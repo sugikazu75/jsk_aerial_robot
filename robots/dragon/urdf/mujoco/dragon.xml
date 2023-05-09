@@ -141,21 +141,21 @@
       </worldbody>
 
       <actuator>
-        <position name="joint1_pitch_servo" kp="40" joint="joint1_pitch" />
-        <position name="joint1_yaw_servo"   kp="40" joint="joint1_yaw" />
-        <position name="joint2_pitch_servo" kp="40" joint="joint2_pitch" />
-        <position name="joint2_yaw_servo"   kp="40" joint="joint2_yaw" />
-        <position name="joint3_pitch_servo" kp="40" joint="joint3_pitch" />
-        <position name="joint3_yaw_servo"   kp="40" joint="joint3_yaw" />
+        <position name="joint1_pitch" kp="40" joint="joint1_pitch" />
+        <position name="joint1_yaw"   kp="40" joint="joint1_yaw" />
+        <position name="joint2_pitch" kp="40" joint="joint2_pitch" />
+        <position name="joint2_yaw"   kp="40" joint="joint2_yaw" />
+        <position name="joint3_pitch" kp="40" joint="joint3_pitch" />
+        <position name="joint3_yaw"   kp="40" joint="joint3_yaw" />
 
-        <position name="gimbal1_pitch_servo" kp="40" joint="gimbal1_pitch" />
-        <position name="gimbal1_roll_servo"  kp="40" joint="gimbal1_roll" />
-        <position name="gimbal2_pitch_servo" kp="40" joint="gimbal2_pitch" />
-        <position name="gimbal2_roll_servo"  kp="40" joint="gimbal2_roll" />
-        <position name="gimbal3_pitch_servo" kp="40" joint="gimbal3_pitch" />
-        <position name="gimbal3_roll_servo"  kp="40" joint="gimbal3_roll" />
-        <position name="gimbal4_pitch_servo" kp="40" joint="gimbal4_pitch" />
-        <position name="gimbal4_roll_servo"  kp="40" joint="gimbal4_roll" />
+        <position name="gimbal1_pitch" kp="4" joint="gimbal1_pitch" />
+        <position name="gimbal1_roll"  kp="4" joint="gimbal1_roll" />
+        <position name="gimbal2_pitch" kp="4" joint="gimbal2_pitch" />
+        <position name="gimbal2_roll"  kp="4" joint="gimbal2_roll" />
+        <position name="gimbal3_pitch" kp="4" joint="gimbal3_pitch" />
+        <position name="gimbal3_roll"  kp="4" joint="gimbal3_roll" />
+        <position name="gimbal4_pitch" kp="4" joint="gimbal4_pitch" />
+        <position name="gimbal4_roll"  kp="4" joint="gimbal4_roll" />
 
         <motor name="rotor1_thrust" ctrllimited="true" ctrlrange="0.0 30.0" gear="0 0 1 0 0 -0.02" site="rotor1" />
         <motor name="rotor2_thrust" ctrllimited="true" ctrlrange="0.0 30.0" gear="0 0 1 0 0 0.02" site="rotor2" />

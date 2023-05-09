@@ -64,7 +64,7 @@ class MujocoRosInterface:
         self.clock_pub = rospy.Publisher('/clock',Clock, queue_size=10)
 
         # ros subscriber
-        ctrl_sub = rospy.Subscriber("ctrl_input", ControlInput, self.ctrlCallback)
+        ctrl_sub = rospy.Subscriber("mujoco/ctrl_input", ControlInput, self.ctrlCallback)
 
         # ros timer
         timer100 = rospy.Timer(rospy.Duration(0.01), self.timerCallback)
@@ -120,6 +120,9 @@ class MujocoRosInterface:
             self.wrench_allocation_mat = wrench_allocation_mat
 
     def ctrlCallback(self, msg):
+        if len(msg.name) != len(msg.input):
+            rospy.logwarn("size of joint name list and input list is not same")
+            return
         for actuator_name, actuator_input in zip(msg.name, msg.input):
             if not (actuator_name in self.actuator_names):
                 rospy.logwarn("%s is an invalid actuator name" % (actuator_name))

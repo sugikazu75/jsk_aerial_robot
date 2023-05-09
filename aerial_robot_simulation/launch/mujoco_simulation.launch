@@ -8,9 +8,10 @@
       <param name="model" value="$(arg model)"/>
     </node>
 
-    <node pkg="aerial_robot_simulation" type="mujoco_flight_controller.py" name="mujoco_flight_controller" output="screen">
+    <node pkg="aerial_robot_simulation" type="mujoco_flight_control_interface.py" name="mujoco_flight_controller" output="screen">
       <rosparam command="load" file="$(find aerial_robot_simulation)/config/ControlParams.yaml" />
     </node>
+
   </group>
 
 </launch>

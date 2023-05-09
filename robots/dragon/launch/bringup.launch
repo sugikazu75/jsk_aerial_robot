@@ -41,6 +41,7 @@
 
     ###########  Servo Config  ###########
     <rosparam file="$(arg config_dir)/Servo.yaml" command="load" />
+    <rosparam command="load" file="$(find dragon)/config/ServoOrder.yaml" />
 
     ###########  Battery Config  ###########
     <rosparam file="$(arg config_dir)/Battery.yaml" command="load" />
