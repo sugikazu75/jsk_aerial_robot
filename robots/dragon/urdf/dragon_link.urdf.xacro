@@ -241,7 +241,7 @@
       </link>
 
       <joint name="joint${self}_yaw" type="revolute">
-        <limit effort="10.0" lower="${-pi/2}" upper="${pi/2}" velocity="0.1"/>
+        <limit effort="10.0" lower="${-pi}" upper="${pi}" velocity="0.1"/>
         <parent link="inter_joint${self}"/>
         <child link="link${child}"/>
         <origin rpy="0 0 0" xyz="${2 * inter_joint_x_offset} 0 0"/>
