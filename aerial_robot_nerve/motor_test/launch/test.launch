@@ -2,10 +2,10 @@
 <launch>
   <!-- general parameters -->
   <arg name="test_mode" default="1" /> <!-- 0: STEP; 1: ONESHOT -->
-  <arg name="run_duration" default="2.0" />
+  <arg name="run_duration" default="3.0" />
   <arg name="pwm_incremental_value" default="25" />
   <arg name="min_pwm_value" default="1200" />
-  <arg name="max_pwm_value" default="1700" />
+  <arg name="max_pwm_value" default="1800" />
   <!-- parameters for oneshot -->
   <arg name="raise_duration" default="2.0" />
   <arg name="brake_duration" default="4.0" />
