@@ -1,0 +1,2 @@
+joint_servo_order: ['joint1', 'joint2']
+gimbal_servo_order: ['gimbal1',  'gimbal2', 'gimbal3']

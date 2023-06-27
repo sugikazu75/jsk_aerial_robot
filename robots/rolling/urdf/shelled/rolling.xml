@@ -1,0 +1,98 @@
+<mujoco model="rolling">
+  <compiler coordinate="local" convexhull="false" angle="radian" balanceinertia="true" meshdir="mesh" autolimits="true"/>
+  <option timestep="0.005" gravity="0 0 -9.81" collision="all"/>
+  <option density="1" viscosity="1e-3" collision="all"/>
+  <option integrator="implicit" />
+
+  <statistic meansize="0.197513" extent="1.80646" center="0.787759 -0.0666544 -0.00642457"/>
+
+  <asset>
+    <mesh name="link" file="link.STL" scale="0.001 0.001 0.001"/>
+    <mesh name="roll_gimbal_module" file="roll_gimbal_module.STL" scale="0.001 0.001 0.001"/>
+
+    <texture type="skybox" builtin="gradient" rgb1=".3 .5 .7" rgb2="0 0 0" width="32" height="512"/>
+    <texture name="body" type="cube" builtin="flat" mark="cross" width="128" height="128" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+    <material name="body" texture="body" texuniform="true" rgba="0.8 0.6 .4 1"/>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+  </asset>
+
+  <worldbody>
+      <geom name="floor" size="0 0 .05" type="plane" material="grid" condim="3"/>
+      <light name="spotlight" mode="targetbodycom" target="link2" diffuse=".8 .8 .8" specular="0.3 0.3 0.3" pos="0 -6 4" cutoff="30"/>
+
+    <body name="link1">
+      <inertial pos="0.275367 -0.0396115 -0.00327242" quat="0.0513323 0.740737 0.0556961 0.667512" mass="0.496665" diaginertia="0.023523 0.0212786 0.0033733"/>
+      <joint name="root_free_joint" type="free"/>
+      <geom type="mesh" mesh="link"/>
+
+      <body name="link2" pos="0.52477 0 0">
+        <inertial pos="0.275366 -0.0396076 -0.00327235" quat="0.0513024 0.740738 0.0556614 0.667516" mass="0.496675" diaginertia="0.0235253 0.0212797 0.00337469"/>
+        <joint name="joint1" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159" damping="40" frictionloss="0.05"/>
+        <geom type="mesh" mesh="link"/>
+        <site name="fc" pos="0 0 0" />
+
+        <body name="link3" pos="0.52477 0 0">
+          <inertial pos="0.275372 -0.0396123 -0.00327248" quat="0.0513288 0.740738 0.0556969 0.667511" mass="0.496655" diaginertia="0.0235212 0.0212769 0.00337228"/>
+          <joint name="joint2" pos="0 0 0" axis="0 0 1" range="-3.14159 3.14159" damping="40" frictionloss="0.05"/>
+          <geom type="mesh" mesh="link"/>
+
+          <body name="gimbal_link3" pos="0.1935 0 0">
+            <inertial pos="0.00821027 -2.35991e-06 0.00688827" quat="0.699639 0.102382 0.102319 0.699681" mass="0.263205" diaginertia="0.000740109 0.000714222 0.000219118"/>
+            <joint name="gimbal3" pos="0 0 0" axis="1 0 0" range="-3.14 3.14" damping="0.1"/>
+            <geom quat="0.99875 0 0.0499792 0" type="mesh" mesh="roll_gimbal_module"/>
+
+            <body name="thrust3" pos="0 0 0.05" quat="0.99875 0 0.0499792 0">
+              <inertial pos="0 0 0" mass="1e-05" diaginertia="1e-06 1e-06 1e-06"/>
+              <!-- <joint name="rotor3" pos="0 0 0" axis="0 0 1" range="0 18"/> -->
+              <site name="rotor3" pos=" 0 0 0"/>
+            </body>
+          </body>
+        </body>
+
+        <body name="gimbal_link2" pos="0.1935 0 0">
+          <inertial pos="0.00821027 -2.35991e-06 0.00688827" quat="0.699639 0.102382 0.102319 0.699681" mass="0.263205" diaginertia="0.000740109 0.000714222 0.000219118"/>
+          <joint name="gimbal2" pos="0 0 0" axis="1 0 0" range="-3.14 3.14" damping="0.1"/>
+          <geom quat="0.99875 0 -0.0499792 0" type="mesh" mesh="roll_gimbal_module"/>
+
+          <body name="thrust2" pos="0 0 0.05" quat="0.99875 0 -0.0499792 0">
+            <inertial pos="0 0 0" mass="1e-05" diaginertia="1e-06 1e-06 1e-06"/>
+            <!-- <joint name="rotor2" pos="0 0 0" axis="0 0 -1" range="0 18"/> -->
+            <site name="rotor2" pos=" 0 0 0"/>
+          </body>
+        </body>
+      </body>
+
+      <body name="gimbal_link1" pos="0.1935 0 0">
+        <inertial pos="0.00821027 -2.35991e-06 0.00688827" quat="0.699639 0.102382 0.102319 0.699681" mass="0.263205" diaginertia="0.000740109 0.000714222 0.000219118"/>
+        <joint name="gimbal1" pos="0 0 0" axis="1 0 0" range="-3.14 3.14" damping="0.1"/>
+        <geom quat="0.99875 0 0.0499792 0" type="mesh" mesh="roll_gimbal_module"/>
+
+        <body name="thrust1" pos="0 0 0.05" quat="0.99875 0 0.0499792 0">
+          <inertial pos="0 0 0" mass="1e-05" diaginertia="1e-06 1e-06 1e-06"/>
+          <!-- <joint name="rotor1" pos="0 0 0" axis="0 0 1" range="0 18"/> -->
+          <site name="rotor1" pos=" 0 0 0"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <position name="joint1" kp="40" joint="joint1" />
+    <position name="joint2" kp="40" joint="joint2" />
+
+    <position name="gimbal1" kp="40" joint="gimbal1" />
+    <position name="gimbal2" kp="40" joint="gimbal2" />
+    <position name="gimbal3" kp="40" joint="gimbal3" />
+
+    <motor name="rotor1" ctrllimited="true" ctrlrange="0.0 30.0" gear="0 0 1 0 0 -0.02" site="rotor1" />
+    <motor name="rotor2" ctrllimited="true" ctrlrange="0.0 30.0" gear="0 0 1 0 0 0.02" site="rotor2" />
+    <motor name="rotor3" ctrllimited="true" ctrlrange="0.0 30.0" gear="0 0 1 0 0 -0.02" site="rotor3" />
+  </actuator>
+
+  <sensor>
+    <accelerometer name="acc" site="fc" />
+    <gyro name="gyro" site="fc" />
+    <magnetometer name="mag" site="fc" />
+  </sensor>
+</mujoco>
