@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="gundam_common" >
+
+  <baselink name="fc" />
+  <thrust_link name="thrust" />
+
+  <m_f_rate value="0" /> <!-- drug torque rate -->
+  <xacro:property name="max_force" value="5000" /> <!-- [N] -->
+  <xacro:property name="min_force" value="0" /> <!-- [N] -->
+
+</robot>
+

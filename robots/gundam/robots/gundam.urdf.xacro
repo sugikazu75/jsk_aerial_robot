@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="gundam" >
+
+  <!-- temporary -->
+  <xacro:include filename="$(find gundam)/urdf/gundam_common.xacro"/>
+  <xacro:include filename="$(find gundam_rx78_description)/urdf/GGC_TestModel_rx78_20170112.urdf" />
+
+</robot>
