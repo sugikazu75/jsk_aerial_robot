@@ -46,13 +46,25 @@ add_executable(full_search src/design/full_search.cpp)
 target_link_libraries(full_search
   ${catkin_LIBRARIES})
 
+add_executable(fc_t_output src/design/fc_t_output.cpp)
+target_link_libraries(fc_t_output
+  ${catkin_LIBRARIES})
+
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 
 add_executable(optimal_design src/design/optimal_design.cpp)
 target_link_libraries(optimal_design
   ${catkin_LIBRARIES} ${NLOPT_LIBRARIES})
 
+install(DIRECTORY include/${PROJECT_NAME}
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  )
+
 install(DIRECTORY config launch plugins scripts
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
+  )
+
+install(TARGETS opt full_search fc_t_output optimal_design
+  DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   )
