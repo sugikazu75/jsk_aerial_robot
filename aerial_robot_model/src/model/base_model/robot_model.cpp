@@ -361,6 +361,8 @@ namespace aerial_robot_model {
     setCog(cog);
     mass_ = link_inertia.getMass();
 
+    ROS_INFO_ONCE("initialized robot model, the mass is %f", mass_);
+
     setInertia((cog.Inverse() * link_inertia).getRotationalInertia());
     setCog2Baselink(cog.Inverse() * f_baselink);
 
