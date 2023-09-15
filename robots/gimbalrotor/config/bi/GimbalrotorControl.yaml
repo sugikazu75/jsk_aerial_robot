@@ -7,7 +7,7 @@ controller:
   controlled_axis: [0, 0, 1, 1, 1, 1]
 
   xy:
-    p_gain: 6.0
+    p_gain: 4.0
     i_gain: 0.05
     d_gain: 1.5
     limit_sum: 4.0
