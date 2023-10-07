@@ -130,7 +130,13 @@ bool UnderActuatedTiltedLQIController::optimalGain()
 
   double t = ros::Time::now().toSec();
   bool use_kleinman_method = true;
-  if(K_.cols() == 0 || K_.rows() == 0) use_kleinman_method = false;
+  std::cout << K_.cols() << " " << K_.rows() << std::endl; //-> 9, 4
+  std::cout << "K matrix: " << K_ << std::endl;
+  std::cout << std::endl;
+  if(K_.cols() == 0 || K_.rows() == 0){
+    std::cout << "dont use kleinman method" << std::endl;
+    use_kleinman_method = false;
+  }
   if(!control_utils::care(A, B, R, Q, K_, use_kleinman_method))
     {
       ROS_ERROR_STREAM("error in solver of continuous-time algebraic riccati equation");

@@ -88,6 +88,7 @@ void UnderActuatedLQIController::initialize(ros::NodeHandle nh,
 
   if (!robot_model_->isModelFixed()) realtime_update_ = true;
   if (realtime_update_) {
+    std::cout << "real time update gain" << std::endl;
     gain_generator_thread_ = std::thread(boost::bind(&UnderActuatedLQIController::gainGeneratorFunc, this));
   }
 }
@@ -130,6 +131,7 @@ void UnderActuatedLQIController::gainGeneratorFunc()
 void UnderActuatedLQIController::activate()
 {
   ControlBase::activate();
+  std::cout << "activate function in UnderActuatedLQIController" << std::endl;
 
   // publish gains in start phase for general multirotor
   if(optimalGain()) {

@@ -47,6 +47,7 @@ namespace control_utils
 
     if(iterative_solution)
       {
+        std::cout << "care: iterative_solution is true" << std::endl;
         /* Kleinman method */
         if (K.cols() != state_dim || K.rows() != input_dim)
           {
@@ -79,11 +80,11 @@ namespace control_utils
             Eigen::MatrixXd delta_K = K - K_prev;
             max_diff = fabs(delta_K.maxCoeff()) > fabs(delta_K.minCoeff())?fabs(delta_K.maxCoeff()):fabs(delta_K.minCoeff());
 
-            // std::cout << "Care in Kleinman method, iteration: " << i << ", max diff: " << max_diff << std::endl;
+            std::cout << "Care in Kleinman method, iteration: " << i << ", max diff: " << max_diff << std::endl;
 
             if(max_diff < converge_thresh)
               {
-                // std::cout << BLUE_MESSAGE << "Care in Kleinman method, iteration: " << i << ", converge" << RESET_COLOR << std::endl;
+                std::cout << BLUE_MESSAGE << "Care in Kleinman method, iteration: " << i << ", converge" << RESET_COLOR << std::endl;
 
 #if 0 //debug
                 /* compare with hamiltonMatrixSolver */
@@ -108,6 +109,7 @@ namespace control_utils
       }
     else
       {
+        std::cout << "care: iterative_solution is false" << std::endl;
         /* hamiltonMatrixSolver */
 
         Eigen::MatrixXcd H = Eigen::MatrixXcd::Zero(2 * state_dim, 2 * state_dim);

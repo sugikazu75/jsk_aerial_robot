@@ -114,7 +114,11 @@ namespace aerial_robot_control
 
     virtual bool update()
     {
-      if(navigator_->getNaviState() == aerial_robot_navigation::START_STATE) activate();
+      if(navigator_->getNaviState() == aerial_robot_navigation::START_STATE)
+        {
+          std::cout << "waiting responce from aerial robot" << std::endl;
+          activate();
+        }
       if(navigator_->getNaviState() == aerial_robot_navigation::ARM_OFF_STATE && control_timestamp_ > 0)
         {
           reset();
