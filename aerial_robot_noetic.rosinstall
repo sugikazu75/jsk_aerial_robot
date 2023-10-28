@@ -2,7 +2,7 @@
 - git:
     local-name: aerial_robot_3rdparty
     uri: https://github.com/sugikazu75/aerial_robot_3rdparty.git
-    version: develop/mujoco
+    version: 4d4ddc1
 
 # kalman filter
 - git:
