@@ -87,9 +87,9 @@ install(DIRECTORY bin
   USE_SOURCE_PERMISSIONS
 )
 
-mujoco_model_convert(
-  ${PROJECT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/config/mujoco_model.yaml)
+# mujoco_model_convert(
+#   ${PROJECT_SOURCE_DIR}
+#   ${PROJECT_SOURCE_DIR}/config/mujoco_model.yaml)
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
