@@ -38,6 +38,7 @@
 #include <aerial_robot_msgs/Acc.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
 #include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <sensor_msgs/Imu.h>
 #include <spinal/Imu.h>
 
@@ -60,10 +61,35 @@ namespace sensor_plugin
 
     inline ros::Time getStamp(){return imu_stamp_;}
 
+    inline tf::Vector3 getFilteredOmegaCog()
+    {
+      boost::lock_guard<boost::mutex> lock(omega_mutex_);
+      return filtered_omega_cog_;
+    }
+
+    inline tf::Vector3 getFilteredVelCog()
+    {
+      boost::lock_guard<boost::mutex> lock(vel_mutex_);
+      return filtered_vel_cog_;
+    }
+
+    void setFilteredOmegaCog(const tf::Vector3 filtered_omega_cog)
+    {
+      boost::lock_guard<boost::mutex> lock(omega_mutex_);
+      filtered_omega_cog_ = filtered_omega_cog;
+    }
+
+    void setFilteredVelCog(const tf::Vector3 filtered_vel_cog)
+    {
+      boost::lock_guard<boost::mutex> lock(vel_mutex_);
+      filtered_vel_cog_ = filtered_vel_cog;
+    }
+    
   protected:
     ros::Publisher  acc_pub_;
     ros::Publisher  imu_pub_;
     ros::Subscriber imu_sub_;
+    ros::Publisher omega_filter_pub_; 
 
     /* rosparam */
     string imu_topic_name_;
@@ -87,6 +113,12 @@ namespace sensor_plugin
     /* acc bias */
     tf::Vector3 acc_bias_b_; /* the acceleration bias in baselink frame, only use z axis  */
     std::array<tf::Vector3, 2> acc_bias_w_; /* the acceleration bias in world frame for estimate_mode and expriment_mode*/
+    /* IIR filter*/
+    boost::mutex omega_mutex_;
+    boost::mutex vel_mutex_;
+    tf::Vector3 filtered_vel_cog_;
+    tf::Vector3 filtered_omega_cog_;
+    IirFilter lpf_omega_; // for gyro
 
     aerial_robot_msgs::States state_; /* for debug */
 
