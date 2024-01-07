@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="cylinder_x" default="3.0"/>
+  <arg name="cylinder_y" default="0.0"/>
+  <arg name="cylinder_z" default="0.0"/>
+  <arg name="cylinder_yaw" default="0.0"/>
+
+  <param name="cylinder/robot_description" command="$(find xacro)/xacro $(find mini_quadrotor)/urdf/infratable/cylinder.urdf"/>
+
+  <node pkg="gazebo_ros" type="spawn_model" name="cylinder_spawn" args="-param cylinder/robot_description -urdf -x $(arg cylinder_x) -y $(arg cylinder_y) -z 0 -Y $(arg cylinder_yaw) -model cylinder_model" />
+
+
+</launch>

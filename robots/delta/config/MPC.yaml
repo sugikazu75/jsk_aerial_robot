@@ -1,0 +1,21 @@
+controller:
+  yaw_p_gain: 1.0
+  holizon: 2.0
+  n_grid: 10
+  nx: 12
+  nu: 4
+
+  q_rx: 40.0
+  q_ry: 40.0
+  q_rz: 10.0
+  q_vx: 0.0
+  q_vy: 0.0
+  q_vz: 0.0
+  q_alpha_x: 0.0
+  q_alpha_y: 0.0
+  q_alpha_z: 10.0
+  q_omega_x: 0.0
+  q_omega_y: 0.0
+  q_omega_z: 1.0
+
+  u_thrust: 0.0

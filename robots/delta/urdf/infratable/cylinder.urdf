@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="cube_urdf" >
+
+  <link name="cylinder_link">
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.3" length="1.0"/>
+      </geometry>
+    </visual>
+
+    <inertial>
+      <origin xyz="0.5 0.5 0.5"/>
+      <mass value="1.0"/>
+      <inertia
+            ixx="0.01" ixy="0.0" ixz="0.0"
+            iyy="0.01" iyz="0.0"
+            izz="0.01"/>
+    </inertial>
+
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry>
+        <box size="1 1 1" />
+      </geometry>
+    </collision>
+
+  </link>
+
+</robot>
