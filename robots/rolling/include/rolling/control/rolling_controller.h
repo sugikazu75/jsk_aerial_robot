@@ -20,6 +20,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <OsqpEigen/OsqpEigen.h>
 #include <nlopt.hpp>
+#include <casadi/casadi.hpp>
+#include <CasadiEigen/CasadiEigen.h>
 #include <osqp_slsqp/slsqp.h>
 #include <rolling/control/osqp_solver.h>
 

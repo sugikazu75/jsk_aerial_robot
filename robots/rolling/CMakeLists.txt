@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   aerial_robot_estimation
   aerial_robot_model
   aerial_robot_msgs
+  casadi_eigen
   mujoco_ros_control
   osqp_slsqp
   pluginlib
@@ -17,9 +18,10 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 find_package(NLopt REQUIRED)
 find_package(OsqpEigen REQUIRED)
+find_package(casadi REQUIRED)
 
 catkin_package(
-  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model aerial_robot_msgs osqp_slsqp pluginlib roscpp
+  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model aerial_robot_msgs casadi_eigen osqp_slsqp pluginlib roscpp
 )
 
 include_directories(
@@ -34,7 +36,7 @@ add_library(rolling_controller
   src/control/frame_control.cpp
   src/control/pid_param_setter.cpp
   src/control/slsqp_solver.cpp)
-target_link_libraries(rolling_controller ${catkin_LIBRARIES} ${OsqpEigen_LIBRARIES} ${NLOPT_LIBRARIES})
+target_link_libraries(rolling_controller ${catkin_LIBRARIES} ${OsqpEigen_LIBRARIES} ${NLOPT_LIBRARIES} casadi)
 
 add_library(rolling_robot_model src/model/rolling_robot_model.cpp)
 target_link_libraries(rolling_robot_model ${catkin_LIBRARIES})

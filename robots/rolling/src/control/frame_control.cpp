@@ -167,6 +167,27 @@ void RollingController::calcStandingFullLambda()
     INFINITY,
     steering_mu_ * robot_model_->getMass() * robot_model_->getGravity()(Z);
 
+  /* implementation with casadi */
+  casadi::MX casadi_lambda = casadi::MX::sym("x", n_variables);
+  casadi::MX casadi_objective = dot(casadi_lambda, casadi_lambda);
+  casadi::MX casadi_A = eigenMatrixToCasadiDM(A);
+  casadi::MX casadi_constraints = mtimes(casadi_A, casadi_lambda);
+  casadi::DM lbg = eigenVectorToCasadiDm(lower_bound);
+  casadi::DM ubg = eigenVectorToCasadiDm(upper_bound);
+  casadi::DM lbx = eigenVectorToCasadiDm(Eigen::VectorXd::Ones(n_variables) * (-25.0));
+  casadi::DM ubx = eigenVectorToCasadiDm(Eigen::VectorXd::Ones(n_variables) * ( 25.0));
+
+  casadi::MXDict nlp = {{"x", casadi_lambda}, {"f", casadi_objective}, {"g", casadi_constraints}};
+  casadi::Dict opt_dict = casadi::Dict();
+  opt_dict["ipopt.max_iter"] = 3000;
+  opt_dict["ipopt.print_level"] = 0;
+  opt_dict["ipopt.sb"] = "yes";
+  opt_dict["print_time"] = 0;
+
+  casadi::Function S = casadi::nlpsol("S", "ipopt", nlp, opt_dict);
+  casadi::DM initial_x = eigenVectorToCasadiDm(Eigen::VectorXd::Ones(n_variables) * 4.0);
+  // auto res = S(casadi::DMDict{{"x0", initial_x}, {"lbg", lbg}, {"ubg", ubg}, {"lbx", lbx}, {"ubx", ubx}});
+  // Eigen::VectorXd optimized_lambda = casadiDmToEigenVector(res.at("x"));
 
   OsqpEigen::Solver solver;
 
