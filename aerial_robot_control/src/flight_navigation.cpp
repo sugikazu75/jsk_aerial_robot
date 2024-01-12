@@ -16,6 +16,7 @@ BaseNavigator::BaseNavigator():
   trajectory_reset_time_(0),
   teleop_reset_time_(0),
   low_voltage_flag_(false),
+  high_voltage_flag_(false),
   prev_xy_control_mode_(ACC_CONTROL_MODE),
   xy_control_flag_(false),
   vel_based_waypoint_(false),
@@ -96,6 +97,7 @@ void BaseNavigator::batteryCheckCallback(const std_msgs::Float32ConstPtr &msg)
     voltage += ( (bat_resistance_voltage_rate_ * voltage +  bat_resistance_) * hovering_current_);
 
   float average_voltage = voltage / bat_cell_;
+  float input_cell = voltage / VOLTAGE_100P;
   float percentage = 0;
   if(average_voltage  > VOLTAGE_90P) percentage = (average_voltage - VOLTAGE_90P) / (VOLTAGE_100P - VOLTAGE_90P) * 10 + 90;
   else if (average_voltage  > VOLTAGE_80P) percentage = (average_voltage - VOLTAGE_80P) / (VOLTAGE_90P - VOLTAGE_80P) * 10 + 80;
@@ -123,6 +125,13 @@ void BaseNavigator::batteryCheckCallback(const std_msgs::Float32ConstPtr &msg)
     }
   else
     low_voltage_flag_  = false;
+
+  if(input_cell - bat_cell_ > high_voltage_cell_thre_)
+    {
+      high_voltage_flag_ = true;
+    }
+  else
+    high_voltage_flag_ = false;
 
   if(power_info_pub_.getNumSubscribers() == 0) return;
 
@@ -776,6 +785,12 @@ void BaseNavigator::update()
             setNaviState(ARM_OFF_STATE);
             break;
           }
+        if(high_voltage_flag_)
+          {
+            setNaviState(ARM_OFF_STATE);
+            ROS_ERROR("high voltage!");
+            break;
+          }
 
         estimator_->setSensorFusionFlag(true);
         force_landing_flag_ = false;
@@ -824,7 +839,7 @@ void BaseNavigator::update()
                 ROS_INFO("expected land height: %f (current height: %f), velocity: %f ", land_height_, curr_pos.z(), vel);
 
                 if (fabs(delta) < land_pos_convergent_thresh_ &&
-                    fabs(vel) < land_vel_convergent_thresh_)
+                    vel > -land_vel_convergent_thresh_)
                   {
                     ROS_INFO("\n \n ======================  \n Land !!! \n ====================== \n");
                     ROS_INFO("Start disarming motors");
@@ -1048,13 +1063,13 @@ void BaseNavigator::rosParamInit()
   getParam<double>(nh, "takeoff_height", takeoff_height_, 0.0);
   getParam<double>(nh, "land_descend_vel",land_descend_vel_, -0.3);
   getParam<double>(nh, "hover_convergent_duration", hover_convergent_duration_, 1.0);
-  getParam<double>(nh, "land_check_duration", land_check_duration_, 1.0);
+  getParam<double>(nh, "land_check_duration", land_check_duration_, 0.5);
   getParam<double>(nh, "trajectory_reset_duration", trajectory_reset_duration_, 0.5);
   getParam<double>(nh, "teleop_reset_duration", teleop_reset_duration_, 0.5);
   getParam<double>(nh, "z_convergent_thresh", z_convergent_thresh_, 0.05);
   getParam<double>(nh, "xy_convergent_thresh", xy_convergent_thresh_, 0.15);
   getParam<double>(nh, "land_pos_convergent_thresh", land_pos_convergent_thresh_, 0.02);
-  getParam<double>(nh, "land_vel_convergent_thresh", land_vel_convergent_thresh_, 0.01);
+  getParam<double>(nh, "land_vel_convergent_thresh", land_vel_convergent_thresh_, 0.05);
 
   //*** trajectory
   getParam<double>(nh, "trajectory_mean_vel", trajectory_mean_vel_, 0.5);
@@ -1087,6 +1102,7 @@ void BaseNavigator::rosParamInit()
   ros::NodeHandle bat_nh(nh_, "bat_info");
   getParam<int>(bat_nh, "bat_cell", bat_cell_, 0); // Lipo battery cell
   getParam<double>(bat_nh, "low_voltage_thre", low_voltage_thre_, 0.1); // Lipo battery cell
+  getParam<double>(bat_nh, "high_voltage_cell_thre", high_voltage_cell_thre_, 1.0);
   getParam<double>(bat_nh, "bat_resistance", bat_resistance_, 0.0); //Battery internal resistance
   getParam<double>(bat_nh, "bat_resistance_voltage_rate", bat_resistance_voltage_rate_, 0.0); //Battery internal resistance_voltage_rate
   getParam<double>(bat_nh, "hovering_current", hovering_current_, 0.0); // current at hovering state
