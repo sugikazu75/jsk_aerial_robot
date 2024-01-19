@@ -1,0 +1,20 @@
+bag_filename: 20240117_hovering_2_2024-01-17-22-53-41.bag
+robot_ns: delta
+plot_topic_names: [debug/pose/pid, debug/pose/pid, debug/pose/pid]
+plot_fields: [x/err_p, y/err_p, z/err_p]
+start_time: 50.0
+end_time: 70.0
+
+fig_size: [6, 3]
+show_legend: true
+legends: [error_x, error_y, error_z]
+plot_colors: [red, green, blue]
+x_label: time [s]
+y_label: position error [m]
+y_range: [-0.2, 0.2]
+x_label_fontsize: 15
+y_label_fontsize: 15
+legend_fontsize: 12
+label_fontsize: 12
+save_fig: false
+save_fig_name: hoge.png
