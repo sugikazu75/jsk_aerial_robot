@@ -249,11 +249,11 @@ int main(void)
   controller_.init(&htim1, &htim4, &estimator_, &battery_status_, &nh_, &flightControlMutexHandle);
   FlashMemory::read(); //IMU calib data (including IMU in neurons)
 
-#if NERVE_COMM        
+#if NERVE_COMM
   Spine::init(&hfdcan1, &nh_, &estimator_, LED1_GPIO_Port, LED1_Pin);
   Spine::useRTOS(&canMsgMailHandle); // use RTOS for CAN in spianl
 #endif
-  
+
   /* USER CODE END 2 */
 
   /* Create the mutex(es) */
@@ -1082,7 +1082,7 @@ void coreTaskFunc(void const * argument)
       estimator_.update();
       controller_.update();
 
-#if NERVE_COMM      
+#if NERVE_COMM
       Spine::update();
 #endif
 
@@ -1218,7 +1218,7 @@ void kondoServoFunc(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-#ifdef KONDO_FLAG    
+#ifdef KONDO_FLAG
     kondo_servo_.update();
     osDelay(KONDO_SERVO_UPDATE_INTERVAL);
 #else
