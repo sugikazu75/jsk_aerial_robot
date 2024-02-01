@@ -19,7 +19,6 @@ RollingRobotModel::RollingRobotModel(bool init_with_rosparam, bool verbose, doub
 
   target_frame_name_ = "cog";
   additional_frame_["cp"] = &contact_point_;
-  additional_frame_["contact_point_real"] = &contact_point_real_;
   setTargetFrame(target_frame_name_);
 }
 
@@ -63,23 +62,25 @@ void RollingRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_position
     }
   link_inertia_ = link_inertia;
 
+
   /* center point */
-  KDL::Frame link2;
-  KDL::Frame link3;
-  fk_solver.JntToCart(joint_positions, link2, "link2");
-  fk_solver.JntToCart(joint_positions, link3, "link3");
-  KDL::Frame center_point;
-  center_point_.p.x((link2.p.x() + link3.p.x()) / 3.0);
-  center_point_.p.y((link2.p.y() + link3.p.y()) / 3.0);
-  center_point_.M = cog.M;
+  // KDL::Frame link2;
+  // KDL::Frame link3;
+  // fk_solver.JntToCart(joint_positions, link2, "link2");
+  // fk_solver.JntToCart(joint_positions, link3, "link3");
+  // KDL::Frame center_point;
+  // center_point_.p.x((link2.p.x() + link3.p.x()) / 3.0);
+  // center_point_.p.y((link2.p.y() + link3.p.y()) / 3.0);
+  // center_point_.M = cog.M;
 
   /* contact point */
-  double target_baselink_roll = getCogDesireOrientation<Eigen::Matrix3d>().eulerAngles(0, 1, 2)(0);
-  double target_baselink_pitch = getCogDesireOrientation<Eigen::Matrix3d>().eulerAngles(0, 1, 2)(1);
-  KDL::Frame cog2baselink = getCog2Baselink<KDL::Frame>();
-  KDL::Vector contact_point_offset = KDL::Vector(0, -circle_radius_ * cos(target_baselink_roll), -circle_radius_ * sin(target_baselink_roll));
-  contact_point_.p = center_point_.p + cog.M * contact_point_offset;
-  contact_point_.M = cog.M;
+  // double target_baselink_roll = getCogDesireOrientation<Eigen::Matrix3d>().eulerAngles(0, 1, 2)(0);
+  // double target_baselink_pitch = getCogDesireOrientation<Eigen::Matrix3d>().eulerAngles(0, 1, 2)(1);
+  // KDL::Frame cog2baselink = getCog2Baselink<KDL::Frame>();
+  // KDL::Vector contact_point_offset = KDL::Vector(0, -circle_radius_ * cos(target_baselink_roll), -circle_radius_ * sin(target_baselink_roll));
+  // contact_point_.p = center_point_.p + cog.M * contact_point_offset;
+  // contact_point_.M = cog.M;
+
 
   /* publish origin and normal for debug */
   geometry_msgs::PoseArray rotor_origin_msg;

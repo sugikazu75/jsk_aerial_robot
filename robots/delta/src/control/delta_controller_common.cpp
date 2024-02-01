@@ -493,45 +493,52 @@ void RollingController::jointStateCallback(const sensor_msgs::JointStateConstPtr
     }
 
   /* tf of real contact point */
-  geometry_msgs::TransformStamped contact_point_real_tf = rolling_robot_model_->getContactPointReal<geometry_msgs::TransformStamped>();
+  geometry_msgs::TransformStamped contact_point_real_tf = rolling_robot_model_->getContactPoint<geometry_msgs::TransformStamped>();
   contact_point_real_tf.header = state->header;
   contact_point_real_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
-  contact_point_real_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point_real"));
+  contact_point_real_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point"));
   br_.sendTransform(contact_point_real_tf);
 
+  /* tf of real and alined contact point */
+  geometry_msgs::TransformStamped contact_point_real_alined_tf = kdlToMsg(contact_point_alined_);
+  contact_point_real_alined_tf.header = state->header;
+  contact_point_real_alined_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
+  contact_point_real_alined_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point_alined"));
+  br_.sendTransform(contact_point_real_alined_tf);
+
   /* tf of contact point */
-  geometry_msgs::TransformStamped contact_point_tf = rolling_robot_model_->getContactPoint<geometry_msgs::TransformStamped>();
-  contact_point_tf.header = state->header;
-  contact_point_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
-  contact_point_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point"));
-  br_.sendTransform(contact_point_tf);
+  // geometry_msgs::TransformStamped contact_point_tf = rolling_robot_model_->getContactPoint<geometry_msgs::TransformStamped>();
+  // contact_point_tf.header = state->header;
+  // contact_point_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
+  // contact_point_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point"));
+  // br_.sendTransform(contact_point_tf);
 
   /* tf of center point */
-  geometry_msgs::TransformStamped center_point_tf = rolling_robot_model_->getCenterPoint<geometry_msgs::TransformStamped>();
-  center_point_tf.header = state->header;
-  center_point_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
-  center_point_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("center_point"));
-  br_.sendTransform(center_point_tf);
+  // geometry_msgs::TransformStamped center_point_tf = rolling_robot_model_->getCenterPoint<geometry_msgs::TransformStamped>();
+  // center_point_tf.header = state->header;
+  // center_point_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
+  // center_point_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("center_point"));
+  // br_.sendTransform(center_point_tf);
 
   /* tf of contact point alined to ground plane */
-  KDL::Frame cog = robot_model_->getCog<KDL::Frame>();
-  KDL::Frame contact_point = rolling_robot_model_->getContactPoint<KDL::Frame>();
-  double baselink_roll = estimator_->getEuler(Frame::COG, estimate_mode_).x();
-  double baselink_pitch = estimator_->getEuler(Frame::COG, estimate_mode_).y();
+  // KDL::Frame cog = robot_model_->getCog<KDL::Frame>();
+  // KDL::Frame contact_point = rolling_robot_model_->getContactPoint<KDL::Frame>();
+  // double baselink_roll = estimator_->getEuler(Frame::COG, estimate_mode_).x();
+  // double baselink_pitch = estimator_->getEuler(Frame::COG, estimate_mode_).y();
 
-  if(true)
-    {
-      std::lock_guard<std::mutex> lock(contact_point_alined_mutex_);
-      contact_point_alined_.p = contact_point.p;
-      contact_point_alined_.M = cog.M;
-      contact_point_alined_.M.DoRotX(-baselink_roll);
-      contact_point_alined_.M.DoRotY(-baselink_pitch);
-    }
-  geometry_msgs::TransformStamped contact_point_alined_tf = kdlToMsg(contact_point_alined_);
-  contact_point_alined_tf.header = state->header;
-  contact_point_alined_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
-  contact_point_alined_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point_alined"));
-  br_.sendTransform(contact_point_alined_tf);
+  // if(true)
+  //   {
+  //     std::lock_guard<std::mutex> lock(contact_point_alined_mutex_);
+  //     contact_point_alined_.p = contact_point.p;
+  //     contact_point_alined_.M = cog.M;
+  //     contact_point_alined_.M.DoRotX(-baselink_roll);
+  //     contact_point_alined_.M.DoRotY(-baselink_pitch);
+  //   }
+  // geometry_msgs::TransformStamped contact_point_alined_tf = kdlToMsg(contact_point_alined_);
+  // contact_point_alined_tf.header = state->header;
+  // contact_point_alined_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
+  // contact_point_alined_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point_alined"));
+  // br_.sendTransform(contact_point_alined_tf);
 
 }
 

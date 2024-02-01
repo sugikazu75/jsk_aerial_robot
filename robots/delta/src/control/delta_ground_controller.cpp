@@ -60,9 +60,17 @@ void RollingController::calcContactPoint()
   contact_point_real_in_cog.p.x(cog_p_cp_in_cog(0));
   contact_point_real_in_cog.p.y(cog_p_cp_in_cog(1));
   contact_point_real_in_cog.p.z(cog_p_cp_in_cog(2));
-  contact_point_real_in_cog.p = cog * contact_point_real_in_cog.p;
-  contact_point_real_in_cog.M = cog.M;
-  rolling_robot_model_->setContactPointReal(contact_point_real_in_cog);
+  KDL::Frame contact_point_real;
+  contact_point_real.p = cog * contact_point_real_in_cog.p;
+  contact_point_real.M = cog.M;
+  rolling_robot_model_->setContactPoint(contact_point_real);
+
+  double baselink_roll = estimator_->getEuler(Frame::COG, estimate_mode_).x();
+  double baselink_pitch = estimator_->getEuler(Frame::COG, estimate_mode_).y();
+  contact_point_alined_ = contact_point_real;
+  contact_point_alined_.M.DoRotX(-baselink_roll);
+  contact_point_alined_.M.DoRotX(-baselink_pitch);
+
 }
 
 
@@ -177,6 +185,9 @@ void RollingController::calcStandingFullLambda()
   Eigen::Matrix3d contact_point_alined_to_cog_p_skew = aerial_robot_model::skew(contact_point_alined_to_cog_p);
   Eigen::VectorXd gravity = robot_model_->getGravity3d();
   Eigen::Vector3d gravity_ang_acc_from_contact_point_alined = rolling_robot_model_->getInertiaFromTargetFrame<Eigen::Matrix3d>().inverse() * contact_point_alined_to_cog_p_skew * robot_model_->getMass() * gravity;
+
+  // KDL::Frame contact_point_real = rolling_robot_model_->getContactPointReal<KDL::Frame>();
+  // contact_point_real.M
 
   /* use sum of pid result and gravity compensation torque for attitude control */
   target_wrench_acc_target_frame.tail(3) = target_wrench_acc_target_frame.tail(3) + gravity_compensate_ratio_ * gravity_ang_acc_from_contact_point_alined;
