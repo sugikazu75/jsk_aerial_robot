@@ -50,3 +50,9 @@
 #    local-name: realsense-ros
 #    uri: https://github.com/tongtybj/realsense-ros.git
 #    version: multi_realsense_t265
+
+# ccdeigen
+- git:
+    local-name: ccdeigen
+    uri: https://github.com/Naoki-Hiraoka/cddeigen
+    version: 1.0
