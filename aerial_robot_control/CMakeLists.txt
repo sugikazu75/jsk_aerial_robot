@@ -20,7 +20,6 @@ find_package(Eigen3 REQUIRED)
 #list(APPEND CMAKE_PREFIX_PATH "~/acados/install/cmake")
 find_package(acados) # if we use REQUIED, then will cause OpenBLAS and FortranLib Find_Package error
 
-
 generate_dynamic_reconfigure_options(
   cfg/PID.cfg
   cfg/LQI.cfg
@@ -60,6 +59,29 @@ add_library(control_utils
 )
 target_link_libraries(control_utils ${EIGEN3_LIBRARIES})
 
+### acados code generation
+set(ACADOS_PYTHON_CODE
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/fix_quad/nmpc_under_act_body_rate.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/fix_quad/nmpc_under_act_full.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/tilt_quad/tilt_qd_full.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/tilt_quad/tilt_qd_full_i_term.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/tilt_quad/tilt_qd_no_servo.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/tilt_quad/tilt_qd_no_servo_new_cost.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/tilt_quad/tilt_qd_old_servo_cost.py
+  ${PROJECT_SOURCE_DIR}/scripts/nmpc/tilt_quad/tilt_qd_vel_input.py
+  )
+
+foreach(script_path ${ACADOS_PYTHON_CODE})
+  message(${script_path})
+  get_filename_component(script_name ${script_path} NAME_WE)
+  add_custom_target(
+    ${script_name}_run ALL
+    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CATKIN_DEVEL_PREFIX}/lib/python3/dist-packages:$ENV{PYTHONPATH} ${Python3_EXECUTABLE} ${script_path}
+    DEPENDS ${script_path} acados
+    COMMENT "Running ${script_path}..."
+    )
+endforeach()
+
 ### flight control plugin
 add_library(flight_control_pluginlib
   src/control/base/pose_linear_controller.cpp
@@ -85,7 +107,7 @@ target_link_libraries(flight_control_pluginlib ${catkin_LIBRARIES} control_utils
         ${PROJECT_SOURCE_DIR}/include/aerial_robot_control/nmpc/over_act_full/c_generated_code/libacados_ocp_solver_beetle_full_model.so
         ${PROJECT_SOURCE_DIR}/include/aerial_robot_control/nmpc/over_act_full_i_term/c_generated_code/libacados_ocp_solver_beetle_full_w_disturb_model.so
         )
-add_dependencies(flight_control_pluginlib  ${PROJECT_NAME}_gencfg)
+add_dependencies(flight_control_pluginlib  ${PROJECT_NAME}_gencfg ${run_all})
 
 ### flight navigation
 add_library (flight_navigation src/flight_navigation.cpp)
