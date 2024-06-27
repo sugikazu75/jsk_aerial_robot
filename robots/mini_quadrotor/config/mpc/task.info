@@ -1,0 +1,145 @@
+; ILQR settings
+ddp
+{
+  algorithm                     ILQR
+
+  nThreads                      4
+
+  maxNumIterations              1
+  minRelCost                    0.1
+  constraintTolerance           1e-3
+
+  displayInfo                   false
+  displayShortSummary           false
+  debugPrintRollout             false
+  checkNumericalStability       false
+
+  AbsTolODE                     2e-5
+  RelTolODE                     1e-3
+  timeStep                      1e-3
+  maxNumStepsPerSecond          100000
+  backwardPassIntegratorType    ODE45
+
+  inequalityConstraintMu        100.0
+  inequalityConstraintDelta     1.1
+
+  preComputeRiccatiTerms        true
+
+  useFeedbackPolicy             false
+
+  strategy                      LINE_SEARCH
+  lineSearch
+  {
+    minStepLength                 0.1
+    maxStepLength                 1.0
+    hessianCorrectionStrategy     EIGENVALUE_MODIFICATION
+    hessianCorrectionMultiple     1e-3
+  }
+}
+
+; Rollout settings
+rollout
+{
+  AbsTolODE                   2e-5
+  RelTolODE                   1e-3
+  timeStep                    1e-3
+  maxNumStepsPerSecond        100000
+  checkNumericalStability     false
+}
+
+; MPC settings
+mpc
+{
+  timeHorizon                 2.0     ; [s]
+  solutionTimeWindow          0.5     ; [s]
+  coldStart                   false
+
+  debugPrint                  false
+
+  mpcDesiredFrequency         100     ; [Hz]
+  mrtDesiredFrequency         400     ; [Hz]
+}
+
+bounds_penalty_config
+{
+  scale                       0.1
+  stepSize                    1.0
+}
+
+; state weight matrix
+Q
+{
+  scaling 1e-0
+
+  ; (0,0)   500.0    ; x
+  ; (1,1)   500.0    ; y
+  ; (2,2)   1000.0    ; z
+  ; (3,3)   300.0    ; qx
+  ; (4,4)   300.0    ; qy
+  ; (5,5)   400.0    ; qz
+  ; (6,6)   100.0      ; qw
+  ; (7,7)   1.0     ; v_x
+  ; (8,8)   1.0     ; v_y
+  ; (9,9)   1.0     ; v_z
+  ; (10,10) 5.0      ; omega_x
+  ; (11,11) 5.0      ; omega_y
+  ; (12,12) 5.0      ; omega_z
+
+  (0,0)   100.0    ; x
+  (1,1)   100.0    ; y
+  (2,2)   300.0    ; z
+  (3,3)   50.0     ; roll
+  (4,4)   50.0     ; pitch
+  (5,5)   50.0     ; yaw
+  (6,6)   10.0     ; v_x
+  (7,7)   10.0     ; v_y
+  (8,8)   10.0     ; v_z
+  (9,9)   100.0    ; w_x
+  (10,10) 100.0    ; w_y
+  (11,11) 10.0     ; w_z
+}
+
+; control weight matrix
+R
+{
+  scaling 1e-1
+
+  (0,0)  1.0   ; thrust0
+  (1,1)  1.0   ; thrust1
+  (2,2)  1.0   ; thrust2
+  (3,3)  1.0   ; thrust3
+}
+
+
+; final state weight matrix
+Q_final
+{
+  scaling 1e-2
+
+  ; (0,0)   500.0    ; x
+  ; (1,1)   500.0    ; y
+  ; (2,2)   400.0    ; z
+  ; (3,3)   300.0    ; qx
+  ; (4,4)   300.0    ; qy
+  ; (5,5)   400.0    ; qz
+  ; (6,6)   1.0      ; qw
+  ; (7,7)   10.0     ; v_x
+  ; (8,8)   10.0     ; v_y
+  ; (9,9)   10.0     ; v_z
+  ; (10,10) 5.0      ; omega_x
+  ; (11,11) 5.0      ; omega_y
+  ; (12,12) 5.0      ; omega_z
+
+  (0,0)   100.0    ; x
+  (1,1)   100.0    ; y
+  (2,2)   300.0    ; z
+  (3,3)   50.0     ; roll
+  (4,4)   50.0     ; pitch
+  (5,5)   50.0     ; yaw
+  (6,6)   10.0     ; v_x
+  (7,7)   10.0     ; v_y
+  (8,8)   10.0     ; v_z
+  (9,9)   100.0    ; w_x
+  (10,10) 100.0    ; w_y
+  (11,11) 10.0     ; w_z
+}

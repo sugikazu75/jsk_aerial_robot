@@ -50,3 +50,13 @@
 #    local-name: realsense-ros
 #    uri: https://github.com/tongtybj/realsense-ros.git
 #    version: multi_realsense_t265
+
+- git:
+     local-name: ocs2
+     uri: https://github.com/leggedrobotics/ocs2.git
+     version: main
+
+- git:
+     local-name: ocs2_robotic_assets
+     uri:  https://github.com/leggedrobotics/ocs2_robotic_assets.git
+     version: main

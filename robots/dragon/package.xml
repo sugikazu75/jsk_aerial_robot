@@ -18,6 +18,14 @@
   <build_depend>hydrus</build_depend>
   <build_depend>mujoco_ros_control</build_depend>
   <build_depend>nlopt</build_depend>
+  <build_depend>ocs2_centroidal_model</build_depend>
+  <build_depend>ocs2_core</build_depend>
+  <build_depend>ocs2_ddp</build_depend>
+  <build_depend>ocs2_mpc</build_depend>
+  <build_depend>ocs2_oc</build_depend>
+  <build_depend>ocs2_pinocchio_interface</build_depend>
+  <build_depend>ocs2_robotic_tools</build_depend>
+  <build_depend>pinocchio</build_depend>
   <build_depend>pluginlib</build_depend>
 
   <run_depend>aerial_robot_control</run_depend>
@@ -29,6 +37,14 @@
   <run_depend>roscpp</run_depend>
   <run_depend>hydrus</run_depend>
   <run_depend>nlopt</run_depend>
+  <run_depend>ocs2_centroidal_model</run_depend>
+  <run_depend>ocs2_core</run_depend>
+  <run_depend>ocs2_ddp</run_depend>
+  <run_depend>ocs2_mpc</run_depend>
+  <run_depend>ocs2_oc</run_depend>
+  <run_depend>ocs2_pinocchio_interface</run_depend>
+  <run_depend>ocs2_robotic_tools</run_depend>
+  <run_depend>pinocchio</run_depend>
   <run_depend>pluginlib</run_depend>
 
   <test_depend>rostest</test_depend>

@@ -452,6 +452,7 @@ namespace aerial_robot_model {
       Q.block(0, i, 3, 1) = u.at(i);
       Q.block(3, i, 3, 1) = p.at(i).cross(u.at(i)) + m_f_rate * sigma.at(i + 1) * u.at(i);
     }
+    Q_ = Q;
     return Q;
   }
 

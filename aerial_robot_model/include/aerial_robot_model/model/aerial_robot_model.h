@@ -141,6 +141,7 @@ namespace aerial_robot_model {
     const double getMFRate() const  {return m_f_rate_;}
     const Eigen::VectorXd& getStaticThrust() const {return static_thrust_;}
     const std::vector<Eigen::MatrixXd>& getThrustWrenchAllocations() const {return thrust_wrench_allocations_;}
+    const Eigen::MatrixXd& getQ() const {return Q_;}
     const Eigen::MatrixXd& getThrustWrenchMatrix() const {return q_mat_;}
     const std::vector<Eigen::VectorXd>& getThrustWrenchUnits() const {return thrust_wrench_units_;}
     const double getThrustUpperLimit() const {return thrust_max_;}
@@ -202,6 +203,7 @@ namespace aerial_robot_model {
     Eigen::VectorXd gravity_;
     Eigen::VectorXd gravity_3d_;
     double m_f_rate_; //moment / force rate
+    Eigen::MatrixXd Q_;
     Eigen::MatrixXd q_mat_;
     std::map<int, int> rotor_direction_;
     Eigen::VectorXd static_thrust_;

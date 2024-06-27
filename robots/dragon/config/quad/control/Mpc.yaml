@@ -1,0 +1,5 @@
+aerial_robot_control_name: aerial_robot_control/dragon_mpc
+
+controller:
+
+  control_verbose: false
