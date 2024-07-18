@@ -40,6 +40,8 @@ public:
   std::string getTargetFrameName() {return target_frame_name_;}
   Eigen::MatrixXd getFullWrenchAllocationMatrixFromControlFrame();
   Eigen::MatrixXd getFullWrenchAllocationMatrixFromControlFrame(std::string frame_name);
+  std::vector<Eigen::MatrixXd> getVOfYAxisFromControlFrame();
+  std::vector<Eigen::MatrixXd> getVOfZAxisFromControlFrame();
   Eigen::MatrixXd getPlannedWrenchAllocationMatrixFromControlFrame();
   std::vector<double> getCurrentGimbalAngles() {return current_gimbal_angles_;}
   void setGimbalPlanningFlag(int index, int flag) {gimbal_planning_flag_.at(index) = flag;}

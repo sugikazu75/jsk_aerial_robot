@@ -238,6 +238,28 @@ Eigen::MatrixXd RollingRobotModel::getFullWrenchAllocationMatrixFromControlFrame
   return full_q_mat;
 }
 
+std::vector<Eigen::MatrixXd> RollingRobotModel::getVOfYAxisFromControlFrame()
+{
+  Eigen::MatrixXd full_q_mat = getFullWrenchAllocationMatrixFromControlFrame();
+  std::vector<Eigen::MatrixXd> v_of_y = std::vector<Eigen::MatrixXd>(0);
+  for(int i = 0; i < getRotorNum(); i++)
+    {
+      v_of_y.push_back(full_q_mat.block(3, 2 * i, 3, 1));
+    }
+  return v_of_y;
+}
+
+std::vector<Eigen::MatrixXd> RollingRobotModel::getVOfZAxisFromControlFrame()
+{
+  Eigen::MatrixXd full_q_mat = getFullWrenchAllocationMatrixFromControlFrame();
+  std::vector<Eigen::MatrixXd> v_of_z = std::vector<Eigen::MatrixXd>(0);
+  for(int i = 0; i < getRotorNum(); i++)
+    {
+      v_of_z.push_back(full_q_mat.block(3, 2 * i + 1, 3, 1));
+    }
+  return v_of_z;
+}
+
 Eigen::MatrixXd RollingRobotModel::getPlannedWrenchAllocationMatrixFromControlFrame()
 {
   Eigen::MatrixXd full_q_mat = getFullWrenchAllocationMatrixFromControlFrame();

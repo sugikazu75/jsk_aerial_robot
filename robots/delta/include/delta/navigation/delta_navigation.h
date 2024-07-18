@@ -8,6 +8,8 @@
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/QuaternionStamped.h>
 #include <spinal/DesireCoord.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Int16.h>
 
 namespace aerial_robot_navigation
@@ -62,6 +64,8 @@ namespace aerial_robot_navigation
     void setEstimatedExternalWrench(Eigen::VectorXd est_external_wrench) {est_external_wrench_ = est_external_wrench;}
     void setEstimatedExternalWrenchCog(Eigen::VectorXd est_external_wrench_cog) {est_external_wrench_cog_ = est_external_wrench_cog;}
 
+    Eigen::VectorXd getEstimatedSteep() {return estimated_steep_;}
+
   private:
     /* baselink rotation process */
     ros::Publisher desire_coord_pub_;
@@ -74,9 +78,14 @@ namespace aerial_robot_navigation
     ros::Subscriber ground_navigation_mode_sub_;
     ros::Publisher ground_navigation_mode_pub_;
 
+    /* state estimation */
+    ros::Publisher estimated_steep_pub_;
+
     boost::shared_ptr<RollingRobotModel> rolling_robot_model_;
 
+    void stateEstimation();
     void rollingPlanner();
+    void gimbalPlanner();
     void baselinkRotationProcess();
     void groundModeProcess();
     void rosPublishProcess();
@@ -107,6 +116,8 @@ namespace aerial_robot_navigation
     double down_mode_roll_anglvel_;
     double down_start_time_;
 
+    tf::Vector3 target_cp_pos_, target_cp_vel_, target_cp_acc_;
+
     /* standing mode trajectory generation */
     agi::Polynomial<> poly_;
     bool ground_trajectory_mode_;
@@ -116,6 +127,14 @@ namespace aerial_robot_navigation
     /* motion planning based on external wrench estimation */
     Eigen::VectorXd est_external_wrench_;
     Eigen::VectorXd est_external_wrench_cog_;
+    Eigen::VectorXd estimated_steep_;
+    double steep_estimation_lpf_factor_;
+
+    /* gimbal angle planner */
+    double gimbal_planning_converged_thresh_;
+    double gimbal_reset_last_time_;
+    int gimbal_reset_index_;
+    bool gimbal_reset_done_;
 
     /* param for joy stick control */
     double joy_stick_deadzone_;
