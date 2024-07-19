@@ -27,10 +27,15 @@ void RollingNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   joy_sub_ = nh_.subscribe("joy", 1, &RollingNavigator::joyCallback, this);
   ground_navigation_mode_sub_ = nh_.subscribe("ground_navigation_command", 1, &RollingNavigator::groundNavigationModeCallback, this);
   ground_navigation_mode_pub_ = nh_.advertise<std_msgs::Int16>("ground_navigation_ack", 1);
+  estimated_steep_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("estimated_steep", 1);
   prev_rotation_stamp_ = ros::Time::now().toSec();
 
   setPrevGroundNavigationMode(aerial_robot_navigation::NONE);
   setGroundNavigationMode(aerial_robot_navigation::FLYING_STATE);
+
+  est_external_wrench_ = Eigen::VectorXd::Zero(6);
+  est_external_wrench_cog_ = Eigen::VectorXd::Zero(6);
+  estimated_steep_ = Eigen::VectorXd::Zero(2);
 
   controllers_reset_flag_ = false;
   baselink_rot_force_update_mode_ = false;
@@ -41,13 +46,21 @@ void RollingNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   target_yaw_ang_vel_ = 0.0;
   pitch_ang_vel_updating_ = false;
   yaw_ang_vel_updating_ = false;
+
+  gimbal_reset_last_time_ = -1;
+  gimbal_reset_index_ = 0;
+  gimbal_reset_done_ = false;
 }
 
 void RollingNavigator::update()
 {
   BaseNavigator::update();
 
+  stateEstimation();
+
   rollingPlanner();
+
+  gimbalPlanner();
 
   rosPublishProcess();
 }
@@ -75,8 +88,54 @@ void RollingNavigator::reset()
   pitch_ang_vel_updating_ = false;
   yaw_ang_vel_updating_ = false;
 
+  gimbal_reset_last_time_ = -1;
+  gimbal_reset_index_ = 0;
+  gimbal_reset_done_ = false;
+  for(int i = 0; i < robot_model_->getRotorNum(); i++)
+    {
+      rolling_robot_model_->setGimbalPlanningFlag(i, 0);
+      rolling_robot_model_->setGimbalPlanningAngle(i, 0.0);
+    }
+
   ROS_INFO_STREAM("[navigation] reset navigator");
 
+}
+
+void RollingNavigator::stateEstimation()
+{
+  /* steep estimation */
+  if(getCurrentGroundNavigationMode() == aerial_robot_navigation::ROLLING_STATE)
+    {
+      tf::Quaternion cog2baselink_rot;
+      tf::quaternionKDLToTF(robot_model_->getCogDesireOrientation<KDL::Rotation>(), cog2baselink_rot);
+      tf::Matrix3x3 cog_rot = estimator_->getOrientation(Frame::BASELINK, estimate_mode_) * tf::Matrix3x3(cog2baselink_rot).inverse();
+      double r, p, y;
+      cog_rot.getRPY(r, p, y);
+
+      KDL::Frame cog = robot_model_->getCog<KDL::Frame>();
+      KDL::Frame cog_alined;
+      cog_alined.p = cog.p;
+      cog_alined.M = cog.M;
+      cog_alined.M.DoRotX(-r);
+      cog_alined.M.DoRotY(-p);
+
+      Eigen::Vector3d est_external_force_cog_alined = kdlToEigen(cog_alined.M).inverse() * kdlToEigen(cog.M) * est_external_wrench_cog_.head(3);
+      Eigen::VectorXd estimated_steep = Eigen::VectorXd::Zero(2);
+      estimated_steep(0) = atan2(est_external_force_cog_alined(1), sqrt(est_external_force_cog_alined(0) * est_external_force_cog_alined(0) + est_external_force_cog_alined(2) * est_external_force_cog_alined(2)));
+      estimated_steep(1) = atan2(est_external_force_cog_alined(0), est_external_force_cog_alined(2));
+
+      estimated_steep_
+        = (steep_estimation_lpf_factor_ - 1.0) / steep_estimation_lpf_factor_ * estimated_steep_
+        + 1.0 / steep_estimation_lpf_factor_ * estimated_steep;
+
+      setTargetPitch(estimated_steep_(1));
+    }
+
+  /* contact point estimation */
+  if(getCurrentGroundNavigationMode() == aerial_robot_navigation::ROLLING_STATE)
+    {
+      Eigen::Vector3d est_contact_point = aerial_robot_model::skew(est_external_wrench_cog_.head(3)) * est_external_wrench_cog_.tail(3) / (est_external_wrench_cog_.head(3).norm() * est_external_wrench_cog_.head(3).norm());
+    }
 }
 
 void RollingNavigator::rollingPlanner()
@@ -199,13 +258,13 @@ void RollingNavigator::rollingPlanner()
           {
             double target_pitch_ang_vel = getTargetPitchAngVel();
             target_pitch = getCurrentTargetBaselinkRpyPitch();
-            if(fabs(p) < rolling_pitch_update_thresh_)
+            if(fabs(p - estimated_steep_(1)) < rolling_pitch_update_thresh_)
               {
                 target_pitch += loop_du_ * target_pitch_ang_vel;
               }
             else
               {
-                ROS_WARN_STREAM_THROTTLE(0.5, "[navigation] do not update target pitch because the pitch " << p << " is  larger than thresh " << rolling_pitch_update_thresh_);
+                ROS_WARN_STREAM_THROTTLE(0.5, "[navigation] do not update target pitch because the pitch " << p - estimated_steep_(1) << " is  larger than thresh " << rolling_pitch_update_thresh_);
               }
 
             setCurrentTargetBaselinkRpyPitch(target_pitch);
@@ -286,10 +345,70 @@ void RollingNavigator::rollingPlanner()
     }
 }
 
+void RollingNavigator::gimbalPlanner()
+{
+  auto gimbal_planning_flag = rolling_robot_model_->getGimbalPlanningFlag();
+  auto gimbal_planning_angle = rolling_robot_model_->getGimbalPlanningAngle();
+  auto current_gimbal_angles = rolling_robot_model_->getCurrentGimbalAngles();
+
+  if(current_ground_navigation_mode_ == aerial_robot_navigation::ROLLING_STATE)
+    {
+      if(!ground_trajectory_mode_ && ros::Time::now().toSec() > ground_trajectory_start_time_ + ground_trajectory_duration_ + 4.0) // wait for a little time
+        {
+          if(!gimbal_reset_done_)
+            {
+              if(!gimbal_planning_flag.at(gimbal_reset_index_) && ros::Time::now().toSec() - gimbal_reset_last_time_ > 1.0)
+                {
+                  rolling_robot_model_->setGimbalPlanningFlag(gimbal_reset_index_, 1);
+                  rolling_robot_model_->setGimbalPlanningAngle(gimbal_reset_index_, M_PI / 2.0);
+                  return;
+                }
+              if(fabs(gimbal_planning_angle.at(gimbal_reset_index_) - current_gimbal_angles.at(gimbal_reset_index_)) < gimbal_planning_converged_thresh_)
+                {
+                  rolling_robot_model_->setGimbalPlanningFlag(gimbal_reset_index_, 0);
+                  ROS_INFO_STREAM("[navigation] planning for gimbal" << gimbal_reset_index_ << " is converged. target: " << gimbal_planning_angle.at(gimbal_reset_index_) << ", thresh: " << gimbal_planning_converged_thresh_);
+                  gimbal_reset_index_++;
+                  gimbal_reset_last_time_ = ros::Time::now().toSec();
+
+                  if(gimbal_reset_index_ == rolling_robot_model_->getRotorNum())
+                    {
+                      gimbal_reset_done_ = true;
+                      for(int i = 0; i < rolling_robot_model_->getRotorNum(); i++)
+                        {
+                          if(fabs(current_gimbal_angles.at(i) - M_PI /2.0) > M_PI / 2.0)
+                            {
+                              gimbal_reset_done_ = false;
+                              gimbal_reset_index_ = i;
+                              gimbal_reset_last_time_ = ros::Time::now().toSec();
+                            }
+                        }
+                      if(gimbal_reset_done_) ROS_INFO_STREAM("[navigation] finished gimbal angle reset");
+                    }
+                }
+            }
+        }
+    }
+  else
+    {
+      for(int i = 0; i < robot_model_->getRotorNum(); i++)
+        {
+          rolling_robot_model_->setGimbalPlanningFlag(i, 0);
+          rolling_robot_model_->setGimbalPlanningAngle(i, 0.0);
+        }
+    }
+}
+
 void RollingNavigator::rosPublishProcess()
 {
   baselinkRotationProcess();
   groundModeProcess();
+
+  std_msgs::Float64MultiArray estimated_steep_msg;
+  for(int i = 0; i < estimated_steep_.size(); i++)
+    {
+      estimated_steep_msg.data.push_back(estimated_steep_(i));
+    }
+  estimated_steep_pub_.publish(estimated_steep_msg);
 }
 
 void RollingNavigator::baselinkRotationProcess()
@@ -347,6 +466,8 @@ void RollingNavigator::rosParamInit()
   getParam<double>(navi_nh, "standing_baselink_roll_converged_thresh", standing_baselink_roll_converged_thresh_, 0.0);
   getParam<double>(navi_nh, "rolling_pitch_update_thresh", rolling_pitch_update_thresh_, 0.0);
   getParam<double>(navi_nh, "ground_trajectory_duration", ground_trajectory_duration_, 0.0);
+  getParam<double>(navi_nh, "gimbal_planning_converged_thresh", gimbal_planning_converged_thresh_, 0.1);
+  getParam<double>(navi_nh, "steep_estimation_lpf_factor", steep_estimation_lpf_factor_, 20.0);
 
 }
 
@@ -384,6 +505,14 @@ void RollingNavigator::setGroundNavigationMode(int state)
       poly_.addConstraint(ground_trajectory_start_time_ + ground_trajectory_duration_, agi::Vector<3>(M_PI / 2.0, 0.0, 0.0));
       poly_.solve();
       ground_trajectory_mode_ = true;
+
+      Eigen::Vector3d cog_pos;
+      // Eigen::Matrix3d cog_orientation = 
+      vectorTFToEigen(estimator_->getPos(Frame::COG, estimate_mode_), cog_pos);
+      KDL::Frame cog = robot_model_->getCog<KDL::Frame>();
+      KDL::Frame contact_point = rolling_robot_model_->getContactPoint<KDL::Frame>();
+      
+      
     }
 
   if(state == aerial_robot_navigation::ROLLING_STATE)

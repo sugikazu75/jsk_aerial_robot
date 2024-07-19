@@ -138,6 +138,43 @@ void RollingController::rosoutControlParams(std::string ns)
 
 void RollingController::printDebug()
 {
+  std::vector<double> gimbal_mass = std::vector<double>(motor_num_);
+  std::vector<Eigen::Vector3d> gimbal_cog = std::vector<Eigen::Vector3d>(motor_num_);
+  std::vector<Eigen::Matrix3d> gimbal_inertia = std::vector<Eigen::Matrix3d>(motor_num_);
+  const auto inertia_map = robot_model_->getInertiaMap();
+  for(const auto& inertia : inertia_map)
+    {
+      if(inertia.first.find("gimbal_link") != std::string::npos)
+        {
+          // std::cout << inertia.first << " \n" << inertia.second.getMass() << " \n" << kdlToEigen(inertia.second.getCOG()) << " \n" << kdlToEigen(inertia.second.getRotationalInertia()) << std::endl;
+          // std::cout << std::endl;
+
+          int gimbal_index = inertia.first.at(11) - '0' - 1;
+          gimbal_mass.at(gimbal_index) = inertia.second.getMass();
+          gimbal_cog.at(gimbal_index) = kdlToEigen(inertia.second.getCOG());
+          gimbal_inertia.at(gimbal_index) = kdlToEigen(inertia.second.getRotationalInertia());
+        }
+    }
+
+  std::vector<Eigen::Matrix3d> links_rotation_from_cog = rolling_robot_model_->getLinksRotationFromCog<Eigen::Matrix3d>();
+  for(int i = 0; i < links_rotation_from_cog.size(); i++)
+    {
+      // std::cout << links_rotation_from_cog.at(i) << std::endl;
+      // std::cout << std::endl;
+    }
+
+  std::vector<Eigen::Matrix3d> gimbal_inertia_cog = std::vector<Eigen::Matrix3d>(motor_num_);
+  for(int i = 0; i < motor_num_; i++)
+    {
+    }
+
+  tf::Vector3 cog_euler = estimator_->getEuler(Frame::COG, estimate_mode_);
+  // std::cout << cog_euler.x() << " " << cog_euler.y() << " " << cog_euler.z() << std::endl;
+
+
+  // std::cout << std::endl;
+  // std::cout << std::endl;
+
   // const auto links_rotation_from_cog = rolling_robot_model_->getLinksRotationFromCog<Eigen::Matrix3d>();
   // Eigen::Vector3d b1 = Eigen::Vector3d(1, 0, 0), b2 = Eigen::Vector3d(0, 1, 0);
   // for(int i = 0; i < motor_num_; i++)

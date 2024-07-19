@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="type" default="20240319_mesh"/>
+  <arg name="worldtype" default="$(find aerial_robot_simulation)/gazebo_model/world/empty.world" />
+
+  <!-- gazebo world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg worldtype)"/>
+    <arg name="debug" value="false" />
+    <arg name="gui" value="true" />
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="headless" value="false"/>
+  </include>
+
+  <param name="delta/robot_description" command="$(find xacro)/xacro $(find delta)/robots/$(arg type)/rolling.urdf.xacro"/>
+  <node pkg="gazebo_ros" type="spawn_model" name="delta_spawn" args="-param delta/robot_description -urdf -z 1.0 -model delta_model" />
+
+</launch>

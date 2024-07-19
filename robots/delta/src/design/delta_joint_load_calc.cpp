@@ -41,9 +41,9 @@ DeltaJointLoadCalc::DeltaJointLoadCalc(ros::NodeHandle nh, ros::NodeHandle nhp):
   getParam<int>(nhp_, "pose_roll_cnt_max", pose_roll_cnt_max_, 0);
   getParam<int>(nhp_, "pose_pitch_cnt_max", pose_pitch_cnt_max_, 0);
 
-  getParam<int>(nhp_, "wrench_z_cnt_max", wrench_z_cnt_max_, 0);
   getParam<double>(nhp_, "wrench_z_min_acc", wrench_z_min_acc_, 0.0);
   getParam<double>(nhp_, "wrench_z_max_acc", wrench_z_max_acc_, 0.0);
+  getParam<int>(nhp_, "wrench_z_cnt_max", wrench_z_cnt_max_, 0);
 
   getParam<double>(nhp_, "wrench_roll_max_abs", wrench_roll_max_abs_, 0.0);
   getParam<double>(nhp_, "wrench_pitch_max_abs", wrench_pitch_max_abs_, 0.0);
@@ -53,6 +53,23 @@ DeltaJointLoadCalc::DeltaJointLoadCalc(ros::NodeHandle nh, ros::NodeHandle nhp):
   if(wrench_mode_ == 0) file_name = std::string("delta_joint_load_z_") + std::to_string((int)ros::Time::now().toSec()) + std::string(".txt");
   else if(wrench_mode_ == 1) file_name = std::string("delta_joint_load_rp_") + std::to_string((int)ros::Time::now().toSec()) + std::string(".txt");
   ofs_.open(file_name, std::ios::out);
+  ROS_ERROR_STREAM(file_name);
+
+  std::cout << "\n===============================" << std::endl;
+  std::cout << "joint angle min: " << joint_angle_min_ << std::endl;
+  std::cout << "joint angle max: " << joint_angle_max_ << std::endl;
+  std::cout << "pose_roll_max_abs: " << pose_roll_max_abs_ << std::endl;
+  std::cout << "pose_pitch_max_abs: " << pose_pitch_max_abs_ << std::endl;
+  std::cout << "pose_roll_cnt_max: " << pose_roll_cnt_max_ << std::endl;
+  std::cout << "pose_pitch_cnt_max: " << pose_pitch_cnt_max_ << std::endl;
+  std::cout << "wrench_z_min_acc: " << wrench_z_min_acc_ << std::endl;
+  std::cout << "wrench_z_max_acc: " << wrench_z_max_acc_ << std::endl;
+  std::cout << "wrench_z_cnt_max: " << wrench_z_cnt_max_ << std::endl;
+  std::cout << "wrench_roll_max_abs: " << wrench_roll_max_abs_ << std::endl;
+  std::cout << "wrench_pitch_max_abs: " << wrench_pitch_max_abs_ << std::endl;
+  std::cout << "wrench_torque_cnt_max: " << wrench_torque_cnt_max_ << std::endl;
+  std::cout << "===============================\n" << std::endl;
+
 }
 
 void DeltaJointLoadCalc::jointAngleSearch()
@@ -212,6 +229,7 @@ void DeltaJointLoadCalc::computeJointTorque()
   const int rotor_num = transformable_robot_model_->getRotorNum();
   const double m_f_rate = transformable_robot_model_->getMFRate();
   const auto gravity = transformable_robot_model_->getGravity();
+  transformable_robot_model_->calcStaticThrust();
   const auto& static_thrust =  transformable_robot_model_->getStaticThrust();
   const auto& thrust_wrench_units = transformable_robot_model_->getThrustWrenchUnits();
 
