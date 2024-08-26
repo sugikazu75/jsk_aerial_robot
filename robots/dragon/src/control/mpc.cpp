@@ -68,6 +68,7 @@ namespace aerial_robot_control{
     ROS_WARN_STREAM("[model][pinocchio] model.njoints: " << model_->njoints);
 
     state_ = boost::make_shared<crocoddyl::StateMultibody>(model_);
+    actuation_ = boost::make_shared<crocoddyl::ActuationModelFloatingBase>(state_);
   }
 
   void MpcController::reset()

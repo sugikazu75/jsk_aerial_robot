@@ -6,6 +6,7 @@
 #include <crocoddyl/core/diff-action-base.hpp>
 #include <crocoddyl/core/state-base.hpp>
 #include <crocoddyl/multibody/actions/free-fwddyn.hpp>
+#include "crocoddyl/multibody/actuations/floating-base.hpp"
 #include <crocoddyl/multibody/states/multibody.hpp>
 
 #include <aerial_robot_control/control/base/pose_linear_controller.h>
@@ -57,6 +58,7 @@ namespace aerial_robot_control{
     boost::shared_ptr<pinocchio::Model> model_;
     boost::shared_ptr<pinocchio::Data> data_;
     boost::shared_ptr<crocoddyl::StateMultibody> state_;
+    boost::shared_ptr<crocoddyl::ActuationModelFloatingBase> actuation_;
 
     virtual void controlCore() override;
     virtual void sendCmd() override;
