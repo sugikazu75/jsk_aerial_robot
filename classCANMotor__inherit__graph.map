@@ -1,0 +1,4 @@
+<map id="CANMotor" name="CANMotor">
+<area shape="rect" id="node1" title=" " alt="" coords="9,79,97,104"/>
+<area shape="rect" id="node2" href="$classCANDevice.html" title=" " alt="" coords="5,5,100,31"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="gazebo_ros_control::AerialRobotHWSim" name="gazebo_ros_control::AerialRobotHWSim">
+<area shape="rect" id="node1" title=" " alt="" coords="973,69,1128,109"/>
+<area shape="rect" id="node2" title=" " alt="" coords="613,5,777,45"/>
+<area shape="rect" id="node3" href="$classhardware__interface_1_1SpinalInterface.html" title=" " alt="" coords="621,69,769,109"/>
+<area shape="rect" id="node4" title=" " alt="" coords="287,68,533,108"/>
+<area shape="rect" id="node5" href="$classrotor__limits__interface_1_1EffortRotorSaturationInterface.html" title=" " alt="" coords="583,135,808,175"/>
+<area shape="rect" id="node6" href="$classrotor__limits__interface_1_1RotorLimitsInterface.html" title=" " alt="" coords="293,133,527,187"/>
+<area shape="rect" id="node7" title=" " alt="" coords="5,133,237,187"/>
+</map>

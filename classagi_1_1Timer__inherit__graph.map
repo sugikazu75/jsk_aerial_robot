@@ -1,0 +1,5 @@
+<map id="agi::Timer" name="agi::Timer">
+<area shape="rect" id="node1" title=" " alt="" coords="106,5,194,31"/>
+<area shape="rect" id="node2" href="$classagi_1_1ScopedTimer.html" title=" " alt="" coords="5,79,140,104"/>
+<area shape="rect" id="node3" href="$classagi_1_1StaticTimer.html" title=" " alt="" coords="165,79,290,104"/>
+</map>

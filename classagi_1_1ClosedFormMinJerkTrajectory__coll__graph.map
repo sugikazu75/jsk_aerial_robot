@@ -1,0 +1,8 @@
+<map id="agi::ClosedFormMinJerkTrajectory" name="agi::ClosedFormMinJerkTrajectory">
+<area shape="rect" id="node1" title=" " alt="" coords="65,315,305,340"/>
+<area shape="rect" id="node2" href="$classagi_1_1PolynomialTrajectory.html" title=" " alt="" coords="81,225,288,265"/>
+<area shape="rect" id="node3" href="$classagi_1_1ReferenceBase.html" title=" " alt="" coords="111,93,259,119"/>
+<area shape="rect" id="node4" href="$structagi_1_1QuadState.html" title=" " alt="" coords="5,5,124,31"/>
+<area shape="rect" id="node5" href="$classagi_1_1ClosedFormMinJerkAxis.html" title=" " alt="" coords="283,93,487,119"/>
+<area shape="rect" id="node6" href="$classagi_1_1Polynomial.html" title=" " alt="" coords="294,5,475,31"/>
+</map>

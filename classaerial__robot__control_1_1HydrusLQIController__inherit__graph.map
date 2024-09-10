@@ -1,0 +1,7 @@
+<map id="aerial_robot_control::HydrusLQIController" name="aerial_robot_control::HydrusLQIController">
+<area shape="rect" id="node1" title=" " alt="" coords="31,269,192,309"/>
+<area shape="rect" id="node5" href="$classaerial__robot__control_1_1DragonLQIGimbalController.html" title=" " alt="" coords="7,357,216,397"/>
+<area shape="rect" id="node2" href="$classaerial__robot__control_1_1UnderActuatedLQIController.html" title=" " alt="" coords="5,181,217,221"/>
+<area shape="rect" id="node3" href="$classaerial__robot__control_1_1PoseLinearController.html" title=" " alt="" coords="29,93,194,133"/>
+<area shape="rect" id="node4" href="$classaerial__robot__control_1_1ControlBase.html" title=" " alt="" coords="35,5,187,45"/>
+</map>

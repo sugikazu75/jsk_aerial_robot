@@ -1,0 +1,7 @@
+<map id="IMU" name="IMU">
+<area shape="rect" id="node1" title=" " alt="" coords="75,79,123,104"/>
+<area shape="rect" id="node3" href="$classCANIMU.html" title=" " alt="" coords="5,152,81,177"/>
+<area shape="rect" id="node4" href="$classIMUOnboard.html" title=" " alt="" coords="105,152,208,177"/>
+<area shape="rect" id="node2" href="$classCANDevice.html" title=" " alt="" coords="52,5,147,31"/>
+<area shape="rect" id="node5" href="$classICM20948.html" title=" " alt="" coords="113,225,200,251"/>
+</map>

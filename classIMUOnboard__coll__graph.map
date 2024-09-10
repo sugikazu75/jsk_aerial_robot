@@ -1,0 +1,6 @@
+<map id="IMUOnboard" name="IMUOnboard">
+<area shape="rect" id="node1" title=" " alt="" coords="71,197,173,223"/>
+<area shape="rect" id="node2" href="$classIMU.html" title=" " alt="" coords="98,123,146,148"/>
+<area shape="rect" id="node3" href="$classCANDevice.html" title=" " alt="" coords="5,5,100,31"/>
+<area shape="rect" id="node4" href="$classap_1_1Vector3.html" title=" " alt="" coords="125,5,258,31"/>
+</map>

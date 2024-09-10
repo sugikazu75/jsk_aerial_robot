@@ -1,0 +1,7 @@
+<map id="ICM20948" name="ICM20948">
+<area shape="rect" id="node1" title=" " alt="" coords="79,272,165,297"/>
+<area shape="rect" id="node2" href="$classIMUOnboard.html" title=" " alt="" coords="71,197,173,223"/>
+<area shape="rect" id="node3" href="$classIMU.html" title=" " alt="" coords="98,123,146,148"/>
+<area shape="rect" id="node4" href="$classCANDevice.html" title=" " alt="" coords="5,5,100,31"/>
+<area shape="rect" id="node5" href="$classap_1_1Vector3.html" title=" " alt="" coords="125,5,258,31"/>
+</map>

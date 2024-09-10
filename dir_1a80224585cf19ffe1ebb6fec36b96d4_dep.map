@@ -1,0 +1,7 @@
+<map id="robots/dragon/include/dragon" name="robots/dragon/include/dragon">
+<area shape="rect" id="node2" href="dir_a3fc59ed74ef5644d0f97ce0f5bdda21.html" title="control" alt="" coords="215,63,281,88"/>
+<area shape="rect" id="node3" href="dir_214afc393d71ed6d689b1546b2fb88da.html" title="model" alt="" coords="127,63,190,88"/>
+<area shape="rect" id="node4" href="dir_5d953233299ab4ce42fbc1ea28d5c2fc.html" title="sensor" alt="" coords="38,63,103,88"/>
+<area shape="rect" id="clust2" href="dir_1a80224585cf19ffe1ebb6fec36b96d4.html" alt="" coords="27,52,383,99"/>
+<area shape="rect" id="clust1" href="dir_537e83858b635316e9761ae901496765.html" title="include" alt="" coords="16,16,393,109"/>
+</map>
