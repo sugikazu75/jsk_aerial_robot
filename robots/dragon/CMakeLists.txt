@@ -9,11 +9,18 @@ find_package(catkin REQUIRED COMPONENTS
   aerial_robot_msgs
   hydrus
   mujoco_ros_control
+  ocs2_centroidal_model
+  ocs2_core
+  ocs2_ddp
+  ocs2_mpc
+  ocs2_oc
+  ocs2_pinocchio_interface
+  ocs2_robotic_tools
   pluginlib
   roscpp
 )
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
@@ -21,10 +28,12 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 
 find_package(NLopt REQUIRED)
 
+set(CMAKE_CXX_STANDARD 17)
+
 catkin_package(
   INCLUDE_DIRS include test
   LIBRARIES dragon_robot_model dragon_aerial_robot_controllib dragon_navigation dragon_numerical_jacobians
-  CATKIN_DEPENDS   aerial_robot_control aerial_robot_model aerial_robot_msgs hydrus pluginlib roscpp
+  CATKIN_DEPENDS   aerial_robot_control aerial_robot_model aerial_robot_msgs hydrus ocs2_centroidal_model ocs2_core ocs2_ddp ocs2_mpc ocs2_oc ocs2_pinocchio_interface ocs2_robotic_tools pluginlib roscpp
 )
 
 ###########
@@ -47,7 +56,7 @@ add_dependencies(dragon_sensor_pluginlib aerial_robot_msgs_generate_messages_cpp
 add_library(dragon_robot_model src/model/hydrus_like_robot_model.cpp src/model/full_vectoring_robot_model.cpp)
 target_link_libraries(dragon_robot_model ${catkin_LIBRARIES} ${NLOPT_LIBRARIES})
 
-add_library(dragon_aerial_robot_controllib src/control/lqi_gimbal_control.cpp src/control/full_vectoring_control.cpp)
+add_library(dragon_aerial_robot_controllib src/control/lqi_gimbal_control.cpp src/control/full_vectoring_control.cpp src/control/mpc.cpp)
 target_link_libraries (dragon_aerial_robot_controllib dragon_robot_model dragon_navigation dragon_sensor_pluginlib ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 add_dependencies(dragon_aerial_robot_controllib aerial_robot_msgs_generate_messages_cpp)
 

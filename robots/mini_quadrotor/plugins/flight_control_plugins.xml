@@ -1,0 +1,7 @@
+<library path="lib/libmini_quadrotor_controllib">
+
+  <class name="aerial_robot_control/ocp" type="aerial_robot_control::ocp" base_class_type="aerial_robot_control::ControlBase">
+    <description> ocp </description>
+  </class>
+
+</library>
