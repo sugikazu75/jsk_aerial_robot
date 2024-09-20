@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="mini_quadrotor" type="crocoddyl_test" name="crocoddyl_test" output="screen">
+    <param name="filename" value="$(find mini_quadrotor)/urdf/robot.urdf"/>
+    <param name="num_threads" value="4"/>
+    <param name="hovering_approximate" value="true"/>
+  </node>
+</launch>
