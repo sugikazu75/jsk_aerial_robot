@@ -24,6 +24,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 find_package(NLopt REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(crocoddyl REQUIRED)
+find_package(OpenMP REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include test
