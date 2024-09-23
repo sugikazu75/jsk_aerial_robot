@@ -3,6 +3,17 @@
   <node pkg="mini_quadrotor" type="crocoddyl_test" name="crocoddyl_test" output="screen">
     <param name="filename" value="$(find mini_quadrotor)/urdf/robot.urdf"/>
     <param name="num_threads" value="4"/>
-    <param name="hovering_approximate" value="true"/>
+    <param name="hovering_approximate" value="false"/>
+    <param name="horizon" value="0.5"/>
+    <param name="dt" value="0.02"/>
+
+    <param name="x_reg_weight" value="1"/>
+    <param name="x_reg_final_weight" value="5"/>
+    <param name="u_reg_weight" value="5"/>
+
+    <rosparam command="load" file="$(find mini_quadrotor)/config/mpc_config.yaml"/>
   </node>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find mini_quadrotor)/config/rviz_config"/>
+
 </launch>

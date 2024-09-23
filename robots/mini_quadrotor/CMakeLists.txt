@@ -6,6 +6,7 @@ add_compile_options(-std=c++17)
 find_package(catkin REQUIRED COMPONENTS
   mujoco_ros_control
   roscpp
+  tf
   )
 
 find_package(Eigen3 REQUIRED)
@@ -14,7 +15,7 @@ find_package(crocoddyl REQUIRED)
 find_package(OpenMP REQUIRED)
 
 catkin_package(
-  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model roscpp
+  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model roscpp tf
   )
 
 ###########
