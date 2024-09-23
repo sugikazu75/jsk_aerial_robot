@@ -87,7 +87,7 @@
       </geometry>
     </visual>
   </link>
-  <joint name="rotor1" type="continuous">
+  <joint name="rotor1" type="revolute">
     <limit effort="100.0" lower="0.0" upper="8.0" velocity="0.5"/>
     <parent link="main_body"/>
     <child link="thrust1"/>
@@ -123,7 +123,7 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
-  <joint name="rotor2" type="continuous">
+  <joint name="rotor2" type="revolute">
     <limit effort="100.0" lower="0.0" upper="8.0" velocity="0.5"/>
     <parent link="main_body"/>
     <child link="thrust2"/>
@@ -159,7 +159,7 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
-  <joint name="rotor3" type="continuous">
+  <joint name="rotor3" type="revolute">
     <limit effort="100.0" lower="0.0" upper="8.0" velocity="0.5"/>
     <parent link="main_body"/>
     <child link="thrust3"/>
@@ -195,7 +195,7 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
-  <joint name="rotor4" type="continuous">
+  <joint name="rotor4" type="revolute">
     <limit effort="100.0" lower="0.0" upper="8.0" velocity="0.5"/>
     <parent link="main_body"/>
     <child link="thrust4"/>
