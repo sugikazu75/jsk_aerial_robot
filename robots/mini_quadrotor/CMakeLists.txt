@@ -56,9 +56,9 @@ install(TARGETS crocoddyl_test
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
-# mujoco_model_convert(
-#   ${PROJECT_SOURCE_DIR}
-#   ${PROJECT_SOURCE_DIR}/config/mujoco_model.yaml)
+mujoco_model_convert(
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/config/mujoco_model.yaml)
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
