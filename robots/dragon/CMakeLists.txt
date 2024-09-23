@@ -3,8 +3,6 @@ project(dragon)
 
 add_compile_options(-std=c++17)
 
-set(CMAKE_BUILD_TYPE Release)
-
 find_package(catkin REQUIRED COMPONENTS
   aerial_robot_control
   aerial_robot_model
@@ -16,11 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 REQUIRED)
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
-endif()
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
-
 find_package(NLopt REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(crocoddyl REQUIRED)
@@ -36,6 +29,11 @@ catkin_package(
 ## Build ##
 ###########
 set(CMAKE_CXX_STANDARD 17)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 
 include_directories(
   include
@@ -67,8 +65,8 @@ add_dependencies(dragon_aerial_robot_controllib aerial_robot_msgs_generate_messa
 add_library(dragon_navigation src/dragon_navigation.cpp)
 target_link_libraries(dragon_navigation ${catkin_LIBRARIES})
 
-add_executable(hoge src/control/test.cpp)
-target_link_libraries(hoge
+add_executable(pinocchio_test src/control/test.cpp)
+target_link_libraries(pinocchio_test
   ${catkin_LIBRARIES}
   ${Eigen3_LIBRARIES}
   pinocchio::pinocchio
@@ -84,7 +82,7 @@ target_link_libraries(dragon_jacobian_test dragon_numerical_jacobians ${catkin_L
 install(DIRECTORY include/${PROJECT_NAME}/ test/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS dragon_jacobian_test
+install(TARGETS dragon_jacobian_test pinocchio_test
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

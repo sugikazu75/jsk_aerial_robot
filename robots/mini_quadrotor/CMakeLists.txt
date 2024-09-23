@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.0.2)
 project(mini_quadrotor)
 
 add_compile_options(-std=c++17)
-set(CMAKE_BUILD_TYPE Release)
 
 find_package(catkin REQUIRED COMPONENTS
   mujoco_ros_control
   roscpp
   )
+
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(crocoddyl REQUIRED)
@@ -21,6 +21,7 @@ catkin_package(
 ## Build ##
 ###########
 set(CMAKE_CXX_STANDARD 17)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -50,6 +51,10 @@ install(DIRECTORY bin
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   USE_SOURCE_PERMISSIONS
 )
+
+install(TARGETS crocoddyl_test
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
 
 # mujoco_model_convert(
 #   ${PROJECT_SOURCE_DIR}
