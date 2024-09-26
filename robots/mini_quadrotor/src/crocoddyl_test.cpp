@@ -56,10 +56,17 @@ int main(int argc, char** argv)
   double rotor_x = 0.085;
   double rotor_z = 0.026;
   double m_f_rate = 0.011;
-  pinocchio::SE3 p1(Eigen::Matrix3d::Identity(), Eigen::Vector3d(-rotor_x, -rotor_x, rotor_z));
-  pinocchio::SE3 p2(Eigen::Matrix3d::Identity(), Eigen::Vector3d(rotor_x, -rotor_x, rotor_z));
-  pinocchio::SE3 p3(Eigen::Matrix3d::Identity(), Eigen::Vector3d(rotor_x, rotor_x, rotor_z));
-  pinocchio::SE3 p4(Eigen::Matrix3d::Identity(), Eigen::Vector3d(-rotor_x, rotor_x, rotor_z));
+
+  Eigen::Matrix3d R1, R2, R3, R4;
+  R1 = Eigen::AngleAxisd(0., Eigen::Vector3d::UnitX());
+  R2 = Eigen::AngleAxisd(0., Eigen::Vector3d::UnitY());
+  R3 = Eigen::AngleAxisd(0., Eigen::Vector3d::UnitX());
+  R4 = Eigen::AngleAxisd(0., Eigen::Vector3d::UnitY());
+
+  pinocchio::SE3 p1(R1, Eigen::Vector3d(-rotor_x, -rotor_x, rotor_z));
+  pinocchio::SE3 p2(R2, Eigen::Vector3d(rotor_x, -rotor_x, rotor_z));
+  pinocchio::SE3 p3(R3, Eigen::Vector3d(rotor_x, rotor_x, rotor_z));
+  pinocchio::SE3 p4(R4, Eigen::Vector3d(-rotor_x, rotor_x, rotor_z));
   thrusters.push_back(crocoddyl::Thruster(p1, m_f_rate, crocoddyl::ThrusterType::CCW));
   thrusters.push_back(crocoddyl::Thruster(p2, m_f_rate, crocoddyl::ThrusterType::CW));
   thrusters.push_back(crocoddyl::Thruster(p3, m_f_rate, crocoddyl::ThrusterType::CW));
@@ -74,6 +81,7 @@ int main(int argc, char** argv)
   boost::shared_ptr<crocoddyl::ActuationModelFloatingBaseThrusters> actuation = boost::make_shared<crocoddyl::ActuationModelFloatingBaseThrusters>(state, thrusters);
   int nu = actuation->get_nu();
   ROS_WARN_STREAM("[crocoddyl][actuation] actuation->get_nu(): " << nu);
+  std::cout << "W_thrust: \n" << actuation->get_Wthrust() << std::endl;
 
   boost::shared_ptr<crocoddyl::CostModelSum> running_cost_model = boost::make_shared<crocoddyl::CostModelSum>(state, nu);
   boost::shared_ptr<crocoddyl::CostModelSum> terminal_cost_model = boost::make_shared<crocoddyl::CostModelSum>(state, nu);
