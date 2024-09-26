@@ -54,7 +54,7 @@
 - git:
      local-name: crocoddyl
      uri: https://github.com/loco-3d/crocoddyl.git
-     version: master
+     version: devel
 
 - git:
      local-name: example-robot-data
