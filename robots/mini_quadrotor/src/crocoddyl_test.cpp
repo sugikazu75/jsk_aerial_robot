@@ -152,60 +152,63 @@ int main(int argc, char** argv)
   boost::shared_ptr<crocoddyl::ShootingProblem> problem = boost::make_shared<crocoddyl::ShootingProblem>(x0, running_models, terminal_model);
 
   boost::shared_ptr<crocoddyl::SolverAbstract> solver = boost::make_shared<crocoddyl::SolverFDDP>(problem);
-  std::vector<Eigen::VectorXd> xs_init(N, x0);
-  std::vector<Eigen::VectorXd> us_init = solver->get_problem()->quasiStatic_xs(xs_init);
-  xs_init.push_back(x0);
 
   int num_threads = 1;
   nhp.getParam("num_threads", num_threads);
   solver->get_problem()->set_nthreads(num_threads);
 
-  crocoddyl::Timer timer;
-  solver->solve(xs_init, us_init);
-  double time = timer.get_duration();
-  std::cout << "total calculation time: " << time << "[ms]" << std::endl;
-  std::cout << "Number of iterations: " << solver->get_iter() << std::endl;
-  std::cout << "time per iterate: " << time / solver->get_iter() << std::endl;
-  std::cout << "Total cost: " << solver->get_cost() << std::endl;
-  std::cout << "Gradient norm: " << solver->get_stop() << std::endl;
-
-  std::vector<Eigen::VectorXd> xs = solver->get_xs();
-  std::vector<Eigen::VectorXd> us = solver->get_us();
-  for(int i = 0; i < xs.size(); i++)
-    {
-      std::cout << xs.at(i).transpose() << std::endl;
-    }
-  std::cout << std::endl;
-  for(int i = 0; i < us.size(); i++)
-    {
-      std::cout << us.at(i).transpose() << std::endl;
-    }
-
-  ros::Rate loop_rate(1.0 / dt);
-  int count = 0;
   while(ros::ok())
-    {
-      Eigen::VectorXd q = xs[count];
-      geometry_msgs::TransformStamped baseState;
-      baseState.header.stamp = ros::Time::now();
-      baseState.header.frame_id = "world";
-      baseState.child_frame_id  = "BODY";
-      baseState.transform.translation.x = q[0];
-      baseState.transform.translation.y = q[1];
-      baseState.transform.translation.z = q[2];
-      baseState.transform.rotation.x = q[3];
-      baseState.transform.rotation.y = q[4];
-      baseState.transform.rotation.z = q[5];
-      baseState.transform.rotation.w = q[6];
-      robot_base_broadcaster.sendTransform(baseState);
+  {
+    ros::Rate loop_rate(1.0 / dt);
 
-      ros::spinOnce();
-      loop_rate.sleep();
+    std::vector<Eigen::VectorXd> xs_init(N, x0);
+    std::vector<Eigen::VectorXd> us_init = solver->get_problem()->quasiStatic_xs(xs_init);
+    xs_init.push_back(x0);
 
-      count++;
-      if(count >= xs.size())
-        {
-          count = 0;
-        }
-    }
+    crocoddyl::Timer timer;
+    solver->solve(xs_init, us_init);
+    double time = timer.get_duration();
+    std::cout << "total calculation time: " << time << "[ms]" << std::endl;
+    std::cout << "Number of iterations: " << solver->get_iter() << std::endl;
+    std::cout << "time per iterate: " << time / solver->get_iter() << std::endl;
+    std::cout << "Total cost: " << solver->get_cost() << std::endl;
+    std::cout << "Gradient norm: " << solver->get_stop() << std::endl;
+
+    std::vector<Eigen::VectorXd> xs = solver->get_xs();
+    std::vector<Eigen::VectorXd> us = solver->get_us();
+
+    problem->set_x0(xs.at(1));
+
+    std::cout << xs.at(1).transpose() << std::endl;
+    std::cout << us.at(0).transpose() << std::endl;
+
+    std::cout << std::endl;
+
+    x0 = xs.at(1);
+
+    Eigen::VectorXd q = xs.at(0);
+    geometry_msgs::TransformStamped baseState;
+    baseState.header.stamp = ros::Time::now();
+    baseState.header.frame_id = "world";
+    baseState.child_frame_id  = "BODY";
+    baseState.transform.translation.x = q[0];
+    baseState.transform.translation.y = q[1];
+    baseState.transform.translation.z = q[2];
+    baseState.transform.rotation.x = q[3];
+    baseState.transform.rotation.y = q[4];
+    baseState.transform.rotation.z = q[5];
+    baseState.transform.rotation.w = q[6];
+    robot_base_broadcaster.sendTransform(baseState);
+  }
+
+  // for(int i = 0; i < xs.size(); i++)
+  //   {
+  //     std::cout << xs.at(i).transpose() << std::endl;
+  //   }
+  // std::cout << std::endl;
+  // for(int i = 0; i < us.size(); i++)
+  //   {
+  //     std::cout << us.at(i).transpose() << std::endl;
+  //   }
+
 }
