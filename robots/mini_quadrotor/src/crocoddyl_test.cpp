@@ -103,18 +103,34 @@ int main(int argc, char** argv)
   boost::shared_ptr<crocoddyl::CostModelAbstract> x_reg_cost = boost::make_shared<crocoddyl::CostModelResidual>(state, boost::make_shared<crocoddyl::ActivationModelWeightedQuad>(x_activation_weights), x_residual);
 
   // thrust input
-  boost::shared_ptr<crocoddyl::ResidualModelControl> u_residual = boost::make_shared<crocoddyl::ResidualModelControl>(state, nu);
+  boost::shared_ptr<crocoddyl::ResidualModelAbstract> u_residual = boost::make_shared<crocoddyl::ResidualModelControl>(state, nu);
   boost::shared_ptr<crocoddyl::ActivationModelAbstract> u_activation = boost::make_shared<crocoddyl::ActivationModelQuadraticBarrier>(crocoddyl::ActivationBounds(Eigen::VectorXd::Zero(rotor_num), 8.0 * Eigen::VectorXd::Ones(rotor_num)));
   boost::shared_ptr<crocoddyl::CostModelAbstract> u_reg_cost = boost::make_shared<crocoddyl::CostModelResidual>(state, u_activation, u_residual);
 
-  double x_reg_weight, x_reg_final_weight, u_reg_weight;
+  // goal tracking
+  boost::shared_ptr<crocoddyl::ResidualModelAbstract> goal_tracking_residual = boost::make_shared<crocoddyl::ResidualModelFramePlacement>(state, model->getFrameId("fc"), pinocchio::SE3(Eigen::Matrix3d::Identity(), Eigen::Vector3d(0, 0, 1.0)), nu);
+  boost::shared_ptr<crocoddyl::CostModelAbstract> goal_tracking_cost = boost::make_shared<crocoddyl::CostModelResidual>(state, goal_tracking_residual);
+
+  // frame rotation
+  boost::shared_ptr<crocoddyl::ResidualModelAbstract> frame_rotation_residual = boost::make_shared<crocoddyl::ResidualModelFrameRotation>(state, model->getFrameId("fc"), Eigen::Matrix3d::Identity(), nu);
+  boost::shared_ptr<crocoddyl::CostModelAbstract> frame_rotation_cost = boost::make_shared<crocoddyl::CostModelResidual>(state, frame_rotation_residual);
+
+  double x_reg_weight, x_reg_final_weight, u_reg_weight, goal_tracking_weight, rotation_tracking_weight, terminal_goal_tracking_weight, terminal_rotation_tracking_weight;
   nhp.getParam("x_reg_weight", x_reg_weight);
   nhp.getParam("x_reg_final_weight", x_reg_final_weight);
   nhp.getParam("u_reg_weight", u_reg_weight);
+  nhp.getParam("goal_tracking_weight", goal_tracking_weight);
+  nhp.getParam("rotation_tracking_weight", rotation_tracking_weight);
+  nhp.getParam("terminal_goal_tracking_weight", terminal_goal_tracking_weight);
+  nhp.getParam("terminal_rotation_tracking_weight", terminal_rotation_tracking_weight);
 
   running_cost_model->addCost("xReg", x_reg_cost, x_reg_weight);
   running_cost_model->addCost("uReg", u_reg_cost, u_reg_weight);
+  running_cost_model->addCost("goalTracking", goal_tracking_cost, goal_tracking_weight);
+  running_cost_model->addCost("rotationTracking", frame_rotation_cost, rotation_tracking_weight);
   terminal_cost_model->addCost("xReg_final", x_reg_cost, x_reg_final_weight);
+  terminal_cost_model->addCost("terminalGoalTracking", goal_tracking_cost, terminal_goal_tracking_weight);
+  terminal_cost_model->addCost("terminalRotationTracking", frame_rotation_cost, terminal_rotation_tracking_weight);
 
   double horizon, dt;
   nhp.getParam("horizon", horizon);
@@ -157,13 +173,13 @@ int main(int argc, char** argv)
   nhp.getParam("num_threads", num_threads);
   solver->get_problem()->set_nthreads(num_threads);
 
+  std::vector<Eigen::VectorXd> xs_init(N, x0);
+  std::vector<Eigen::VectorXd> us_init = solver->get_problem()->quasiStatic_xs(xs_init);
+  xs_init.push_back(x0);
+  
   while(ros::ok())
   {
     ros::Rate loop_rate(1.0 / dt);
-
-    std::vector<Eigen::VectorXd> xs_init(N, x0);
-    std::vector<Eigen::VectorXd> us_init = solver->get_problem()->quasiStatic_xs(xs_init);
-    xs_init.push_back(x0);
 
     crocoddyl::Timer timer;
     solver->solve(xs_init, us_init);
@@ -174,19 +190,16 @@ int main(int argc, char** argv)
     std::cout << "Total cost: " << solver->get_cost() << std::endl;
     std::cout << "Gradient norm: " << solver->get_stop() << std::endl;
 
-    std::vector<Eigen::VectorXd> xs = solver->get_xs();
-    std::vector<Eigen::VectorXd> us = solver->get_us();
+    xs_init = solver->get_xs();
+    us_init = solver->get_us();
 
-    problem->set_x0(xs.at(1));
+    problem->set_x0(xs_init.at(1));
 
-    std::cout << xs.at(1).transpose() << std::endl;
-    std::cout << us.at(0).transpose() << std::endl;
-
+    std::cout << xs_init.at(1).transpose() << std::endl;
+    std::cout << us_init.at(0).transpose() << std::endl;
     std::cout << std::endl;
 
-    x0 = xs.at(1);
-
-    Eigen::VectorXd q = xs.at(0);
+    Eigen::VectorXd q = xs_init.at(0);
     geometry_msgs::TransformStamped baseState;
     baseState.header.stamp = ros::Time::now();
     baseState.header.frame_id = "world";
