@@ -50,3 +50,18 @@
 #    local-name: realsense-ros
 #    uri: https://github.com/tongtybj/realsense-ros.git
 #    version: multi_realsense_t265
+
+- git:
+     local-name: crocoddyl
+     uri: https://github.com/loco-3d/crocoddyl.git
+     version: devel
+
+- git:
+     local-name: example-robot-data
+     uri: https://github.com/Gepetto/example-robot-data.git
+     version: master
+
+- git:
+    local-name: pinocchio
+    uri: https://github.com/stack-of-tasks/pinocchio.git
+    version: v2.7.1

@@ -20,6 +20,16 @@
   <run_depend>aerial_robot_msgs</run_depend>
   <run_depend>aerial_robot_simulation</run_depend>
 
+  <build_depend>crocoddyl</build_depend>
+  <build_depend>pinocchio</build_depend>
+  <run_depend>crocoddyl</run_depend>
+  <run_depend>pinocchio</run_depend>
+
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+  <build_depend>tf</build_depend>
+  <run_depend>tf</run_depend>
+
   <test_depend>rostest</test_depend>
 
 </package>
