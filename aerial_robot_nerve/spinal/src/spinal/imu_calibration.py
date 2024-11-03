@@ -410,14 +410,13 @@ class IMUCalibWidget(QWidget):
 
     def mag_lsm_calib(self, flag):
         try:
-            # Rest Mag calib data first
+            # Reset Mag calib data first
             req = ImuCalibRequest()
             req.command = req.SEND_CALIB_DATA
             req.data = []
             req.data.append(0) # hard-coding: imu0
             req.data.append(req.CALIB_MAG)
             req.data.extend([0, 0, 0, 1, 1, 1]) # mag bias and scale
-            print(req.data)
             res = self.imu_calib_data_client(req)
         except rospy.ServiceException as e:
             rospy.logerr("/imu_calib service call failed: %s"%e)
@@ -425,6 +424,16 @@ class IMUCalibWidget(QWidget):
         self.mag_view_start_flag = flag # for visualization
 
         rospy.sleep(1.0)
+
+        try:
+            # Set flag to get raw mag data during calibration
+            req = ImuCalibRequest()
+            req.command = req.MAG_LSM_CALIB
+            req.data = []
+            req.data.append(flag)
+            res = self.imu_calib_data_client(req)
+        except rospy.ServiceException as e:
+            rospy.logerr("/imu_calib service call failed: %s"%e)
 
         if flag:  # start calibration
             self.mag_view_clear_flag = True # clear the sample with certain delay
@@ -442,6 +451,7 @@ class IMUCalibWidget(QWidget):
                 req.data.append(req.CALIB_MAG)
                 req.data.extend(bias)
                 req.data.extend(scale) # mag bias and scale
+                print(req.data)
                 res = self.imu_calib_data_client(req)
             except rospy.ServiceException as e:
                 rospy.logerr("/imu_calib service call failed: %s"%e)

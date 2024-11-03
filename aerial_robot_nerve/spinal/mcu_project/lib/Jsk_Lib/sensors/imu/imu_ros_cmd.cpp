@@ -154,6 +154,17 @@ namespace IMU_ROS_CMD
           res.data_length = 0;
           break;
         }
+      case spinal::ImuCalib::Request::MAG_LSM_CALIB:
+        {
+          bool calib_flag = req.data[0]; // implicit casting from float to bool
+
+          for(unsigned int i = 0; i < imu_.size(); i++)
+            imu_.at(i)->setMagLsmCalib(calib_flag);
+
+          res.success = true;
+          res.data_length = 0;
+          break;
+        }
       default:
         {
           nh_->logwarn("unsupported command");

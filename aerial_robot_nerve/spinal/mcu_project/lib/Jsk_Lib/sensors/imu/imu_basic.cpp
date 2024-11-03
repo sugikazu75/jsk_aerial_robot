@@ -26,6 +26,7 @@ void IMU::init()
   calib_gyro_ = true;
   calib_acc_ = false;
   calib_mag_ = false;
+  mag_lsm_calib_ = false;
   gyro_calib_duration_ = GYRO_DEFAULT_CALIB_DURATION * 1000;
   acc_calib_duration_ = ACC_DEFAULT_CALIB_DURATION * 1000;
   mag_calib_duration_ = MAG_DEFAULT_CALIB_DURATION * 1000;

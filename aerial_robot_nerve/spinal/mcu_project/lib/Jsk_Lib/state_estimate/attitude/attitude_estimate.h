@@ -192,7 +192,14 @@ public:
 #endif
         for(int i = 0; i < 3 ; i ++)
           {
+#ifdef SIMULATION
             imu_msg_.mag_data[i] = estimator_->getEstM(Frame::BODY)[i];
+#else
+            if(imu_list_[0]->getMagLsmCalib())
+              imu_msg_.mag_data[i] = estimator_->getMag(Frame::BODY)[i];
+            else
+              imu_msg_.mag_data[i] = estimator_->getEstM(Frame::BODY)[i];
+#endif
             imu_msg_.acc_data[i] = estimator_->getAcc(Frame::BODY)[i];
             imu_msg_.gyro_data[i] = estimator_->getAngular(Frame::BODY)[i];
 #if ESTIMATE_TYPE == COMPLEMENTARY

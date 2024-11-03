@@ -48,6 +48,7 @@ protected:
   Vector3f raw_gyro_adc_, raw_acc_adc_, raw_mag_adc_;
 
   bool calib_acc_, calib_gyro_, calib_mag_;
+  bool mag_lsm_calib_;
 
 public:
   IMU();
@@ -86,6 +87,7 @@ public:
     if(!calib_acc_ && !calib_gyro_ && !calib_mag_) return true;
     else return false;
   }
+  bool getMagLsmCalib() {return mag_lsm_calib_;}
   void update();
   inline Vector3f getGyroBias() {return gyro_bias_;}
   inline Vector3f getAccBias() {return acc_bias_;}
@@ -95,6 +97,7 @@ public:
   inline void setAccBias(Vector3f data) { acc_bias_ = data;}
   inline void setMagBias(Vector3f data) { mag_bias_ = data;}
   inline void setMagScale(Vector3f data) { mag_scale_ = data;}
+  inline void setMagLsmCalib(bool flag) {mag_lsm_calib_ = flag;}
   void gyroCalib(bool flag, float duration);
   void accCalib(bool flag, float duration);
   void magCalib(bool flag, float duration);
