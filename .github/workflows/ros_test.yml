@@ -14,6 +14,8 @@ jobs:
             DOCKER_IMAGE : ubuntu:focal
           - ROS_DISTRO : one
             DOCKER_IMAGE : ubuntu:jammy
+          - ROS_DISTRO : one
+            DOCKER_IMAGE : ubuntu:noble
     steps:
       - name: Setup OS
         run: |
