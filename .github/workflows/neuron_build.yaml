@@ -1,0 +1,31 @@
+name: Build Neuron Firmware
+on : [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ut-dragon-lab/stm32cubeide_1.8.0_build_env:latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # submodules too
+          submodules: recursive
+          
+      - name: Build Neuron F4 as STM32CubeIDE project # Build Neuron F4 firmware with STM32CubeIDE
+        run: |
+          /opt/st/stm32cubeide_1.8.0/stm32cubeide -nosplash \
+            -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
+            -data ~/STM32CubeIDE/workspace_1.8.0/ \
+            -import aerial_robot_nerve/neuron/neuron_f4/STM32CubeIDE/ \
+            -cleanBuild neuron/Debug \
+            -vmargs -Dorg.eclipse.cdt.core.build.parallel=true \
+            -Dorg.eclipse.cdt.core.build.parallel.threads=12
+
+      - name: Upload Neuron F4 artifacts # Upload required F4 files for flash.
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuronF4.artifacts
+          path: aerial_robot_nerve/neuron/neuron_f4/STM32CubeIDE/Debug/neuron.*
