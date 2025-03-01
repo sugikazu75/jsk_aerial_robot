@@ -6,7 +6,9 @@
 #include <Eigen/Geometry>
 #include <vector>
 #include <delta/model/delta_robot_model.h>
+#include <geometry_msgs/PoseArray.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Float32.h>
 
 class DeltaOptimalDesign
 {
@@ -28,6 +30,8 @@ public:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle nhp_;
+  ros::Publisher feasible_control_torque_convex_pub_;
+  ros::Publisher feasible_control_torque_radius_pub_;
 
   template<class T> void getParam(ros::NodeHandle nh, std::string param_name, T& param, T default_value)
   {

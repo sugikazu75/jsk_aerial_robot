@@ -25,6 +25,9 @@ DeltaOptimalDesign::DeltaOptimalDesign(ros::NodeHandle nh, ros::NodeHandle nhp):
   getParam<double>(nhp_, "fct_min_weight", fct_min_weight_, 0.0);
   getParam<double>(nhp_, "gimbal_penalty_weight", gimbal_penalty_weight_, 0.0);
 
+  feasible_control_torque_convex_pub_ = nh_.advertise<geometry_msgs::PoseArray>("feasible_control_torque_convex", 1);
+  feasible_control_torque_radius_pub_ = nh_.advertise<std_msgs::Float32>("feasible_control_torque_radius", 1);
+
   eval_cnt_ = 0;
 }
 
@@ -179,6 +182,30 @@ void DeltaOptimalDesign::run()
     std::cout << opt_x.at(i) << " ";
   std::cout << std::endl;
   std::cout << "objective: " << max_val << std::endl;
+
+  // publish v in optimal state
+  ros::Rate rate(1);
+  while(ros::ok())
+    {
+      std::vector<Eigen::Vector3d> v = calcRotorConfiguration(opt_x);
+      geometry_msgs::PoseArray feasible_control_torque_convex_msg;
+      feasible_control_torque_convex_msg.poses.resize(0);
+      for(int i = 0; i < v.size(); i++)
+        {
+          geometry_msgs::Pose pose_msg;
+          pose_msg.position.x = delta_robot_model_->getThrustUpperLimit() * v.at(i)(0);
+          pose_msg.position.y = delta_robot_model_->getThrustUpperLimit() * v.at(i)(1);
+          pose_msg.position.z = delta_robot_model_->getThrustUpperLimit() * v.at(i)(2);
+          feasible_control_torque_convex_msg.poses.push_back(pose_msg);
+        }
+      feasible_control_torque_convex_pub_.publish(feasible_control_torque_convex_msg);
+
+      std_msgs::Float32 feasible_control_torque_radius_msg;
+      feasible_control_torque_radius_msg.data = delta_robot_model_->getThrustUpperLimit() * calcFeasibleControlTDists(v);
+      feasible_control_torque_radius_pub_.publish(feasible_control_torque_radius_msg);
+
+      rate.sleep();
+    }
 }
 
 int main(int argc, char **argv)
