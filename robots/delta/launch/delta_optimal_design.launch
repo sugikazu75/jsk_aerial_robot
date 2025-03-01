@@ -20,4 +20,8 @@
     <rosparam file="$(find delta)/config/$(arg type)/optimal_design.yaml" command="load"/>
   </node>
 
+  <node pkg="delta" type="feasible_control_convex_plot.py" name="feasible_control_convex_plot" output="screen" ns="$(arg robot_ns)">
+    <param name="only_torque" value="True"/>
+  </node>
+
 </launch>
