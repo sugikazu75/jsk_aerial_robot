@@ -7,7 +7,7 @@ controller:
   wrench_estimate_flag: true
 
   hovering_approximate: false
-  aerial_mode_add_joint_torque_constraint: true
+  aerial_mode_add_joint_torque_constraint: false
 
   rolling_minimum_lateral_force: 0.2
   ground_mu: 2.0

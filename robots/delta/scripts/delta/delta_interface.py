@@ -2,13 +2,16 @@
 
 import rospy
 from aerial_robot_msgs.msg import FlightNav, PoseControlPid
-from geometry_msgs.msg import PoseStamped
+from delta.msg import GimbalPlanning
+from dynamic_reconfigure.srv import Reconfigure, ReconfigureRequest
+from dynamic_reconfigure.msg import DoubleParameter
+from geometry_msgs.msg import PoseStamped, Vector3Stamped
 from IPython import embed
 import math
 from nav_msgs.msg import Odometry
 import numpy as np
 from sensor_msgs.msg import JointState, Joy
-from std_msgs.msg import  Empty, Int8, UInt8
+from std_msgs.msg import Bool, Empty, Int8, Int16, UInt8
 import tf
 import time
 
@@ -33,12 +36,19 @@ class DeltaInterface:
         # parameters for task
         self.robot_ns = rospy.get_namespace()
         self.force_skip_ = False
+        self.dynamic_reconfigure_params = ["thrust_weight", "gimbal_linear_solution_dist_weight", "gimbal_current_angle_dist_weight", "gimbal_center_dist_weight", "joint_torque_weight", "attitude_control_roll_threshold", "attitude_control_pitch_threshold", "attitude_control_yaw_threshold"]
 
         # ros subscriber and publisher
         self.tf_listener_ = tf.TransformListener()
         self.joints_ctrl_pub_ = rospy.Publisher('joints_ctrl', JointState, queue_size = 1)
         self.target_pose_pub_ = rospy.Publisher('target_pose', PoseStamped, queue_size = 1)
         self.uav_nav_pub_ = rospy.Publisher("uav/nav", FlightNav, queue_size=1)
+        self.current_target_baselink_rpy_pub = rospy.Publisher("current_target_baselink_rpy", Vector3Stamped, queue_size = 1)
+        self.final_target_baselink_rpy_pub = rospy.Publisher("final_target_baselink_rpy", Vector3Stamped, queue_size = 1)
+        self.nominal_contact_flag_pub = rospy.Publisher("contact_planning/nominal_contact_flag", Bool, queue_size = 1)
+        self.commanded_contacting_link_index_pub = rospy.Publisher("contact_planning/commanded_contacting_link_index", Int16, queue_size = 1)
+        self.correct_baselink_pose_pub = rospy.Publisher("correct_baselink_pose", Bool, queue_size = 1)
+        self.gimbal_planning_pub = rospy.Publisher("gimbal_planning", GimbalPlanning, queue_size = 1)
 
         self.start_pub_ = rospy.Publisher('teleop_command/start', Empty, queue_size = 1)
         self.takeoff_pub_ = rospy.Publisher('teleop_command/takeoff', Empty, queue_size = 1)
@@ -53,8 +63,11 @@ class DeltaInterface:
         rospy.Subscriber("joy", Joy, self.joyCallback)
         rospy.Subscriber("uav/cog/odom", Odometry, self.cogOdomCallback)
 
+        rospy.wait_for_service("controller/nlopt/set_parameters")
+        self.dynamic_reconfigure_client = rospy.ServiceProxy("controller/nlopt/set_parameters", Reconfigure)
+
         time.sleep(2.0)
-        rospy.logwarn("created " + self.robot_ns + " interface")
+        print("created " + self.robot_ns + " interface")
 
 
     def start(self, sleep = 1.0):
@@ -158,6 +171,38 @@ class DeltaInterface:
         msg.pose.orientation.w = quat[3]
         self.target_pose_pub_.publish(msg)
 
+    def setCurrentTargetBaselinkRPY(self, current_target_baselink_rpy_msg):
+        self.current_target_baselink_rpy_pub.publish(current_target_baselink_rpy_msg)
+
+    def setFinalTargetBaselinkRPY(self, final_target_baselink_rpy_msg):
+        self.final_target_baselink_rpy_pub.publish(final_target_baselink_rpy_msg)
+
+    def setNominalContactFlag(self, nominal_contact_flag_msg):
+        self.nominal_contact_flag_pub.publish(nominal_contact_flag_msg)
+
+    def setCommandedContactingLinkIndex(self, commanded_contacting_link_index_msg):
+        self.commanded_contacting_link_index_pub.publish(commanded_contacting_link_index_msg)
+
+    def setCorrectBaselinkPose(self, correct_baselink_pose_msg):
+        self.correct_baselink_pose_pub.publish(correct_baselink_pose_msg)
+
+    def setGimbalPlanningState(self, index, angle):
+        msg = GimbalPlanning()
+        msg.index = [index]
+        msg.angle = [angle]
+        self.gimbal_planning_pub.publish(msg)
+
+    def setDynamicReconfigureParameter(self, index, value):
+        double_param = DoubleParameter()
+        double_param.name = self.dynamic_reconfigure_params[index]
+        double_param.value = value
+        req = ReconfigureRequest()
+        req.config.doubles.append(double_param)
+        try:
+            res = self.dynamic_reconfigure_client(req)
+        except rospy.ServiceException as e:
+            rospy.logerr("dynamic_reconfigure service call failed")
+
     def getTransform(self, parent, child):
         try:
             (trans, rot) = self.tf_listener_.lookupTransform(self.robot_ns + parent, self.robot_ns + child, rospy.Time(0))
@@ -175,9 +220,12 @@ class DeltaInterface:
 
     def joyCallback(self, msg):
         self.joy_ = msg
+        if(self.joy_.axes[9] == -1 and self.joy_.axes[10] == -1 and (not self.getForceSkipFlag())):
+            print("force skip!")
+            self.setForceSkipFlag(True)
 
     def forceSkipCallback(self, msg):
-        self.setForceSkipFlag(true)
+        self.setForceSkipFlag(True)
     def getForceSkipFlag(self):
         return self.force_skip_
     def setForceSkipFlag(self, flag):

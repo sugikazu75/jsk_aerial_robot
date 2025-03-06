@@ -31,6 +31,7 @@ catkin_python_setup()
 
 add_message_files(FILES
   DynamicReconfigureLevels.msg
+  GimbalPlanning.msg
   )
 generate_messages(DEPENDENCIES std_msgs geometry_msgs)
 
@@ -56,6 +57,7 @@ add_library(delta_controller
   src/control/delta_controller_common.cpp
   src/control/delta_controller_utils.cpp
   src/control/delta_flight_controller.cpp
+  src/control/delta_gimbal_controller.cpp
   src/control/delta_ground_controller.cpp
   src/control/delta_joint_controller.cpp
   )
