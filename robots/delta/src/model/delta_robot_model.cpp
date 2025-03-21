@@ -11,13 +11,20 @@ RollingRobotModel::RollingRobotModel(bool init_with_rosparam, bool verbose, doub
   links_center_frame_from_cog_.resize(rotor_num);
   current_joint_angles_.resize(getJointNum() - rotor_num);
   current_gimbal_angles_.resize(rotor_num);
+  contacting_angles_in_links_.resize(rotor_num);
+  lowest_point_ranks_.resize(rotor_num);
   thrust_link_ = "thrust";
 
+  nominal_contact_point_flag_ = true;
+  commanded_contacting_link_index_ = 1;
+
   gimbal_planning_flag_.resize(getRotorNum(), 0);
-  gimbal_planning_angle_.resize(getRotorNum(), 0.0);
+  current_gimbal_planning_angle_.resize(getRotorNum(), 0.0);
+  final_gimbal_planning_angle_.resize(getRotorNum(), 0.0);
 
   control_frame_name_ = "cog";
   additional_frame_["cp"] = &contact_point_;
+  additional_frame_["cp2"] = &second_contact_point_;
   setControlFrame(control_frame_name_);
   circle_radius_ = 0.405; // hard coded
 
@@ -35,13 +42,14 @@ RollingRobotModel::RollingRobotModel(bool init_with_rosparam, bool verbose, doub
 
 void RollingRobotModel::calcContactPoint()
 {
-  /* contact point */
   std::vector<KDL::Frame> links_center_frame_from_cog = getLinksCenterFrameFromCog();
-  double min_z_in_cog = 100000;
-  int min_index_i = 0, min_index_j = 0;
 
+  /* priority queue of tuple: lowest point in each link,lowest yaw angle in each link, link index */
+  std::priority_queue<std::tuple<double, double, int>, std::vector<std::tuple<double, double, int>>, std::greater<std::tuple<double, double, int>>> priorized_z_psi_index_tuple_queue;
   for(int i = 0; i < getRotorNum(); i++)
     {
+      double min_z_in_cog = 100000;
+      int min_index_j = 0;
       KDL::Frame cog_f_link_i_center = links_center_frame_from_cog.at(i);
       KDL::Vector link_i_center_p_cp_in_link_i_center;
       for(double j = 30.0; j <= 150.0; j+=0.25)
@@ -55,22 +63,54 @@ void RollingRobotModel::calcContactPoint()
           if(cog_p_cp_in_cog.z() < min_z_in_cog)
             {
               min_z_in_cog = cog_p_cp_in_cog.z();
-              min_index_i = i;
               min_index_j = j;
             }
         }
+      priorized_z_psi_index_tuple_queue.push(std::make_tuple(min_z_in_cog, min_index_j, i));
     }
 
-  contacting_link_ = min_index_i;
-  contacting_angle_in_link_ = min_index_j / 180.0 * M_PI;
-  KDL::Frame cog_f_link_i_center = links_center_frame_from_cog.at(contacting_link_);
-  KDL::Vector link_i_center_p_cp_in_link_i_center;
-  link_i_center_p_cp_in_link_i_center.x(circle_radius_ * cos(contacting_angle_in_link_));
-  link_i_center_p_cp_in_link_i_center.y(circle_radius_ * sin(contacting_angle_in_link_));
-  link_i_center_p_cp_in_link_i_center.z(0.0);
-  KDL::Vector cog_p_cp_in_cog = cog_f_link_i_center * link_i_center_p_cp_in_link_i_center;
+  /* get lowest point and rank of height of lowest point between links */
+  std::tuple<double, double, int> lowest_z_psi_index_tuple = priorized_z_psi_index_tuple_queue.top();
 
+  int rank = 0;
+  std::vector<double> z_in_cog(3);
+  while(!priorized_z_psi_index_tuple_queue.empty())
+    {
+      std::tuple<double, double, int> z_psi_index_tuple = priorized_z_psi_index_tuple_queue.top();
+
+      z_in_cog.at(std::get<2>(z_psi_index_tuple)) = std::get<0>(z_psi_index_tuple);
+      contacting_angles_in_links_.at(std::get<2>(z_psi_index_tuple)) = std::get<1>(z_psi_index_tuple) / 180.0 * M_PI;
+      lowest_point_ranks_.at(rank) = std::get<2>(z_psi_index_tuple);
+      priorized_z_psi_index_tuple_queue.pop();
+      rank++;
+    }
+
+  int second_contacting_link;
+  if(!nominal_contact_point_flag_)
+    {
+      contacting_link_ = commanded_contacting_link_index_;
+      if(contacting_link_ == lowest_point_ranks_.at(0))
+        second_contacting_link = lowest_point_ranks_.at(1);
+      else second_contacting_link = lowest_point_ranks_.at(0);
+    }
+  else
+    {
+      contacting_link_ = lowest_point_ranks_.at(0);
+      second_contacting_link = lowest_point_ranks_.at(1);
+    }
+
+  /* calculate contact point */
+  KDL::Frame cog_f_link_i_center;
+  KDL::Vector link_i_center_p_cp_in_link_i_center;
+  KDL::Vector cog_p_cp_in_cog;
   auto cog = getCog<KDL::Frame>();
+
+  cog_f_link_i_center = links_center_frame_from_cog.at(contacting_link_);
+  link_i_center_p_cp_in_link_i_center.x(circle_radius_ * cos(contacting_angles_in_links_.at(contacting_link_)));
+  link_i_center_p_cp_in_link_i_center.y(circle_radius_ * sin(contacting_angles_in_links_.at(contacting_link_)));
+  link_i_center_p_cp_in_link_i_center.z(0.0);
+  cog_p_cp_in_cog = cog_f_link_i_center * link_i_center_p_cp_in_link_i_center;
+
   KDL::Frame contact_point;
   contact_point.p.x(cog_p_cp_in_cog(0));
   contact_point.p.y(cog_p_cp_in_cog(1));
@@ -78,7 +118,20 @@ void RollingRobotModel::calcContactPoint()
   contact_point.p = cog * contact_point.p;
   contact_point.M = cog.M;
   setContactPoint(contact_point);
-  /* contact point */
+
+  cog_f_link_i_center = links_center_frame_from_cog.at(second_contacting_link);
+  link_i_center_p_cp_in_link_i_center.x(circle_radius_ * cos(contacting_angles_in_links_.at(second_contacting_link)));
+  link_i_center_p_cp_in_link_i_center.y(circle_radius_ * sin(contacting_angles_in_links_.at(second_contacting_link)));
+  link_i_center_p_cp_in_link_i_center.z(0.0);
+  cog_p_cp_in_cog = cog_f_link_i_center * link_i_center_p_cp_in_link_i_center;
+
+  KDL::Frame second_contact_point;
+  second_contact_point.p.x(cog_p_cp_in_cog(0));
+  second_contact_point.p.y(cog_p_cp_in_cog(1));
+  second_contact_point.p.z(cog_p_cp_in_cog(2));
+  second_contact_point.p = cog * second_contact_point.p;
+  second_contact_point.M = cog.M;
+  setSecondContactPoint(second_contact_point);
 }
 
 void RollingRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_positions)

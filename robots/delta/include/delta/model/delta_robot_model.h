@@ -3,12 +3,14 @@
 #pragma once
 
 #include <ros/ros.h>
+
+#include <aerial_robot_model/model/transformable_aerial_robot_model.h>
 #include <boost/thread/thread.hpp>
 #include <chrono>
-#include <std_msgs/Float32.h>
 #include <geometry_msgs/PoseArray.h>
-#include <aerial_robot_model/model/transformable_aerial_robot_model.h>
 #include <numeric>
+#include <queue>
+#include <std_msgs/Float32.h>
 
 using namespace aerial_robot_model;
 
@@ -26,6 +28,7 @@ public:
   }
 
   template <class T> T getContactPoint();
+  template <class T> T getSecondContactPoint();
   template <class T> std::vector<T> getLinksRotationFromCog();
   template <class T> std::vector<T> getLinksRotationFromControlFrame();
   template <class T> std::vector<T> getRotorsOriginFromControlFrame();
@@ -39,7 +42,11 @@ public:
   double getCircleRadius() {return circle_radius_;}
   void calcContactPoint();
   int getContactingLink() {return contacting_link_;}
-  double getContactingAngleInLink() {return contacting_angle_in_link_;}
+  const std::vector<double>& getContactingAnglesInLinks() {return contacting_angles_in_links_;}
+  void setNominalContactPointFlag(bool flag) {nominal_contact_point_flag_ = flag;}
+  bool getNonimalContactPointFlag() {return nominal_contact_point_flag_;}
+  void setCommandedContactingLinkIndex(int index) {commanded_contacting_link_index_ = index;}
+  int getCommandedContactingLinkIndex() {return commanded_contacting_link_index_;}
   void setControlFrame(KDL::Frame frame){control_frame_ = frame;};
   void setControlFrame(std::string frame_name);
   KDL::Frame getControlFrame(){return control_frame_;}
@@ -51,8 +58,10 @@ public:
   const std::vector<double>& getCurrentGimbalAngles() {return current_gimbal_angles_;}
   void setGimbalPlanningFlag(int index, int flag) {gimbal_planning_flag_.at(index) = flag;}
   std::vector<int> getGimbalPlanningFlag() {return gimbal_planning_flag_;}
-  void setGimbalPlanningAngle(int index, double angle) {gimbal_planning_angle_.at(index) = angle;}
-  std::vector<double> getGimbalPlanningAngle() {return gimbal_planning_angle_;}
+  void setCurrentGimbalPlanningAngle(int index, double angle) {current_gimbal_planning_angle_.at(index) = angle;}
+  const std::vector<double>& getCurrentGimbalPlanningAngle() {return current_gimbal_planning_angle_;}
+  void setFinalGimbalPlanningAngle(int index, double angle) {final_gimbal_planning_angle_.at(index) = angle;}
+  const std::vector<double>& getFinalGimbalPlanningAngle() {return final_gimbal_planning_angle_;}
   template <class T> T getInertiaFromControlFrame();
 
 private:
@@ -66,9 +75,13 @@ private:
   std::mutex current_joint_angles_mutex_;
   std::mutex current_gimbal_angles_mutex_;
 
+  bool nominal_contact_point_flag_;
+  int commanded_contacting_link_index_;
   KDL::Frame contact_point_;
+  KDL::Frame second_contact_point_;
   int contacting_link_;
-  double contacting_angle_in_link_;
+  std::vector<double> contacting_angles_in_links_;
+  std::vector<int> lowest_point_ranks_;
 
   std::string thrust_link_;
   double circle_radius_;
@@ -87,7 +100,8 @@ private:
 
   /* gimbal planning */
   std::vector<int> gimbal_planning_flag_;
-  std::vector<double> gimbal_planning_angle_;
+  std::vector<double> current_gimbal_planning_angle_;
+  std::vector<double> final_gimbal_planning_angle_;
 
 protected:
   void updateRobotModelImpl(const KDL::JntArray& joint_positions) override;
@@ -96,6 +110,11 @@ protected:
   {
     std::lock_guard<std::mutex> lock(contact_point_mutex_);
     contact_point_ = contact_point;
+  }
+  void setSecondContactPoint(KDL::Frame second_contact_point)
+  {
+    std::lock_guard<std::mutex> lock(contact_point_mutex_);
+    second_contact_point_ = second_contact_point;
   }
 };
 
@@ -152,6 +171,17 @@ template<> inline KDL::Frame RollingRobotModel::getContactPoint()
 template<> inline geometry_msgs::TransformStamped RollingRobotModel::getContactPoint()
 {
   return aerial_robot_model::kdlToMsg(RollingRobotModel::getContactPoint<KDL::Frame>());
+}
+
+template<> inline KDL::Frame RollingRobotModel::getSecondContactPoint()
+{
+  std::lock_guard<std::mutex> lock(contact_point_mutex_);
+  return second_contact_point_;
+}
+
+template<> inline geometry_msgs::TransformStamped RollingRobotModel::getSecondContactPoint()
+{
+  return aerial_robot_model::kdlToMsg(RollingRobotModel::getSecondContactPoint<KDL::Frame>());
 }
 
 template<> inline KDL::RotationalInertia RollingRobotModel::getInertiaFromControlFrame()

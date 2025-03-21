@@ -25,6 +25,7 @@ void RollingNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   desire_coord_pub_ = nh_.advertise<spinal::DesireCoord>("desire_coordinate", 1);
   final_target_baselink_quat_sub_ = nh_.subscribe("final_target_baselink_quat", 1, &RollingNavigator::setFinalTargetBaselinkQuatCallback, this);
   final_target_baselink_rpy_sub_ = nh_.subscribe("final_target_baselink_rpy", 1, &RollingNavigator::setFinalTargetBaselinkRpyCallback, this);
+  current_target_baselink_rpy_sub_ = nh_.subscribe("current_target_baselink_rpy", 1, &RollingNavigator::setCurrentTargetBaselinkRpyCallback, this);
   joints_control_pub_ = nh_.advertise<sensor_msgs::JointState>("joints_ctrl", 1);
   ik_target_rel_ee_pos_sub_ = nh_.subscribe("full_body_ik_target", 1, &RollingNavigator::fullBodyIKTargetRelPosCallback, this);
   joy_sub_ = nh_.subscribe("joy", 1, &RollingNavigator::joyCallback, this);
@@ -33,6 +34,9 @@ void RollingNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   ground_navigation_mode_pub_ = nh_.advertise<std_msgs::Int16>("ground_navigation_ack", 1);
   ground_motion_mode_pub_ = nh_.advertise<std_msgs::Int16>("ground_motion_ack", 1);
   estimated_steep_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("estimated_steep", 1);
+  nominal_contact_flag_sub_ = nh_.subscribe("contact_planning/nominal_contact_flag", 1, &RollingNavigator::nominalContactPointFlagCallback, this);
+  commanded_contacting_link_index_sub_ = nh_.subscribe("contact_planning/commanded_contacting_link_index", 1, &RollingNavigator::commandedContactingLinkIndexCallback, this);
+
   prev_rotation_stamp_ = ros::Time::now().toSec();
 
   setPrevGroundNavigationMode(aerial_robot_navigation::NONE);
@@ -62,6 +66,8 @@ void RollingNavigator::update()
   BaseNavigator::update();
 
   estimateSteep();
+  robot_model_for_plan_->setNominalContactPointFlag(rolling_robot_model_->getNonimalContactPointFlag());
+  robot_model_for_plan_->setCommandedContactingLinkIndex(rolling_robot_model_->getCommandedContactingLinkIndex());
 
   if(motion_mode_ == aerial_robot_navigation::MANIPULATION_MODE)
     {
@@ -354,9 +360,16 @@ void RollingNavigator::setFinalTargetBaselinkQuatCallback(const geometry_msgs::Q
   tf::quaternionMsgToTF(msg->quaternion, final_target_baselink_quat);
 }
 
+void RollingNavigator::setCurrentTargetBaselinkRpyCallback(const geometry_msgs::Vector3StampedConstPtr & msg)
+{
+  ROS_WARN_STREAM("[navigation] current baselink rotation callback. RPY: " << msg->vector.x << " " << msg->vector.y << " " << msg->vector.z);
+  curr_target_baselink_quat_.setRPY(msg->vector.x, msg->vector.y, msg->vector.z);
+  final_target_baselink_quat_.setRPY(msg->vector.x, msg->vector.y, msg->vector.z);
+}
+
 void RollingNavigator::setFinalTargetBaselinkRpyCallback(const geometry_msgs::Vector3StampedConstPtr & msg)
 {
-  ROS_WARN_STREAM("[navigation] baselink rotation callback. RPY: " << msg->vector.x << " " << msg->vector.y << " " << msg->vector.z);
+  ROS_WARN_STREAM("[navigation] final baselink rotation callback. RPY: " << msg->vector.x << " " << msg->vector.y << " " << msg->vector.z);
   final_target_baselink_quat_.setRPY(msg->vector.x, msg->vector.y, msg->vector.z);
 }
 

@@ -32,9 +32,13 @@ void RollingController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   full_lambda_all_ = Eigen::VectorXd::Zero(2 * motor_num_);
   full_lambda_trans_ = Eigen::VectorXd::Zero(2 * motor_num_);
   full_lambda_rot_ = Eigen::VectorXd::Zero(2 * motor_num_);
+  osqp_solution_ = Eigen::VectorXd::Zero(2 * motor_num_ + robot_model_->getJointNum() - motor_num_);
+
+  gravity_compensate_weights_ = Eigen::Matrix3d::Identity();
 
   joint_torque_.resize(robot_model_->getJointNum());
   gimbal_link_jacobians_.resize(motor_num_);
+  gimbal_directions_.resize(motor_num_, 1);
 
   rosParamInit();
 
@@ -46,6 +50,7 @@ void RollingController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
 
   joint_state_sub_ = nh_.subscribe("joint_states", 1, &RollingController::jointStateCallback, this);
   correct_baselink_pose_sub_ = nh_.subscribe("correct_baselink_pose", 1, &RollingController::correctBaselinkPoseCallback, this);
+  gimbal_planning_sub_ = nh_.subscribe("gimbal_planning", 1, &RollingController::gimbalPlanningCallback, this);
 
   target_vectoring_force_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("debug/target_vectoring_force", 1);
   target_acc_cog_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("debug/target_acc_cog", 1);
@@ -123,6 +128,8 @@ void RollingController::rosParamInit()
   getParam<double>(control_nh, "ground_mu", ground_mu_, 0.0);
   getParam<bool>(control_nh, "use_estimated_external_force", use_estimated_external_force_, true);
   getParam<bool>(control_nh, "correct_baselink_pose", correct_baselink_pose_, true);
+  getParam<double>(control_nh, "gimbal_planning_converged_thresh", gimbal_planning_converged_thresh_, 0.1);
+  getParam<double>(control_nh, "gimbal_velocity", gimbal_velocity_, 5.0);
 
   double circle_radius;
   getParam<double>(nh_, "circle_radius", circle_radius, 0.5);
@@ -202,6 +209,8 @@ void RollingController::controlCore()
 {
   PoseLinearController::controlCore();
 
+  gimbalPlanner();
+
   /* set gain if ground navigation mode is updated */
   if(ground_navigation_mode_ != rolling_navigator_->getPrevGroundNavigationMode())
     {
@@ -221,7 +230,7 @@ void RollingController::controlCore()
           {
             setControllerParams("standing_controller");
             ros::NodeHandle standing_nh(nh_, "standing_controller");
-            std::vector<double> gravity_compensate_weights = std::vector<double>(3);
+            std::vector<double> gravity_compensate_weights = std::vector<double>(3, 1.0);
             if(!standing_nh.getParam("gravity_compensate_weights", gravity_compensate_weights))
               ROS_ERROR_STREAM("[control] could not find parameter gravity_compensate_weights");
             else
@@ -235,7 +244,7 @@ void RollingController::controlCore()
           {
             setControllerParams("rolling_controller");
             ros::NodeHandle rolling_nh(nh_, "rolling_controller");
-            std::vector<double> gravity_compensate_weights = std::vector<double>(3);
+            std::vector<double> gravity_compensate_weights = std::vector<double>(3, 1.0);
             if(!rolling_nh.getParam("gravity_compensate_weights", gravity_compensate_weights))
               ROS_ERROR_STREAM("[control] could not find parameter gravity_compensate_weights");
             else
@@ -248,6 +257,9 @@ void RollingController::controlCore()
           break;
         }
     }
+
+  robot_model_for_control_->setNominalContactPointFlag(rolling_robot_model_->getNonimalContactPointFlag());
+  robot_model_for_control_->setCommandedContactingLinkIndex(rolling_robot_model_->getCommandedContactingLinkIndex());
 
   switch(ground_navigation_mode_)
     {
@@ -324,13 +336,18 @@ void RollingController::controlCore()
 void RollingController::resolveGimbalOffset()
 {
   auto gimbal_planning_flag = rolling_robot_model_->getGimbalPlanningFlag();
+  auto current_gimbal_planning_angle = rolling_robot_model_->getCurrentGimbalPlanningAngle();
   auto current_gimbal_angles = rolling_robot_model_->getCurrentGimbalAngles();
 
   /* solve round offset of gimbal angle */
   for(int i = 0; i < motor_num_; i++)
     {
-      if(gimbal_planning_flag.at(i)) continue; // send planned gimbal angle
-
+      // send planned gimbal angle
+      if(gimbal_planning_flag.at(i))
+        {
+          target_gimbal_angles_.at(i) = current_gimbal_planning_angle.at(i);
+          continue;
+        }
       if(fabs(target_gimbal_angles_.at(i) - current_gimbal_angles.at(i)) > M_PI)
         {
           bool converge_flag = false;
@@ -589,6 +606,12 @@ void RollingController::jointStateCallback(const sensor_msgs::JointStateConstPtr
   contact_point_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
   contact_point_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("contact_point"));
   br_.sendTransform(contact_point_tf);
+
+  geometry_msgs::TransformStamped second_contact_point_tf = rolling_robot_model_->getSecondContactPoint<geometry_msgs::TransformStamped>();
+  second_contact_point_tf.header = state->header;
+  second_contact_point_tf.header.frame_id = tf::resolve(tf_prefix_, std::string("root"));
+  second_contact_point_tf.child_frame_id = tf::resolve(tf_prefix_, std::string("second_contact_point"));
+  br_.sendTransform(second_contact_point_tf);
 
   /* get current orientation to get alined frame */
   tf::Quaternion cog2baselink_rot;
