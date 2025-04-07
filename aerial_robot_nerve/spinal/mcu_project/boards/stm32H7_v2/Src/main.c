@@ -263,15 +263,13 @@ int main(void)
   gps_.init(&huart3, &nh_, LED2_GPIO_Port, LED2_Pin);
 #if DSHOT
   battery_status_.init(&hadc1, &nh_, false);
-  estimator_.init(&imu_, &baro_, &gps_, &nh_);  // imu + baro + gps => att + alt + pos(xy)
   dshot_.init(DSHOT600, &htim1,TIM_CHANNEL_1, &htim1,TIM_CHANNEL_2, &htim1,TIM_CHANNEL_3, &htim1, TIM_CHANNEL_4);
   dshot_.initTelemetry(&huart6);
-  controller_.init(&htim1, &htim4, &estimator_, &dshot_, &battery_status_, &nh_, &flightControlMutexHandle);
 #else
   battery_status_.init(&hadc1, &nh_);
-  estimator_.init(&imu_, &baro_, &gps_, &nh_);  // imu + baro + gps => att + alt + pos(xy)
-  controller_.init(&htim1, &htim4, &estimator_, NULL, &battery_status_, &nh_, &flightControlMutexHandle);
 #endif
+  estimator_.init(&imu_, &baro_, &gps_, &nh_);  // imu + baro + gps => att + alt + pos(xy)
+  controller_.init(&nh_, &estimator_, &battery_status_, &flightControlMutexHandle);
 
   FlashMemory::read(); //IMU calib data (including IMU in neurons)
 #if SERVO_FLAG
@@ -280,7 +278,7 @@ int main(void)
   Spine::init(&hfdcan1, &nh_, &estimator_, LED1_GPIO_Port, LED1_Pin);
   Spine::useRTOS(&canMsgMailHandle); // use RTOS for CAN in spianl
 #endif
-  
+
   /* USER CODE END 2 */
 
   /* Create the mutex(es) */

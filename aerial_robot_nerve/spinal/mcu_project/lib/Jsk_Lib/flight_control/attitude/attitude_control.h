@@ -23,16 +23,13 @@
 #include <vector>
 
 #ifndef SIMULATION
+#include "battery_status/battery_status.h" /* battery status */
 /* state estimate  */
 #if NERVE_COMM
 #include <Spine/spine.h>
 #endif
-/* battery status */
-#include "battery_status/battery_status.h"
 /* RTOS */
 #include "cmsis_os.h"
-/* dshot esc */
-#include "dshot_esc/dshot.h"
 #endif
 
 #include "state_estimate/state_estimate.h"
@@ -41,8 +38,6 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <std_srvs/SetBool.h>
-#include <spinal/Pwms.h>
-#include <spinal/PwmTest.h>
 #include <spinal/FourAxisCommand.h>
 #include <spinal/RollPitchYawTerms.h>
 #include <spinal/PwmInfo.h>
@@ -58,11 +53,9 @@
 /* fail safe */
 #define FLIGHT_COMMAND_TIMEOUT 500 //500ms
 #define MAX_TILT_ANGLE 1.0f // rad
-#define MAX_PWM 1.0f // duty
 
 #define CONTROL_TERM_PUB_INTERVAL 100
 #define CONTROL_FEEDBACK_STATE_PUB_INTERVAL 25
-#define PWM_PUB_INTERVAL 100 //100ms
 
 #define MOTOR_TEST 0
 
@@ -81,8 +74,7 @@ public:
 #ifdef SIMULATION
   void init(ros::NodeHandle* nh, StateEstimate* estimator);
 #else
-  void init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, StateEstimate* estimator,
-            DShot* dshot, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex = NULL);
+  void init(ros::NodeHandle* nh, StateEstimate* estimator, BatteryStatus* bat, osMutexId* mutex = NULL);
 #endif
 
   void baseInit(); // common part in both pc and board
@@ -94,13 +86,11 @@ public:
   inline const ap::Matrix3f getOffsetRotation()  { return offset_rot_; }
 
   void setMotorNumber(uint8_t motor_number);
-  void setPwmTestMode(bool pwm_test_flag){pwm_test_flag_ = pwm_test_flag; }
   bool getIntegrateFlag(){return integrate_flag_; }
   void setIntegrateFlag(bool integrate_flag){integrate_flag_ = integrate_flag; }
   bool getForceLandingFlag() {return force_landing_flag_;}
 
   void setForceLandingFlag(bool force_landing_flag) { force_landing_flag_ = force_landing_flag; }
-  float getPwm(uint8_t index) {return target_pwm_[index];}
   float getForce(uint8_t index) {return target_thrust_[index];}
 
   bool activated();
@@ -113,10 +103,8 @@ private:
 #endif
 
   ros::NodeHandle* nh_;
-  ros::Publisher pwms_pub_;
   ros::Publisher control_term_pub_;
   ros::Publisher control_feedback_state_pub_;
-  spinal::Pwms pwms_msg_;
   spinal::RollPitchYawTerms control_term_msg_;
   spinal::RollPitchYawTerm control_feedback_state_msg_;
 
@@ -124,7 +112,6 @@ private:
   ros::Subscriber four_axis_cmd_sub_;
   ros::Subscriber pwm_info_sub_;
   ros::Subscriber rpy_gain_sub_;
-  ros::Subscriber pwm_test_sub_;
   ros::Subscriber p_matrix_pseudo_inverse_inertia_sub_;
   ros::Subscriber torque_allocation_matrix_inv_sub_;
   ros::Subscriber sim_vol_sub_;
@@ -140,14 +127,10 @@ private:
   ros::Subscriber<spinal::FourAxisCommand, AttitudeController> four_axis_cmd_sub_;
   ros::Subscriber<spinal::PwmInfo, AttitudeController> pwm_info_sub_;
   ros::Subscriber<spinal::RollPitchYawTerms, AttitudeController> rpy_gain_sub_;
-  ros::Subscriber<spinal::PwmTest, AttitudeController> pwm_test_sub_;
   ros::Subscriber<spinal::PMatrixPseudoInverseWithInertia, AttitudeController> p_matrix_pseudo_inverse_inertia_sub_;
   ros::Subscriber<spinal::TorqueAllocationMatrixInv, AttitudeController> torque_allocation_matrix_inv_sub_;
   ros::Subscriber<spinal::DesireCoord, AttitudeController> offset_rot_sub_;
   ros::ServiceServer<std_srvs::SetBool::Request, std_srvs::SetBool::Response, AttitudeController> att_control_srv_;
-
-  ros::Publisher esc_telem_pub_;
-  spinal::ESCTelemetryArray esc_telem_msg_;
 
   void setAttitudeControlCallback(const std_srvs::SetBool::Request& req, std_srvs::SetBool::Response& res)
   {
@@ -156,7 +139,7 @@ private:
 
   BatteryStatus* bat_;
   osMutexId* mutex_;
-  DShot* dshot_;
+  // DShot* dshot_;
 #endif
 
   StateEstimate* estimator_;
@@ -164,11 +147,9 @@ private:
   int8_t uav_model_;
   uint8_t motor_number_;
   bool start_control_flag_;
-  bool pwm_test_flag_;
   bool integrate_flag_;
   bool force_landing_flag_;
   bool att_control_flag_;
-
 
   float target_angle_[3];
   float error_angle_i_[3];
@@ -200,9 +181,6 @@ private:
 
   // Thrust PWM Conversion
   float target_thrust_[MAX_MOTOR_NUMBER];
-  float target_pwm_[MAX_MOTOR_NUMBER];
-  float min_duty_;
-  float max_duty_;
   float min_thrust_; // max thrust is variant according to the voltage
   float force_landing_thrust_;
   int8_t rotor_devider_;
@@ -212,8 +190,6 @@ private:
   float v_factor_;
   uint32_t voltage_update_last_time_;
   uint32_t control_term_pub_last_time_, control_feedback_state_pub_last_time_;
-  uint32_t pwm_pub_last_time_;
-  float pwm_test_value_[MAX_MOTOR_NUMBER]; // PWM Test
 
   void fourAxisCommandCallback( const spinal::FourAxisCommand &cmd_msg);
   void pwmInfoCallback( const spinal::PwmInfo &info_msg);
@@ -224,9 +200,8 @@ private:
 
   void thrustGainMapping();
   void maxYawGainIndex();
-  void pwmTestCallback(const spinal::PwmTest& pwm_msg);
-  void pwmConversion(void);
   void pwmsControl(void);
+  void publish(void);
 
   void reset(void);
 

@@ -67,7 +67,7 @@ public:
   {
   }
 
-  void init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, StateEstimate* estimator, DShot* dshot, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex = NULL)
+  void init(ros::NodeHandle* nh, StateEstimate* estimator, BatteryStatus* bat, osMutexId* mutex = NULL)
   {
     nh_ = nh;
 
@@ -80,14 +80,14 @@ public:
 
     estimator_ = estimator;
 
-    bat_ = bat;
+   bat_ = bat;
 
-    pwm_htim1_ = htim1;
-    pwm_htim2_ = htim2;
+//    pwm_htim1_ = htim1;
+//    pwm_htim2_ = htim2;
 
     mutex_ = mutex;
 
-    att_controller_.init(htim1, htim2, estimator, dshot, bat, nh, mutex);
+    att_controller_.init(nh, estimator, bat, mutex);
     //pos_controller_.init(estimator_, &att_controller_, nh_);
 
     start_control_flag_ = false;
@@ -96,7 +96,7 @@ public:
   }
   void init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, StateEstimate* estimator, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex = NULL)
   {
-    init(htim1, htim2, estimator, NULL, bat, nh, mutex);
+    init(htim1, htim2, estimator, bat, nh, mutex);
   }
 #endif
 
@@ -154,8 +154,8 @@ private:
 #ifndef SIMULATION
   StateEstimate* estimator_;
   BatteryStatus* bat_;
-  TIM_HandleTypeDef* pwm_htim1_;
-  TIM_HandleTypeDef*  pwm_htim2_;
+//  TIM_HandleTypeDef* pwm_htim1_;
+//  TIM_HandleTypeDef*  pwm_htim2_;
   osMutexId* mutex_;
 #endif
 
