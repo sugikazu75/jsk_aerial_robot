@@ -8,6 +8,7 @@
 #include <delta/model/delta_robot_model.h>
 #include <delta/navigation/delta_navigation.h>
 #include <delta/nloptConfig.h>
+#include <delta/GimbalPlanning.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <nlopt.hpp>
@@ -79,6 +80,7 @@ namespace aerial_robot_control
     const std::vector<double>& getOptInitialX() {return opt_initial_x_;};
     const std::vector<double>& getOptCostWeights() {return opt_cost_weights_;}
     const double& getOptJointTorqueWeight() {return opt_joint_torque_weight_;}
+    const std::vector<int>& getGimbalDirections() {return gimbal_directions_;}
     const int getNLOptResult() {return nlopt_result_;}
     const std::vector<float> getNLOptLog() {return nlopt_log_;}
     void setGroundNavigationMode(int ground_navigation_mode) {ground_navigation_mode_ = ground_navigation_mode;}
@@ -106,6 +108,7 @@ namespace aerial_robot_control
     ros::Publisher rotor_normal_pub_;
     ros::Subscriber joint_state_sub_;
     ros::Subscriber correct_baselink_pose_sub_;
+    ros::Subscriber gimbal_planning_sub_;
 
     tf2_ros::TransformBroadcaster br_;
     KDL::Frame contact_point_alined_;
@@ -161,11 +164,15 @@ namespace aerial_robot_control
     bool correct_baselink_pose_;
     bool ground_mode_add_joint_torque_constraints_;
     std::vector<double> opt_initial_x_;
-    std::vector<double> opt_x_prev_;
     std::vector<double> opt_cost_weights_;
     std::vector<double> opt_attitude_control_thresholds_;
     double opt_joint_torque_weight_;
     boost::shared_ptr<nloptConfig> nlopt_reconf_server_;
+
+    /* gimbal planning */
+    double gimbal_velocity_;
+    double gimbal_planning_converged_thresh_;
+    std::vector<int> gimbal_directions_;
 
     /* common part */
     bool update() override;
@@ -192,6 +199,10 @@ namespace aerial_robot_control
     /* joint control */
     void jointTorquePreComputation();
 
+    /* gimbal planning */
+    void gimbalPlanner();
+    void gimbalPlanningCallback(const delta::GimbalPlanningPtr & msg);
+
     /* send command */
     void sendCmd();
     void sendGimbalAngles();
@@ -207,6 +218,7 @@ namespace aerial_robot_control
     void setControllerParams(std::string ns);
     void rosoutControlParams(std::string ns);
     void printDebug();
+    double sign(double x) {return x > 0 ? 1 : (x < 0 ? -1 : 0);}
   };
 };
 double nonlinearWrenchAllocationMinObjective(const std::vector<double> &x, std::vector<double> &grad, void *ptr);

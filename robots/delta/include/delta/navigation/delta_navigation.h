@@ -10,6 +10,7 @@
 #include <geometry_msgs/QuaternionStamped.h>
 #include <sensor_msgs/JointState.h>
 #include <spinal/DesireCoord.h>
+#include <std_msgs/Bool.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Int16.h>
@@ -88,6 +89,7 @@ namespace aerial_robot_navigation
     /* baselink rotation process */
     ros::Publisher desire_coord_pub_;
     ros::Subscriber final_target_baselink_quat_sub_, final_target_baselink_rpy_sub_;
+    ros::Subscriber current_target_baselink_rpy_sub_;
 
     /* transform planning */
     ros::Publisher joints_control_pub_;
@@ -101,6 +103,10 @@ namespace aerial_robot_navigation
     ros::Publisher ground_navigation_mode_pub_;
     ros::Subscriber ground_motion_mode_sub_;
     ros::Publisher ground_motion_mode_pub_;
+
+    /* contact planning */
+    ros::Subscriber nominal_contact_flag_sub_;
+    ros::Subscriber commanded_contacting_link_index_sub_;
 
     /* state estimation */
     ros::Publisher estimated_steep_pub_;
@@ -124,12 +130,15 @@ namespace aerial_robot_navigation
     void groundMotionModeCallback(const std_msgs::Int16Ptr & msg);
     void setFinalTargetBaselinkQuatCallback(const geometry_msgs::QuaternionStampedConstPtr & msg);
     void setFinalTargetBaselinkRpyCallback(const geometry_msgs::Vector3StampedConstPtr & msg);
+    void setCurrentTargetBaselinkRpyCallback(const geometry_msgs::Vector3StampedConstPtr & msg);
     void jointsControlCallback(const sensor_msgs::JointStatePtr & msg);
     void ikTargetRelEEPosCallback(const geometry_msgs::Vector3Ptr & msg);
     void fullBodyIKTargetRelPosCallback(const geometry_msgs::Vector3Ptr & msg);
     void joyCallback(const sensor_msgs::JoyConstPtr & joy_msg);
     void transformJoyCallback(const sensor_msgs::JoyConstPtr & joy_msg);
     void locomotionJoyCallback(const sensor_msgs::JoyConstPtr & joy_msg);
+    void nominalContactPointFlagCallback(const std_msgs::BoolPtr & msg);
+    void commandedContactingLinkIndexCallback(const std_msgs::Int16Ptr & msg);
 
     /* navigation mode */
     int current_ground_navigation_mode_;

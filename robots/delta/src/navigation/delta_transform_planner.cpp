@@ -251,7 +251,8 @@ void RollingNavigator::calcEndEffetorJacobian()
   robot_model_for_plan_->calcContactPoint();
   double circle_radius = rolling_robot_model_->getCircleRadius();
   int contacting_link = rolling_robot_model_->getContactingLink();
-  double contacting_angle_in_link = rolling_robot_model_->getContactingAngleInLink();
+  const std::vector<double>& contacting_angles_in_links = rolling_robot_model_->getContactingAnglesInLinks();
+  double contacting_angle_in_link = contacting_angles_in_links.at(contacting_link);
   std::string cl_name, ee_name;
   if(contacting_link == 0) {
     cl_name = "link1";
@@ -561,4 +562,19 @@ void RollingNavigator::fullBodyIKTargetRelPosCallback(const geometry_msgs::Vecto
 {
   full_body_ik_initial_cp_p_ee_target_(0) += msg->x;
   full_body_ik_initial_cp_p_ee_target_(2) += msg->z;
+}
+
+void RollingNavigator::nominalContactPointFlagCallback(const std_msgs::BoolPtr & msg)
+{
+  rolling_robot_model_->setNominalContactPointFlag(msg->data);
+  if(msg->data)
+    ROS_INFO_STREAM_THROTTLE(0.1, "[navigation] nominal contact point flag as true");
+  else
+    ROS_INFO_STREAM_THROTTLE(0.1, "[navigation] nominal contact point flag as false");
+}
+
+void RollingNavigator::commandedContactingLinkIndexCallback(const std_msgs::Int16Ptr & msg)
+{
+  rolling_robot_model_->setCommandedContactingLinkIndex(msg->data);
+  ROS_INFO_STREAM_THROTTLE(0.1, "[navigation] commanded contact link: link" << msg->data + 1);
 }
