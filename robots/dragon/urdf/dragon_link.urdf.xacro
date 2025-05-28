@@ -3,7 +3,7 @@
     xmlns:xacro="http://www.ros.org/wiki/xacro" name="dragon_link" >
 
   <!-- D-H kai description(different from prof.nakamura) -->
-  <xacro:macro name="dragon_module" params="self child baselink">
+  <xacro:macro name="dragon_module" params="self child baselink rotor_fixed:=false">
 
     <!-- link -->
     <link name="link${self}">
@@ -157,13 +157,34 @@
     </link>
 
     <!-- rotor -->
-    <joint name="rotor${self}" type="fixed">
-      <!-- <limit effort="100.0" lower="${min_force}" upper="${max_force}" velocity="0.5"/> -->
-      <parent link="gimbal${self}_pitch_module"/>
-      <child link="thrust${self}"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <axis xyz="0 0 1"/>
-    </joint>
+    <xacro:if value="${rotor_fixed}">
+      <joint name="rotor${self}" type="fixed">
+        <parent link="gimbal${self}_pitch_module"/>
+        <child link="thrust${self}"/>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <axis xyz="0 0 1"/>
+      </joint>
+    </xacro:if>
+    <xacro:unless value="${rotor_fixed}">
+      <joint name="rotor${self}" type="continuous">
+        <limit effort="100.0" lower="${min_force}" upper="${max_force}" velocity="0.5"/>
+        <parent link="gimbal${self}_pitch_module"/>
+        <child link="thrust${self}"/>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <axis xyz="0 0 1"/>
+      </joint>
+      <transmission name="rotor${self}_tran">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="rotor${self}">
+          <hardwareInterface>RotorInterface</hardwareInterface>
+        </joint>
+        <actuator name="rotor${self}">
+          <hardwareInterface>RotorInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+      </transmission>
+      <xacro:friction self ="${self}"/>
+    </xacro:unless>
 
     <link name="thrust${self}">
       <inertial>
@@ -344,18 +365,6 @@
         <mechanicalReduction>1</mechanicalReduction>
       </actuator>
     </transmission>
-
-    <!-- <transmission name="rotor${self}_tran"> -->
-    <!--   <type>transmission_interface/SimpleTransmission</type> -->
-    <!--   <joint name="rotor${self}"> -->
-    <!--     <hardwareInterface>RotorInterface</hardwareInterface> -->
-    <!--   </joint> -->
-    <!--   <actuator name="rotor${self}"> -->
-    <!--     <hardwareInterface>RotorInterface</hardwareInterface> -->
-    <!--     <mechanicalReduction>1</mechanicalReduction> -->
-    <!--   </actuator> -->
-    <!--   </transmission> -->
-    <!-- <xacro:friction self ="${self}"/> -->
 
   </xacro:macro>
 
