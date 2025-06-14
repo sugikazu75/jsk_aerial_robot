@@ -32,3 +32,23 @@ servo_controller:
     controller3:
       id: 2
       name: joint3
+
+    controller4:
+      id: 3
+      name: tail_joint1
+
+    controller5:
+      id: 4
+      name: tail_joint2
+
+    controller6:
+      id: 5
+      name: tail_joint3
+
+    controller7:
+      id: 6
+      name: tail_joint4
+
+    controller8:
+      id: 7
+      name: tail_joint5
