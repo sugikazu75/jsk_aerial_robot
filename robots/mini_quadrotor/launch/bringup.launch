@@ -73,7 +73,8 @@
   </include>
 
   ###########  Sensors ###########
-  <include file="$(find mini_quadrotor)/launch/includes/sensors.launch.xml" >
+  <!-- <include file="$(find mini_quadrotor)/launch/includes/sensors.launch.xml" > -->
+  <include file="$(find mini_quadrotor)/launch/includes/vo.launch.xml" >
     <arg name="real_machine" value="$(arg real_machine)" />
     <arg name="simulation" value="$(arg simulation)" />
     <arg name="robot_ns" value="$(arg robot_ns)" />
