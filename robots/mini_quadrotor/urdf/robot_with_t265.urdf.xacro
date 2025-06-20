@@ -151,7 +151,7 @@
   </xacro:extra_module>
 
   <!-- realsense t265 -->
-  <xacro:extra_module name = "camera_imu" parent = "main_body" visible = "0" > 
+  <xacro:extra_module name = "camera_frame" parent = "main_body" visible = "0" > 
     <origin xyz="0.01714890 -0.00034063 0.10250007" rpy="0 0 0"/> 
     <inertial>
       <mass value = "0.054" />
@@ -175,10 +175,10 @@
   </xacro:extra_module>
 
   <!-- propellers -->
-  <xacro:propeller_module id = "1" x = "${-rotor_x}" y = "${-rotor_y}" z = "${rotor_z}" direction = "-1" />
-  <xacro:propeller_module id = "2" x = "${rotor_x}" y = "${-rotor_y}" z = "${rotor_z}" direction = "1" />
-  <xacro:propeller_module id = "3" x = "${rotor_x}" y = "${rotor_y}" z = "${rotor_z}" direction = "-1" />
-  <xacro:propeller_module id = "4" x = "${-rotor_x}" y = "${rotor_y}" z = "${rotor_z}"  direction = "1" />
+  <xacro:propeller_module id = "1" x = "${-rotor_x}" y = "${-rotor_y}" z = "${rotor_z}" direction = "1" />
+  <xacro:propeller_module id = "2" x = "${rotor_x}" y = "${-rotor_y}" z = "${rotor_z}" direction = "-1" />
+  <xacro:propeller_module id = "3" x = "${rotor_x}" y = "${rotor_y}" z = "${rotor_z}" direction = "1" />
+  <xacro:propeller_module id = "4" x = "${-rotor_x}" y = "${rotor_y}" z = "${rotor_z}"  direction = "-1" />
 
 
 </robot>
