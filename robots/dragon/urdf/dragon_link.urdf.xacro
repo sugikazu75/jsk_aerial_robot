@@ -235,12 +235,12 @@
     <!-- joint -->
     <xacro:unless value="${self == child}">
       <joint name="joint${self}_pitch" type="revolute">
-        <limit effort="10.0" lower="${-pi/2}" upper="${pi/2}" velocity="0.1"/>
+        <limit effort="20.0" lower="${-pi/2}" upper="${pi/2}" velocity="6"/>
         <parent link="link${self}"/>
         <child link="inter_joint${self}"/>
         <origin rpy="0 0 0" xyz="${link_length} 0 0"/>
         <axis xyz="0 1 0"/>
-        <dynamics damping="0.9" friction="0.05"/>
+        <dynamics damping="0.1" friction="0.0"/>
       </joint>
 
       <!-- inter joint -->
@@ -262,12 +262,12 @@
       </link>
 
       <joint name="joint${self}_yaw" type="revolute">
-        <limit effort="10.0" lower="${-pi/2}" upper="${pi/2}" velocity="0.1"/>
+        <limit effort="20.0" lower="${-pi/2}" upper="${pi/2}" velocity="6"/>
         <parent link="inter_joint${self}"/>
         <child link="link${child}"/>
         <origin rpy="0 0 0" xyz="${2 * inter_joint_x_offset} 0 0"/>
         <axis xyz="0 0 1"/>
-        <dynamics damping="0.9" friction="0.05"/>
+        <dynamics damping="0.1" friction="0.0"/>
       </joint>
 
       <gazebo reference="inter_joint${self}">
@@ -293,26 +293,6 @@
         <parent link="root"/>
         <child link="link${self}"/>
         <origin rpy="0 0 0" xyz="0 0 0"/>
-        <axis xyz="0 0 1"/>
-      </joint>
-    </xacro:if>
-
-    <!-- set the fcu frame -->
-    <xacro:if value="${baselink}">
-      <link name="fc">
-        <inertial>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <mass value="0.00001"/>
-          <inertia
-              ixx="0.000001" ixy="0.0" ixz="0.0"
-              iyy="0.000001" iyz="0.0"
-              izz="0.000002"/>
-        </inertial>
-      </link>
-      <joint name="fc_joint" type="fixed">
-        <child link="fc"/>
-        <parent link="link${self}"/>
-        <origin rpy="0 0 0" xyz="0.316 -0.004 0.043"/>
         <axis xyz="0 0 1"/>
       </joint>
     </xacro:if>
