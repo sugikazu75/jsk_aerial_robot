@@ -95,7 +95,7 @@ class ServoMonitor(Plugin):
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
         context.add_widget(self._widget)
-        self._headers = ["torque", "joint name", "board", "index", "id", "angle", "temperature", "load", "error", "pid_gains", "profile_velocity", "current_limit", "send_data_flag"]
+        self._headers = ["torque", "joint name", "board", "index", "id", "angle", "temperature", "load", "error", "operating_mode", "pid_gains", "profile_velocity", "current_limit", "send_data_flag"]
 
         self._widget.setLayout(self._widget.gridLayout)
         self.joint_id_name_map = {}
@@ -256,6 +256,22 @@ class ServoMonitor(Plugin):
         else:
             return 'No Error'
 
+    def operatingMode2string(self, mode):
+        if mode == 0:
+            return "current control mode"
+        elif mode == 1:
+            return "velocity control mode"
+        elif mode == 3:
+            return "position control mode"
+        elif mode == 4:
+            return "extended position control mode"
+        elif mode == 5:
+            return "current base position control mode"
+        elif mode == 16:
+            return "pwm mode"
+        else:
+            return "invalid mode"
+
     def servoStateCallback(self, msg):
         cnt = 0
         for s in msg.servos:
@@ -322,6 +338,7 @@ class ServoMonitor(Plugin):
                     rowData.append(i)
                     rowData.append(s.id)
                     rowData.extend([None] * 4)
+                    rowData.append(self.operatingMode2string(0))
                     rowData.append(str(s.p_gain) + ', ' + str(s.i_gain) + ', ' + str(s.d_gain))
                     rowData.append(s.profile_velocity)
                     rowData.append(s.current_limit)
