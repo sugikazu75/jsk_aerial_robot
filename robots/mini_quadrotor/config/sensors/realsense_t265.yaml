@@ -1,6 +1,6 @@
 sensor_plugin:
   vo:
-    vo_sub_topic_name: /camera/odom/sample #/vo/odom #raw: /camera/odom/sample
+    vo_sub_topic_name: camera/odom/sample #/vo/odom #raw: /camera/odom/sample
     level_pos_noise_sigma: 0.01
     z_pos_noise_sigma: 0.01
     vel_noise_sigma: 0.01
