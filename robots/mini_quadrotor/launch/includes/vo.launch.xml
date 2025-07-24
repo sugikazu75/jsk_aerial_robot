@@ -15,7 +15,7 @@
         </include>
         
         <!-- vo by realsense t265 -->
-        <!-- <include file="$(find realsense2_camera)/launch/rs_t265.launch" /> -->
+        <include file="$(find realsense2_camera)/launch/rs_t265.launch" />
 
         <!-- mocap -->
         <include file="$(find aerial_robot_base)/launch/external_module/mocap.launch" />
