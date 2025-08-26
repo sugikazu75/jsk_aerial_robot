@@ -148,66 +148,67 @@ $(function() {
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keywordtype">bool</span> reset();</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  <span class="keyword">private</span>:</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="comment">/* ros */</span></div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    ros::Subscriber vo_sub_;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    ros::Publisher vo_servo_pub_;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    ros::Subscriber vo_servo_debug_sub_;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    ros::Timer  servo_control_timer_;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="comment">/* ros param */</span></div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keywordtype">double</span> throttle_rate_;</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keywordtype">double</span> level_pos_noise_sigma_;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordtype">double</span> z_pos_noise_sigma_;</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordtype">double</span> vel_noise_sigma_;</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keywordtype">double</span> vel_outlier_thresh_;</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordtype">double</span> downwards_vo_min_height_;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">double</span> downwards_vo_max_height_;</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordtype">int</span> fusion_mode_;</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keywordtype">bool</span> vio_mode_; <span class="comment">// visual + inertial mode</span></div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordtype">bool</span> z_vel_mode_;</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">bool</span> local_vel_mode_;</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordtype">bool</span> outdoor_no_vel_time_sync_; <span class="comment">// very special flag for stereo cam such as zed mini, which has tricky behavier in outdoor mode</span></div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="comment">/* heuristic sepecial flag for fusion */</span></div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">bool</span> outdoor_;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">bool</span> z_no_delay_;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="comment">/* servo */</span></div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    std::string joint_name_;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keywordtype">bool</span> servo_auto_change_flag_;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordtype">double</span> servo_height_thresh_;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">double</span> servo_angle_;</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">double</span> servo_init_angle_, servo_downwards_angle_;</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordtype">double</span> servo_vel_;</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordtype">double</span> servo_control_rate_;</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keywordtype">double</span> servo_min_angle_, servo_max_angle_;</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">int</span> servo_index_;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    tf::Transform world_offset_tf_; <span class="comment">// ^{w}H_{w_vo}: transform from true world frame to the vo/vio world frame</span></div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    tf::Transform baselink_tf_; <span class="comment">// ^{w}H_{b}: transform from true world frame to the baselink frame, but is estimated by vo/vio</span></div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    tf::Vector3 raw_global_vel_;</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span> </div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordtype">double</span> reference_timestamp_;</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    aerial_robot_msgs::States vo_state_;</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>    tf2_ros::StaticTransformBroadcaster static_broadcaster_; <span class="comment">// publish the transfrom between the work and vo frame</span></div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span> </div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    <span class="keywordtype">void</span> rosParamInit();</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">void</span> servoControl(<span class="keyword">const</span> ros::TimerEvent &amp; e);</div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordtype">void</span> estimateProcess();</div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">void</span> voCallback(<span class="keyword">const</span> nav_msgs::Odometry::ConstPtr &amp; vo_msg);</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>    <span class="keywordtype">void</span> servoDebugCallback(<span class="keyword">const</span> std_msgs::Empty::ConstPtr &amp; msg)</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    {</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>      servo_auto_change_flag_ = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    }</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>  };</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>};</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="keyword">const</span> tf::Transform&amp; getRawBaselinkTF()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> baselink_tf_; }</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>  <span class="keyword">private</span>:</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="comment">/* ros */</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    ros::Subscriber vo_sub_;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    ros::Publisher vo_servo_pub_;</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    ros::Subscriber vo_servo_debug_sub_;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    ros::Timer  servo_control_timer_;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="comment">/* ros param */</span></div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keywordtype">double</span> throttle_rate_;</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    <span class="keywordtype">double</span> level_pos_noise_sigma_;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keywordtype">double</span> z_pos_noise_sigma_;</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordtype">double</span> vel_noise_sigma_;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">double</span> vel_outlier_thresh_;</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordtype">double</span> downwards_vo_min_height_;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keywordtype">double</span> downwards_vo_max_height_;</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>    <span class="keywordtype">int</span> fusion_mode_;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    <span class="keywordtype">bool</span> vio_mode_; <span class="comment">// visual + inertial mode</span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keywordtype">bool</span> z_vel_mode_;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">bool</span> local_vel_mode_;</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">bool</span> outdoor_no_vel_time_sync_; <span class="comment">// very special flag for stereo cam such as zed mini, which has tricky behavier in outdoor mode</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="comment">/* heuristic sepecial flag for fusion */</span></div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordtype">bool</span> outdoor_;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">bool</span> z_no_delay_;</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="comment">/* servo */</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    std::string joint_name_;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    <span class="keywordtype">bool</span> servo_auto_change_flag_;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">double</span> servo_height_thresh_;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">double</span> servo_angle_;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keywordtype">double</span> servo_init_angle_, servo_downwards_angle_;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keywordtype">double</span> servo_vel_;</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordtype">double</span> servo_control_rate_;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">double</span> servo_min_angle_, servo_max_angle_;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keywordtype">int</span> servo_index_;</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>    tf::Transform world_offset_tf_; <span class="comment">// ^{w}H_{w_vo}: transform from true world frame to the vo/vio world frame</span></div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>    tf::Transform baselink_tf_; <span class="comment">// ^{w}H_{b}: transform from true world frame to the baselink frame, but is estimated by vo/vio</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    tf::Vector3 raw_global_vel_;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keywordtype">double</span> reference_timestamp_;</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    aerial_robot_msgs::States vo_state_;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    tf2_ros::StaticTransformBroadcaster static_broadcaster_; <span class="comment">// publish the transfrom between the work and vo frame</span></div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">void</span> rosParamInit();</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordtype">void</span> servoControl(<span class="keyword">const</span> ros::TimerEvent &amp; e);</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>    <span class="keywordtype">void</span> estimateProcess();</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    <span class="keywordtype">void</span> voCallback(<span class="keyword">const</span> nav_msgs::Odometry::ConstPtr &amp; vo_msg);</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span> </div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    <span class="keywordtype">void</span> servoDebugCallback(<span class="keyword">const</span> std_msgs::Empty::ConstPtr &amp; msg)</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    {</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>      servo_auto_change_flag_ = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>    }</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>  };</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>};</div>
 <div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span> </div>
 <div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
 <div class="ttc" id="aclasssensor__plugin_1_1SensorBase_html"><div class="ttname"><a href="classsensor__plugin_1_1SensorBase.html">sensor_plugin::SensorBase</a></div><div class="ttdef"><b>Definition:</b> base_plugin.h:62</div></div>
 <div class="ttc" id="aclasssensor__plugin_1_1VisualOdometry_html"><div class="ttname"><a href="classsensor__plugin_1_1VisualOdometry.html">sensor_plugin::VisualOdometry</a></div><div class="ttdef"><b>Definition:</b> vo.h:54</div></div>
 </div><!-- fragment --></div><!-- contents -->

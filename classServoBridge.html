@@ -95,9 +95,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>servoStatesCallback</
 <tr class="memitem:aa3e235fa9635ee171325155ead1b3e9c"><td class="memItemLeft" align="right" valign="top"><a id="aa3e235fa9635ee171325155ead1b3e9c" name="aa3e235fa9635ee171325155ead1b3e9c"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>servoCtrlCallback</b> (const sensor_msgs::JointStateConstPtr &amp;joints_ctrl_msg, const std::string &amp;servo_group_name)</td></tr>
 <tr class="separator:aa3e235fa9635ee171325155ead1b3e9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85dd6fc6e8ff1c47cfda7da91d3622e2"><td class="memItemLeft" align="right" valign="top"><a id="a85dd6fc6e8ff1c47cfda7da91d3622e2" name="a85dd6fc6e8ff1c47cfda7da91d3622e2"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>servoTorqueCtrlCallback</b> (std_srvs::SetBool::Request &amp;req, std_srvs::SetBool::Response &amp;res, const std::string &amp;servo_group_name)</td></tr>
-<tr class="separator:a85dd6fc6e8ff1c47cfda7da91d3622e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74edc28316b5a4bed984fd41fba627da"><td class="memItemLeft" align="right" valign="top"><a id="a74edc28316b5a4bed984fd41fba627da" name="a74edc28316b5a4bed984fd41fba627da"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>servoTorqueCtrlCallback</b> (const sensor_msgs::JointStateConstPtr &amp;joints_ctrl_msg, const std::string &amp;servo_group_name)</td></tr>
+<tr class="separator:a74edc28316b5a4bed984fd41fba627da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acea70da738e354412f68a05dc3ebd691"><td class="memItemLeft" align="right" valign="top"><a id="acea70da738e354412f68a05dc3ebd691" name="acea70da738e354412f68a05dc3ebd691"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>servoEnableCallback</b> (std_srvs::SetBool::Request &amp;req, std_srvs::SetBool::Response &amp;res, const std::string &amp;servo_group_name)</td></tr>
+<tr class="separator:acea70da738e354412f68a05dc3ebd691"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac579392ed4057d72a56c66c6a7e99995"><td class="memItemLeft" align="right" valign="top"><a id="ac579392ed4057d72a56c66c6a7e99995" name="ac579392ed4057d72a56c66c6a7e99995"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>uavInfoCallback</b> (const spinal::UavInfoConstPtr &amp;uav_msg)</td></tr>
+<tr class="separator:ac579392ed4057d72a56c66c6a7e99995"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -113,27 +119,42 @@ ros::Publisher&#160;</td><td class="memItemRight" valign="bottom"><b>servo_state
 <tr class="memitem:a81de516021f27a6641eabb28018d297f"><td class="memItemLeft" align="right" valign="top"><a id="a81de516021f27a6641eabb28018d297f" name="a81de516021f27a6641eabb28018d297f"></a>
 ros::Publisher&#160;</td><td class="memItemRight" valign="bottom"><b>mujoco_control_input_pub_</b></td></tr>
 <tr class="separator:a81de516021f27a6641eabb28018d297f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae71d4a6cc3ece2551dc8e128a3f24206"><td class="memItemLeft" align="right" valign="top"><a id="ae71d4a6cc3ece2551dc8e128a3f24206" name="ae71d4a6cc3ece2551dc8e128a3f24206"></a>
+ros::Publisher&#160;</td><td class="memItemRight" valign="bottom"><b>joint_profile_pub_</b></td></tr>
+<tr class="separator:ae71d4a6cc3ece2551dc8e128a3f24206"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdc165b27efc6d31faa742229ef8fbde"><td class="memItemLeft" align="right" valign="top"><a id="acdc165b27efc6d31faa742229ef8fbde" name="acdc165b27efc6d31faa742229ef8fbde"></a>
+ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>uav_info_sub_</b></td></tr>
+<tr class="separator:acdc165b27efc6d31faa742229ef8fbde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c7a30da862ff2e8a906602631acf9cb"><td class="memItemLeft" align="right" valign="top"><a id="a0c7a30da862ff2e8a906602631acf9cb" name="a0c7a30da862ff2e8a906602631acf9cb"></a>
 map&lt; string, ros::Subscriber &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_states_subs_</b></td></tr>
 <tr class="separator:a0c7a30da862ff2e8a906602631acf9cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aad1d43a60a32748f22c0748d05e867ec"><td class="memItemLeft" align="right" valign="top"><a id="aad1d43a60a32748f22c0748d05e867ec" name="aad1d43a60a32748f22c0748d05e867ec"></a>
 map&lt; string, ros::Subscriber &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_ctrl_subs_</b></td></tr>
 <tr class="separator:aad1d43a60a32748f22c0748d05e867ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad25b94e4bf23dff929cf5e2e7c4f6985"><td class="memItemLeft" align="right" valign="top"><a id="ad25b94e4bf23dff929cf5e2e7c4f6985" name="ad25b94e4bf23dff929cf5e2e7c4f6985"></a>
+map&lt; string, ros::Subscriber &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_torque_ctrl_subs_</b></td></tr>
+<tr class="separator:ad25b94e4bf23dff929cf5e2e7c4f6985"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a554eba22ebf991ad518a0ec250d92e29"><td class="memItemLeft" align="right" valign="top"><a id="a554eba22ebf991ad518a0ec250d92e29" name="a554eba22ebf991ad518a0ec250d92e29"></a>
+map&lt; string, ros::Subscriber &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_torque_subs_</b></td></tr>
+<tr class="separator:a554eba22ebf991ad518a0ec250d92e29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3120a1235a0b3c720f54ef92a0d5d48a"><td class="memItemLeft" align="right" valign="top"><a id="a3120a1235a0b3c720f54ef92a0d5d48a" name="a3120a1235a0b3c720f54ef92a0d5d48a"></a>
 map&lt; string, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>no_real_state_flags_</b></td></tr>
 <tr class="separator:a3120a1235a0b3c720f54ef92a0d5d48a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aee02ea18076d50bd525ba17a569e0008"><td class="memItemLeft" align="right" valign="top"><a id="aee02ea18076d50bd525ba17a569e0008" name="aee02ea18076d50bd525ba17a569e0008"></a>
-map&lt; string, ros::Publisher &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_ctrl_pubs_</b></td></tr>
-<tr class="separator:aee02ea18076d50bd525ba17a569e0008"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af1961c8b8451e1d3e6eb7a54959e343f"><td class="memItemLeft" align="right" valign="top"><a id="af1961c8b8451e1d3e6eb7a54959e343f" name="af1961c8b8451e1d3e6eb7a54959e343f"></a>
-map&lt; string, ros::ServiceServer &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_torque_ctrl_srvs_</b></td></tr>
-<tr class="separator:af1961c8b8451e1d3e6eb7a54959e343f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc2e9e6630a949ba3d0259033acfe675"><td class="memItemLeft" align="right" valign="top"><a id="adc2e9e6630a949ba3d0259033acfe675" name="adc2e9e6630a949ba3d0259033acfe675"></a>
-map&lt; string, ros::Publisher &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_torque_ctrl_pubs_</b></td></tr>
-<tr class="separator:adc2e9e6630a949ba3d0259033acfe675"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5146e3da3f71739537cf145dae145f42"><td class="memItemLeft" align="right" valign="top"><a id="a5146e3da3f71739537cf145dae145f42" name="a5146e3da3f71739537cf145dae145f42"></a>
-map&lt; string, vector&lt; ros::Publisher &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_ctrl_sim_pubs_</b></td></tr>
-<tr class="separator:a5146e3da3f71739537cf145dae145f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5aad50b2cfb07749f864f0e0ee3dffc8"><td class="memItemLeft" align="right" valign="top"><a id="a5aad50b2cfb07749f864f0e0ee3dffc8" name="a5aad50b2cfb07749f864f0e0ee3dffc8"></a>
+map&lt; string, ros::Publisher &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_target_pos_pubs_</b></td></tr>
+<tr class="separator:a5aad50b2cfb07749f864f0e0ee3dffc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaaeac7877c61007929cad19a839694b2"><td class="memItemLeft" align="right" valign="top"><a id="aaaeac7877c61007929cad19a839694b2" name="aaaeac7877c61007929cad19a839694b2"></a>
+map&lt; string, ros::Publisher &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_target_torque_pubs_</b></td></tr>
+<tr class="separator:aaaeac7877c61007929cad19a839694b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2766ea68302d9e654af54b97940c222c"><td class="memItemLeft" align="right" valign="top"><a id="a2766ea68302d9e654af54b97940c222c" name="a2766ea68302d9e654af54b97940c222c"></a>
+map&lt; string, ros::ServiceServer &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_enable_srvs_</b></td></tr>
+<tr class="separator:a2766ea68302d9e654af54b97940c222c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f63909f812cc43d34c141c17a656e4f"><td class="memItemLeft" align="right" valign="top"><a id="a5f63909f812cc43d34c141c17a656e4f" name="a5f63909f812cc43d34c141c17a656e4f"></a>
+map&lt; string, ros::Publisher &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_enable_pubs_</b></td></tr>
+<tr class="separator:a5f63909f812cc43d34c141c17a656e4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1263a4765e0a8126d52e130603720654"><td class="memItemLeft" align="right" valign="top"><a id="a1263a4765e0a8126d52e130603720654" name="a1263a4765e0a8126d52e130603720654"></a>
+map&lt; string, vector&lt; ros::Publisher &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servo_target_pos_sim_pubs_</b></td></tr>
+<tr class="separator:a1263a4765e0a8126d52e130603720654"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada825aacf964baaa6f669601d82cc95f"><td class="memItemLeft" align="right" valign="top"><a id="ada825aacf964baaa6f669601d82cc95f" name="ada825aacf964baaa6f669601d82cc95f"></a>
 map&lt; string, ServoGroupHandler &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>servos_handler_</b></td></tr>
 <tr class="separator:ada825aacf964baaa6f669601d82cc95f"><td class="memSeparator" colspan="2">&#160;</td></tr>

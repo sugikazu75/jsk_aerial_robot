@@ -140,9 +140,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setRollLockedGimbal</
 <tr class="memitem:a3b3df5b4a559e0071e1519e9b8f3b35b"><td class="memItemLeft" align="right" valign="top"><a id="a3b3df5b4a559e0071e1519e9b8f3b35b" name="a3b3df5b4a559e0071e1519e9b8f3b35b"></a>
 Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>calcFeasibleControlFxyDists</b> (const std::vector&lt; int &gt; &amp;gimbal_roll_lock, const std::vector&lt; double &gt; &amp;locked_roll_angles, int rotor_num, const std::vector&lt; Eigen::Matrix3d &gt; &amp;link_rot)</td></tr>
 <tr class="separator:a3b3df5b4a559e0071e1519e9b8f3b35b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e760636528c9909a72c7835f1ee070d"><td class="memItemLeft" align="right" valign="top"><a id="a9e760636528c9909a72c7835f1ee070d" name="a9e760636528c9909a72c7835f1ee070d"></a>
-Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>calcFeasibleControlTDists</b> (const std::vector&lt; int &gt; &amp;gimbal_roll_lock, const std::vector&lt; double &gt; &amp;locked_roll_angles, int rotor_num, const std::vector&lt; Eigen::Vector3d &gt; &amp;rotor_pos, const std::vector&lt; Eigen::Matrix3d &gt; &amp;link_rot)</td></tr>
-<tr class="separator:a9e760636528c9909a72c7835f1ee070d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60ab0da91f511df3be50529225afae77"><td class="memItemLeft" align="right" valign="top"><a id="a60ab0da91f511df3be50529225afae77" name="a60ab0da91f511df3be50529225afae77"></a>
+Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>calcFeasibleControlTDists</b> (const std::vector&lt; int &gt; &amp;gimbal_roll_lock, const std::vector&lt; double &gt; &amp;locked_roll_angles, int rotor_num, const std::vector&lt; Eigen::Vector3d &gt; &amp;rotor_pos, const std::vector&lt; Eigen::Matrix3d &gt; &amp;link_rot, const Eigen::Matrix3d &amp;cog_rot)</td></tr>
+<tr class="separator:a60ab0da91f511df3be50529225afae77"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7620ceaa6b6151a3961f776a23125e2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDragon_1_1FullVectoringRobotModel.html#ab7620ceaa6b6151a3961f776a23125e2">stabilityCheck</a> (bool verbose) override</td></tr>
 <tr class="separator:ab7620ceaa6b6151a3961f776a23125e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e14519c657b81d8bf933add378e2a7c"><td class="memItemLeft" align="right" valign="top"><a id="a1e14519c657b81d8bf933add378e2a7c" name="a1e14519c657b81d8bf933add378e2a7c"></a>
@@ -560,6 +560,12 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>addExtraModule</b> (s
 <tr class="memitem:a64c522e219352c2c3daaac619143da65 inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memItemLeft" align="right" valign="top"><a id="a64c522e219352c2c3daaac619143da65" name="a64c522e219352c2c3daaac619143da65"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>removeExtraModule</b> (std::string module_name)</td></tr>
 <tr class="separator:a64c522e219352c2c3daaac619143da65 inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af8dab39076757b4772c47dde9c3b9a5d inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memItemLeft" align="right" valign="top"><a id="af8dab39076757b4772c47dde9c3b9a5d" name="af8dab39076757b4772c47dde9c3b9a5d"></a>
+const std::map&lt; std::string, KDL::Segment &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getExtraModuleMap</b> () const</td></tr>
+<tr class="separator:af8dab39076757b4772c47dde9c3b9a5d inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a82be2bf1b1445b2d28f9aa44527c3d27 inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memItemLeft" align="right" valign="top"><a id="a82be2bf1b1445b2d28f9aa44527c3d27" name="a82be2bf1b1445b2d28f9aa44527c3d27"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setExtraModuleMap</b> (const std::map&lt; std::string, KDL::Segment &gt; &amp;map)</td></tr>
+<tr class="separator:a82be2bf1b1445b2d28f9aa44527c3d27 inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a488c4d55899c9424b217c532ab2f35 inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memItemLeft" align="right" valign="top"><a id="a2a488c4d55899c9424b217c532ab2f35" name="a2a488c4d55899c9424b217c532ab2f35"></a>
 Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>calcGravityWrenchOnRoot</b> ()</td></tr>
 <tr class="separator:a2a488c4d55899c9424b217c532ab2f35 inherit pub_methods_classaerial__robot__model_1_1RobotModel"><td class="memSeparator" colspan="2">&#160;</td></tr>

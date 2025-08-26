@@ -79,15 +79,15 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:afab41eb00d3c751b90b2636b28ab4053"><td class="memItemLeft" align="right" valign="top"><a id="afab41eb00d3c751b90b2636b28ab4053" name="afab41eb00d3c751b90b2636b28ab4053"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (ADC_HandleTypeDef *hadc, ros::NodeHandle *nh)</td></tr>
-<tr class="separator:afab41eb00d3c751b90b2636b28ab4053"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b2874590e43c06ba810127c3a6db752"><td class="memItemLeft" align="right" valign="top"><a id="a6b2874590e43c06ba810127c3a6db752" name="a6b2874590e43c06ba810127c3a6db752"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (ADC_HandleTypeDef *hadc, ros::NodeHandle *nh, bool is_adc_measure=true)</td></tr>
+<tr class="separator:a6b2874590e43c06ba810127c3a6db752"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38dc6d31b711406be689eb99b64d5d2b"><td class="memItemLeft" align="right" valign="top"><a id="a38dc6d31b711406be689eb99b64d5d2b" name="a38dc6d31b711406be689eb99b64d5d2b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>adcScaleCallback</b> (const std_msgs::Float32 &amp;cmd_msg)</td></tr>
 <tr class="separator:a38dc6d31b711406be689eb99b64d5d2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa67e73d16a6f02eef4793711eeb73d10"><td class="memItemLeft" align="right" valign="top"><a id="aa67e73d16a6f02eef4793711eeb73d10" name="aa67e73d16a6f02eef4793711eeb73d10"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>update</b> ()</td></tr>
-<tr class="separator:aa67e73d16a6f02eef4793711eeb73d10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa300a0e9a63e52951dcd0150cf25bfbc"><td class="memItemLeft" align="right" valign="top"><a id="aa300a0e9a63e52951dcd0150cf25bfbc" name="aa300a0e9a63e52951dcd0150cf25bfbc"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>update</b> (float voltage=-1)</td></tr>
+<tr class="separator:aa300a0e9a63e52951dcd0150cf25bfbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af52419ee640c214f1da13b7f69162ea1"><td class="memItemLeft" align="right" valign="top"><a id="af52419ee640c214f1da13b7f69162ea1" name="af52419ee640c214f1da13b7f69162ea1"></a>
 float&#160;</td><td class="memItemRight" valign="bottom"><b>getVoltage</b> ()</td></tr>
 <tr class="separator:af52419ee640c214f1da13b7f69162ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -103,6 +103,9 @@ ros::Subscriber&lt; std_msgs::Float32, <a class="el" href="classBatteryStatus.ht
 <tr class="memitem:a95080121f1ec071d7ed6ad67ca7f7d03"><td class="memItemLeft" align="right" valign="top"><a id="a95080121f1ec071d7ed6ad67ca7f7d03" name="a95080121f1ec071d7ed6ad67ca7f7d03"></a>
 std_msgs::Float32&#160;</td><td class="memItemRight" valign="bottom"><b>voltage_status_msg_</b></td></tr>
 <tr class="separator:a95080121f1ec071d7ed6ad67ca7f7d03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fe005a54c81069cfcaae3e84e0577b2"><td class="memItemLeft" align="right" valign="top"><a id="a6fe005a54c81069cfcaae3e84e0577b2" name="a6fe005a54c81069cfcaae3e84e0577b2"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_adc_measure_</b></td></tr>
+<tr class="separator:a6fe005a54c81069cfcaae3e84e0577b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>aerial_robot_nerve/spinal/mcu_project/lib/Jsk_Lib/battery_status/<a class="el" href="battery__status_8h_source.html">battery_status.h</a></li>

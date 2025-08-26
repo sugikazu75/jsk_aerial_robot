@@ -138,12 +138,18 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setVel</b> (int frame
 <tr class="memitem:ab7e07606fdd1543ace1e724c3205b7ad"><td class="memItemLeft" align="right" valign="top"><a id="ab7e07606fdd1543ace1e724c3205b7ad" name="ab7e07606fdd1543ace1e724c3205b7ad"></a>
 tf::Matrix3x3&#160;</td><td class="memItemRight" valign="bottom"><b>getOrientation</b> (int frame, int estimate_mode)</td></tr>
 <tr class="separator:ab7e07606fdd1543ace1e724c3205b7ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f64c64fb02d7cccc4821fcc9f3a1509"><td class="memItemLeft" align="right" valign="top"><a id="a7f64c64fb02d7cccc4821fcc9f3a1509" name="a7f64c64fb02d7cccc4821fcc9f3a1509"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setOrientation</b> (int frame, int estimate_mode, tf::Matrix3x3 rot)</td></tr>
+<tr class="separator:a7f64c64fb02d7cccc4821fcc9f3a1509"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a32a6e5a6fd95e9bdd20ea055ce81f5"><td class="memItemLeft" align="right" valign="top"><a id="a8a32a6e5a6fd95e9bdd20ea055ce81f5" name="a8a32a6e5a6fd95e9bdd20ea055ce81f5"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setOrientationWxB</b> (int frame, int estimate_mode, tf::Vector3 v)</td></tr>
+<tr class="separator:a8a32a6e5a6fd95e9bdd20ea055ce81f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab01361cde4f6cc2ac8764ba6789a55f2"><td class="memItemLeft" align="right" valign="top"><a id="ab01361cde4f6cc2ac8764ba6789a55f2" name="ab01361cde4f6cc2ac8764ba6789a55f2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setOrientationWzB</b> (int frame, int estimate_mode, tf::Vector3 v)</td></tr>
+<tr class="separator:ab01361cde4f6cc2ac8764ba6789a55f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace9f78d58866d16f1134994d45d3f5d5"><td class="memItemLeft" align="right" valign="top"><a id="ace9f78d58866d16f1134994d45d3f5d5" name="ace9f78d58866d16f1134994d45d3f5d5"></a>
 tf::Vector3&#160;</td><td class="memItemRight" valign="bottom"><b>getEuler</b> (int frame, int estimate_mode)</td></tr>
 <tr class="separator:ace9f78d58866d16f1134994d45d3f5d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9fbcbd9dbff16c7c70c73c7128c39aa"><td class="memItemLeft" align="right" valign="top"><a id="aa9fbcbd9dbff16c7c70c73c7128c39aa" name="aa9fbcbd9dbff16c7c70c73c7128c39aa"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setEuler</b> (int frame, int estimate_mode, tf::Vector3 euler)</td></tr>
-<tr class="separator:aa9fbcbd9dbff16c7c70c73c7128c39aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86d13383ac4bf71da50d923cf0e32af3"><td class="memItemLeft" align="right" valign="top"><a id="a86d13383ac4bf71da50d923cf0e32af3" name="a86d13383ac4bf71da50d923cf0e32af3"></a>
 tf::Vector3&#160;</td><td class="memItemRight" valign="bottom"><b>getAngularVel</b> (int frame, int estimate_mode)</td></tr>
 <tr class="separator:a86d13383ac4bf71da50d923cf0e32af3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -153,9 +159,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setAngularVel</b> (in
 <tr class="memitem:aa3810f798589b5e0d3cbd7478ae6fd91"><td class="memItemLeft" align="right" valign="top"><a id="aa3810f798589b5e0d3cbd7478ae6fd91" name="aa3810f798589b5e0d3cbd7478ae6fd91"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setQueueSize</b> (const int &amp;qu_size)</td></tr>
 <tr class="separator:aa3810f798589b5e0d3cbd7478ae6fd91"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada5bed6b548ceab1471b47a330ea498a"><td class="memItemLeft" align="right" valign="top"><a id="ada5bed6b548ceab1471b47a330ea498a" name="ada5bed6b548ceab1471b47a330ea498a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>updateQueue</b> (const double timestamp, const double roll, const double pitch, const tf::Vector3 omega)</td></tr>
-<tr class="separator:ada5bed6b548ceab1471b47a330ea498a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3f3ab80cc68bf69eea6d012d55fc12c"><td class="memItemLeft" align="right" valign="top"><a id="aa3f3ab80cc68bf69eea6d012d55fc12c" name="aa3f3ab80cc68bf69eea6d012d55fc12c"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>updateQueue</b> (const double timestamp, const tf::Matrix3x3 r_ee, const tf::Matrix3x3 r_ex, const tf::Vector3 omega)</td></tr>
+<tr class="separator:aa3f3ab80cc68bf69eea6d012d55fc12c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5f4afc6e688bf1b950a98a52839937b"><td class="memItemLeft" align="right" valign="top"><a id="ab5f4afc6e688bf1b950a98a52839937b" name="ab5f4afc6e688bf1b950a98a52839937b"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>findRotOmega</b> (const double timestamp, const int mode, tf::Matrix3x3 &amp;r, tf::Vector3 &amp;omega, bool verbose=true)</td></tr>
 <tr class="separator:ab5f4afc6e688bf1b950a98a52839937b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -192,6 +198,18 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setCurrGpsPoint</b> (
 <tr class="memitem:a265110e5c7e3242055f986a5dae80c5e"><td class="memItemLeft" align="right" valign="top"><a id="a265110e5c7e3242055f986a5dae80c5e" name="a265110e5c7e3242055f986a5dae80c5e"></a>
 const geographic_msgs::GeoPoint &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getCurrGpsPoint</b> () const</td></tr>
 <tr class="separator:a265110e5c7e3242055f986a5dae80c5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afee8f1f3546f1eb8efd4ae0d8d14dfa6"><td class="memItemLeft" align="right" valign="top"><a id="afee8f1f3546f1eb8efd4ae0d8d14dfa6" name="afee8f1f3546f1eb8efd4ae0d8d14dfa6"></a>
+const bool&#160;</td><td class="memItemRight" valign="bottom"><b>hasGroundTruthOdom</b> () const</td></tr>
+<tr class="separator:afee8f1f3546f1eb8efd4ae0d8d14dfa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0d861f648a0e452a276e8ee70e82334"><td class="memItemLeft" align="right" valign="top"><a id="ac0d861f648a0e452a276e8ee70e82334" name="ac0d861f648a0e452a276e8ee70e82334"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>receiveGroundTruthOdom</b> (bool flag)</td></tr>
+<tr class="separator:ac0d861f648a0e452a276e8ee70e82334"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f1ecfbaa94d81027a8eb747d4980afb"><td class="memItemLeft" align="right" valign="top"><a id="a1f1ecfbaa94d81027a8eb747d4980afb" name="a1f1ecfbaa94d81027a8eb747d4980afb"></a>
+const bool&#160;</td><td class="memItemRight" valign="bottom"><b>hasRefinedYawEstimate</b> (int i) const</td></tr>
+<tr class="separator:a1f1ecfbaa94d81027a8eb747d4980afb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaeec2f0d663b43bbfe7afd03fc76cd8b"><td class="memItemLeft" align="right" valign="top"><a id="aaeec2f0d663b43bbfe7afd03fc76cd8b" name="aaeec2f0d663b43bbfe7afd03fc76cd8b"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetRefinedYawEstimate</b> (int i, bool flag)</td></tr>
+<tr class="separator:aaeec2f0d663b43bbfe7afd03fc76cd8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67c38936cfa04920f4a04e1d0c82f4da"><td class="memItemLeft" align="right" valign="top"><a id="a67c38936cfa04920f4a04e1d0c82f4da" name="a67c38936cfa04920f4a04e1d0c82f4da"></a>
 const SensorFuser &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getFuser</b> (int mode)</td></tr>
 <tr class="separator:a67c38936cfa04920f4a04e1d0c82f4da"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -309,9 +327,33 @@ boost::shared_ptr&lt; <a class="el" href="classaerial__robot__model_1_1RobotMode
 <tr class="memitem:ae315e596a6be5556c7f87b9ddcb418fc"><td class="memItemLeft" align="right" valign="top"><a id="ae315e596a6be5556c7f87b9ddcb418fc" name="ae315e596a6be5556c7f87b9ddcb418fc"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>tf_prefix_</b></td></tr>
 <tr class="separator:ae315e596a6be5556c7f87b9ddcb418fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a62cbc1cb23715fdbe2ceb415b8dd58"><td class="memItemLeft" align="right" valign="top"><a id="a8a62cbc1cb23715fdbe2ceb415b8dd58" name="a8a62cbc1cb23715fdbe2ceb415b8dd58"></a>
-array&lt; AxisState, State::TOTAL_NUM &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>state_</b></td></tr>
-<tr class="separator:a8a62cbc1cb23715fdbe2ceb415b8dd58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6de0e71a6221b461669c938ef2e6d8c"><td class="memItemLeft" align="right" valign="top"><a id="ab6de0e71a6221b461669c938ef2e6d8c" name="ab6de0e71a6221b461669c938ef2e6d8c"></a>
+std::array&lt; AxisState, 6 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>state_</b></td></tr>
+<tr class="separator:ab6de0e71a6221b461669c938ef2e6d8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a597737f2c6af44d55ae305975f116de0"><td class="memItemLeft" align="right" valign="top"><a id="a597737f2c6af44d55ae305975f116de0" name="a597737f2c6af44d55ae305975f116de0"></a>
+std::array&lt; tf::Matrix3x3, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>base_rots_</b></td></tr>
+<tr class="separator:a597737f2c6af44d55ae305975f116de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d193bb9c265fa0652f72400e7ea7a21"><td class="memItemLeft" align="right" valign="top"><a id="a2d193bb9c265fa0652f72400e7ea7a21" name="a2d193bb9c265fa0652f72400e7ea7a21"></a>
+std::array&lt; tf::Matrix3x3, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>cog_rots_</b></td></tr>
+<tr class="separator:a2d193bb9c265fa0652f72400e7ea7a21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa843d9e9244b854968d3044e950a184f"><td class="memItemLeft" align="right" valign="top"><a id="aa843d9e9244b854968d3044e950a184f" name="aa843d9e9244b854968d3044e950a184f"></a>
+std::array&lt; tf::Vector3, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>base_omegas_</b></td></tr>
+<tr class="separator:aa843d9e9244b854968d3044e950a184f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08b1c4f0f14776006f17e87223b43b07"><td class="memItemLeft" align="right" valign="top"><a id="a08b1c4f0f14776006f17e87223b43b07" name="a08b1c4f0f14776006f17e87223b43b07"></a>
+std::array&lt; tf::Vector3, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>cog_omegas_</b></td></tr>
+<tr class="separator:a08b1c4f0f14776006f17e87223b43b07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ddce04e00e234ba9fceca0f839ff2fe"><td class="memItemLeft" align="right" valign="top"><a id="a7ddce04e00e234ba9fceca0f839ff2fe" name="a7ddce04e00e234ba9fceca0f839ff2fe"></a>
+std::array&lt; int, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>base_rot_status_</b></td></tr>
+<tr class="separator:a7ddce04e00e234ba9fceca0f839ff2fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2b1b1b60fa6824b6d0ed554b226a970"><td class="memItemLeft" align="right" valign="top"><a id="aa2b1b1b60fa6824b6d0ed554b226a970" name="aa2b1b1b60fa6824b6d0ed554b226a970"></a>
+std::array&lt; int, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>cog_rot_status_</b></td></tr>
+<tr class="separator:aa2b1b1b60fa6824b6d0ed554b226a970"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad58aeefe51f866f948f34437e395c7c1"><td class="memItemLeft" align="right" valign="top"><a id="ad58aeefe51f866f948f34437e395c7c1" name="ad58aeefe51f866f948f34437e395c7c1"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>has_groundtruth_odom_</b></td></tr>
+<tr class="separator:ad58aeefe51f866f948f34437e395c7c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a929df66d1388225988a1be4f4b90accb"><td class="memItemLeft" align="right" valign="top"><a id="a929df66d1388225988a1be4f4b90accb" name="a929df66d1388225988a1be4f4b90accb"></a>
+std::map&lt; int, bool &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>has_refined_yaw_estimate_</b></td></tr>
+<tr class="separator:a929df66d1388225988a1be4f4b90accb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19eb34f03e5f4cf0acc9644749df82ba"><td class="memItemLeft" align="right" valign="top"><a id="a19eb34f03e5f4cf0acc9644749df82ba" name="a19eb34f03e5f4cf0acc9644749df82ba"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>qu_size_</b></td></tr>
 <tr class="separator:a19eb34f03e5f4cf0acc9644749df82ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -324,9 +366,6 @@ deque&lt; tf::Matrix3x3 &gt;&#160;</td><td class="memItemRight" valign="bottom">
 <tr class="memitem:a445728b052a0db902baeeb0370ff7be7"><td class="memItemLeft" align="right" valign="top"><a id="a445728b052a0db902baeeb0370ff7be7" name="a445728b052a0db902baeeb0370ff7be7"></a>
 deque&lt; tf::Matrix3x3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>rot_ex_qu_</b></td></tr>
 <tr class="separator:a445728b052a0db902baeeb0370ff7be7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad19136b417624c60fc1bd06893aae5ec"><td class="memItemLeft" align="right" valign="top"><a id="ad19136b417624c60fc1bd06893aae5ec" name="ad19136b417624c60fc1bd06893aae5ec"></a>
-deque&lt; tf::Matrix3x3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>rot_gt_qu_</b></td></tr>
-<tr class="separator:ad19136b417624c60fc1bd06893aae5ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af46cf97452b3081fbe745f9f2fd68c7a"><td class="memItemLeft" align="right" valign="top"><a id="af46cf97452b3081fbe745f9f2fd68c7a" name="af46cf97452b3081fbe745f9f2fd68c7a"></a>
 deque&lt; tf::Vector3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>omega_qu_</b></td></tr>
 <tr class="separator:af46cf97452b3081fbe745f9f2fd68c7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -336,9 +375,9 @@ boost::shared_ptr&lt; pluginlib::ClassLoader&lt; kf_plugin::KalmanFilter &gt; &g
 <tr class="memitem:a25b0d354679c42329402a6e5b0c3a689"><td class="memItemLeft" align="right" valign="top"><a id="a25b0d354679c42329402a6e5b0c3a689" name="a25b0d354679c42329402a6e5b0c3a689"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>sensor_fusion_flag_</b></td></tr>
 <tr class="separator:a25b0d354679c42329402a6e5b0c3a689"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a676a2e1860f706ca4f9d3e84864dc261"><td class="memItemLeft" align="right" valign="top"><a id="a676a2e1860f706ca4f9d3e84864dc261" name="a676a2e1860f706ca4f9d3e84864dc261"></a>
-array&lt; SensorFuser, 2 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>fuser_</b></td></tr>
-<tr class="separator:a676a2e1860f706ca4f9d3e84864dc261"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4efa63ea6de92964473cdfb4ea480a9d"><td class="memItemLeft" align="right" valign="top"><a id="a4efa63ea6de92964473cdfb4ea480a9d" name="a4efa63ea6de92964473cdfb4ea480a9d"></a>
+std::array&lt; SensorFuser, 2 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>fuser_</b></td></tr>
+<tr class="separator:a4efa63ea6de92964473cdfb4ea480a9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a610cd46c569ccbeb22ebd696fd6da111"><td class="memItemLeft" align="right" valign="top"><a id="a610cd46c569ccbeb22ebd696fd6da111" name="a610cd46c569ccbeb22ebd696fd6da111"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>unhealth_level_</b></td></tr>
 <tr class="separator:a610cd46c569ccbeb22ebd696fd6da111"><td class="memSeparator" colspan="2">&#160;</td></tr>

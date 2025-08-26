@@ -1,0 +1,5 @@
+<map id="DynamixelSerial" name="DynamixelSerial">
+<area shape="rect" id="node1" title=" " alt="" coords="5,168,135,193"/>
+<area shape="rect" id="node2" href="$classServoBase.html" title=" " alt="" coords="25,93,115,119"/>
+<area shape="rect" id="node3" href="$classMagEncoder.html" title=" " alt="" coords="19,5,121,31"/>
+</map>

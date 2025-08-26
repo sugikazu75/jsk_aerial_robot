@@ -1,0 +1,14 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,205,108,230"/>
+<area shape="rect" id="node2" href="$classaerial__robot__base_1_1state__machine_1_1BaseState.html" title=" " alt="" coords="156,197,331,237"/>
+<area shape="rect" id="node3" href="$classaerial__robot__base_1_1state__machine_1_1CircleTrajectory.html" title=" " alt="" coords="399,5,589,45"/>
+<area shape="rect" id="node4" href="$classaerial__robot__base_1_1state__machine_1_1FormCheck.html" title=" " alt="" coords="407,69,581,109"/>
+<area shape="rect" id="node5" href="$classaerial__robot__base_1_1state__machine_1_1SingleCommandState.html" title=" " alt="" coords="379,133,609,173"/>
+<area shape="rect" id="node9" href="$classaerial__robot__base_1_1state__machine_1_1Start.html" title=" " alt="" coords="407,197,581,237"/>
+<area shape="rect" id="node10" href="$classaerial__robot__base_1_1state__machine_1_1Transform.html" title=" " alt="" coords="407,261,581,301"/>
+<area shape="rect" id="node11" href="$classaerial__robot__base_1_1state__machine_1_1TransformWithPose.html" title=" " alt="" coords="387,325,601,365"/>
+<area shape="rect" id="node12" href="$classaerial__robot__base_1_1state__machine_1_1WayPoint.html" title=" " alt="" coords="407,389,581,429"/>
+<area shape="rect" id="node6" href="$classaerial__robot__base_1_1state__machine_1_1Arm.html" title=" " alt="" coords="657,69,832,109"/>
+<area shape="rect" id="node7" href="$classaerial__robot__base_1_1state__machine_1_1Land.html" title=" " alt="" coords="657,133,832,173"/>
+<area shape="rect" id="node8" href="$classaerial__robot__base_1_1state__machine_1_1Takeoff.html" title=" " alt="" coords="657,197,832,237"/>
+</map>

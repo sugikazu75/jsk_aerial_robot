@@ -98,9 +98,9 @@ Collaboration diagram for CANServo:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a8cbf35f4471c9044a251d1b98828fdaa"><td class="memItemLeft" align="right" valign="top"><a id="a8cbf35f4471c9044a251d1b98828fdaa" name="a8cbf35f4471c9044a251d1b98828fdaa"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>CANServo</b> (uint8_t slave_id, unsigned int servo_num, bool dynamixel_ttl_rs485_mixed)</td></tr>
-<tr class="separator:a8cbf35f4471c9044a251d1b98828fdaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e9262195b4560cdaa31e6df2fcf2607"><td class="memItemLeft" align="right" valign="top"><a id="a5e9262195b4560cdaa31e6df2fcf2607" name="a5e9262195b4560cdaa31e6df2fcf2607"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>CANServo</b> (uint8_t slave_id, unsigned int servo_num, bool dynamixel_ttl_rs485_mixed, uint16_t thresh)</td></tr>
+<tr class="separator:a5e9262195b4560cdaa31e6df2fcf2607"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81521f444b55d744a603fd9ecd8555d4"><td class="memItemLeft" align="right" valign="top"><a id="a81521f444b55d744a603fd9ecd8555d4" name="a81521f444b55d744a603fd9ecd8555d4"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setServoNum</b> (unsigned int servo_num)</td></tr>
 <tr class="separator:a81521f444b55d744a603fd9ecd8555d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -117,6 +117,12 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>getDynamixelTTLRS485M
 <tr class="memitem:ac4f06ac2a2af5073f3025044168ad682"><td class="memItemLeft" align="right" valign="top"><a id="ac4f06ac2a2af5073f3025044168ad682" name="ac4f06ac2a2af5073f3025044168ad682"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setDynamixelTTLRS485Mixed</b> (bool dynamixel_ttl_rs485_mixed)</td></tr>
 <tr class="separator:ac4f06ac2a2af5073f3025044168ad682"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1061f7bb7e7be4f849a1c76264272aa7"><td class="memItemLeft" align="right" valign="top"><a id="a1061f7bb7e7be4f849a1c76264272aa7" name="a1061f7bb7e7be4f849a1c76264272aa7"></a>
+uint16_t&#160;</td><td class="memItemRight" valign="bottom"><b>getPulleySkipThresh</b> () const</td></tr>
+<tr class="separator:a1061f7bb7e7be4f849a1c76264272aa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70cb878bacf5aa2ad91c0471326f5693"><td class="memItemLeft" align="right" valign="top"><a id="a70cb878bacf5aa2ad91c0471326f5693" name="a70cb878bacf5aa2ad91c0471326f5693"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setPulleySkipThresh</b> (uint16_t value)</td></tr>
+<tr class="separator:a70cb878bacf5aa2ad91c0471326f5693"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classCANDevice"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classCANDevice')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classCANDevice.html">CANDevice</a></td></tr>
 <tr class="memitem:a6a414920103f093f7e4547e864be98d3 inherit pub_methods_classCANDevice"><td class="memItemLeft" align="right" valign="top"><a id="a6a414920103f093f7e4547e864be98d3" name="a6a414920103f093f7e4547e864be98d3"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>CANDevice</b> (uint8_t device_id, uint8_t slave_id)</td></tr>

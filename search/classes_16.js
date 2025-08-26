@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['yaml_0',['Yaml',['../classagi_1_1Yaml.html',1,'agi']]]
+  ['waypoint_0',['WayPoint',['../classaerial__robot__base_1_1state__machine_1_1WayPoint.html',1,'aerial_robot_base::state_machine']]]
 ];

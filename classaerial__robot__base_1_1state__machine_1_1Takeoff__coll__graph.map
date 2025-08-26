@@ -1,0 +1,6 @@
+<map id="aerial_robot_base.state_machine.Takeoff" name="aerial_robot_base.state_machine.Takeoff">
+<area shape="rect" id="node1" title=" " alt="" coords="33,255,208,295"/>
+<area shape="rect" id="node2" href="$classaerial__robot__base_1_1state__machine_1_1SingleCommandState.html" title=" " alt="" coords="5,167,236,207"/>
+<area shape="rect" id="node3" href="$classaerial__robot__base_1_1state__machine_1_1BaseState.html" title=" " alt="" coords="33,79,208,119"/>
+<area shape="rect" id="node4" title=" " alt="" coords="67,5,174,31"/>
+</map>

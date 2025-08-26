@@ -210,6 +210,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>addTargetYaw</b> (flo
 <tr class="memitem:aa34c512fcd64b18424e5f44770546f62"><td class="memItemLeft" align="right" valign="top"><a id="aa34c512fcd64b18424e5f44770546f62" name="aa34c512fcd64b18424e5f44770546f62"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setTargetOmegaZ</b> (float value)</td></tr>
 <tr class="separator:aa34c512fcd64b18424e5f44770546f62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b5f9c7c89d30aa618d4de6698094dab"><td class="memItemLeft" align="right" valign="top"><a id="a7b5f9c7c89d30aa618d4de6698094dab" name="a7b5f9c7c89d30aa618d4de6698094dab"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setTargetRPY</b> (tf::Vector3 value)</td></tr>
+<tr class="separator:a7b5f9c7c89d30aa618d4de6698094dab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c6390479539e4ccfb7f2df84aea91ab"><td class="memItemLeft" align="right" valign="top"><a id="a4c6390479539e4ccfb7f2df84aea91ab" name="a4c6390479539e4ccfb7f2df84aea91ab"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setTargetAngAcc</b> (tf::Vector3 acc)</td></tr>
 <tr class="separator:a4c6390479539e4ccfb7f2df84aea91ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -279,15 +282,15 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getEstimateMode</b
 <tr class="memitem:a8b9bb7efc63f74fb6d251b520ff9e11b"><td class="memItemLeft" align="right" valign="top"><a id="a8b9bb7efc63f74fb6d251b520ff9e11b" name="a8b9bb7efc63f74fb6d251b520ff9e11b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setEstimateMode</b> (uint8_t estimate_mode)</td></tr>
 <tr class="separator:a8b9bb7efc63f74fb6d251b520ff9e11b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9ce39ca3050e1a86ec67e710d88a39f1"><td class="memItemLeft" align="right" valign="top"><a id="a9ce39ca3050e1a86ec67e710d88a39f1" name="a9ce39ca3050e1a86ec67e710d88a39f1"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>generateNewTrajectory</b> (geometry_msgs::PoseStamped pose)</td></tr>
-<tr class="separator:a9ce39ca3050e1a86ec67e710d88a39f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab460c87f91e4ddf1b67049b0d621b68e"><td class="memItemLeft" align="right" valign="top"><a id="ab460c87f91e4ddf1b67049b0d621b68e" name="ab460c87f91e4ddf1b67049b0d621b68e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>generateNewTrajectory</b> (std::vector&lt; geometry_msgs::PoseStamped &gt; path)</td></tr>
+<tr class="separator:ab460c87f91e4ddf1b67049b0d621b68e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a8ea54a169d22f0fb60df5990cfbc5de1"><td class="memItemLeft" align="right" valign="top"><a id="a8ea54a169d22f0fb60df5990cfbc5de1" name="a8ea54a169d22f0fb60df5990cfbc5de1"></a>
+<tr class="memitem:ac1e07baa8474128d69f7136e34adac7e"><td class="memItemLeft" align="right" valign="top"><a id="ac1e07baa8474128d69f7136e34adac7e" name="ac1e07baa8474128d69f7136e34adac7e"></a>
 static const sensor_msgs::Joy&#160;</td><td class="memItemRight" valign="bottom"><b>ps4joyToPs3joyConvert</b> (const sensor_msgs::Joy &amp;ps4_joy_msg)</td></tr>
-<tr class="separator:a8ea54a169d22f0fb60df5990cfbc5de1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:ac1e07baa8474128d69f7136e34adac7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -549,12 +552,15 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a8f6145732d8d7e8d9717d517d553ef4e"><td class="memItemLeft" align="right" valign="top"><a id="a8f6145732d8d7e8d9717d517d553ef4e" name="a8f6145732d8d7e8d9717d517d553ef4e"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>rosParamInit</b> ()</td></tr>
 <tr class="separator:a8f6145732d8d7e8d9717d517d553ef4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6f842fc88e8b6713f1a748a45c2a39d"><td class="memItemLeft" align="right" valign="top"><a id="af6f842fc88e8b6713f1a748a45c2a39d" name="af6f842fc88e8b6713f1a748a45c2a39d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>poseCallback</b> (const geometry_msgs::PoseStampedConstPtr &amp;msg)</td></tr>
-<tr class="separator:af6f842fc88e8b6713f1a748a45c2a39d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae45d6ebab31f693978f6329f91db0ec0"><td class="memItemLeft" align="right" valign="top"><a id="ae45d6ebab31f693978f6329f91db0ec0" name="ae45d6ebab31f693978f6329f91db0ec0"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>simpleMoveBaseGoalCallback</b> (const geometry_msgs::PoseStampedConstPtr &amp;msg)</td></tr>
 <tr class="separator:ae45d6ebab31f693978f6329f91db0ec0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24ad3229c4f5b2ce7b37b354189afb5a"><td class="memItemLeft" align="right" valign="top"><a id="a24ad3229c4f5b2ce7b37b354189afb5a" name="a24ad3229c4f5b2ce7b37b354189afb5a"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>singleGoalCallback</b> (const geometry_msgs::PoseStampedConstPtr &amp;msg)</td></tr>
+<tr class="separator:a24ad3229c4f5b2ce7b37b354189afb5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aceb44730409ee33f37af76aa7b438737"><td class="memItemLeft" align="right" valign="top"><a id="aceb44730409ee33f37af76aa7b438737" name="aceb44730409ee33f37af76aa7b438737"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>pathCallback</b> (const nav_msgs::PathConstPtr &amp;msg)</td></tr>
+<tr class="separator:aceb44730409ee33f37af76aa7b438737"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc1d8b7fa874a313c90af882daf636d5"><td class="memItemLeft" align="right" valign="top"><a id="acc1d8b7fa874a313c90af882daf636d5" name="acc1d8b7fa874a313c90af882daf636d5"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>naviCallback</b> (const aerial_robot_msgs::FlightNavConstPtr &amp;msg)</td></tr>
 <tr class="separator:acc1d8b7fa874a313c90af882daf636d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -579,6 +585,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>motorArming</b> ()</t
 <tr class="memitem:a52bf6d58b8b8aff1932da3aba019b794"><td class="memItemLeft" align="right" valign="top"><a id="a52bf6d58b8b8aff1932da3aba019b794" name="a52bf6d58b8b8aff1932da3aba019b794"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>updateLandCommand</b> ()</td></tr>
 <tr class="separator:a52bf6d58b8b8aff1932da3aba019b794"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace54053962dc5391cde7e92bb6ef8d24"><td class="memItemLeft" align="right" valign="top"><a id="ace54053962dc5391cde7e92bb6ef8d24" name="ace54053962dc5391cde7e92bb6ef8d24"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>updatePoseFromTrajectory</b> ()</td></tr>
+<tr class="separator:ace54053962dc5391cde7e92bb6ef8d24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3208654ca9345b587986b7c80889fab5"><td class="memItemLeft" align="right" valign="top"><a id="a3208654ca9345b587986b7c80889fab5" name="a3208654ca9345b587986b7c80889fab5"></a>
 tf::Vector3&#160;</td><td class="memItemRight" valign="bottom"><b>frameConversion</b> (tf::Vector3 origin_val, tf::Matrix3x3 r)</td></tr>
 <tr class="separator:a3208654ca9345b587986b7c80889fab5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -643,15 +652,21 @@ ros::Publisher&#160;</td><td class="memItemRight" valign="bottom"><b>flight_stat
 <tr class="memitem:ac0a171161afbf993fc16c1743cd72c45"><td class="memItemLeft" align="right" valign="top"><a id="ac0a171161afbf993fc16c1743cd72c45" name="ac0a171161afbf993fc16c1743cd72c45"></a>
 ros::Publisher&#160;</td><td class="memItemRight" valign="bottom"><b>path_pub_</b></td></tr>
 <tr class="separator:ac0a171161afbf993fc16c1743cd72c45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55c86e0b52cdaffed158ecc8b8de2eca"><td class="memItemLeft" align="right" valign="top"><a id="a55c86e0b52cdaffed158ecc8b8de2eca" name="a55c86e0b52cdaffed158ecc8b8de2eca"></a>
+ros::Publisher&#160;</td><td class="memItemRight" valign="bottom"><b>waypoint_pub_</b></td></tr>
+<tr class="separator:a55c86e0b52cdaffed158ecc8b8de2eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab222aa970ebca83a66f341cc8241481a"><td class="memItemLeft" align="right" valign="top"><a id="ab222aa970ebca83a66f341cc8241481a" name="ab222aa970ebca83a66f341cc8241481a"></a>
 ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>navi_sub_</b></td></tr>
 <tr class="separator:ab222aa970ebca83a66f341cc8241481a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77bc274bc335885b8dc83330e2fa327c"><td class="memItemLeft" align="right" valign="top"><a id="a77bc274bc335885b8dc83330e2fa327c" name="a77bc274bc335885b8dc83330e2fa327c"></a>
-ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>pose_sub_</b></td></tr>
-<tr class="separator:a77bc274bc335885b8dc83330e2fa327c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a784a996464e577b8f67059785da0a199"><td class="memItemLeft" align="right" valign="top"><a id="a784a996464e577b8f67059785da0a199" name="a784a996464e577b8f67059785da0a199"></a>
+ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>single_goal_sub_</b></td></tr>
+<tr class="separator:a784a996464e577b8f67059785da0a199"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ca5bf881d239fde6683901ca28d8122"><td class="memItemLeft" align="right" valign="top"><a id="a9ca5bf881d239fde6683901ca28d8122" name="a9ca5bf881d239fde6683901ca28d8122"></a>
 ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>simple_move_base_goal_sub_</b></td></tr>
 <tr class="separator:a9ca5bf881d239fde6683901ca28d8122"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18c04ad309477c1ea750d378664663ef"><td class="memItemLeft" align="right" valign="top"><a id="a18c04ad309477c1ea750d378664663ef" name="a18c04ad309477c1ea750d378664663ef"></a>
+ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>path_sub_</b></td></tr>
+<tr class="separator:a18c04ad309477c1ea750d378664663ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a084535c00025f97ee6728273f43dfde2"><td class="memItemLeft" align="right" valign="top"><a id="a084535c00025f97ee6728273f43dfde2" name="a084535c00025f97ee6728273f43dfde2"></a>
 ros::Subscriber&#160;</td><td class="memItemRight" valign="bottom"><b>battery_sub_</b></td></tr>
 <tr class="separator:a084535c00025f97ee6728273f43dfde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -727,6 +742,12 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>lock_teleop_</b></td>
 <tr class="memitem:a04478ca880b974f5901b14a6e530ea42"><td class="memItemLeft" align="right" valign="top"><a id="a04478ca880b974f5901b14a6e530ea42" name="a04478ca880b974f5901b14a6e530ea42"></a>
 ros::Time&#160;</td><td class="memItemRight" valign="bottom"><b>force_landing_start_time_</b></td></tr>
 <tr class="separator:a04478ca880b974f5901b14a6e530ea42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a616be26dd8b32ec92810c3de6fcb41ea"><td class="memItemLeft" align="right" valign="top"><a id="a616be26dd8b32ec92810c3de6fcb41ea" name="a616be26dd8b32ec92810c3de6fcb41ea"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>takeoff_xy_pos_tolerance_</b></td></tr>
+<tr class="separator:a616be26dd8b32ec92810c3de6fcb41ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaf9a59f7b1f59b7b4f06b8447f09f12"><td class="memItemLeft" align="right" valign="top"><a id="adaf9a59f7b1f59b7b4f06b8447f09f12" name="adaf9a59f7b1f59b7b4f06b8447f09f12"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>takeoff_z_pos_tolerance_</b></td></tr>
+<tr class="separator:adaf9a59f7b1f59b7b4f06b8447f09f12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ecc173124cea698c9af2d50f49c94a4"><td class="memItemLeft" align="right" valign="top"><a id="a0ecc173124cea698c9af2d50f49c94a4" name="a0ecc173124cea698c9af2d50f49c94a4"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>hover_convergent_start_time_</b></td></tr>
 <tr class="separator:a0ecc173124cea698c9af2d50f49c94a4"><td class="memSeparator" colspan="2">&#160;</td></tr>

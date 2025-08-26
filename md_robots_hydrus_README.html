@@ -88,15 +88,15 @@ in Proceedings of The 2017 IEEE/RSJ International Conference on Intelligent Robo
 Aerial Grasping Based on Shape Adaptive Transformation by HALO: Horizontal Plane Transformable Aerial Robot with Closed-Loop Multilinks Structure,
 in Proceedings of The 2018 IEEE International Conference on Robotics and Automation, pp.6990-6996, 2018.
 
-@section autotoc_md11 how to use:
+@section autotoc_md21 how to use:
 
 &lt;strong&gt;note&lt;/strong&gt;: the following instructions are based on hex type robot, we also have quad type robot (chage the var &lt;tt&gt;type&lt;/tt&gt;)
 
-@subsection autotoc_md12 0. calibration:
+@subsection autotoc_md22 0. calibration:
     Calibration is via rosserial between on-board processor and spinal. Please check the wiki.
-@subsection autotoc_md13 1. robot bringup command:
+@subsection autotoc_md23 1. robot bringup command:
 
-@subsubsection autotoc_md14 real machine
+@subsubsection autotoc_md24 real machine
 &lt;strong&gt;note&lt;/strong&gt;: &lt;tt&gt;\${model}&lt;/tt&gt; can be &lt;tt&gt;quad&lt;/tt&gt; or &lt;tt&gt;hex&lt;/tt&gt;. 
 -  egomotion estimation only with on-board sensors:
 @icode 
@@ -107,7 +107,7 @@ $ roslaunch hydrus bringup.launch control_mode:=0 estimate_mode:=0 type:=${model
 $ roslaunch hydrus bringup.launch control_mode:=0 estimate_mode:=1 type:=${model}
 @endicode
 
-@subsubsection autotoc_md15 simulation
+@subsubsection autotoc_md25 simulation
 -  flight control in gazebo:
 @icode 
 $ roslaunch hydrus bringup.launch real_machine:=false simulation:=true headless:=false control_mode:=0 type:=${model}
@@ -121,12 +121,12 @@ $ roslaunch hydrus bringup.launch real_machine:=false simulation:=false headless
 $ roslaunch hydrus bringup.launch real_machine:=true simulation:=true headless:=false type:=${model}
 @endicode
 
-@subsection autotoc_md16 2. tele-operation
+@subsection autotoc_md26 2. tele-operation
    &lt;strong&gt;note&lt;/strong&gt;: after the robot completely transforms to normal form
 
    - &lt;strong&gt;keyboard&lt;/strong&gt;: please check instruction &lt;a href="https://github.com/JSKAerialRobot/aerial_robot/wiki/keyboard_operation" &gt;wiki&lt;/a&gt;
    - &lt;strong&gt;joystick&lt;/strong&gt;: please check instruction &lt;a href="https://github.com/JSKAerialRobot/aerial_robot/wiki/joystick_operation" &gt;wiki</a></p>
-<h2><a class="anchor" id="autotoc_md17"></a>
+<h2><a class="anchor" id="autotoc_md27"></a>
 3. transformation demostration</h2>
 <p><b>note</b>: after the robot completely hovering with the message <code>Hovering!</code></p>
 <ul>

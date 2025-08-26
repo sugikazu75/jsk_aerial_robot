@@ -138,23 +138,21 @@ $(function() {
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  <span class="keyword">private</span>:</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="comment">//private attributes</span></div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    ros::ServiceServer add_extra_module_service_;</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    ros::Subscriber desire_coordinate_sub_;</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    ros::Subscriber joint_state_sub_;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    tf2_ros::TransformBroadcaster br_;</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    tf2_ros::StaticTransformBroadcaster static_br_;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    sensor_msgs::JointState joint_state_;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    ros::NodeHandle nh_;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    ros::NodeHandle nhp_;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    pluginlib::ClassLoader&lt;aerial_robot_model::RobotModel&gt; robot_model_loader_;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    boost::shared_ptr&lt;aerial_robot_model::RobotModel&gt; robot_model_;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    std::string tf_prefix_;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="comment">//private functions</span></div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keywordtype">void</span> jointStateCallback(<span class="keyword">const</span> sensor_msgs::JointStateConstPtr&amp; state);</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keywordtype">bool</span> addExtraModuleCallback(aerial_robot_model::AddExtraModule::Request&amp; req, aerial_robot_model::AddExtraModule::Response&amp; res);</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordtype">void</span> desireCoordinateCallback(<span class="keyword">const</span> spinal::DesireCoordConstPtr&amp; msg);</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  };</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>} <span class="comment">//namespace aerial_robot_model</span></div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    ros::Subscriber joint_state_sub_;</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    tf2_ros::TransformBroadcaster br_;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    tf2_ros::StaticTransformBroadcaster static_br_;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    sensor_msgs::JointState joint_state_;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    ros::NodeHandle nh_;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    ros::NodeHandle nhp_;</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    pluginlib::ClassLoader&lt;aerial_robot_model::RobotModel&gt; robot_model_loader_;</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    boost::shared_ptr&lt;aerial_robot_model::RobotModel&gt; robot_model_;</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    std::string tf_prefix_;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    <span class="comment">//private functions</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="keywordtype">void</span> jointStateCallback(<span class="keyword">const</span> sensor_msgs::JointStateConstPtr&amp; state);</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keywordtype">bool</span> addExtraModuleCallback(aerial_robot_model::AddExtraModule::Request&amp; req, aerial_robot_model::AddExtraModule::Response&amp; res);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  };</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>} <span class="comment">//namespace aerial_robot_model</span></div>
 <div class="ttc" id="aclassaerial__robot__model_1_1RobotModelRos_html"><div class="ttname"><a href="classaerial__robot__model_1_1RobotModelRos.html">aerial_robot_model::RobotModelRos</a></div><div class="ttdef"><b>Definition:</b> aerial_robot_model_ros.h:50</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

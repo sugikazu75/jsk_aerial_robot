@@ -111,6 +111,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>update</b> ()</td></t
 <tr class="separator:a399fd92f5e76b83a1ead2684d7a92743"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a71e53b4858e46a484676234b83c67379"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classServo.html#a71e53b4858e46a484676234b83c67379">receiveDataCallback</a> (uint8_t message_id, uint32_t DLC, uint8_t *data) override</td></tr>
 <tr class="separator:a71e53b4858e46a484676234b83c67379"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d048814f3f5d84ae864efa0372f96a2"><td class="memItemLeft" align="right" valign="top"><a id="a9d048814f3f5d84ae864efa0372f96a2" name="a9d048814f3f5d84ae864efa0372f96a2"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>getConnect</b> ()</td></tr>
+<tr class="separator:a9d048814f3f5d84ae864efa0372f96a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e40a699ee0a7afdc9f3e191ad4a5e6f"><td class="memItemLeft" align="right" valign="top"><a id="a8e40a699ee0a7afdc9f3e191ad4a5e6f" name="a8e40a699ee0a7afdc9f3e191ad4a5e6f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setConnect</b> (bool connect)</td></tr>
+<tr class="separator:a8e40a699ee0a7afdc9f3e191ad4a5e6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe014a7e44dfaf52a85352885284ded2"><td class="memItemLeft" align="right" valign="top"><a id="afe014a7e44dfaf52a85352885284ded2" name="afe014a7e44dfaf52a85352885284ded2"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getId</b> () const</td></tr>
 <tr class="separator:afe014a7e44dfaf52a85352885284ded2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -159,15 +165,21 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getMoving</b> () c
 <tr class="memitem:a5c1362282eaef61f878c03ebdfb905e6"><td class="memItemLeft" align="right" valign="top"><a id="a5c1362282eaef61f878c03ebdfb905e6" name="a5c1362282eaef61f878c03ebdfb905e6"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getError</b> () const</td></tr>
 <tr class="separator:a5c1362282eaef61f878c03ebdfb905e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e0309c9a758553152842c9ee71df30d"><td class="memItemLeft" align="right" valign="top"><a id="a0e0309c9a758553152842c9ee71df30d" name="a0e0309c9a758553152842c9ee71df30d"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>getTorqueEnable</b> ()</td></tr>
-<tr class="separator:a0e0309c9a758553152842c9ee71df30d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a153b16405e16db9388686867c0f893f0"><td class="memItemLeft" align="right" valign="top"><a id="a153b16405e16db9388686867c0f893f0" name="a153b16405e16db9388686867c0f893f0"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>getTorqueEnable</b> () const</td></tr>
+<tr class="separator:a153b16405e16db9388686867c0f893f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a027491b10ee6719cfbbbc0ccbd33a5a4"><td class="memItemLeft" align="right" valign="top"><a id="a027491b10ee6719cfbbbc0ccbd33a5a4" name="a027491b10ee6719cfbbbc0ccbd33a5a4"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>getForceServoOffFlag</b> () const</td></tr>
+<tr class="separator:a027491b10ee6719cfbbbc0ccbd33a5a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b318f3ef912f762ecf75af1ae9d7b7d"><td class="memItemLeft" align="right" valign="top"><a id="a0b318f3ef912f762ecf75af1ae9d7b7d" name="a0b318f3ef912f762ecf75af1ae9d7b7d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setIndex</b> (uint8_t index)</td></tr>
 <tr class="separator:a0b318f3ef912f762ecf75af1ae9d7b7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6b58c0bf0ba7b28941820634dbd932a"><td class="memItemLeft" align="right" valign="top"><a id="aa6b58c0bf0ba7b28941820634dbd932a" name="aa6b58c0bf0ba7b28941820634dbd932a"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setGoalPosition</b> (int16_t goal_position)</td></tr>
 <tr class="separator:aa6b58c0bf0ba7b28941820634dbd932a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd08362949a664f38ac58d8fe86f7843"><td class="memItemLeft" align="right" valign="top"><a id="abd08362949a664f38ac58d8fe86f7843" name="abd08362949a664f38ac58d8fe86f7843"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setGoalCurrent</b> (int16_t goal_current)</td></tr>
+<tr class="separator:abd08362949a664f38ac58d8fe86f7843"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0921c49576e5d6496df224c43612bed"><td class="memItemLeft" align="right" valign="top"><a id="ad0921c49576e5d6496df224c43612bed" name="ad0921c49576e5d6496df224c43612bed"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setTorqueEnable</b> (bool torque_enable)</td></tr>
 <tr class="separator:ad0921c49576e5d6496df224c43612bed"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -304,7 +316,7 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>m_slave_id</b></td
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>aerial_robot_nerve/neuron/neuronlib/Servo/<a class="el" href="servo_8h_source.html">servo.h</a></li>
+<li>aerial_robot_nerve/neuron/neuronlib/Servo/<a class="el" href="neuron_2neuronlib_2Servo_2servo_8h_source.html">servo.h</a></li>
 <li>aerial_robot_nerve/spinal/mcu_project/lib/Hydrus_Lib/CANDevice/servo/<a class="el" href="can__servo_8h_source.html">can_servo.h</a></li>
 <li>aerial_robot_nerve/neuron/neuronlib/Servo/servo.cpp</li>
 <li>aerial_robot_nerve/spinal/mcu_project/lib/Hydrus_Lib/CANDevice/servo/can_servo.cpp</li>

@@ -6,6 +6,7 @@ var searchData=
   ['alt_3',['Alt',['../classsensor__plugin_1_1Alt.html',1,'sensor_plugin']]],
   ['altitudeestimate_4',['AltitudeEstimate',['../classAltitudeEstimate.html',1,'']]],
   ['ap_5',['ap',['../namespaceap.html',1,'']]],
-  ['attitudecontroller_6',['AttitudeController',['../classAttitudeController.html',1,'']]],
-  ['attitudeestimate_7',['AttitudeEstimate',['../classAttitudeEstimate.html',1,'']]]
+  ['arm_6',['Arm',['../classaerial__robot__base_1_1state__machine_1_1Arm.html',1,'aerial_robot_base::state_machine']]],
+  ['attitudecontroller_7',['AttitudeController',['../classAttitudeController.html',1,'']]],
+  ['attitudeestimate_8',['AttitudeEstimate',['../classAttitudeEstimate.html',1,'']]]
 ];
