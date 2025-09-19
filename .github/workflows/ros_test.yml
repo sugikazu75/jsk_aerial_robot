@@ -13,7 +13,10 @@ jobs:
             ROS_DISTRO : noetic
             DOCKER_IMAGE : ubuntu:focal
           - runs-on: ubuntu-latest
-            ROS_DISTRO : one
+            ROS_DISTRO : one-v4hn
+            DOCKER_IMAGE : ubuntu:jammy
+          - runs-on: ubuntu-latest
+            ROS_DISTRO : one-techfak
             DOCKER_IMAGE : ubuntu:jammy
           - runs-on: ubuntu-22.04-arm
             ROS_DISTRO : noetic
