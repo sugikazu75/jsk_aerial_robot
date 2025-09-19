@@ -48,4 +48,7 @@ if [ "$DISTRO" = "jammy" ] && [ "$1" = "1" ]; then
 
     # Install packages, e.g. ROS desktop
     sudo apt install -y ros-one-desktop
+
+    sudo apt install -y python3-wstool
+    pip3 install -U catkin_tools
 fi
