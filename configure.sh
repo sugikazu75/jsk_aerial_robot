@@ -50,5 +50,6 @@ if [ "$DISTRO" = "jammy" ] && [ "$1" = "1" ]; then
     sudo apt install -y ros-one-desktop
 
     sudo apt install -y python3-wstool
+    sudo apt install -y python3-pip
     pip3 install -U catkin_tools
 fi
