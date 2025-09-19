@@ -10,8 +10,10 @@ echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
 # Install ROS
 if [[ "$ROS_DISTRO" ==  "one-v4hn" ]]; then
     ${CI_SOURCE_PATH}/configure.sh 0
+    export ROS_DISTRO=one
 elif [[ "$ROS_DISTRO" ==  "one-techfak" ]]; then
     ${CI_SOURCE_PATH}/configure.sh 1
+    export ROS_DISTRO=one
 else
     sudo sh -c "echo \"deb ${REPOSITORY} `lsb_release -cs` main\" > /etc/apt/sources.list.d/ros-latest.list"
     curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
