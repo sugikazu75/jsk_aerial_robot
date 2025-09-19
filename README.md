@@ -23,7 +23,6 @@ sudo rosdep init
 rosdep update --include-eol-distros
 wstool init src
 wstool set -u -t src jsk_aerial_robot http://github.com/jsk-ros-pkg/jsk_aerial_robot --git
-./src/jsk_aerial_robot/configure.sh # for configuration especially for ros-o in jammy
 wstool merge -t src src/jsk_aerial_robot/aerial_robot_${ROS_DISTRO}.rosinstall
 wstool update -t src
 rosdep install -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
@@ -38,7 +37,7 @@ mkdir -p ~/ros/jsk_aerial_robot_ws/src
 cd ~/ros/jsk_aerial_robot_ws
 wstool init src
 wstool set -u -t src jsk_aerial_robot http://github.com/jsk-ros-pkg/jsk_aerial_robot --git
-./src/jsk_aerial_robot/configure.sh # for configuration especially for ros-o in jammy
+./src/jsk_aerial_robot/configure.sh 0 # for configuration especially for ros-o in jammy. In this process, ROS-O is installed from https://github.com/v4hn/ros-o-builder. The other option is from https://ros.packages.techfak.net/ by changing "0" to "1"
 source /opt/ros/one/setup.bash
 wstool merge -t src src/jsk_aerial_robot/aerial_robot_${ROS_DISTRO}.rosinstall
 wstool update -t src
