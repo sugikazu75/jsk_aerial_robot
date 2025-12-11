@@ -31,10 +31,13 @@ namespace Spine
     FlightControl* controller_;
 
     /* ros */
+    constexpr uint8_t ENCODER_PUB_INTERVAL = 20; //[ms]
     constexpr uint8_t SERVO_PUB_INTERVAL = 20; //[ms]
     constexpr uint32_t SERVO_TORQUE_PUB_INTERVAL = 1000; //[ms]
+    spinal::ServoStates encoder_msg_;
     spinal::ServoStates servo_state_msg_;
     spinal::ServoTorqueStates servo_torque_state_msg_;
+    ros::Publisher encoder_pub_("encoder/angles", &encoder_msg_);
     ros::Publisher servo_state_pub_("servo/states", &servo_state_msg_);
     // merge torque_states to states
     ros::Publisher servo_torque_state_pub_("servo/torque_states", &servo_torque_state_msg_);
@@ -52,6 +55,7 @@ namespace Spine
     spinal::GetBoardInfo::Response board_info_res_;
 
     ros::NodeHandle* nh_;
+    uint32_t encoder_last_pub_time_ = 10; // offset to level publish rate with servo
     uint32_t servo_last_pub_time_ = 0;
     uint32_t servo_torque_last_pub_time_ = 0;
     unsigned int can_idle_count_ = 0;
@@ -145,6 +149,22 @@ namespace Spine
     /* Control */
     controller_ = controller;
 
+    /* ros */
+    nh_ = nh;
+    nh_->advertise(encoder_pub_);
+    nh_->advertise(servo_state_pub_);
+    nh_->advertise(servo_torque_state_pub_);
+#if SEND_GYRO
+    nh_->advertise(gyro_pub_);
+#endif
+
+    nh_->subscribe(servo_position_sub_);
+    nh_->subscribe(servo_current_sub_);
+    nh_->subscribe(servo_torque_ctrl_sub_);
+
+    nh_->advertiseService(board_info_srv_);
+    nh_->advertiseService(board_config_srv_);
+
     HAL_Delay(5000); //wait neuron initialization
     CANDeviceManager::addDevice(can_initializer_);
     CANDeviceManager::CAN_START();
@@ -159,6 +179,7 @@ namespace Spine
       can_motor_send_device_.addMotor(neuron_.at(i).can_motor_);
       CANDeviceManager::addDevice(neuron_.at(i).can_imu_);
       CANDeviceManager::addDevice(neuron_.at(i).can_servo_);
+      CANDeviceManager::addDevice(neuron_.at(i).can_encoder_);
       for (unsigned int j = 0; j < neuron_.at(i).can_servo_.servo_.size(); j++) {
         neuron_.at(i).can_servo_.servo_.at(j).setIndex(servo_.size());
         servo_.push_back(neuron_.at(i).can_servo_.servo_.at(j));
@@ -201,10 +222,15 @@ namespace Spine
         uav_model_ = spinal::UavInfo::DRAGON;
       }
 
+<<<<<<< HEAD
     /* update controller */
     controller_->setUavModel(uav_model_);
     controller_->setMotorNumber(slave_num_);
 
+=======
+    encoder_msg_.servos_length = slave_num_;
+    encoder_msg_.servos = new spinal::ServoState[slave_num_];
+>>>>>>> d5e30c07 ([spinal] enable to receive and publish data of encoder connected to neuron)
     servo_state_msg_.servos_length = servo_with_send_flag_.size();
     servo_state_msg_.servos = new spinal::ServoState[servo_with_send_flag_.size()];
     servo_torque_state_msg_.torque_enable_length = servo_num_;
@@ -277,6 +303,28 @@ namespace Spine
 
     /* ros publish */
     servoPublish();
+
+    uint32_t now_time = HAL_GetTick();
+    if( now_time - encoder_last_pub_time_ >= ENCODER_PUB_INTERVAL)
+      {
+        /* send encoder */
+        encoder_msg_.stamp = nh_->now();
+        for (unsigned int i = 0; i < slave_num_; i++)
+          {
+            spinal::ServoState encoder;
+
+            encoder.index = i;
+            encoder.angle = neuron_.at(i).can_encoder_.getValue();
+            encoder.temp = 0;
+            encoder.load = neuron_.at(i).can_encoder_.getRawValue();
+            encoder.error = 0;
+
+            encoder_msg_.servos[i] = encoder;
+          }
+
+        encoder_pub_.publish(&encoder_msg_);
+        encoder_last_pub_time_ = now_time;
+      }
 
     CANDeviceManager::tick(1);
 
