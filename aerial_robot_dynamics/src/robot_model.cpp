@@ -36,6 +36,10 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
     model_->upperPositionLimit.segment<4>(3).setConstant(1.0);   // quaternion
   }
 
+  // create zero gravity model
+  zero_gravity_model_ = std::make_shared<pinocchio::Model>(*model_);
+  zero_gravity_model_->gravity.setZero();
+
   // Initialize the data structure
   data_ = std::make_shared<pinocchio::Data>(*model_);
 
@@ -46,6 +50,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
 
   // initialize robot model with neutral configuration
   Eigen::VectorXd q = Eigen::VectorXd::Zero(model_->nq);
+  pinocchio::computeAllTerms(*model_, *data_, q, Eigen::VectorXd::Zero(model_->nv));
   pinocchio::framesForwardKinematics(*model_, *data_, q);
 
   // Parse the URDF string to xml
@@ -488,16 +493,12 @@ Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustDerivative(const Eigen
 Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivative(const Eigen::VectorXd& q,
                                                                       const Eigen::VectorXd& thrust)
 {
-  // Generalized gravity derivative w.r.t q
-  Eigen::MatrixXd gravity_partial_q = Eigen::MatrixXd::Zero(model_->nv, model_->nv);
-  pinocchio::computeGeneralizedGravityDerivatives(*model_, *data_, q, gravity_partial_q);
-
   // Compute RNEA derivatives with external forces
   pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
-  pinocchio::computeRNEADerivatives(*model_, *data_, q, Eigen::VectorXd::Zero(model_->nv),
+  pinocchio::computeRNEADerivatives(*zero_gravity_model_, *data_, q, Eigen::VectorXd::Zero(model_->nv),
                                     Eigen::VectorXd::Zero(model_->nv), fext);
 
-  return gravity_partial_q - data_->dtau_dq;
+  return -data_->dtau_dq;
 }
 
 pinocchio::container::aligned_vector<pinocchio::Force>
