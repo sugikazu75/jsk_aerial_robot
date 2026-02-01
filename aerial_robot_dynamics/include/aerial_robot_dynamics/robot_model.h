@@ -111,6 +111,7 @@ public:
 private:
   urdf::Model urdf_;
   std::shared_ptr<pinocchio::Model> model_;
+  std::shared_ptr<pinocchio::Model> zero_gravity_model_;
   std::shared_ptr<pinocchio::Data> data_;
   std::vector<std::string> rotor_names_;
   std::vector<pinocchio::SE3> joint_M_rotors_;
