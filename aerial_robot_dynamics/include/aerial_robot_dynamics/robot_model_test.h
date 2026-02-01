@@ -19,6 +19,7 @@ public:
   bool inverseDynamicsDerivativesTest(bool verbose = false);
   bool computeTauExtByThrustDerivativeQDerivativesTest(bool verbose = false);
   bool computeTauExtByThrustQDerivativeTest(bool verbose = false);
+  bool computeTauExtByThrustQDerivativeComparisonTest(bool verbose = false);
 
 private:
   std::shared_ptr<PinocchioRobotModel> robot_model_;

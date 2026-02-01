@@ -24,6 +24,9 @@ int main(int argc, char** argv)
   aerial_robot_dynamics::PinocchioRobotModelTest robot_model_test(is_floating_base);
 
   // Test the robot model
+  std::cout << "verbose: " << verbose << std::endl;
+  std::cout << "is_floating_base: " << is_floating_base << std::endl;
+
   // FD with thrust and its test
   for (int i = 0; i < 3; i++)
   {
@@ -78,6 +81,17 @@ int main(int argc, char** argv)
     std::cout << "-------------------------" << std::endl;
     bool tauext_by_thrust_q_derivative_test = robot_model_test.computeTauExtByThrustQDerivativeTest(verbose);
     std::cout << "computeTauExtByThrustQDerivativeTest: " << tauext_by_thrust_q_derivative_test << std::endl;
+    std::cout << "-------------------------" << std::endl;
+    std::cout << std::endl;
+  }
+
+  for (int i = 0; i < 3; i++)
+  {
+    std::cout << "-------------------------" << std::endl;
+    bool tauext_by_thrust_q_derivative_comparison_test =
+        robot_model_test.computeTauExtByThrustQDerivativeComparisonTest(verbose);
+    std::cout << "computeTauExtByThrustQDerivativeComparisonTest: " << tauext_by_thrust_q_derivative_comparison_test
+              << std::endl;
     std::cout << "-------------------------" << std::endl;
     std::cout << std::endl;
   }
