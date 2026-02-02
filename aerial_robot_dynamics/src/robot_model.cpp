@@ -545,9 +545,9 @@ Eigen::VectorXd PinocchioRobotModel::getResetConfiguration()
   Eigen::VectorXd q = Eigen::VectorXd::Zero(model_->nq);
   if (is_floating_base_)
     q(6) = 1;
-  q(model_->joints[model_->getJointId("joint1_yaw")].idx_q()) = M_PI / 2.0;
-  q(model_->joints[model_->getJointId("joint2_yaw")].idx_q()) = M_PI / 2.0;
-  q(model_->joints[model_->getJointId("joint3_yaw")].idx_q()) = M_PI / 2.0;
+
+  for (int i = 1; i < getRotorNum(); i++)
+    q(model_->joints[model_->getJointId("joint" + std::to_string(i) + "_yaw")].idx_q()) = 2.0 * M_PI / getRotorNum();
 
   return q;
 }

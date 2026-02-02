@@ -1,4 +1,8 @@
 <robot name="test_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="link_num" default="4"/>
+  <xacro:property name="link_num" value="$(arg link_num)"/>
+
   <link name="root">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -124,9 +128,18 @@
 
   </xacro:macro>
 
-  <xacro:link self="1" child="2"/>
-  <xacro:link self="2" child="3"/>
-  <xacro:link self="3" child="4"/>
-  <xacro:link self="4" child="4"/>
+  <xacro:macro name="loop_links" params="current total">
+    <xacro:if value="${current == total}">
+      <xacro:link self="${current}" child="${current}"/>
+    </xacro:if>
+
+    <xacro:unless value="${current == total}">
+      <xacro:link self="${current}" child="${current + 1}"/>
+      <xacro:loop_links current="${current + 1}" total="${total}"/>
+    </xacro:unless>
+
+  </xacro:macro>
+
+  <xacro:loop_links current="1" total="${link_num}"/>
 
 </robot>
