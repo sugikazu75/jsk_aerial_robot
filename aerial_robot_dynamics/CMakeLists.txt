@@ -24,6 +24,7 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -DNDEBUG")
 
 option(BUILD_TEST "Build Test Code" ON)
+option(BUILD_BENCH "Build Benchmark Code" OFF)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -70,6 +71,30 @@ if(BUILD_TEST)
     ${catkin_LIBRARIES}
     ${OsqpEigen_LIBRARIES}
     ${pinocchio_LIBRARIES}
+    )
+endif()
+
+if(BUILD_BENCH)
+  find_package(benchmark REQUIRED)
+
+  add_executable(tauext_partial_q_derivative_hessian_benchmark
+    src/benchmark/tauext_partial_q_derivative_hessian_benchmark.cpp)
+  target_link_libraries(tauext_partial_q_derivative_hessian_benchmark
+    robot_model
+    ${catkin_LIBRARIES}
+    ${OsqpEigen_LIBRARIES}
+    ${pinocchio_LIBRARIES}
+    benchmark::benchmark
+    )
+
+  add_executable(tauext_partial_q_derivative_rnea_benchmark
+    src/benchmark/tauext_partial_q_derivative_rnea_benchmark.cpp)
+  target_link_libraries(tauext_partial_q_derivative_rnea_benchmark
+    robot_model
+    ${catkin_LIBRARIES}
+    ${OsqpEigen_LIBRARIES}
+    ${pinocchio_LIBRARIES}
+    benchmark::benchmark
     )
 endif()
 

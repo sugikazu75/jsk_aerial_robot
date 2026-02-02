@@ -400,6 +400,7 @@ std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativ
                                                                Eigen::MatrixXd::Zero(model_->nv, rotor_num_));
 
   pinocchio::computeJointKinematicHessians(*model_, *data_, q);
+  Eigen::Tensor<double, 3> rotor_i_parent_joint_hessian(6, model_->nv, model_->nv);
   for (int i = 0; i < rotor_num_; i++)
   {
     // get rotor joint index
@@ -408,7 +409,6 @@ std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativ
     pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
 
     // get rotor joint kinematic hessian
-    Eigen::Tensor<double, 3> rotor_i_parent_joint_hessian(6, model_->nv, model_->nv);
     rotor_i_parent_joint_hessian.setZero();
     pinocchio::getJointKinematicHessian(*model_, *data_, rotor_parent_joint_index, pinocchio::LOCAL,
                                         rotor_i_parent_joint_hessian);  // 6 * nv * nv
@@ -545,9 +545,9 @@ Eigen::VectorXd PinocchioRobotModel::getResetConfiguration()
   Eigen::VectorXd q = Eigen::VectorXd::Zero(model_->nq);
   if (is_floating_base_)
     q(6) = 1;
-  q(model_->joints[model_->getJointId("joint1_yaw")].idx_q()) = M_PI / 2.0;
-  q(model_->joints[model_->getJointId("joint2_yaw")].idx_q()) = M_PI / 2.0;
-  q(model_->joints[model_->getJointId("joint3_yaw")].idx_q()) = M_PI / 2.0;
+
+  for (int i = 1; i < getRotorNum(); i++)
+    q(model_->joints[model_->getJointId("joint" + std::to_string(i) + "_yaw")].idx_q()) = 2.0 * M_PI / getRotorNum();
 
   return q;
 }
