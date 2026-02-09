@@ -96,6 +96,16 @@ if(BUILD_BENCH)
     ${pinocchio_LIBRARIES}
     benchmark::benchmark
     )
+
+  add_executable(tauext_partial_q_derivative_numerical_benchmark
+    src/benchmark/tauext_partial_q_derivative_numerical_benchmark.cpp)
+  target_link_libraries(tauext_partial_q_derivative_numerical_benchmark
+    robot_model
+    ${catkin_LIBRARIES}
+    ${OsqpEigen_LIBRARIES}
+    ${pinocchio_LIBRARIES}
+    benchmark::benchmark
+    )
 endif()
 
 install(DIRECTORY launch scripts
