@@ -1,6 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <robot name="gimbalrotor" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  
+
+  <xacro:include filename="$(find gimbalrotor)/urdf/grape/common.xacro"/>
+
   <link name="root">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -239,8 +241,46 @@
     <!-- </collision> -->
   </link>
 
+  <link name="rotor_arm1">
+    <xacro:virtual_inertial/>
+  </link>
+  <link name="rotor_arm2">
+    <xacro:virtual_inertial/>
+  </link>
+  <link name="rotor_arm3">
+    <xacro:virtual_inertial/>
+  </link>
+  <link name="rotor_arm4">
+    <xacro:virtual_inertial/>
+  </link>
+
+  <joint name="rotor_arm1_joint" type="fixed">
+    <parent link="main_body"/>
+    <child link="rotor_arm1"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="-0.22309 -0.22309 0.0" rpy="0.0 -0.0 -2.3562"/>
+  </joint>
+  <joint name="rotor_arm2_joint" type="fixed">
+    <parent link="main_body"/>
+    <child link="rotor_arm2"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.22309 -0.22309 0.0" rpy="-0.0 -0.0 -0.7854000000000001"/>
+  </joint>
+  <joint name="rotor_arm3_joint" type="fixed">
+    <parent link="main_body"/>
+    <child link="rotor_arm3"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.22309 0.22309 0.0" rpy="0.0 -0.0 0.7854000000000001"/>
+  </joint>
+  <joint name="rotor_arm4_joint" type="fixed">
+    <parent link="main_body"/>
+    <child link="rotor_arm4"/>
+    <axis xyz="0 0 1"/>
+    <origin xyz="-0.22309 0.22309 0.0" rpy="0.0 -0.0 2.3562"/>
+  </joint>
+
   <joint name="gimbal1" type="revolute">
-    <limit effort="0.0" velocity="0.0" lower="-3.14" upper="3.14"/>
+    <limit effort="5.0" velocity="10.0" lower="-3.14" upper="3.14"/>
     <parent link="main_body"/>
     <child link="gimbal1_link"/>
     <axis xyz="1. 0. 0."/>
@@ -248,7 +288,7 @@
   </joint>
 
   <joint name="rotor1" type="continuous">
-    <limit effort="0.0" velocity="0.0"/>
+    <limit effort="0.0" velocity="0.0" lower="0.0" upper="30.0"/>
     <parent link="gimbal1_link"/>
     <child link="thrust1"/>
     <axis xyz=" 0.  0. -1."/>
@@ -256,7 +296,7 @@
   </joint>
 
   <joint name="gimbal2" type="revolute">
-    <limit effort="0.0" velocity="0.0" lower="-3.14" upper="3.14"/>
+    <limit effort="5.0" velocity="10.0" lower="-3.14" upper="3.14"/>
     <parent link="main_body"/>
     <child link="gimbal2_link"/>
     <axis xyz="1. 0. 0."/>
@@ -264,7 +304,7 @@
   </joint>
 
   <joint name="rotor2" type="continuous">
-    <limit effort="0.0" velocity="0.0"/>
+    <limit effort="0.0" velocity="0.0" lower="0.0" upper="30.0"/>
     <parent link="gimbal2_link"/>
     <child link="thrust2"/>
     <axis xyz="0. 0. 1."/>
@@ -272,7 +312,7 @@
   </joint>
 
   <joint name="gimbal3" type="revolute">
-    <limit effort="0.0" velocity="0.0" lower="-3.14" upper="3.14"/>
+    <limit effort="5.0" velocity="10.0" lower="-3.14" upper="3.14"/>
     <parent link="main_body"/>
     <child link="gimbal3_link"/>
     <axis xyz="1. 0. 0."/>
@@ -280,7 +320,7 @@
   </joint>
 
   <joint name="rotor3" type="continuous">
-    <limit effort="0.0" velocity="0.0"/>
+    <limit effort="0.0" velocity="0.0" lower="0.0" upper="30.0"/>
     <parent link="gimbal3_link"/>
     <child link="thrust3"/>
     <axis xyz=" 0.  0. -1."/>
@@ -288,7 +328,7 @@
   </joint>
 
   <joint name="gimbal4" type="revolute">
-    <limit effort="0.0" velocity="0.0" lower="-3.14" upper="3.14"/>
+    <limit effort="5.0" velocity="10.0" lower="-3.14" upper="3.14"/>
     <parent link="main_body"/>
     <child link="gimbal4_link"/>
     <axis xyz="1. 0. 0."/>
@@ -296,7 +336,7 @@
   </joint>
 
   <joint name="rotor4" type="continuous">
-    <limit effort="0.0" velocity="0.0"/>
+    <limit effort="0.0" velocity="0.0" lower="0.0" upper="30.0"/>
     <parent link="gimbal4_link"/>
     <child link="thrust4"/>
     <axis xyz="0. 0. 1."/>
@@ -348,6 +388,49 @@
     </actuator>
   </transmission>
 
+    <transmission name="rotor_tran1">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rotor1">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+      </joint>
+      <actuator name="rotor_actuator1">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="rotor_tran2">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rotor2">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+      </joint>
+      <actuator name="rotor_actuator2">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="rotor_tran3">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rotor3">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+      </joint>
+      <actuator name="rotor_actuator3">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="rotor_tran4">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rotor4">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+      </joint>
+      <actuator name="rotor_actuator4">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
 
   <material name="__unnamed_material_1">
     <color rgba="0.10980392 0.10980392 0.10980392 1.        "/>
