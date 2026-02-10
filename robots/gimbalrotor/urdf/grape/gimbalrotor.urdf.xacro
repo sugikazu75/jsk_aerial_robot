@@ -1,22 +1,59 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <robot name="gimbalrotor" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <link name="root">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00001"/>
+      <inertia
+          ixx="0.000001" ixy="0.0" ixz="0.0"
+          iyy="0.000001" iyz="0.0"
+          izz="0.000001"/>
+    </inertial>
+  </link>
+
+  <joint name="root_joint" type="fixed">
+    <parent link="root"/>
+    <child link="main_body"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="fc">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00001"/>
+      <inertia
+          ixx="0.000001" ixy="0.0" ixz="0.0"
+          iyy="0.000001" iyz="0.0"
+          izz="0.000001"/>
+    </inertial>
+  </link>
+
+  <joint name="fc_joint" type="fixed">
+    <child link="fc"/>
+    <parent link="main_body"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
 
   <link name="main_body">
     <inertial>
-      <!-- <origin xyz="-0.00202460418348044 -0.000510481706680737 -0.0123651551887967" rpy="0.0 -0.0 0.0"/> -->
-      <!-- <mass value="1.40071559053294"/> -->
-      <!-- <inertia ixx="0.00167259281385339" ixy="-1.88191851673578e-07" ixz="7.17787328777675e-07" iyy="0.00167984573863287" iyz="4.03619596691479e-08" izz="0.00304193991451692"/> -->
+      <origin xyz="-0.00202460418348044 -0.000510481706680737 -0.0123651551887967" rpy="0.0 -0.0 0.0"/>
+      <mass value="1.40071559053294"/>
+      <inertia ixx="0.00167259281385339" ixy="-1.88191851673578e-07" ixz="7.17787328777675e-07" iyy="0.00167984573863287" iyz="4.03619596691479e-08" izz="0.00304193991451692"/>
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/main_body.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/main_body.dae"/>
       </geometry>
       <material name="__unnamed_material_1"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/main_body.stl"/>
+        <!-- <mesh filename="package://gimbalrotor/urdf/grape/meshes/main_body.stl"/> -->
+        <box size="0.25 0.25 0.035"/>
       </geometry>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </collision>
@@ -33,17 +70,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal1_link.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal1_link.dae"/>
       </geometry>
       <material name="__unnamed_material_2"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal1_link.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+      <!-- <geometry> -->
+      <!--   <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal1_link.stl"/> -->
+      <!-- </geometry> -->
+      <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="thrust1">
@@ -54,17 +91,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust1.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust1.dae"/>
       </geometry>
       <material name="__unnamed_material_3"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust1.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+      <!-- <geometry> -->
+      <!--   <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust1.stl"/> -->
+      <!-- </geometry> -->
+      <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="gimbal2_link">
@@ -78,17 +115,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal2_link.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal2_link.dae"/>
       </geometry>
       <material name="__unnamed_material_4"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal2_link.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal2_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="thrust2">
@@ -99,17 +136,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust2.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust2.dae"/>
       </geometry>
       <material name="__unnamed_material_5"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust2.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust2.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="gimbal3_link">
@@ -123,17 +160,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal3_link.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal3_link.dae"/>
       </geometry>
       <material name="__unnamed_material_6"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal3_link.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+      <!-- <geometry> -->
+      <!--   <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal3_link.stl"/> -->
+      <!-- </geometry> -->
+      <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="thrust3">
@@ -144,17 +181,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust3.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust3.dae"/>
       </geometry>
       <material name="__unnamed_material_7"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust3.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+      <!-- <geometry> -->
+      <!--   <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust3.stl"/> -->
+      <!-- </geometry> -->
+      <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="gimbal4_link">
@@ -168,17 +205,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal4_link.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal4_link.dae"/>
       </geometry>
       <material name="__unnamed_material_8"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/gimbal4_link.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+      <!-- <geometry> -->
+      <!--   <mesh filename="package://gimbalrotor/urdf/grape/meshes/gimbal4_link.stl"/> -->
+      <!-- </geometry> -->
+      <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <link name="thrust4">
@@ -189,17 +226,17 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust4.dae"/>
+        <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust4.dae"/>
       </geometry>
       <material name="__unnamed_material_9"/>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
     </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://gimbalrotor/grape/meshes/thrust4.stl"/>
-      </geometry>
-      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
-    </collision>
+    <!-- <collision> -->
+      <!-- <geometry> -->
+      <!--   <mesh filename="package://gimbalrotor/urdf/grape/meshes/thrust4.stl"/> -->
+      <!-- </geometry> -->
+      <!-- <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
   </link>
 
   <joint name="gimbal1" type="revolute">
@@ -265,6 +302,52 @@
     <axis xyz="0. 0. 1."/>
     <origin xyz="0.0 0.0 0.0585" rpy="0.0 -0.0 0.0"/>
   </joint>
+
+
+  <transmission name="gimbal1_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gimbal1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="servo1">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="gimbal2_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gimbal2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="servo2">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="gimbal3_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gimbal3">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="servo3">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="gimbal4_tran">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gimbal4">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="servo4">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
 
   <material name="__unnamed_material_1">
     <color rgba="0.10980392 0.10980392 0.10980392 1.        "/>
