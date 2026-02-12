@@ -71,5 +71,61 @@
       parent_link="arm_joint5_dummy_link"
       xyz="0 0 0"
       rpy="0 0 0"/>
+
+    <!-- Transmissions for arm joints (required for Gazebo control) -->
+    <transmission name="arm_joint1_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="arm_joint1_joint1">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="arm_servo1">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="arm_joint2_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="arm_joint2_joint1">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="arm_servo2">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="arm_joint3_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="arm_joint3_joint1">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="arm_servo3">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="arm_joint4_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="arm_joint4_joint1">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="arm_servo4">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="arm_joint5_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="arm_joint5_joint1">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="arm_servo5">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
   </xacro:macro>
 </robot>
