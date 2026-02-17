@@ -4,6 +4,9 @@
   <arg name="headless" default="false" />
   <arg name="mujoco_model" default="" />
   <arg name="initial_joint_states" default=""/>
+  <arg name="use_spinal" default="true"/>
+  <arg name="hw_sim_type" value="mujoco_ros_control/AerialRobotHWSim" if="$(arg use_spinal)"/>
+  <arg name="hw_sim_type" value="mujoco_ros_control/DefaultAerialRobotHWSim" unless="$(arg use_spinal)"/>
 
   <group ns="$(arg robot_ns)">
     <include file="$(find mujoco_ros)/launch/launch_server.launch" >
@@ -20,7 +23,7 @@
         - type: mujoco_ros_control/MujocoRosControlPlugin
           robot_namespace: $(arg robot_ns)
           hardware:
-            type: mujoco_ros_control/AerialRobotHWSim
+            type: $(arg hw_sim_type)
             control_period: 0.001
     </rosparam>
 
@@ -29,7 +32,14 @@
   <!-- basic parameter -->
   <rosparam file="$(find aerial_robot_simulation)/config/Mujoco.yaml" command="load" ns="$(arg robot_ns)" />
 
+  <!-- spawn joint state controller and spinal based flight controller -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-        output="screen" ns="$(arg robot_ns)" args="joint_state_controller attitude_controller" />
+        output="screen" ns="$(arg robot_ns)" args="joint_state_controller attitude_controller"
+        if="$(arg use_spinal)"/>
+
+  <!-- spawn joint state controller -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="$(arg robot_ns)" args="joint_state_controller"
+        unless="$(arg use_spinal)"/>
 
 </launch>
