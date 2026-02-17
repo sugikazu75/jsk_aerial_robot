@@ -48,6 +48,10 @@ add_library(flight_controllers
 add_dependencies(flight_controllers spinal_generate_messages_cpp)
 target_link_libraries(flight_controllers ${catkin_LIBRARIES})
 
+add_library(rotor_controllers
+  src/rotor_controller.cpp)
+target_link_libraries(rotor_controllers ${catkin_LIBRARIES})
+
 add_library(spinal_interface src/spinal_interface.cpp)
 target_link_libraries(spinal_interface ${catkin_LIBRARIES})
 
@@ -64,7 +68,7 @@ target_link_libraries(mujoco_aerial_robot_hw_sim ${catkin_LIBRARIES} mujoco_spin
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(TARGETS aerial_robot_hw_sim spinal_interface flight_controllers mujoco_spinal_interface mujoco_aerial_robot_hw_sim
+install(TARGETS aerial_robot_hw_sim spinal_interface flight_controllers mujoco_spinal_interface mujoco_aerial_robot_hw_sim rotor_controllers
   DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
@@ -73,6 +77,6 @@ install(DIRECTORY scripts
   USE_SOURCE_PERMISSIONS
 )
 
-install(FILES aerial_robot_hw_sim_plugins.xml flight_controllers_plugins.xml mujoco_robot_hw_sim_plugin.xml
+install(FILES aerial_robot_hw_sim_plugins.xml flight_controllers_plugins.xml mujoco_robot_hw_sim_plugin.xml rotor_controllers_plugin.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
