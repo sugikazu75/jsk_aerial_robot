@@ -7,4 +7,14 @@
        simulation interface for aerial robot in MuJoCo.
     </description>
   </class>
+
+  <class
+      name="mujoco_ros_control/DefaultAerialRobotHWSim"
+      type="mujoco_ros_control::DefaultAerialRobotHWSim"
+      base_class_type="mujoco_ros::control::RobotHWSim">
+    <description>
+       simulation interface for aerial robot in MuJoCo.
+    </description>
+  </class>
+
 </library>
