@@ -64,12 +64,33 @@ bool DefaultAerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoc
 
   registerInterface(&rotor_interface_);
 
+  robot_ns_ = model_nh.getNamespace();
+  odom_pub_ = model_nh.advertise<nav_msgs::Odometry>("odom", 10);
+
+  ros::NodeHandle simulation_nh = ros::NodeHandle(model_nh, "simulation");
+  simulation_nh.param("odom_pub_rate", odom_pub_rate_, 0.01);          // [sec]
+  simulation_nh.param("tf_broadcast_rate", tf_broadcast_rate_, 0.01);  // [sec]
+  odom_pub_last_time_ = 0.0;
+  tf_broadcast_last_time_ = 0.0;
+
   return true;
 }
 
 void DefaultAerialRobotHWSim::readSim(ros::Time time, ros::Duration period)
 {
   DefaultRobotHWSim::readSim(time, period);
+
+  if (ros::Time(time).toSec() - odom_pub_last_time_ >= odom_pub_rate_)
+  {
+    publishOdometry(time);
+    odom_pub_last_time_ = ros::Time(time).toSec();
+  }
+
+  if (ros::Time(time).toSec() - tf_broadcast_last_time_ >= tf_broadcast_rate_)
+  {
+    publishTF(time);
+    tf_broadcast_last_time_ = ros::Time(time).toSec();
+  }
 }
 
 void DefaultAerialRobotHWSim::writeSim(ros::Time time, ros::Duration period)
@@ -82,6 +103,48 @@ void DefaultAerialRobotHWSim::writeSim(ros::Time time, ros::Duration period)
     int rotor_id = mj_name2id(m_ptr_, mjtObj_::mjOBJ_ACTUATOR, rotor_names_[i].c_str());
     d_ptr_->ctrl[rotor_id] = rotor_cmd_.at(i);
   }
+}
+
+void DefaultAerialRobotHWSim::publishOdometry(ros::Time time)
+{
+  nav_msgs::Odometry odom_msg;
+  tf::Vector3 v_global(d_ptr_->qvel[0], d_ptr_->qvel[1], d_ptr_->qvel[2]);
+  tf::Quaternion q(d_ptr_->qpos[4], d_ptr_->qpos[5], d_ptr_->qpos[6], d_ptr_->qpos[3]);
+  tf::Vector3 v_local = tf::quatRotate(q.inverse(), v_global);
+
+  odom_msg.header.stamp = time;
+  odom_msg.header.frame_id = "world";
+  odom_msg.child_frame_id = tf::resolve(robot_ns_, mj_id2name(m_ptr_, mjtObj_::mjOBJ_BODY, 1));
+  odom_msg.pose.pose.position.x = d_ptr_->qpos[0];
+  odom_msg.pose.pose.position.y = d_ptr_->qpos[1];
+  odom_msg.pose.pose.position.z = d_ptr_->qpos[2];
+  odom_msg.pose.pose.orientation.w = d_ptr_->qpos[3];
+  odom_msg.pose.pose.orientation.x = d_ptr_->qpos[4];
+  odom_msg.pose.pose.orientation.y = d_ptr_->qpos[5];
+  odom_msg.pose.pose.orientation.z = d_ptr_->qpos[6];
+  odom_msg.twist.twist.linear.x = v_local.x();
+  odom_msg.twist.twist.linear.y = v_local.y();
+  odom_msg.twist.twist.linear.z = v_local.z();
+  odom_msg.twist.twist.angular.x = d_ptr_->qvel[3];
+  odom_msg.twist.twist.angular.y = d_ptr_->qvel[4];
+  odom_msg.twist.twist.angular.z = d_ptr_->qvel[5];
+  odom_pub_.publish(odom_msg);
+}
+
+void DefaultAerialRobotHWSim::publishTF(ros::Time time)
+{
+  geometry_msgs::TransformStamped root_pose_transform;
+  root_pose_transform.header.stamp = time;
+  root_pose_transform.header.frame_id = "world";
+  root_pose_transform.child_frame_id = tf::resolve(robot_ns_, mj_id2name(m_ptr_, mjtObj_::mjOBJ_BODY, 1));  // 0: world
+  root_pose_transform.transform.translation.x = d_ptr_->qpos[0];
+  root_pose_transform.transform.translation.y = d_ptr_->qpos[1];
+  root_pose_transform.transform.translation.z = d_ptr_->qpos[2];
+  root_pose_transform.transform.rotation.w = d_ptr_->qpos[3];
+  root_pose_transform.transform.rotation.x = d_ptr_->qpos[4];
+  root_pose_transform.transform.rotation.y = d_ptr_->qpos[5];
+  root_pose_transform.transform.rotation.z = d_ptr_->qpos[6];
+  tf_broadcaster_.sendTransform(root_pose_transform);
 }
 
 }  // namespace mujoco_ros_control
