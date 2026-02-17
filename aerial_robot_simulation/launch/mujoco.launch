@@ -3,6 +3,7 @@
   <arg name="robot_ns" default="" />
   <arg name="headless" default="false" />
   <arg name="mujoco_model" default="" />
+  <arg name="initial_joint_states" default=""/>
 
   <group ns="$(arg robot_ns)">
     <include file="$(find mujoco_ros)/launch/launch_server.launch" >
@@ -11,6 +12,7 @@
       <arg name="modelfile" value="$(arg mujoco_model)"/>
       <arg name="use_sim_time" value="true"/>
       <arg name="unpause" value="true"/>
+      <arg name="initial_joint_states" value="$(arg initial_joint_states)"/>
     </include>
 
     <rosparam subst_value="true">
