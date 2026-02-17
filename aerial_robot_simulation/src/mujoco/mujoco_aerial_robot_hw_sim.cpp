@@ -7,10 +7,12 @@ bool AerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::
                                const urdf::Model* const urdf_model,
                                std::vector<transmission_interface::TransmissionInfo> transmissions)
 {
-  // separate rotor transmissions and standard transmissions
+  /* separate rotor transmissions and standard transmissions */
   std::vector<transmission_interface::TransmissionInfo> standard_transmissions;
   std::vector<transmission_interface::TransmissionInfo> rotor_transmissions;
 
+  int motor_num = 0;
+  rotor_list_.resize(0);
   for (const auto& trans : transmissions)
   {
     bool is_rotor = false;
@@ -24,88 +26,27 @@ bool AerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::
     }
     if (is_rotor)
     {
+      std::string actuator_name = trans.joints_[0].name_;
+      rotor_list_.push_back(actuator_name);
+      motor_num++;
+
       rotor_transmissions.push_back(trans);
     }
     else
-    {
       standard_transmissions.push_back(trans);
-    }
   }
 
+  /* Initialize standard joint handlers */
   DefaultRobotHWSim::initSim(m_ptr, d_ptr, mujoco_env_ptr, robot_namespace, model_nh, urdf_model,
                              standard_transmissions);
 
-  rotor_list_.resize(0);
-
-  // get entire mass
+  /* get entire mass */
   float mass = 0.0;
   for (int i = 0; i < m_ptr_->nbody; i++)
   {
     mass += m_ptr_->body_mass[i];
   }
   ROS_INFO_STREAM("[mujoco] robot mass is " << mass);
-
-  // get rotor names from mujoco model
-  int motor_num = 0;
-  for (int i = 0; i < m_ptr_->nu; i++)
-  {
-    std::string actuator_name = mj_id2name(m_ptr_, mjtObj_::mjOBJ_ACTUATOR, i);
-    if (actuator_name.find("rotor") != std::string::npos)
-    {
-      rotor_list_.push_back(actuator_name);
-      motor_num++;
-    }
-  }
-
-  // init joints from rosparam
-  XmlRpc::XmlRpcValue all_servos_params;
-  model_nh.getParam("servo_controller", all_servos_params);
-  std::string init_value_param_name = "init_value";
-  for (auto servo_group_params : all_servos_params)
-  {
-    if (servo_group_params.second.getType() != XmlRpc::XmlRpcValue::TypeStruct)
-      continue;
-    for (auto servo_params : servo_group_params.second)
-    {
-      if (servo_params.first.find("controller") != string::npos)
-      {
-        std::string servo_name = static_cast<std::string>(servo_params.second["name"]);
-        double init_value = 0.0;
-
-        // check simulation param exists
-        if (!servo_group_params.second.hasMember("simulation") && !servo_params.second.hasMember("simulation"))
-        {
-          ROS_ERROR("please set mujoco servo parameters for %s, using sub namespace 'simulation:'",
-                    string(servo_params.second["name"]).c_str());
-          continue;
-        }
-
-        // search init_value in servo params
-        if (!servo_params.second.hasMember("simulation") ||
-            (servo_params.second.hasMember("simulation") &&
-             !servo_params.second["simulation"].hasMember(init_value_param_name)))
-        {
-          // search init_value in servo group params
-          if (!servo_group_params.second["simulation"].hasMember(init_value_param_name))
-          {
-            ROS_ERROR("can not find '%s' servo paramter for servo %s", init_value_param_name.c_str(),
-                      string(servo_params.second["name"]).c_str());
-            return false;
-          }
-          // use param of servo group
-          init_value = static_cast<double>(servo_group_params.second["simulation"][init_value_param_name]);
-        }
-        else
-        {
-          // use param of servo
-          init_value = static_cast<double>(servo_params.second["simulation"][init_value_param_name]);
-        }
-        d_ptr_->qpos[m_ptr_->jnt_qposadr[mj_name2id(m_ptr_, mjtObj_::mjOBJ_JOINT, servo_name.c_str())]] = init_value;
-        d_ptr_->qvel[m_ptr_->jnt_dofadr[mj_name2id(m_ptr_, mjtObj_::mjOBJ_JOINT, servo_name.c_str())]] = 0.0;
-        d_ptr_->qfrc_applied[m_ptr_->jnt_dofadr[mj_name2id(m_ptr_, mjtObj_::mjOBJ_JOINT, servo_name.c_str())]] = 0.0;
-      }
-    }
-  }
 
   /* Initialize spinal interface */
   spinal_interface_.init(model_nh, rotor_list_.size());
