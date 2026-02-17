@@ -3,20 +3,30 @@ import rospy
 import sys
 from std_msgs.msg import Float64
 from controller_manager_msgs.srv import LoadController, SwitchController
+from urdf_parser_py.urdf import URDF
 
 
 def main():
     rospy.init_node("rotor_controller_spawner", anonymous=True)
 
-    # get paramter from "rotor_controller" namespace
+    # get robot_description
     rotor_controller_params = None
-    try:
-        rotor_controller_params = rospy.get_param("rotor_controller", None)
-    except KeyError:
-        rospy.logerr(f"No parameters found in namespace '{target_ns}'.")
-        sys.exit(1)
+    if not rospy.has_param("robot_description"):
+        rospy.logerr("Parameter 'robot_description' not found.")
+        return
+    urdf_str = rospy.get_param("robot_description")
 
-    rospy.loginfo("Waiting for controller_manager services...")
+    # parse URDF to ensure
+    robot = None
+    try:
+        robot = URDF.from_xml_string(urdf_str)
+    except Exception as e:
+        rospy.logerr("Failed to parse URDF: %s", e)
+        return
+
+    rotor_joints = [j.name for j in robot.joints if "rotor" in j.name]
+    rotor_joints.sort()
+    rospy.loginfo("Found {} rotors".format(len(rotor_joints)))
 
     # wait for controller manager services to be available
     try:
@@ -26,31 +36,28 @@ def main():
         rospy.logerr("Controller manager services not available.")
         sys.exit(1)
 
-    rospy.wait_for_service("controller_manager/load_controller")
     load_srv = rospy.ServiceProxy("controller_manager/load_controller", LoadController)
-    rospy.wait_for_service("controller_manager/switch_controller")
-    switch_srv = rospy.ServiceProxy("controller_manager/switch_controller", SwitchController)
+    switch_srv = rospy.ServiceProxy(
+        "controller_manager/switch_controller", SwitchController
+    )
 
-    common_type = rotor_controller_params["type"]
-    controllers_to_spawn = []
+    common_type = "rotor_controllers/RotorController"
 
     # set parameters for each controller and prepare list of controllers to spawn
-    for key, value in rotor_controller_params.items():
-        if key.startswith("controller"):
-            rospy.set_param(f"rotor_controller/{key}/type", common_type)
-            rospy.sleep(0.1)  # ensure parameter is set before loading controller
+    controllers_to_spawn = []
+    for i in range(len(rotor_joints)):
+        controller_name = f"rotor_controller/controller{i+1}"
+        rospy.set_param(f"{controller_name}/type", common_type)
+        rospy.set_param(f"{controller_name}/joint", rotor_joints[i])
+        controllers_to_spawn.append(controller_name)
+        rospy.sleep(0.1)
 
-            controllers_to_spawn.append(f"rotor_controller/{key}")
-    rospy.sleep(1.0)  # wait for parameters to be set
-
-    controller_publishers = {}
     for controller in controllers_to_spawn:
         load_srv(controller)
-        rospy.loginfo(f"loading controller: {controller}")
+        rospy.loginfo(f"load controller: {controller}")
 
         # wait
         pub = rospy.Publisher(f"{controller}/command", Float64, queue_size=10)
-        # controller_publishers[controller] = pub
         while pub.get_num_connections() == 0 and not rospy.is_shutdown():
             rospy.sleep(0.2)
 
