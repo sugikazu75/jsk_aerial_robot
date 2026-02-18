@@ -7,9 +7,6 @@ jobs:
       matrix:
         include:
           - runs-on: ubuntu-latest
-            ROS_DISTRO : melodic
-            DOCKER_IMAGE : ubuntu:bionic
-          - runs-on: ubuntu-latest
             ROS_DISTRO : noetic
             DOCKER_IMAGE : ubuntu:focal
           - runs-on: ubuntu-latest
