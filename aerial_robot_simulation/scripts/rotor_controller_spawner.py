@@ -46,18 +46,18 @@ def main():
     # set parameters for each controller and prepare list of controllers to spawn
     controllers_to_spawn = []
     for i in range(len(rotor_joints)):
-        controller_name = f"rotor_controller/controller{i+1}"
-        rospy.set_param(f"{controller_name}/type", common_type)
-        rospy.set_param(f"{controller_name}/joint", rotor_joints[i])
+        controller_name = "rotor_controller/controller{}".format(i + 1)
+        rospy.set_param("{}/type".format(controller_name), common_type)
+        rospy.set_param("{}/joint".format(controller_name), rotor_joints[i])
         controllers_to_spawn.append(controller_name)
         rospy.sleep(0.1)
 
     for controller in controllers_to_spawn:
         load_srv(controller)
-        rospy.loginfo(f"load controller: {controller}")
+        rospy.loginfo("load controller: {}".format(controller))
 
         # wait
-        pub = rospy.Publisher(f"{controller}/command", Float64, queue_size=10)
+        pub = rospy.Publisher("{}/command".format(controller), Float64, queue_size=1)
         while pub.get_num_connections() == 0 and not rospy.is_shutdown():
             rospy.sleep(0.2)
 
@@ -70,9 +70,9 @@ def main():
             timeout=0.0,
         )
         if resp.ok:
-            rospy.loginfo(f"start controller: {controller}")
+            rospy.loginfo("start controller: {}.".format(controller))
         else:
-            rospy.logerr(f"Failed to switch controller: {controller}")
+            rospy.logerr("Failed to switch controller: {}".format(controller))
         rospy.sleep(0.5)
 
 
