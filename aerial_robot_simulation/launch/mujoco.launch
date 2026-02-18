@@ -2,6 +2,7 @@
 <launch>
   <arg name="robot_ns" default="" />
   <arg name="headless" default="false" />
+  <arg name="no_render" default="$(arg headless)"/>
   <arg name="mujoco_model" default="" />
   <arg name="initial_joint_states" default=""/>
   <arg name="use_spinal" default="true"/>
@@ -12,6 +13,7 @@
     <include file="$(find mujoco_ros)/launch/launch_server.launch" >
       <arg name="ns" value="$(arg robot_ns)" />
       <arg name="headless" value="$(arg headless)"/>
+      <arg name="no_render" value="$(arg no_render)"/>
       <arg name="modelfile" value="$(arg mujoco_model)"/>
       <arg name="use_sim_time" value="true"/>
       <arg name="unpause" value="true"/>
