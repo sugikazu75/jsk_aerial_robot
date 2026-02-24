@@ -1,8 +1,8 @@
 # aerial robot third party
 - git:
     local-name: aerial_robot_3rdparty
-    uri: https://github.com/sugikazu75/aerial_robot_3rdparty.git
-    version: PR/mujoco_ros_control/meshlab
+    uri: https://github.com/JSKAerialRobot/aerial_robot_3rdparty.git
+    version: 3875fa5
 
 # kalman filter
 - git:
