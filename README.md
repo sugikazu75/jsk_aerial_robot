@@ -31,6 +31,7 @@ catkin build
 ### Ubuntu 22.04, 24.04 (ROS-O)
 
 ```bash
+sudo apt install python3-vcstool python3-catkin-tools
 mkdir -p ~/ros/jsk_aerial_robot_ws/src
 cd ~/ros/jsk_aerial_robot_ws/src
 git clone https://github.com/jsk-ros-pkg/jsk_aerial_robot.git
