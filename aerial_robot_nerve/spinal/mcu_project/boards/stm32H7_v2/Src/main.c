@@ -35,6 +35,7 @@
 #include <spinal/Imu.h>
 
 #include "flashmemory/flashmemory.h"
+#include "sensors/encoder/mag_encoder.h"
 #include "sensors/imu/drivers/mpu9250/imu_mpu9250.h"
 #include "sensors/imu/drivers/icm20948/icm_20948.h"
 #include "sensors/imu/imu_ros_cmd.h"
@@ -121,6 +122,7 @@ ICM20948 imu_;
 #endif
 
 Baro baro_;
+MagEncoder mag_encoder_;
 GPS gps_;
 BatteryStatus battery_status_;
 
@@ -260,6 +262,7 @@ int main(void)
   IMU_ROS_CMD::init(&nh_);
   IMU_ROS_CMD::addImu(&imu_);
   baro_.init(&hi2c1, &nh_, BAROCS_GPIO_Port, BAROCS_Pin);
+  mag_encoder_.init(&hi2c1, &nh_);
   gps_.init(&huart3, &nh_, LED2_GPIO_Port, LED2_Pin);
 
   DShot* dshotptr = nullptr;
@@ -1223,6 +1226,7 @@ void coreTaskFunc(void const * argument)
 
       imu_.update();
       baro_.update();
+      mag_encoder_.update();
       gps_.update();
       estimator_.update();
       controller_.update();
