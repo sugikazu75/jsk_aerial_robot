@@ -25,6 +25,13 @@
           <arg name="rviz" value="false" />
         </include>
 
+        <!-- imu pipeline to use imu data of spinal for fast lio -->
+        <node pkg="imu_transformer" type="imu_transformer_node" name="imu_data_transformer" output="screen">
+          <remap from="imu_in/data" to="sensor_plugin/imu1/ros_converted"/>
+          <remap from="imu_out/data" to="livox/imu_spinal"/>
+          <param name="target_frame" value="$(arg robot_ns)/lidar_imu"/>
+        </node>
+
       </group>
     </group>
 
@@ -32,6 +39,11 @@
     <rosparam file="$(find gimbalrotor)/config/sensors/imu/spinal.yaml" command="load" />
     <rosparam file="$(find aerial_robot_base)/config/sensors/mocap.yaml" command="load" />
     <rosparam file="$(find aerial_robot_base)/config/sensors/lio/livox_mid360.yaml" command="load" />
+
+    <!-- overwrite basic parameters to use imu data for fast lio -->
+    <param name="mapping/acc_scale" value="0.101936799"/> <!-- 1/g -->
+    <param name="common/imu_topic" value="livox/imu_spinal"/>
+
   </group>
 
 </launch>
