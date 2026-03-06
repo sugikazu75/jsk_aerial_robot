@@ -580,7 +580,7 @@
   </link>
   <link name="arm_joint2_dummy_link" />
   <joint name="arm_joint2_joint1" type="revolute">
-    <limit effort="0.0" lower="-0.567" upper="0.567" velocity="0.0" />
+    <limit effort="0.0" lower="-3.14159" upper="3.14159" velocity="0.0" />
     <parent link="arm_joint2_base_link" />
     <child link="arm_joint2_link1" />
     <axis xyz="-1.  0.  0." />
@@ -647,7 +647,7 @@
   </link>
   <link name="arm_joint3_dummy_link" />
   <joint name="arm_joint3_joint1" type="revolute">
-    <limit effort="0.0" lower="-0.567" upper="0.567" velocity="0.0" />
+    <limit effort="0.0" lower="-3.14159" upper="3.14159" velocity="0.0" />
     <parent link="arm_joint3_base_link" />
     <child link="arm_joint3_link1" />
     <axis xyz="-1.  0.  0." />
@@ -714,7 +714,7 @@
   </link>
   <link name="arm_joint4_dummy_link" />
   <joint name="arm_joint4_joint1" type="revolute">
-    <limit effort="0.0" lower="-0.567" upper="0.567" velocity="0.0" />
+    <limit effort="0.0" lower="-3.14159" upper="3.14159" velocity="0.0" />
     <parent link="arm_joint4_base_link" />
     <child link="arm_joint4_link1" />
     <axis xyz="-1.  0.  0." />
