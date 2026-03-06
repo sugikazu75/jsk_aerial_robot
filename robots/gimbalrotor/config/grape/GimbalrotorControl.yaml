@@ -15,7 +15,7 @@ controller:
     limit_d: 12.0
 
   z:
-    p_gain: 6.0
+    p_gain: 5.0
     i_gain: 1.0
     d_gain: 2.5
     limit_err_p: 1.0
