@@ -5,8 +5,8 @@
  *      Author: anzai
  */
 
-#ifndef APPLICATION_IMU_IMU_MPU9250_H_
-#define APPLICATION_IMU_IMU_MPU9250_H_
+#ifndef APPLICATION_IMU_IMU_BASE_H_
+#define APPLICATION_IMU_IMU_BASE_H_
 
 #ifndef __cplusplus
 #error "Please define __cplusplus, because this is a c++ based file "
@@ -93,4 +93,4 @@ private:
   friend class Initializer;
 };
 
-#endif /* APPLICATION_IMU_IMU_MPU9250_H_ */
+#endif /* APPLICATION_IMU_IMU_BASE_H_ */
