@@ -178,9 +178,13 @@ private:
         /* ack to ROS */
         config_ack_msg_.data = spinal::FlightConfigCmd::ARM_ON_CMD;
 #ifdef SIMULATION
+        ROS_ERROR("[spinal] motor armed, motor number is %d", att_controller_.getMotorNumber());
         config_ack_pub_.publish(config_ack_msg_);
 #else
         config_ack_pub_.publish(&config_ack_msg_);
+        char msg[120];
+        sprintf(msg, "[spinal] motor armed, motor number is %d", att_controller_.getMotorNumber());
+        nh_->logerror(msg);
 #endif
         break;
       case spinal::FlightConfigCmd::ARM_OFF_CMD:
