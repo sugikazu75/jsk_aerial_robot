@@ -33,7 +33,7 @@ void IMU::update()
 
 void IMU::sendData()
 {
-	if (!(send_data_flag_ != 0)) return;
+	if (send_data_flag_ == 0) return;
 	sendMessage(CAN::MESSAGEID_SEND_GYRO, m_slave_id, 6, reinterpret_cast<uint8_t*>(gyro_.data()), 1);
 	sendMessage(CAN::MESSAGEID_SEND_ACC, m_slave_id, 6, reinterpret_cast<uint8_t*>(acc_.data()), 1);
 	sendMessage(CAN::MESSAGEID_SEND_MAG, m_slave_id, 6, reinterpret_cast<uint8_t*>(mag_.data()), 1);
