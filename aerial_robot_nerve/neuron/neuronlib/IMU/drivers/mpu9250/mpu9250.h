@@ -25,7 +25,6 @@ public:
   MPU9250(uint8_t slave_id):IMU(slave_id){}
   ~MPU9250(){}
   void init(SPI_HandleTypeDef* hspi) override;
-  void update();
 
   static  uint8_t adc_[SENSOR_DATA_LENGTH];
 
