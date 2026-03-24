@@ -35,6 +35,13 @@ namespace ValueType
 class DirectServo
 {
 public:
+  struct JointProf{
+    uint8_t servo_id;
+    int8_t angle_sgn;
+    float angle_scale;
+    int16_t zero_point_offset;
+  };
+
   DirectServo():
     servo_ctrl_sub_("servo/target_states", &DirectServo::servoControlCallback,this),
     servo_torque_ctrl_sub_("servo/torque_enable", &DirectServo::servoTorqueControlCallback,this),
@@ -63,6 +70,8 @@ public:
   uint32_t rad2Pos(float angle, float scale, uint32_t zero_point_pos){
     return static_cast<uint32_t>(angle /scale + zero_point_pos);
   }
+
+  JointProf joint_profiles_[MAX_SERVO_NUM];
 
 private:
   /* ROS */
@@ -100,15 +109,6 @@ private:
     ServoState(uint16_t angle, uint8_t temperature, uint8_t moving, int16_t current, uint8_t error)
       :angle(angle), temperature(temperature), moving(moving), current(current), error(error){}
   };
-
-  struct JointProf{
-    uint8_t servo_id;
-    int8_t angle_sgn;
-    float angle_scale;
-    int16_t zero_point_offset;
-  };
-
-  JointProf joint_profiles_[MAX_SERVO_NUM];
 
 #if KONDO
   KondoServo servo_handler_;
