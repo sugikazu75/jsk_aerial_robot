@@ -174,15 +174,15 @@ namespace Spine
 
     if (servo_num_ > 0)
       {
-        nh_->advertise(servo_state_pub_);
-        nh_->advertise(servo_torque_state_pub_);
-        nh_->subscribe(servo_position_sub_);
-        nh_->subscribe(servo_current_sub_);
-        nh_->subscribe(servo_torque_ctrl_sub_);
+        // nh_->advertise(servo_state_pub_);
+        // nh_->advertise(servo_torque_state_pub_);
+        // nh_->subscribe(servo_position_sub_);
+        // nh_->subscribe(servo_current_sub_);
+        // nh_->subscribe(servo_torque_ctrl_sub_);
       }
 
-    nh_->advertiseService(board_info_srv_);
-    nh_->advertiseService(board_config_srv_);
+    // nh_->advertiseService(board_info_srv_);
+    // nh_->advertiseService(board_config_srv_);
 
     /* uav model: special rule based on the number of gimbals (no send data flag servos) */
     uint8_t gimbal_servo_num = servo_num_ - servo_with_send_flag_.size();
@@ -276,7 +276,7 @@ namespace Spine
       neuron_.at(i).can_imu_.update();
 
     /* ros publish */
-    servoPublish();
+    // servoPublish();
 
     CANDeviceManager::tick(1);
 
