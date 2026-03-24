@@ -12,13 +12,6 @@ includes ------------------------------------------------------------------*/
 #include "drivers/Dynamixel/dynamixel_serial.h"
 #include "drivers/kondo_servo/kondo_servo.h"
 #include <ros.h>
-#include <spinal/ServoControlCmd.h>
-#include <spinal/ServoStates.h>
-#include <spinal/ServoTorqueStates.h>
-#include <spinal/ServoTorqueCmd.h>
-#include <spinal/SetDirectServoConfig.h>
-#include <spinal/GetBoardInfo.h>
-#include <spinal/JointProfiles.h>
 #include <string.h>
 #include <config.h>
 #include <map>
@@ -42,14 +35,7 @@ public:
     int16_t zero_point_offset;
   };
 
-  DirectServo():
-    servo_ctrl_sub_("servo/target_states", &DirectServo::servoControlCallback,this),
-    servo_torque_ctrl_sub_("servo/torque_enable", &DirectServo::servoTorqueControlCallback,this),
-    joint_profiles_sub_("joint_profiles", &DirectServo::jointProfilesCallback,this),
-    servo_state_pub_("servo/states", &servo_state_msg_),
-    servo_torque_state_pub_("servo/torque_states", &servo_torque_state_msg_),
-    servo_config_srv_("direct_servo_config", &DirectServo::servoConfigCallback, this),
-    board_info_srv_("get_board_info", &DirectServo::boardInfoCallback,this)
+  DirectServo()
   {
     connected_ = false;
   }
@@ -76,28 +62,6 @@ public:
 private:
   /* ROS */
   ros::NodeHandle* nh_;
-  ros::Subscriber<spinal::ServoControlCmd, DirectServo> servo_ctrl_sub_;
-  ros::Subscriber<spinal::ServoTorqueCmd, DirectServo> servo_torque_ctrl_sub_;
-  ros::Subscriber<spinal::JointProfiles, DirectServo> joint_profiles_sub_;
-  ros::Publisher servo_state_pub_;
-  ros::Publisher servo_torque_state_pub_;
-
-  ros::ServiceServer<spinal::SetDirectServoConfig::Request, spinal::SetDirectServoConfig::Response, DirectServo> servo_config_srv_;
-  ros::ServiceServer<spinal::GetBoardInfo::Request, spinal::GetBoardInfo::Response, DirectServo> board_info_srv_;
-
-  spinal::ServoStates servo_state_msg_;
-  spinal::ServoTorqueStates servo_torque_state_msg_;
-  spinal::GetBoardInfo::Response board_info_res_;
-
-  uint32_t servo_last_pub_time_;
-  uint32_t servo_torque_last_pub_time_;
-
-  void servoControlCallback(const spinal::ServoControlCmd& control_msg);
-  void servoTorqueControlCallback(const spinal::ServoTorqueCmd& control_msg);
-  void jointProfilesCallback(const spinal::JointProfiles& joint_prof_msg);
-  
-  void servoConfigCallback(const spinal::SetDirectServoConfig::Request& req, spinal::SetDirectServoConfig::Response& res);
-  void boardInfoCallback(const spinal::GetBoardInfo::Request& req, spinal::GetBoardInfo::Response& res);
   
   /* Servo state */
   struct ServoState{
