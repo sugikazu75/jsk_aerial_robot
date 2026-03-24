@@ -1,0 +1,535 @@
+/*
+ * servo_manager.cpp
+ *
+ *  Created on: 2026/3/20
+ *      Author: K.Sugihara
+ */
+
+#include "servo_manager.h"
+
+constexpr uint32_t SERVO_PUB_INTERVAL = 20;           //[ms]
+constexpr uint32_t SERVO_TORQUE_PUB_INTERVAL = 1000;  //[ms]
+
+void ServoManager::init(ros::NodeHandle* nh)
+{
+  nh_ = nh;
+  if (servo_num_ > 0)
+  {
+    nh_->advertise(servo_state_pub_);
+    nh_->advertise(servo_torque_state_pub_);
+    nh_->subscribe(servo_position_sub_);
+    nh_->subscribe(servo_current_sub_);
+    nh_->subscribe(servo_torque_ctrl_sub_);
+    nh_->subscribe(joint_profiles_sub_);
+    nh_->advertiseService(board_config_srv_);
+    nh_->advertiseService(board_info_srv_);
+
+    servo_state_msg_.servos_length = servo_num_;
+    servo_state_msg_.servos = new spinal::ServoState[servo_num_];
+    servo_torque_state_msg_.torque_enable_length = servo_num_;
+    servo_torque_state_msg_.torque_enable = new uint8_t[servo_num_];
+
+    servo_last_pub_time_ = 0;
+    servo_torque_last_pub_time_ = 0;
+
+    board_info_res_.boards_length = 1 + (use_spine_ ? Spine::getSlaveNum() : 0);
+    board_info_res_.boards = new spinal::BoardInfo[board_info_res_.boards_length];
+
+    int board_index = 0;
+    for (auto servo_ptrs_ite = servo_ptrs_.begin(); servo_ptrs_ite != servo_ptrs_.end(); servo_ptrs_ite++)
+    {
+      if (servo_ptrs_ite->second != NULL)  // direct servo
+      {
+        DirectServo* direct_servo = servo_ptrs_ite->second;
+        spinal::BoardInfo& board = board_info_res_.boards[board_index];
+        board.servos_length = direct_servo->getServoHnadler().getServoNum();
+        board.servos = new spinal::ServoInfo[board.servos_length];
+      }
+      else if (servo_ptrs_ite->second == NULL)  // spine servo
+      {
+        for (unsigned int i = 0; i < Spine::getSlaveNum(); i++)
+        {
+          spinal::BoardInfo& board = board_info_res_.boards[board_index + i];
+          board.servos_length = Spine::getNeuron().at(i).can_servo_.servo_.size();
+          board.servos = new spinal::ServoInfo[board.servos_length];
+        }
+      }
+      board_index++;
+    }
+  }
+}
+
+void ServoManager::update()
+{
+  servoPublish();
+}
+
+void ServoManager::addSpineServo()
+{
+  int servo_num = Spine::getServoNum();
+
+  for (int i = 0; i < servo_num; i++)
+  {
+    servo_ptrs_[i + servo_num_] = NULL;
+    servo_index_in_each_handle_[i + servo_num_] = i;
+  }
+
+  servo_num_ += servo_num;
+  use_spine_ = true;
+}
+
+void ServoManager::addDirectServo(DirectServo* direct_servo)
+{
+  int servo_num = direct_servo->getServoHnadler().getServoNum();
+
+  for (int i = 0; i < servo_num; i++)
+  {
+    servo_ptrs_[i + servo_num_] = direct_servo;
+    servo_index_in_each_handle_[i + servo_num_] = i;
+  }
+
+  servo_num_ += servo_num;
+}
+
+void ServoManager::servoPublish()
+{
+  if (servo_num_ == 0)
+    return;
+
+  uint32_t now_time = HAL_GetTick();
+  if (now_time - servo_last_pub_time_ >= SERVO_PUB_INTERVAL)  // servo states
+  {
+    servo_state_msg_.stamp = nh_->now();
+    int servo_index = 0;
+    for (auto servo_ptrs_ite = servo_ptrs_.begin(); servo_ptrs_ite != servo_ptrs_.end(); servo_ptrs_ite++)
+    {
+      if (servo_ptrs_ite->second != NULL)  // direct servo
+      {
+        DirectServo* direct_servo = servo_ptrs_ite->second;
+        for (unsigned int i = 0; i < direct_servo->getServoHnadler().getServoNum(); i++)
+        {
+          const ServoData& s = direct_servo->getServoHnadler().getServo()[i];
+          if (s.send_data_flag_ != 0)
+          {
+            spinal::ServoState servo;
+            servo.index = servo_index;
+            servo.angle = s.present_position_;
+            servo.temp = s.present_temp_;
+            servo.load = s.present_current_;
+            servo.error = s.hardware_error_status_;
+            servo_state_msg_.servos[servo_index] = servo;
+          }
+          servo_index++;
+        }
+      }
+      else if (servo_ptrs_ite->second == NULL)  // spine servo
+      {
+        std::vector<std::reference_wrapper<Servo>>& servo_with_send_flag = Spine::getServoWithSendFlag();
+        for (unsigned int i = 0; i < servo_with_send_flag.size(); i++)
+        {
+          const Servo& s = servo_with_send_flag.at(i).get();
+          if (s.getSendDataFlag())
+          {
+            spinal::ServoState servo;
+            servo.index = servo_index;
+            servo.angle = s.getPresentPosition();
+            servo.temp = s.getPresentTemperature();
+            servo.load = s.getPresentCurrent();
+            servo.error = s.getError();
+            servo_state_msg_.servos[servo_index] = servo;
+          }
+          servo_index++;
+        }
+      }
+    }
+    servo_state_pub_.publish(&servo_state_msg_);
+    servo_last_pub_time_ = now_time;
+  }
+
+  if (now_time - servo_torque_last_pub_time_ >= SERVO_TORQUE_PUB_INTERVAL)  // servo torque states
+  {
+    int servo_index = 0;
+    for (auto servo_ptrs_ite = servo_ptrs_.begin(); servo_ptrs_ite != servo_ptrs_.end(); servo_ptrs_ite++)
+    {
+      if (servo_ptrs_ite->second != NULL)  // direct servo
+      {
+        DirectServo* direct_servo = servo_ptrs_ite->second;
+        for (unsigned int i = 0; i < direct_servo->getServoHnadler().getServoNum(); i++)
+        {
+          const ServoData& s = direct_servo->getServoHnadler().getServo()[i];
+          if (s.send_data_flag_ != 0)
+          {
+            servo_torque_state_msg_.torque_enable[servo_index] = s.torque_enable_;
+          }
+          servo_index++;
+        }
+      }
+      else if (servo_ptrs_ite->second == NULL)  // spine servo
+      {
+        std::vector<std::reference_wrapper<Servo>>& servo_with_send_flag = Spine::getServoWithSendFlag();
+        for (unsigned int i = 0; i < servo_with_send_flag.size(); i++)
+        {
+          const Servo& s = servo_with_send_flag.at(i).get();
+          if (s.getSendDataFlag())
+          {
+            servo_torque_state_msg_.torque_enable[servo_index] = s.getTorqueEnable();
+          }
+          servo_index++;
+        }
+      }
+    }
+    servo_torque_state_pub_.publish(&servo_torque_state_msg_);
+    servo_torque_last_pub_time_ = now_time;
+  }
+}
+
+void ServoManager::servoPositionCallback(const spinal::ServoControlCmd& control_msg)
+{
+  if (control_msg.index_length != control_msg.angles_length)
+    return;
+
+  for (unsigned int i = 0; i < control_msg.index_length; i++)
+  {
+    uint8_t index = control_msg.index[i];
+    uint8_t servo_index = servo_index_in_each_handle_[index];
+
+    if (index >= servo_num_)
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+
+    if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] != NULL)  // direct servo
+    {
+      DirectServo* direct_servo = servo_ptrs_[index];
+      ServoData& s = direct_servo->getServoHnadler().getServo()[servo_index];
+      int32_t goal_pos = static_cast<int32_t>(control_msg.angles[i]);
+      s.setGoalPosition(goal_pos);
+      if (!s.torque_enable_)
+      {
+        s.torque_enable_ = true;
+        direct_servo->getServoHnadler().setTorque(servo_index);
+      }
+    }
+    else if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] == NULL)  // spine servo
+    {
+      if (!Spine::getServoControlFlag())
+        continue;
+
+      std::vector<std::reference_wrapper<Servo>>& spine_servos = Spine::getServo();
+      spine_servos.at(servo_index).get().setGoalPosition(control_msg.angles[i]);
+    }
+    else
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+  }
+}
+
+void ServoManager::servoCurrentCallback(const spinal::ServoControlCmd& control_msg)
+{
+  if (control_msg.index_length != control_msg.angles_length)
+    return;
+
+  for (unsigned int i = 0; i < control_msg.index_length; i++)
+  {
+    uint8_t index = control_msg.index[i];
+    uint8_t servo_index = servo_index_in_each_handle_[index];
+
+    if (index >= servo_num_)
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+
+    if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] != NULL)  // direct servo
+    {
+      // TODO: implement current control for direct servo
+    }
+    else if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] == NULL)  // spine servo
+    {
+      if (!Spine::getServoControlFlag())
+        continue;
+
+      std::vector<std::reference_wrapper<Servo>>& spine_servos = Spine::getServo();
+      spine_servos.at(servo_index).get().setGoalCurrent(control_msg.angles[i]);
+    }
+    else
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+  }
+}
+
+void ServoManager::servoTorqueControlCallback(const spinal::ServoTorqueCmd& control_msg)
+{
+  if (control_msg.index_length != control_msg.torque_enable_length)
+    return;
+
+  for (unsigned int i = 0; i < control_msg.index_length; i++)
+  {
+    uint8_t index = control_msg.index[i];
+    uint8_t servo_index = servo_index_in_each_handle_[index];
+
+    if (index >= servo_num_)
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+
+    if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] != NULL)  // direct servo
+    {
+      DirectServo* direct_servo = servo_ptrs_[index];
+      ServoData& s = direct_servo->getServoHnadler().getServo()[servo_index];
+      s.torque_enable_ = (control_msg.torque_enable[i] != 0) ? true : false;
+      direct_servo->getServoHnadler().setTorqueFromPresetnPos(servo_index);
+    }
+    else if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] == NULL)  // spine servo
+    {
+      std::vector<std::reference_wrapper<Servo>>& spine_servos = Spine::getServo();
+      spine_servos.at(servo_index).get().setTorqueEnable((control_msg.torque_enable[i] != 0) ? true : false);
+
+      /* update the target angle */
+      if (spine_servos.at(servo_index).get().getSendDataFlag())
+      {
+        spine_servos.at(servo_index).get().setGoalPosition(spine_servos.at(servo_index).get().getPresentPosition());
+      }
+    }
+    else
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+  }
+}
+
+void ServoManager::jointProfilesCallback(const spinal::JointProfiles& joint_prof_msg)
+{
+  for (unsigned int i = 0; i < joint_prof_msg.joints_length; i++)
+  {
+    uint8_t index = joint_prof_msg.joints[i].servo_id;
+    uint8_t servo_index = servo_index_in_each_handle_[index];
+
+    if (index >= servo_num_)
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+
+    if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] != NULL)  // direct servo
+    {
+      DirectServo* direct_servo = servo_ptrs_[index];
+      direct_servo->joint_profiles_[servo_index].servo_id = servo_index;
+      direct_servo->joint_profiles_[servo_index].angle_sgn = joint_prof_msg.joints[i].angle_sgn;
+      direct_servo->joint_profiles_[servo_index].angle_scale = joint_prof_msg.joints[i].angle_scale;
+      direct_servo->joint_profiles_[servo_index].zero_point_offset = joint_prof_msg.joints[i].zero_point_offset;
+    }
+    else if (servo_ptrs_.find(index) != servo_ptrs_.end() && servo_ptrs_[index] == NULL)  // spine servo
+    {
+      // TODO: implement joint profile setting for spine servo
+    }
+    else
+    {
+      nh_->logerror("Invalid Servo ID!");
+      return;
+    }
+  }
+}
+
+void ServoManager::boardInfoCallback(const spinal::GetBoardInfo::Request& req, spinal::GetBoardInfo::Response& res)
+{
+  int board_index = 0;
+  for (auto servo_ptrs_ite = servo_ptrs_.begin(); servo_ptrs_ite != servo_ptrs_.end(); servo_ptrs_ite++)
+  {
+    if (servo_ptrs_ite->second != NULL)  // direct servo
+    {
+      DirectServo* direct_servo = servo_ptrs_ite->second;
+      spinal::BoardInfo& board = board_info_res_.boards[board_index];
+      board.imu_send_data_flag = 1;
+#if DYNAMIXEL
+      board.dynamixel_ttl_rs485_mixed = direct_servo->getServoHnadler().getTTLRS485Mixed() ? 1 : 0;
+#endif
+      board.slave_id = 0;
+      for (unsigned int i = 0; i < direct_servo->getServoHnadler().getServoNum(); i++)
+      {
+        const ServoData& s = direct_servo->getServoHnadler().getServo()[i];
+        board.servos[i].id = s.id_;
+        board.servos[i].p_gain = s.p_gain_;
+        board.servos[i].i_gain = s.i_gain_;
+        board.servos[i].d_gain = s.d_gain_;
+        board.servos[i].profile_velocity = s.profile_velocity_;
+        board.servos[i].current_limit = s.current_limit_;
+        board.servos[i].send_data_flag = s.send_data_flag_ ? 1 : 0;
+        board.servos[i].external_encoder_flag = s.external_encoder_flag_ ? 1 : 0;
+        board.servos[i].joint_resolution = s.joint_resolution_;
+        board.servos[i].servo_resolution = s.servo_resolution_;
+      }
+    }
+    else if (servo_ptrs_ite->second == NULL)  // spine servo
+    {
+      for (unsigned int i = 0; i < Spine::getSlaveNum(); i++)
+      {
+        spinal::BoardInfo& board = board_info_res_.boards[board_index + i];
+        board.imu_send_data_flag = Spine::getNeuron().at(i).can_imu_.getSendDataFlag() ? 1 : 0;
+        board.dynamixel_ttl_rs485_mixed = Spine::getNeuron().at(i).can_servo_.getDynamixelTTLRS485Mixed() ? 1 : 0;
+        board.slave_id = Spine::getNeuron().at(i).getSlaveId();
+
+        for (unsigned int j = 0; j < board.servos_length; j++)
+        {
+          Servo& s = Spine::getNeuron().at(i).can_servo_.servo_.at(j);
+          board.servos[j].id = s.getId();
+          board.servos[j].p_gain = s.getPGain();
+          board.servos[j].i_gain = s.getIGain();
+          board.servos[j].d_gain = s.getDGain();
+          board.servos[j].profile_velocity = s.getProfileVelocity();
+          board.servos[j].current_limit = s.getCurrentLimit();
+          board.servos[j].send_data_flag = s.getSendDataFlag() ? 1 : 0;
+          board.servos[j].external_encoder_flag = s.getExternalEncoderFlag() ? 1 : 0;
+          board.servos[j].joint_resolution = s.getJointResolution();
+          board.servos[j].servo_resolution = s.getServoResolution();
+        }
+      }
+    }
+    board_index++;
+  }
+  res = board_info_res_;
+}
+
+void ServoManager::boardConfigCallback(const spinal::SetBoardConfig::Request& req,
+                                       spinal::SetBoardConfig::Response& res)
+{
+  uint8_t command = req.command;
+  uint8_t slave_id = static_cast<uint8_t>(req.data[0]);
+  if (slave_id == 0)  // spinal
+  {
+    DirectServo* servo_ptr = servo_ptrs_[req.data[1]];
+    uint8_t servo_index_in_handle = servo_index_in_each_handle_[req.data[1]];
+    ServoData& s = servo_ptr->getServoHnadler().getServo()[servo_index_in_handle];
+
+    switch (command)
+    {
+      case spinal::SetBoardConfig::Request::SET_SERVO_HOMING_OFFSET: {
+        if (!s.torque_enable_)
+        {
+          int32_t calib_value = req.data[2];
+          s.calib_value_ = calib_value;
+          servo_ptr->getServoHnadler().setHomingOffset(servo_index_in_handle);
+          res.success = true;
+        }
+        else
+        {
+          nh_->logerror("Cannot set homing offset during torque on state.");
+          res.success = false;
+        }
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_SERVO_PID_GAIN: {
+        if (!s.torque_enable_)
+        {
+          s.p_gain_ = req.data[2];
+          s.i_gain_ = req.data[3];
+          s.d_gain_ = req.data[4];
+          servo_ptr->getServoHnadler().setPositionGains(servo_index_in_handle);
+          FlashMemory::erase();
+          FlashMemory::write();
+          res.success = true;
+        }
+        else
+        {
+          nh_->logerror("Cannot set PID gains during torque on state.");
+          res.success = false;
+        }
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_SERVO_PROFILE_VEL: {
+        s.profile_velocity_ = req.data[2];
+        servo_ptr->getServoHnadler().setProfileVelocity(servo_index_in_handle);
+        FlashMemory::erase();
+        FlashMemory::write();
+        res.success = true;
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_SERVO_SEND_DATA_FLAG: {
+        s.send_data_flag_ = req.data[2];
+        FlashMemory::erase();
+        FlashMemory::write();
+        res.success = true;
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_SERVO_CURRENT_LIMIT: {
+        s.current_limit_ = req.data[2];
+        servo_ptr->getServoHnadler().setCurrentLimit(servo_index_in_handle);
+        res.success = true;
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_DYNAMIXEL_TTL_RS485_MIXED: {
+        servo_ptr->getServoHnadler().setTTLRS485Mixed(req.data[2]);
+        FlashMemory::erase();
+        FlashMemory::write();
+        res.success = true;
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_SERVO_EXTERNAL_ENCODER_FLAG: {
+        if (!s.torque_enable_)
+        {
+          s.external_encoder_flag_ = req.data[2];
+          s.first_get_pos_flag_ = true;
+          if (!s.external_encoder_flag_)  // if use the servo internal encoder, we directly output the encoder value
+                                          // without scaling by resolution_ratio.
+          {
+            s.servo_resolution_ = 1;
+            s.joint_resolution_ = 1;
+            s.resolution_ratio_ = 1;
+          }
+          FlashMemory::erase();
+          FlashMemory::write();
+          res.success = true;
+        }
+        else
+        {
+          nh_->logerror("Cannot set ex encoder flag during torque on state.");
+          res.success = false;
+        }
+        break;
+      }
+      case spinal::SetBoardConfig::Request::SET_SERVO_RESOLUTION_RATIO: {
+        if (!s.torque_enable_)
+        {
+          s.joint_resolution_ = req.data[2];
+          s.servo_resolution_ = req.data[3];
+          s.hardware_error_status_ &= ((1 << RESOLUTION_RATIO_ERROR) - 1);  // 0b00111111: reset
+
+          if (s.servo_resolution_ == 65535 || s.joint_resolution_ == 65535)
+          {
+            s.hardware_error_status_ |= (1 << RESOLUTION_RATIO_ERROR);  // 0b01000000;
+            s.resolution_ratio_ = 1;
+          }
+          else
+          {
+            s.resolution_ratio_ = (float)s.servo_resolution_ / (float)s.joint_resolution_;
+            s.first_get_pos_flag_ = true;
+            FlashMemory::erase();
+            FlashMemory::write();
+          }
+          res.success = true;
+        }
+        else
+        {
+          nh_->logerror("Cannot set resolution rate during torque on state.");
+          res.success = false;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  else  // neuron
+  {
+    Spine::setCanTxIdleStartTime(HAL_GetTick());
+    Spine::getCANInitializer().configDevice(req);
+  }
+  res.success = true;
+}
