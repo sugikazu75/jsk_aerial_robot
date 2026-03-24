@@ -310,6 +310,31 @@ namespace Spine
     return false;
   }
 
+  std::vector<Neuron>& getNeuron()
+  {
+    return neuron_;
+  }
+
+  std::vector<std::reference_wrapper<Servo>>& getServo()
+  {
+    return servo_;
+  }
+
+  std::vector<std::reference_wrapper<Servo>>& getServoWithSendFlag()
+  {
+    return servo_with_send_flag_;
+  }
+
+  CANInitializer& getCANInitializer()
+  {
+    return can_initializer_;
+  }
+
+  int8_t getServoNum()
+  {
+    return servo_num_;
+  }
+
   uint8_t getSlaveNum()
   {
     return slave_num_;
@@ -318,6 +343,16 @@ namespace Spine
   int8_t getUavModel()
   {
     return uav_model_;
+  }
+
+  bool getServoControlFlag()
+  {
+    return servo_control_flag_;
+  }
+
+  void setCanTxIdleStartTime(uint32_t time)
+  {
+    can_tx_idle_start_time_ = time;
   }
 
   void setServoControlFlag(bool flag)
