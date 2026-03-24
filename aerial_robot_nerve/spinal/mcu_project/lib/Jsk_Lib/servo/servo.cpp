@@ -40,13 +40,13 @@ bool DirectServo::init(UART_HandleTypeDef* huart,  ros::NodeHandle* nh, osMutexI
   }
 
   nh_ = nh;
-  nh_->subscribe(servo_ctrl_sub_);
-  nh_->subscribe(servo_torque_ctrl_sub_);
-  nh_->subscribe(joint_profiles_sub_);
-  nh_->advertise(servo_state_pub_);
-  nh_->advertise(servo_torque_state_pub_);
-  nh_->advertiseService(servo_config_srv_);
-  nh_->advertiseService(board_info_srv_);
+  // nh_->subscribe(servo_ctrl_sub_);
+  // nh_->subscribe(servo_torque_ctrl_sub_);
+  // nh_->subscribe(joint_profiles_sub_);
+  // nh_->advertise(servo_state_pub_);
+  // nh_->advertise(servo_torque_state_pub_);
+  // nh_->advertiseService(servo_config_srv_);
+  // nh_->advertiseService(board_info_srv_);
 
   servo_state_msg_.servos_length = actual_servo_num;
   servo_state_msg_.servos = new spinal::ServoState[actual_servo_num];
@@ -90,7 +90,7 @@ void DirectServo::sendData(bool flag_send_asap)
           servo_state_msg_.servos[i] = servo;
         }
       }
-      servo_state_pub_.publish(&servo_state_msg_);
+      // servo_state_pub_.publish(&servo_state_msg_);
       servo_last_pub_time_ = now_time;
 
       servo_handler_.setROSCommFlag(false);
@@ -112,7 +112,7 @@ void DirectServo::sendData(bool flag_send_asap)
           servo_state_msg_.servos[i] = servo;
         }
       }
-      servo_state_pub_.publish(&servo_state_msg_);
+      // servo_state_pub_.publish(&servo_state_msg_);
       servo_last_pub_time_ = now_time;
     }
   }
@@ -125,7 +125,7 @@ void DirectServo::sendData(bool flag_send_asap)
           servo_torque_state_msg_.torque_enable[i] = s.torque_enable_;
         }
       }
-      servo_torque_state_pub_.publish(&servo_torque_state_msg_);
+      // servo_torque_state_pub_.publish(&servo_torque_state_msg_);
       servo_torque_last_pub_time_= now_time;
     }  
 }
