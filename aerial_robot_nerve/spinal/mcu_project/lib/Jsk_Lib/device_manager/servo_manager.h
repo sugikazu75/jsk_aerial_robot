@@ -20,7 +20,6 @@
 #include <spinal/ServoStates.h>
 #include <spinal/ServoTorqueStates.h>
 #include <spinal/ServoTorqueCmd.h>
-#include <spinal/SetDirectServoConfig.h>
 #include <spinal/GetBoardInfo.h>
 #include <spinal/JointProfiles.h>
 
