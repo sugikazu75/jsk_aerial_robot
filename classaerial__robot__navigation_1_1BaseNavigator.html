@@ -88,9 +88,10 @@ Inheritance diagram for aerial_robot_navigation::BaseNavigator:</div>
 <div class="dyncontent">
 <div class="center"><img src="classaerial__robot__navigation_1_1BaseNavigator__inherit__graph.png" border="0" usemap="#aaerial__robot__navigation_1_1BaseNavigator_inherit__map" alt="Inheritance graph"/></div>
 <map name="aaerial__robot__navigation_1_1BaseNavigator_inherit__map" id="aaerial__robot__navigation_1_1BaseNavigator_inherit__map">
-<area shape="rect" title=" " alt="" coords="5,37,181,77"/>
+<area shape="rect" title=" " alt="" coords="5,69,181,109"/>
 <area shape="rect" href="classaerial__robot__navigation_1_1DragonNavigator.html" title=" " alt="" coords="267,5,443,45"/>
-<area shape="rect" href="classaerial__robot__navigation_1_1HydrusXiUnderActuatedNavigator.html" title=" " alt="" coords="229,69,480,109"/>
+<area shape="rect" href="classaerial__robot__navigation_1_1GimbalrotorNavigator.html" title=" " alt="" coords="267,69,443,109"/>
+<area shape="rect" href="classaerial__robot__navigation_1_1HydrusXiUnderActuatedNavigator.html" title=" " alt="" coords="229,133,480,173"/>
 </map>
 <center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
@@ -111,6 +112,9 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getNaviState</b> (
 <tr class="memitem:af575eea0cdcd2f6cc7a24d1e48d91623"><td class="memItemLeft" align="right" valign="top"><a id="af575eea0cdcd2f6cc7a24d1e48d91623" name="af575eea0cdcd2f6cc7a24d1e48d91623"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setNaviState</b> (const uint8_t state)</td></tr>
 <tr class="separator:af575eea0cdcd2f6cc7a24d1e48d91623"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a953720dbad8ae82e8d93f1314fcd8b70"><td class="memItemLeft" align="right" valign="top"><a id="a953720dbad8ae82e8d93f1314fcd8b70" name="a953720dbad8ae82e8d93f1314fcd8b70"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>isInflightState</b> ()</td></tr>
+<tr class="separator:a953720dbad8ae82e8d93f1314fcd8b70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a111d3fef25d5a81189d73bcaf822deeb"><td class="memItemLeft" align="right" valign="top"><a id="a111d3fef25d5a81189d73bcaf822deeb" name="a111d3fef25d5a81189d73bcaf822deeb"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getXyControlMode</b> ()</td></tr>
 <tr class="separator:a111d3fef25d5a81189d73bcaf822deeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -562,10 +566,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>singleGoalCallback</b
 void&#160;</td><td class="memItemRight" valign="bottom"><b>pathCallback</b> (const nav_msgs::PathConstPtr &amp;msg)</td></tr>
 <tr class="separator:aceb44730409ee33f37af76aa7b438737"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc1d8b7fa874a313c90af882daf636d5"><td class="memItemLeft" align="right" valign="top"><a id="acc1d8b7fa874a313c90af882daf636d5" name="acc1d8b7fa874a313c90af882daf636d5"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>naviCallback</b> (const aerial_robot_msgs::FlightNavConstPtr &amp;msg)</td></tr>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>naviCallback</b> (const aerial_robot_msgs::FlightNavConstPtr &amp;msg)</td></tr>
 <tr class="separator:acc1d8b7fa874a313c90af882daf636d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a857804d110014c6c6ee3128112f718fa"><td class="memItemLeft" align="right" valign="top"><a id="a857804d110014c6c6ee3128112f718fa" name="a857804d110014c6c6ee3128112f718fa"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>joyStickControl</b> (const sensor_msgs::JoyConstPtr &amp;joy_msg)</td></tr>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>joyStickControl</b> (const sensor_msgs::JoyConstPtr &amp;joy_msg)</td></tr>
 <tr class="separator:a857804d110014c6c6ee3128112f718fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6b43d7b2a36678b6f1f0f81ecdc0877"><td class="memItemLeft" align="right" valign="top"><a id="ae6b43d7b2a36678b6f1f0f81ecdc0877" name="ae6b43d7b2a36678b6f1f0f81ecdc0877"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>batteryCheckCallback</b> (const std_msgs::Float32ConstPtr &amp;msg)</td></tr>

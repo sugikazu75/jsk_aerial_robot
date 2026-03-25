@@ -113,13 +113,13 @@ $(function() {
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#include &lt;hydrus/hydrus_lqi_controller.h&gt;</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#include &lt;dragon/model/hydrus_like_robot_model.h&gt;</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#include &lt;dragon/dragon_navigation.h&gt;</span></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#include &lt;gazebo_msgs/ApplyBodyWrench.h&gt;</span></div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#include &lt;gazebo_msgs/BodyRequest.h&gt;</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="preprocessor">#include &lt;aerial_robot_msgs/ApplyWrench.h&gt;</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="preprocessor">#include &lt;aerial_robot_msgs/ForceList.h&gt;</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="preprocessor">#include &lt;hydrus/hydrus_lqi_controller.h&gt;</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span><span class="preprocessor">#include &lt;dragon/model/hydrus_like_robot_model.h&gt;</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="preprocessor">#include &lt;dragon/dragon_navigation.h&gt;</span></div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span><span class="preprocessor">#include &lt;ros/ros.h&gt;</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#include &lt;std_msgs/Float32MultiArray.h&gt;</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="preprocessor">#include &lt;std_msgs/String.h&gt;</span></div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="preprocessor">#include &lt;spinal/RollPitchYawTerm.h&gt;</span></div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="keyword">namespace </span>aerial_robot_control</div>
@@ -155,7 +155,7 @@ $(function() {
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordtype">void</span> allocateYawTerm()<span class="keyword"> override </span>{} <span class="comment">// do nothing</span></div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
 <div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keywordtype">void</span> attControlFeedbackStateCallback(<span class="keyword">const</span> spinal::RollPitchYawTermConstPtr&amp; msg);</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordtype">void</span> extraVectoringForceCallback(<span class="keyword">const</span> std_msgs::Float32MultiArrayConstPtr&amp; msg);</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordtype">void</span> extraVectoringForceCallback(<span class="keyword">const</span> aerial_robot_msgs::ForceListConstPtr&amp; msg);</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    boost::shared_ptr&lt;Dragon::HydrusLikeRobotModel&gt; dragon_robot_model_;</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    Eigen::MatrixXd P_xy_;</div>
@@ -170,12 +170,12 @@ $(function() {
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span> </div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="comment">/* external wrench */</span></div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    ros::ServiceServer add_external_wrench_service_, clear_external_wrench_service_;</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordtype">bool</span> addExternalWrenchCallback(gazebo_msgs::ApplyBodyWrench::Request&amp; req, gazebo_msgs::ApplyBodyWrench::Response&amp; res);</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">bool</span> clearExternalWrenchCallback(gazebo_msgs::BodyRequest::Request&amp; req, gazebo_msgs::BodyRequest::Response&amp; res);</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    ros::Subscriber add_external_wrench_sub_, clear_external_wrench_sub_;</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordtype">void</span> addExternalWrenchCallback(<span class="keyword">const</span> aerial_robot_msgs::ApplyWrench::ConstPtr&amp; msg);</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordtype">void</span> clearExternalWrenchCallback(<span class="keyword">const</span> std_msgs::String::ConstPtr&amp; msg);</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    <span class="comment">/* extra vectoring force (i.e., for grasping) */</span></div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    Eigen::VectorXd extra_vectoring_force_;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    std::vector&lt;Eigen::Vector3d&gt; extra_vectoring_forces_;</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  };</div>
 <div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>};</div>

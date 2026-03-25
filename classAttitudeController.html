@@ -78,9 +78,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9736702738cf698a0e90e1231da03a20"><td class="memItemLeft" align="right" valign="top"><a id="a9736702738cf698a0e90e1231da03a20" name="a9736702738cf698a0e90e1231da03a20"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (TIM_HandleTypeDef *htim1, TIM_HandleTypeDef *htim2, <a class="el" href="classStateEstimate.html">StateEstimate</a> *estimator, <a class="el" href="classDShot.html">DShot</a> *dshot, <a class="el" href="classBatteryStatus.html">BatteryStatus</a> *bat, ros::NodeHandle *nh, osMutexId *mutex=NULL)</td></tr>
-<tr class="separator:a9736702738cf698a0e90e1231da03a20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1b27058e5dfbef6d17cc14eab41963e"><td class="memItemLeft" align="right" valign="top"><a id="aa1b27058e5dfbef6d17cc14eab41963e" name="aa1b27058e5dfbef6d17cc14eab41963e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (TIM_HandleTypeDef *htim1, TIM_HandleTypeDef *htim2, <a class="el" href="classStateEstimate.html">StateEstimate</a> *estimator, <a class="el" href="classDShot.html">DShot</a> *dshot, <a class="el" href="classDirectServo.html">DirectServo</a> *servo, <a class="el" href="classBatteryStatus.html">BatteryStatus</a> *bat, ros::NodeHandle *nh, osMutexId *mutex=NULL)</td></tr>
+<tr class="separator:aa1b27058e5dfbef6d17cc14eab41963e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab04bf3bf88d4709d2ad332f0f7cfe40b"><td class="memItemLeft" align="right" valign="top"><a id="ab04bf3bf88d4709d2ad332f0f7cfe40b" name="ab04bf3bf88d4709d2ad332f0f7cfe40b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>baseInit</b> ()</td></tr>
 <tr class="separator:ab04bf3bf88d4709d2ad332f0f7cfe40b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -93,15 +93,24 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setStartControlFlag</
 <tr class="memitem:a26e7ff0d85d6cf3819de2e55244a1f51"><td class="memItemLeft" align="right" valign="top"><a id="a26e7ff0d85d6cf3819de2e55244a1f51" name="a26e7ff0d85d6cf3819de2e55244a1f51"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setUavModel</b> (int8_t uav_model)</td></tr>
 <tr class="separator:a26e7ff0d85d6cf3819de2e55244a1f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adadd55d03703086cf6eb6beefba69371"><td class="memItemLeft" align="right" valign="top"><a id="adadd55d03703086cf6eb6beefba69371" name="adadd55d03703086cf6eb6beefba69371"></a>
-uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getMotorNumber</b> ()</td></tr>
-<tr class="separator:adadd55d03703086cf6eb6beefba69371"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a531702ecfe08e838b929b78053d798e7"><td class="memItemLeft" align="right" valign="top"><a id="a531702ecfe08e838b929b78053d798e7" name="a531702ecfe08e838b929b78053d798e7"></a>
+uint16_t&#160;</td><td class="memItemRight" valign="bottom"><b>getMotorNumber</b> ()</td></tr>
+<tr class="separator:a531702ecfe08e838b929b78053d798e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae79ee644e2d9732c143fa5c6356c15e7"><td class="memItemLeft" align="right" valign="top"><a id="ae79ee644e2d9732c143fa5c6356c15e7" name="ae79ee644e2d9732c143fa5c6356c15e7"></a>
 const <a class="el" href="classap_1_1Matrix3.html">ap::Matrix3f</a>&#160;</td><td class="memItemRight" valign="bottom"><b>getOffsetRotation</b> ()</td></tr>
 <tr class="separator:ae79ee644e2d9732c143fa5c6356c15e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa01f46e70cf7e475b36325f689e753b9"><td class="memItemLeft" align="right" valign="top"><a id="aa01f46e70cf7e475b36325f689e753b9" name="aa01f46e70cf7e475b36325f689e753b9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setMotorNumber</b> (uint8_t motor_number)</td></tr>
-<tr class="separator:aa01f46e70cf7e475b36325f689e753b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a3df136ce3303283e3e9080b270d474"><td class="memItemLeft" align="right" valign="top"><a id="a1a3df136ce3303283e3e9080b270d474" name="a1a3df136ce3303283e3e9080b270d474"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setMotorNumber</b> (uint16_t motor_number)</td></tr>
+<tr class="separator:a1a3df136ce3303283e3e9080b270d474"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c5b1e878c5fb0e0cd85faabf77bbbcd"><td class="memItemLeft" align="right" valign="top"><a id="a0c5b1e878c5fb0e0cd85faabf77bbbcd" name="a0c5b1e878c5fb0e0cd85faabf77bbbcd"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setGimbalDof</b> (uint8_t gimbal_dof)</td></tr>
+<tr class="separator:a0c5b1e878c5fb0e0cd85faabf77bbbcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a091994295d9b2d9b8133b427cd6b8180"><td class="memItemLeft" align="right" valign="top"><a id="a091994295d9b2d9b8133b427cd6b8180" name="a091994295d9b2d9b8133b427cd6b8180"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setRotorCoef</b> (uint8_t rotor_coef)</td></tr>
+<tr class="separator:a091994295d9b2d9b8133b427cd6b8180"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16fe871ea9246bbe2b68a353e9d38653"><td class="memItemLeft" align="right" valign="top"><a id="a16fe871ea9246bbe2b68a353e9d38653" name="a16fe871ea9246bbe2b68a353e9d38653"></a>
+uint16_t&#160;</td><td class="memItemRight" valign="bottom"><b>getGimbalDof</b> ()</td></tr>
+<tr class="separator:a16fe871ea9246bbe2b68a353e9d38653"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe94933f34d0e9f3edf5383152ab3a73"><td class="memItemLeft" align="right" valign="top"><a id="abe94933f34d0e9f3edf5383152ab3a73" name="abe94933f34d0e9f3edf5383152ab3a73"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setPwmTestMode</b> (bool pwm_test_flag)</td></tr>
 <tr class="separator:abe94933f34d0e9f3edf5383152ab3a73"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -117,9 +126,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>getForceLandingFlag</
 <tr class="memitem:a30aa91101b823938d73853fa4b6e7ccf"><td class="memItemLeft" align="right" valign="top"><a id="a30aa91101b823938d73853fa4b6e7ccf" name="a30aa91101b823938d73853fa4b6e7ccf"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setForceLandingFlag</b> (bool force_landing_flag)</td></tr>
 <tr class="separator:a30aa91101b823938d73853fa4b6e7ccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc7e4e4865cba41c3d651847ddf11520"><td class="memItemLeft" align="right" valign="top"><a id="abc7e4e4865cba41c3d651847ddf11520" name="abc7e4e4865cba41c3d651847ddf11520"></a>
-float&#160;</td><td class="memItemRight" valign="bottom"><b>getPwm</b> (uint8_t index)</td></tr>
-<tr class="separator:abc7e4e4865cba41c3d651847ddf11520"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8e592220624bbadb3ec5653f64f7c24"><td class="memItemLeft" align="right" valign="top"><a id="ab8e592220624bbadb3ec5653f64f7c24" name="ab8e592220624bbadb3ec5653f64f7c24"></a>
+float&#160;</td><td class="memItemRight" valign="bottom"><b>getTargetPwm</b> (uint8_t index)</td></tr>
+<tr class="separator:ab8e592220624bbadb3ec5653f64f7c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a253ff801b5d8c52f016dab7bf5191eea"><td class="memItemLeft" align="right" valign="top"><a id="a253ff801b5d8c52f016dab7bf5191eea" name="a253ff801b5d8c52f016dab7bf5191eea"></a>
 float&#160;</td><td class="memItemRight" valign="bottom"><b>getForce</b> (uint8_t index)</td></tr>
 <tr class="separator:a253ff801b5d8c52f016dab7bf5191eea"><td class="memSeparator" colspan="2">&#160;</td></tr>

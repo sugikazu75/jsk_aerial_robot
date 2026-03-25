@@ -1,9 +1,10 @@
 <map id="aerial_robot_model::transformable::RobotModel" name="aerial_robot_model::transformable::RobotModel">
-<area shape="rect" id="node1" title=" " alt="" coords="229,93,437,133"/>
-<area shape="rect" id="node3" href="$classHydrusRobotModel.html" title=" " alt="" coords="160,189,307,214"/>
-<area shape="rect" id="node7" href="$classHydrusXiFullyActuatedRobotModel.html" title=" " alt="" coords="331,181,539,221"/>
-<area shape="rect" id="node2" href="$classaerial__robot__model_1_1RobotModel.html" title=" " alt="" coords="259,5,407,45"/>
-<area shape="rect" id="node4" href="$classDragon_1_1HydrusLikeRobotModel.html" title=" " alt="" coords="5,269,232,295"/>
-<area shape="rect" id="node6" href="$classHydrusTiltedRobotModel.html" title=" " alt="" coords="257,269,439,295"/>
-<area shape="rect" id="node5" href="$classDragon_1_1FullVectoringRobotModel.html" title=" " alt="" coords="19,343,218,383"/>
+<area shape="rect" id="node1" title=" " alt="" coords="177,93,385,133"/>
+<area shape="rect" id="node3" href="$classGimbalrotorRobotModel.html" title=" " alt="" coords="5,189,184,214"/>
+<area shape="rect" id="node4" href="$classHydrusRobotModel.html" title=" " alt="" coords="208,189,355,214"/>
+<area shape="rect" id="node8" href="$classHydrusXiFullyActuatedRobotModel.html" title=" " alt="" coords="379,181,587,221"/>
+<area shape="rect" id="node2" href="$classaerial__robot__model_1_1RobotModel.html" title=" " alt="" coords="207,5,355,45"/>
+<area shape="rect" id="node5" href="$classDragon_1_1HydrusLikeRobotModel.html" title=" " alt="" coords="53,269,280,295"/>
+<area shape="rect" id="node7" href="$classHydrusTiltedRobotModel.html" title=" " alt="" coords="305,269,487,295"/>
+<area shape="rect" id="node6" href="$classDragon_1_1FullVectoringRobotModel.html" title=" " alt="" coords="67,343,266,383"/>
 </map>

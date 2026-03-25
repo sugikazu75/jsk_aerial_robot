@@ -92,9 +92,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>servoTorqueControlCal
 <tr class="memitem:ad32623cf73e4a4f3832265fef083e85f"><td class="memItemLeft" align="right" valign="top"><a id="ad32623cf73e4a4f3832265fef083e85f" name="ad32623cf73e4a4f3832265fef083e85f"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>boardConfigCallback</b> (const spinal::SetBoardConfig::Request &amp;req, spinal::SetBoardConfig::Response &amp;res)</td></tr>
 <tr class="separator:ad32623cf73e4a4f3832265fef083e85f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92438d8d77b4da0c99b8878dafc4b5e8"><td class="memItemLeft" align="right" valign="top"><a id="a92438d8d77b4da0c99b8878dafc4b5e8" name="a92438d8d77b4da0c99b8878dafc4b5e8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (CAN_GeranlHandleTypeDef *hcan, ros::NodeHandle *nh, <a class="el" href="classStateEstimate.html">StateEstimate</a> *estimator, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)</td></tr>
-<tr class="separator:a92438d8d77b4da0c99b8878dafc4b5e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b383a107077c55a94f7947579ef0a29"><td class="memItemLeft" align="right" valign="top"><a id="a3b383a107077c55a94f7947579ef0a29" name="a3b383a107077c55a94f7947579ef0a29"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> (CAN_GeranlHandleTypeDef *hcan, ros::NodeHandle *nh, <a class="el" href="classStateEstimate.html">StateEstimate</a> *estimator, <a class="el" href="classFlightControl.html">FlightControl</a> *controller, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin)</td></tr>
+<tr class="separator:a3b383a107077c55a94f7947579ef0a29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa54f47d9337474145504ddccfb5c508d"><td class="memItemLeft" align="right" valign="top"><a id="aa54f47d9337474145504ddccfb5c508d" name="aa54f47d9337474145504ddccfb5c508d"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>send</b> ()</td></tr>
 <tr class="separator:aa54f47d9337474145504ddccfb5c508d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -107,6 +107,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>useRTOS</b> (osMailQI
 <tr class="memitem:a0b1233f0193449f97cc6e954d7f09c30"><td class="memItemLeft" align="right" valign="top"><a id="a0b1233f0193449f97cc6e954d7f09c30" name="a0b1233f0193449f97cc6e954d7f09c30"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setMotorPwm</b> (uint16_t pwm, uint8_t motor)</td></tr>
 <tr class="separator:a0b1233f0193449f97cc6e954d7f09c30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84c2eb3367324736632cd539c99d1ef9"><td class="memItemLeft" align="right" valign="top"><a id="a84c2eb3367324736632cd539c99d1ef9" name="a84c2eb3367324736632cd539c99d1ef9"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>connected</b> ()</td></tr>
+<tr class="separator:a84c2eb3367324736632cd539c99d1ef9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa76ad53b2bdf11cbcd3b5dda412745d4"><td class="memItemLeft" align="right" valign="top"><a id="aa76ad53b2bdf11cbcd3b5dda412745d4" name="aa76ad53b2bdf11cbcd3b5dda412745d4"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getSlaveNum</b> ()</td></tr>
 <tr class="separator:aa76ad53b2bdf11cbcd3b5dda412745d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -116,6 +119,9 @@ int8_t&#160;</td><td class="memItemRight" valign="bottom"><b>getUavModel</b> ()<
 <tr class="memitem:ade863f6b83d9e15bf039a96e4c23d287"><td class="memItemLeft" align="right" valign="top"><a id="ade863f6b83d9e15bf039a96e4c23d287" name="ade863f6b83d9e15bf039a96e4c23d287"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setServoControlFlag</b> (bool flag)</td></tr>
 <tr class="separator:ade863f6b83d9e15bf039a96e4c23d287"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abdecc9f8c444e9284079f53ad1e24eca"><td class="memItemLeft" align="right" valign="top"><a id="abdecc9f8c444e9284079f53ad1e24eca" name="abdecc9f8c444e9284079f53ad1e24eca"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>servoPublish</b> ()</td></tr>
+<tr class="separator:abdecc9f8c444e9284079f53ad1e24eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8ca6afbc2da2becea80389defe6bc6d5"><td class="memItemLeft" align="right" valign="top"><a id="a8ca6afbc2da2becea80389defe6bc6d5" name="a8ca6afbc2da2becea80389defe6bc6d5"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>convertGyroFromJointvalues</b> ()</td></tr>
 <tr class="separator:a8ca6afbc2da2becea80389defe6bc6d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,6 +130,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>convertGyroFromJointv
 <div class="textblock"><p>File Name : spine.cpp </p>
 <h2><a class="anchor" id="autotoc_md3"></a>
 Description        : can-based internal comm network, spine side interface</h2>
+<p>File Name : <a class="el" href="spine_8h_source.html">spine.h</a> Description : can-based internal comm network, spine side interface Includes ---------------------------------------------------------------&mdash; </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

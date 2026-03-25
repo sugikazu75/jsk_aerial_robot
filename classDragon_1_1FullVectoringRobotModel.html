@@ -109,9 +109,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8c39365b3e9264593ca6040f931db7a1"><td class="memItemLeft" align="right" valign="top"><a id="a8c39365b3e9264593ca6040f931db7a1" name="a8c39365b3e9264593ca6040f931db7a1"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>FullVectoringRobotModel</b> (bool init_with_rosparam=true, bool verbose=false, double edf_radius=0, double edf_max_tilt=0)</td></tr>
 <tr class="separator:a8c39365b3e9264593ca6040f931db7a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a96c59f72e06596bc4a6d2259a830a644"><td class="memItemLeft" align="right" valign="top"><a id="a96c59f72e06596bc4a6d2259a830a644" name="a96c59f72e06596bc4a6d2259a830a644"></a>
-boost::shared_ptr&lt; <a class="el" href="classaerial__robot__model_1_1transformable_1_1RobotModel.html">aerial_robot_model::transformable::RobotModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getRobotModelForPlan</b> ()</td></tr>
-<tr class="separator:a96c59f72e06596bc4a6d2259a830a644"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12149b1f79f77748db0df77a90564b30"><td class="memItemLeft" align="right" valign="top"><a id="a12149b1f79f77748db0df77a90564b30" name="a12149b1f79f77748db0df77a90564b30"></a>
+boost::shared_ptr&lt; <a class="el" href="classaerial__robot__model_1_1RobotModel.html">aerial_robot_model::RobotModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getRobotModelForPlan</b> ()</td></tr>
+<tr class="separator:a12149b1f79f77748db0df77a90564b30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93dfcd36dafe2b61bed21355df54a953"><td class="memItemLeft" align="right" valign="top"><a id="a93dfcd36dafe2b61bed21355df54a953" name="a93dfcd36dafe2b61bed21355df54a953"></a>
 const Eigen::VectorXd &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getHoverVectoringF</b> () const</td></tr>
 <tr class="separator:a93dfcd36dafe2b61bed21355df54a953"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,8 +143,6 @@ Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>calcFeasib
 <tr class="memitem:a60ab0da91f511df3be50529225afae77"><td class="memItemLeft" align="right" valign="top"><a id="a60ab0da91f511df3be50529225afae77" name="a60ab0da91f511df3be50529225afae77"></a>
 Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>calcFeasibleControlTDists</b> (const std::vector&lt; int &gt; &amp;gimbal_roll_lock, const std::vector&lt; double &gt; &amp;locked_roll_angles, int rotor_num, const std::vector&lt; Eigen::Vector3d &gt; &amp;rotor_pos, const std::vector&lt; Eigen::Matrix3d &gt; &amp;link_rot, const Eigen::Matrix3d &amp;cog_rot)</td></tr>
 <tr class="separator:a60ab0da91f511df3be50529225afae77"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7620ceaa6b6151a3961f776a23125e2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDragon_1_1FullVectoringRobotModel.html#ab7620ceaa6b6151a3961f776a23125e2">stabilityCheck</a> (bool verbose) override</td></tr>
-<tr class="separator:ab7620ceaa6b6151a3961f776a23125e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e14519c657b81d8bf933add378e2a7c"><td class="memItemLeft" align="right" valign="top"><a id="a1e14519c657b81d8bf933add378e2a7c" name="a1e14519c657b81d8bf933add378e2a7c"></a>
 template&lt;&gt; </td></tr>
 <tr class="memitem:a1e14519c657b81d8bf933add378e2a7c"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; KDL::Vector &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>getGimbalRollOriginFromCog</b> () const</td></tr>
@@ -758,35 +756,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setStaticThrust</b> (
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setThrustWrenchMatrix</b> (const Eigen::MatrixXd q_mat)</td></tr>
 <tr class="separator:a94523c436dc026d653f878d49506fc65 inherit pro_methods_classaerial__robot__model_1_1RobotModel"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a id="ab7620ceaa6b6151a3961f776a23125e2" name="ab7620ceaa6b6151a3961f776a23125e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab7620ceaa6b6151a3961f776a23125e2">&#9670;&#160;</a></span>stabilityCheck()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool FullVectoringRobotModel::stabilityCheck </td>
-          <td>(</td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>verbose</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Reimplemented from <a class="el" href="classHydrusRobotModel.html">HydrusRobotModel</a>.</p>
-
-</div>
-</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>robots/dragon/include/dragon/model/<a class="el" href="full__vectoring__robot__model_8h_source.html">full_vectoring_robot_model.h</a></li>
 <li>robots/dragon/src/model/full_vectoring_robot_model.cpp</li>

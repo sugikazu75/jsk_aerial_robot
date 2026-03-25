@@ -104,6 +104,26 @@ Collaboration diagram for aerial_robot_control::DragonFullVectoringController:</
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a47b0c29d801d335146fd4f24f7a4a2f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaerial__robot__control_1_1DragonFullVectoringController.html#a47b0c29d801d335146fd4f24f7a4a2f7">initialize</a> (ros::NodeHandle nh, ros::NodeHandle nhp, boost::shared_ptr&lt; <a class="el" href="classaerial__robot__model_1_1RobotModel.html">aerial_robot_model::RobotModel</a> &gt; robot_model, boost::shared_ptr&lt; <a class="el" href="classaerial__robot__estimation_1_1StateEstimator.html">aerial_robot_estimation::StateEstimator</a> &gt; estimator, boost::shared_ptr&lt; <a class="el" href="classaerial__robot__navigation_1_1BaseNavigator.html">aerial_robot_navigation::BaseNavigator</a> &gt; navigator, double ctrl_loop_rate) override</td></tr>
 <tr class="separator:a47b0c29d801d335146fd4f24f7a4a2f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6ca5daef04cbecd23fdadcbd3d28925"><td class="memItemLeft" align="right" valign="top"><a id="ac6ca5daef04cbecd23fdadcbd3d28925" name="ac6ca5daef04cbecd23fdadcbd3d28925"></a>
+const boost::shared_ptr&lt; <a class="el" href="classDragon_1_1FullVectoringRobotModel.html">Dragon::FullVectoringRobotModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getDragonRobotModel</b> () const</td></tr>
+<tr class="separator:ac6ca5daef04cbecd23fdadcbd3d28925"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13544a0ae53e227ca2f410de77b8a59c"><td class="memItemLeft" align="right" valign="top"><a id="a13544a0ae53e227ca2f410de77b8a59c" name="a13544a0ae53e227ca2f410de77b8a59c"></a>
+const boost::shared_ptr&lt; <a class="el" href="classaerial__robot__model_1_1RobotModel.html">aerial_robot_model::RobotModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getRobotModelForControl</b> () const</td></tr>
+<tr class="separator:a13544a0ae53e227ca2f410de77b8a59c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f9797e2617acc106977d67dcf57e446"><td class="memItemLeft" align="right" valign="top"><a id="a6f9797e2617acc106977d67dcf57e446" name="a6f9797e2617acc106977d67dcf57e446"></a>
+const Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>getTargetWrench</b> ()</td></tr>
+<tr class="separator:a6f9797e2617acc106977d67dcf57e446"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25bbd688964d98e64b72b6fdb8439b0e"><td class="memItemLeft" align="right" valign="top"><a id="a25bbd688964d98e64b72b6fdb8439b0e" name="a25bbd688964d98e64b72b6fdb8439b0e"></a>
+const Eigen::VectorXd&#160;</td><td class="memItemRight" valign="bottom"><b>getTargetAcc</b> ()</td></tr>
+<tr class="separator:a25bbd688964d98e64b72b6fdb8439b0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec225389d8cbcebd9612846c4f9c0255"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaerial__robot__control_1_1DragonFullVectoringController.html#aec225389d8cbcebd9612846c4f9c0255">reset</a> () override</td></tr>
+<tr class="separator:aec225389d8cbcebd9612846c4f9c0255"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a246ccbd9797cf36b61fd54c525489194"><td class="memItemLeft" align="right" valign="top"><a id="a246ccbd9797cf36b61fd54c525489194" name="a246ccbd9797cf36b61fd54c525489194"></a>
+const std::vector&lt; int &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getRollLockedGimbal</b> () const</td></tr>
+<tr class="separator:a246ccbd9797cf36b61fd54c525489194"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3523066343af0f91c861ba8188d887b"><td class="memItemLeft" align="right" valign="top"><a id="ac3523066343af0f91c861ba8188d887b" name="ac3523066343af0f91c861ba8188d887b"></a>
+const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getGimbalNominalAngles</b> () const</td></tr>
+<tr class="separator:ac3523066343af0f91c861ba8188d887b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classaerial__robot__control_1_1PoseLinearController"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classaerial__robot__control_1_1PoseLinearController')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classaerial__robot__control_1_1PoseLinearController.html">aerial_robot_control::PoseLinearController</a></td></tr>
 <tr class="memitem:ad0fb5f6821a4bd14fad22bed93580cc8 inherit pub_methods_classaerial__robot__control_1_1PoseLinearController"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classaerial__robot__control_1_1PoseLinearController.html#ad0fb5f6821a4bd14fad22bed93580cc8">initialize</a> (ros::NodeHandle nh, ros::NodeHandle nhp, boost::shared_ptr&lt; <a class="el" href="classaerial__robot__model_1_1RobotModel.html">aerial_robot_model::RobotModel</a> &gt; robot_model, boost::shared_ptr&lt; <a class="el" href="classaerial__robot__estimation_1_1StateEstimator.html">aerial_robot_estimation::StateEstimator</a> &gt; estimator, boost::shared_ptr&lt; <a class="el" href="classaerial__robot__navigation_1_1BaseNavigator.html">aerial_robot_navigation::BaseNavigator</a> &gt; navigator, double ctrl_loop_du) override</td></tr>
 <tr class="separator:ad0fb5f6821a4bd14fad22bed93580cc8 inherit pub_methods_classaerial__robot__control_1_1PoseLinearController"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -321,6 +341,33 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>control_verbose_</b><
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reimplemented from <a class="el" href="classaerial__robot__control_1_1PoseLinearController.html">aerial_robot_control::PoseLinearController</a>.</p>
+
+</div>
+</div>
+<a id="aec225389d8cbcebd9612846c4f9c0255" name="aec225389d8cbcebd9612846c4f9c0255"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec225389d8cbcebd9612846c4f9c0255">&#9670;&#160;</a></span>reset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DragonFullVectoringController::reset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>
