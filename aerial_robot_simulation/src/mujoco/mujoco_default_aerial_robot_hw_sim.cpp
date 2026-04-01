@@ -147,6 +147,6 @@ void DefaultAerialRobotHWSim::publishTF(ros::Time time)
   tf_broadcaster_.sendTransform(root_pose_transform);
 }
 
-}  // namespace mujoco_ros_control
+}  // namespace mujoco_ros::control
 
 PLUGINLIB_EXPORT_CLASS(mujoco_ros::control::DefaultAerialRobotHWSim, mujoco_ros::control::RobotHWSim)
