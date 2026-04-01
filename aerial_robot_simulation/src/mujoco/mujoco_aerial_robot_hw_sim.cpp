@@ -172,6 +172,6 @@ void AerialRobotHWSim::writeSim(ros::Time time, ros::Duration period)
   }
 }
 
-}  // namespace mujoco_ros_control
+}  // namespace mujoco_ros::control
 
 PLUGINLIB_EXPORT_CLASS(mujoco_ros::control::AerialRobotHWSim, mujoco_ros::control::RobotHWSim)
