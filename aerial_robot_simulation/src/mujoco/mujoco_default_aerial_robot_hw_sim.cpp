@@ -1,6 +1,6 @@
 #include <aerial_robot_simulation/mujoco/mujoco_default_aerial_robot_hw_sim.h>
 
-namespace mujoco_ros_control
+namespace mujoco_ros::control
 {
 
 bool DefaultAerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
@@ -149,4 +149,4 @@ void DefaultAerialRobotHWSim::publishTF(ros::Time time)
 
 }  // namespace mujoco_ros_control
 
-PLUGINLIB_EXPORT_CLASS(mujoco_ros_control::DefaultAerialRobotHWSim, mujoco_ros::control::RobotHWSim)
+PLUGINLIB_EXPORT_CLASS(mujoco_ros::control::DefaultAerialRobotHWSim, mujoco_ros::control::RobotHWSim)

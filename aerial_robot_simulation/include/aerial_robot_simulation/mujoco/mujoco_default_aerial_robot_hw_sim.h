@@ -7,7 +7,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 
-namespace mujoco_ros_control
+namespace mujoco_ros::control
 {
 class DefaultAerialRobotHWSim : public mujoco_ros::control::DefaultRobotHWSim
 {

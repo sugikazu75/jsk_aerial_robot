@@ -1,6 +1,6 @@
 #include <aerial_robot_simulation/mujoco/mujoco_aerial_robot_hw_sim.h>
 
-namespace mujoco_ros_control
+namespace mujoco_ros::control
 {
 bool AerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
                                const std::string& robot_namespace, ros::NodeHandle model_nh,
@@ -174,4 +174,4 @@ void AerialRobotHWSim::writeSim(ros::Time time, ros::Duration period)
 
 }  // namespace mujoco_ros_control
 
-PLUGINLIB_EXPORT_CLASS(mujoco_ros_control::AerialRobotHWSim, mujoco_ros::control::RobotHWSim)
+PLUGINLIB_EXPORT_CLASS(mujoco_ros::control::AerialRobotHWSim, mujoco_ros::control::RobotHWSim)

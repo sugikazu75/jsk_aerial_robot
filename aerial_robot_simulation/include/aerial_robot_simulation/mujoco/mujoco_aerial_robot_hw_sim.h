@@ -6,7 +6,7 @@
 #include <mujoco_ros_control/default_robot_hw_sim.h>
 #include <nav_msgs/Odometry.h>
 
-namespace mujoco_ros_control
+namespace mujoco_ros::control
 {
 class AerialRobotHWSim : public mujoco_ros::control::DefaultRobotHWSim
 {

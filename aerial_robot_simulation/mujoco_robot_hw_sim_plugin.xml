@@ -1,7 +1,7 @@
 <library path="lib/libmujoco_aerial_robot_hw_sim">
   <class
       name="mujoco_ros_control/AerialRobotHWSim"
-      type="mujoco_ros_control::AerialRobotHWSim"
+      type="mujoco_ros::control::AerialRobotHWSim"
       base_class_type="mujoco_ros::control::RobotHWSim">
     <description>
        simulation interface for aerial robot in MuJoCo.
@@ -10,7 +10,7 @@
 
   <class
       name="mujoco_ros_control/DefaultAerialRobotHWSim"
-      type="mujoco_ros_control::DefaultAerialRobotHWSim"
+      type="mujoco_ros::control::DefaultAerialRobotHWSim"
       base_class_type="mujoco_ros::control::RobotHWSim">
     <description>
        simulation interface for aerial robot in MuJoCo.
