@@ -86,7 +86,7 @@ void RotorController::setCommandCB(const std_msgs::Float64ConstPtr& msg)
 
 void RotorController::enforceJointLimits(double& command)
 {
-  if (command > joint_urdf_->limits->upper)  // above upper limnit
+  if (command > joint_urdf_->limits->upper)  // above upper limit
   {
     command = joint_urdf_->limits->upper;
   }
