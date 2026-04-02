@@ -3,7 +3,6 @@
     xmlns:xacro="http://www.ros.org/wiki/xacro" name="dragon" >
 
   <xacro:arg name="robot_name" default="dragon" />
-  <xacro:arg name="rotor_fixed" default="false"/>
 
   <!-- robot urdf -->
   <xacro:include filename="$(find dragon)/robots/quad/v1_5_202601.urdf.xacro" />
