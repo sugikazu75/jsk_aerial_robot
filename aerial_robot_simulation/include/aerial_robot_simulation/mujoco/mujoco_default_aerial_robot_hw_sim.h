@@ -44,7 +44,11 @@ private:
   std::vector<double> rotor_vel_;
   std::vector<double> rotor_eff_;
 
+  std::string root_link_name_ = "";
+  bool publish_odom_ = true;
+  bool publish_tf_ = false;
+
   void publishOdometry(ros::Time time);
   void publishTF(ros::Time time);
 };
-}  // namespace mujoco_ros_control
+}  // namespace mujoco_ros::control
