@@ -13,6 +13,38 @@ constexpr uint32_t SERVO_TORQUE_PUB_INTERVAL = 1000;  //[ms]
 void ServoManager::init(ros::NodeHandle* nh)
 {
   nh_ = nh;
+
+  board_info_res_.boards_length = 1 + (use_spine_ ? Spine::getSlaveNum() : 0);
+  board_info_res_.boards = new spinal::BoardInfo[board_info_res_.boards_length];
+
+  // count total number of servo connected to spinal (board id 0)
+  int spinal_servo_num = 0;
+  for (auto servo_handler : servo_handlers_)
+    {
+      if (servo_handler != NULL)
+        {
+          spinal_servo_num += servo_handler->getServoHnadler().getServoNum();
+        }
+    }
+  spinal::BoardInfo& board = board_info_res_.boards[0];
+  board.servos_length = spinal_servo_num;
+  board.servos = new spinal::ServoInfo[board.servos_length];
+
+  if (use_spine_)
+    {
+      for (unsigned int i = 0; i < Spine::getSlaveNum(); i++)
+        {
+          spinal::BoardInfo& board = board_info_res_.boards[1 + i];
+          board.imu_send_data_flag = Spine::getNeuron().at(i).can_imu_.getSendDataFlag() ? 1 : 0;
+          board.dynamixel_ttl_rs485_mixed = Spine::getNeuron().at(i).can_servo_.getDynamixelTTLRS485Mixed() ? 1 : 0;
+          board.slave_id = Spine::getNeuron().at(i).getSlaveId();
+          board.servos_length = Spine::getNeuron().at(i).can_servo_.servo_.size();
+          board.servos = new spinal::ServoInfo[board.servos_length];
+        }
+    }
+  nh_->advertiseService(board_config_srv_);
+  nh_->advertiseService(board_info_srv_);
+
   if (servo_num_ > 0)
   {
     nh_->advertise(servo_state_pub_);
@@ -21,8 +53,6 @@ void ServoManager::init(ros::NodeHandle* nh)
     nh_->subscribe(servo_current_sub_);
     nh_->subscribe(servo_torque_ctrl_sub_);
     nh_->subscribe(joint_profiles_sub_);
-    nh_->advertiseService(board_config_srv_);
-    nh_->advertiseService(board_info_srv_);
 
     servo_state_msg_.servos_length = servo_num_;
     servo_state_msg_.servos = new spinal::ServoState[servo_num_];
@@ -31,32 +61,6 @@ void ServoManager::init(ros::NodeHandle* nh)
 
     servo_last_pub_time_ = 0;
     servo_torque_last_pub_time_ = 0;
-
-    board_info_res_.boards_length = 1 + (use_spine_ ? Spine::getSlaveNum() : 0);
-    board_info_res_.boards = new spinal::BoardInfo[board_info_res_.boards_length];
-
-    // count total number of servo connected to spinal (board id 0)
-    int spinal_servo_num = 0;
-    for (auto servo_handler : servo_handlers_)
-    {
-      if (servo_handler != NULL)
-      {
-        spinal_servo_num += servo_handler->getServoHnadler().getServoNum();
-      }
-    }
-    spinal::BoardInfo& board = board_info_res_.boards[0];
-    board.servos_length = spinal_servo_num;
-    board.servos = new spinal::ServoInfo[board.servos_length];
-
-    if (use_spine_)
-    {
-      for (unsigned int i = 0; i < Spine::getSlaveNum(); i++)
-      {
-        spinal::BoardInfo& board = board_info_res_.boards[1 + i];
-        board.servos_length = Spine::getNeuron().at(i).can_servo_.servo_.size();
-        board.servos = new spinal::ServoInfo[board.servos_length];
-      }
-    }
   }
 }
 
