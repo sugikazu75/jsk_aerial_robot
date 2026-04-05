@@ -70,7 +70,10 @@ private:
   uint32_t servo_last_pub_time_;
   uint32_t servo_torque_last_pub_time_;
 
-  std::map<uint8_t, DirectServo*> servo_ptrs_;
+  std::vector<DirectServo*> servo_handlers_;
+  std::map<uint8_t, DirectServo*> servo_index_to_servo_handler_;  // translate total servo index to each servo handler
+                                                                  // pointer. if the pointer is NULL, it means the servo
+                                                                  // is controlled by spine.
   std::map<uint8_t, uint8_t> servo_index_in_each_handle_;  // translate total servo index to each servo handler's index
   int servo_num_;
   bool use_spine_;
