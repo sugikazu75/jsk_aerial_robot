@@ -18,7 +18,7 @@ class RotorController : public controller_interface::Controller<hardware_interfa
 public:
   struct Commands
   {
-    double force_;  // Last commanded force
+    double force_ = 0.0;  // Last commanded force
   };
 
   RotorController();
