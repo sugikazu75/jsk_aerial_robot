@@ -9,6 +9,8 @@
 #include <std_msgs/Float64.h>
 #include <urdf/model.h>
 
+#include <memory>
+
 namespace rotor_controllers
 {
 class RotorController : public controller_interface::Controller<hardware_interface::RotorInterface>
