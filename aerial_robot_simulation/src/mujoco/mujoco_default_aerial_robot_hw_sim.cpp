@@ -85,6 +85,13 @@ void DefaultAerialRobotHWSim::readSim(ros::Time time, ros::Duration period)
 {
   DefaultRobotHWSim::readSim(time, period);
 
+  // reset last publish time after simulator reset
+  if (ros::Time(time).toSec() < odom_pub_last_time_ || ros::Time(time).toSec() < tf_broadcast_last_time_)
+  {
+    odom_pub_last_time_ = 0.0;
+    tf_broadcast_last_time_ = 0.0;
+  }
+
   if (publish_odom_ && (ros::Time(time).toSec() - odom_pub_last_time_ >= odom_pub_rate_))
   {
     publishOdometry(time);
