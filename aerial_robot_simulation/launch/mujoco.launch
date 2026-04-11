@@ -27,6 +27,7 @@
           hardware:
             type: $(arg hw_sim_type)
             control_period: 0.001
+        - type: mujoco_ros_sensors/MujocoRosSensorsPlugin
     </rosparam>
 
   </group>
