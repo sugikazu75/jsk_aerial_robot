@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_ros_control
   kdl_parser
   mujoco_ros_control
+  mujoco_ros_sensors
   roscpp
   spinal
   tf
@@ -25,7 +26,7 @@ include_directories(${orocos_kdl_INCLUDE_DIRS} ${urdfdom_headers_INCLUDE_DIRS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES aerial_robot_hw_sim spinal_interface flight_controllers
-  CATKIN_DEPENDS aerial_robot_base aerial_robot_estimation aerial_robot_msgs aerial_robot_model gazebo_ros_control kdl_parser roscpp spinal tf
+  CATKIN_DEPENDS aerial_robot_base aerial_robot_estimation aerial_robot_msgs aerial_robot_model gazebo_ros_control kdl_parser mujoco_ros_control mujoco_ros_sensors roscpp spinal tf
   DEPENDS GAZEBO orocos_kdl urdfdom_headers
 )
 
