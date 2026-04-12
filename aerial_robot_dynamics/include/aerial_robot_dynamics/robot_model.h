@@ -129,7 +129,7 @@ private:
   // model parameters
   bool is_floating_base_;
   int rotor_num_;
-  double m_f_rate_;
+  double m_f_rate_ = 0.0;
   Eigen::VectorXd joint_torque_limits_;
   Eigen::VectorXd thrust_upper_limits_;
   Eigen::VectorXd thrust_lower_limits_;
