@@ -27,6 +27,7 @@ public:
   bool init(hardware_interface::RotorInterface* robot, ros::NodeHandle& n);
 
   void setCommand(double force_target);
+  void starting(const ros::Time& time);
   void update(const ros::Time& time, const ros::Duration& period);
 
   hardware_interface::JointHandle rotor_;

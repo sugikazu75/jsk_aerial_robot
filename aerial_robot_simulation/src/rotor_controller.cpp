@@ -50,6 +50,12 @@ bool RotorController::init(hardware_interface::RotorInterface* robot, ros::NodeH
   return true;
 }
 
+void RotorController::starting(const ros::Time& time)
+{
+  command_struct_.force_ = 0.0;
+  command_.initRT(command_struct_);
+}
+
 void RotorController::update(const ros::Time& time, const ros::Duration& period)
 {
   command_struct_ = *(command_.readFromRT());
