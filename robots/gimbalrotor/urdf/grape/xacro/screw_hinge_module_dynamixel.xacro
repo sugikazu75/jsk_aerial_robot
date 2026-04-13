@@ -48,7 +48,8 @@
     </link>
     <link name="${prefix}dummy_link"/>
     <joint name="${prefix}joint1" type="revolute">
-      <limit effort="0.0" velocity="0.0" lower="-0.567" upper="0.567"/>
+      <limit effort="0.0" velocity="0.0" lower="-3.141592" upper="3.141592"/>
+      <!-- <limit effort="0.0" velocity="0.0" lower="-0.567" upper="0.567"/> -->
       <parent link="${prefix}base_link"/>
       <child link="${prefix}link1"/>
       <axis xyz="-1.  0.  0."/>
