@@ -128,7 +128,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
   {
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
+    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
     pinocchio::SE3 w_M_rotor = data_->oMf[rotor_frame_index];
     pinocchio::SE3 w_M_joint = data_->oMi[rotor_parent_joint_index];
@@ -192,7 +192,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
 Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
                                                      const Eigen::VectorXd& tau, Eigen::VectorXd& thrust)
 {
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
 
   // Compute the forward dynamics with external forces
   Eigen::VectorXd a = pinocchio::aba(*model_, *data_, q, v, tau, fext, pinocchio::Convention::LOCAL);
@@ -203,7 +203,7 @@ Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, c
 Eigen::MatrixXd PinocchioRobotModel::forwardDynamicsDerivatives(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
                                                                 const Eigen::VectorXd& tau, Eigen::VectorXd& thrust)
 {
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
 
   // Compute the forward dynamics with external forces
   pinocchio::computeABADerivatives(*model_, *data_, q, v, tau, fext);
@@ -353,7 +353,7 @@ bool PinocchioRobotModel::inverseDynamicsDerivatives(const Eigen::VectorXd& q, c
   Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> K_ldlt;
   K_ldlt.compute(K_s);
 
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(id_solution_thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(id_solution_thrust);
   pinocchio::computeRNEADerivatives(*model_, *data_, q, v, a);  // not sure we need set fext
 
   Eigen::MatrixXd rnea_partial_dq = data_->dtau_dq;
@@ -406,7 +406,7 @@ std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativ
     // get rotor joint index
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
+    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
     // get rotor joint kinematic hessian
     rotor_i_parent_joint_hessian.setZero();
@@ -494,23 +494,22 @@ Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivative(const Eige
                                                                       const Eigen::VectorXd& thrust)
 {
   // Compute RNEA derivatives with external forces
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
   pinocchio::computeRNEADerivatives(*zero_gravity_model_, *data_, q, Eigen::VectorXd::Zero(model_->nv),
                                     Eigen::VectorXd::Zero(model_->nv), fext);
 
   return -data_->dtau_dq;
 }
 
-pinocchio::container::aligned_vector<pinocchio::Force>
-PinocchioRobotModel::computeFExtByThrust(const Eigen::VectorXd& thrust)
+std::vector<pinocchio::Force> PinocchioRobotModel::computeFExtByThrust(const Eigen::VectorXd& thrust)
 {
   // Compute external wrench by thrust
-  pinocchio::container::aligned_vector<pinocchio::Force> fext(model_->njoints, pinocchio::Force::Zero());
+  std::vector<pinocchio::Force> fext(model_->njoints, pinocchio::Force::Zero());
   for (int i = 0; i < rotor_num_; i++)
   {
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
+    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
     // LOCAL
     pinocchio::Force rotor_frame_wrench;
