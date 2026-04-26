@@ -59,15 +59,6 @@ int main(int argc, char** argv)
   for (int i = 0; i < 3; i++)
   {
     std::cout << "-------------------------" << std::endl;
-    bool id_derivarives_test = robot_model_test.inverseDynamicsDerivativesTest(verbose);
-    std::cout << "inverseDynamicsDerivativesTest: " << id_derivarives_test << std::endl;
-    std::cout << "-------------------------" << std::endl;
-    std::cout << std::endl;
-  }
-
-  for (int i = 0; i < 3; i++)
-  {
-    std::cout << "-------------------------" << std::endl;
     bool tauext_by_thrust_derivative_q_derivative_test =
         robot_model_test.computeTauExtByThrustDerivativeQDerivativesTest(verbose);
     std::cout << "computeTauExtPartialThrustPartialQTest: " << tauext_by_thrust_derivative_q_derivative_test

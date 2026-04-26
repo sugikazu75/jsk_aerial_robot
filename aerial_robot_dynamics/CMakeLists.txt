@@ -51,7 +51,6 @@ if(BUILD_TEST)
     src/test/fd_test.cpp
     src/test/fd_derivative_test.cpp
     src/test/id_test.cpp
-    src/test/id_derivative_test.cpp
     src/test/tauext_by_thrust_derivative_q_derivative_test.cpp
     src/test/tauext_by_thrust_q_derivative_comparison_test.cpp
     src/test/tauext_by_thrust_q_derivative_test.cpp

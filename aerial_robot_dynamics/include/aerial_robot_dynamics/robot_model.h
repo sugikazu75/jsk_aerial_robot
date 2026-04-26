@@ -47,9 +47,6 @@ public:
                                              const Eigen::VectorXd& tau, Eigen::VectorXd& thrust);
   bool inverseDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
                        Eigen::VectorXd& tau);
-  bool inverseDynamicsDerivatives(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
-                                  Eigen::MatrixXd& id_partial_dq, Eigen::MatrixXd& id_partial_dv,
-                                  Eigen::MatrixXd& id_partial_da);
 
   std::vector<pinocchio::Force> computeFExtByThrust(const Eigen::VectorXd& thrust);  // external force is expressed in
                                                                                      // the LOCAL frame

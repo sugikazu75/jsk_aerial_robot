@@ -16,7 +16,6 @@ public:
   bool forwardDynamicsTest(bool verbose = false);
   bool forwardDynamicsDerivativesTest(bool verbose = false);
   bool inverseDynamicsTest(bool verbose = false);
-  bool inverseDynamicsDerivativesTest(bool verbose = false);
   bool computeTauExtByThrustDerivativeQDerivativesTest(bool verbose = false);
   bool computeTauExtByThrustQDerivativeTest(bool verbose = false);
   bool computeTauExtByThrustQDerivativeComparisonTest(bool verbose = false);
