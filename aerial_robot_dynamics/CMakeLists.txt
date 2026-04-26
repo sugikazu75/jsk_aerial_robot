@@ -47,6 +47,8 @@ target_link_libraries(robot_model
   )
 
 if(BUILD_TEST)
+  find_package(rostest REQUIRED)
+
   add_library(robot_model_test
     src/test/fd_test.cpp
     src/test/fd_derivative_test.cpp
@@ -62,14 +64,20 @@ if(BUILD_TEST)
     pinocchio::pinocchio
     )
 
-  add_executable(test_node src/test/test_node.cpp)
-  target_link_libraries(test_node
-    robot_model
-    robot_model_test
-    ${catkin_LIBRARIES}
-    ${OsqpEigen_LIBRARIES}
-    pinocchio::pinocchio
+  add_rostest_gtest(pinocchio_robot_model_gtest
+    test/pinocchio_robot_model.test
+    src/test/gtest_main.cpp
+    src/test/pinocchio_robot_model_gtest.cpp
     )
+  if(TARGET pinocchio_robot_model_gtest)
+    target_link_libraries(pinocchio_robot_model_gtest
+      robot_model
+      robot_model_test
+      ${catkin_LIBRARIES}
+      ${OsqpEigen_LIBRARIES}
+      pinocchio::pinocchio
+      )
+  endif()
 endif()
 
 if(BUILD_BENCH)
