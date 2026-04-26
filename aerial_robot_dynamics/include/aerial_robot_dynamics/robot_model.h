@@ -11,11 +11,7 @@
 #include <pinocchio/algorithm/kinematics-derivatives.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
 #include <pinocchio/algorithm/rnea-derivatives.hpp>
-#include <pinocchio/container/aligned-vector.hpp>
-#include <pinocchio/multibody/model.hpp>
-#include <pinocchio/multibody/data.hpp>
 #include <pinocchio/parsers/urdf.hpp>
-#include <pinocchio/spatial/force.hpp>
 
 #include <aerial_robot_dynamics/math_utils.h>
 
@@ -55,8 +51,8 @@ public:
                                   Eigen::MatrixXd& id_partial_dq, Eigen::MatrixXd& id_partial_dv,
                                   Eigen::MatrixXd& id_partial_da);
 
-  pinocchio::container::aligned_vector<pinocchio::Force>
-  computeFExtByThrust(const Eigen::VectorXd& thrust);  // external force is expressed in the LOCAL frame
+  std::vector<pinocchio::Force> computeFExtByThrust(const Eigen::VectorXd& thrust);  // external force is expressed in
+                                                                                     // the LOCAL frame
   std::vector<Eigen::MatrixXd> computeTauExtByThrustDerivativeQDerivatives(const Eigen::VectorXd& q);
   std::vector<Eigen::MatrixXd> computeTauExtByThrustDerivativeQDerivativesNum(const Eigen::VectorXd& q);
   Eigen::VectorXd computeTauExtByThrust(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);

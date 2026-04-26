@@ -36,7 +36,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OsqpEigen_INCLUDE_DIRS}
-  ${pinocchio_INCLUDE_DIRS}
   ${urdfdom_headers_INCLUDE_DIRS}
   )
 
@@ -44,7 +43,7 @@ add_library(robot_model src/robot_model.cpp)
 target_link_libraries(robot_model
   ${catkin_LIBRARIES}
   ${OsqpEigen_LIBRARIES}
-  ${pinocchio_LIBRARIES}
+  pinocchio::pinocchio
   )
 
 if(BUILD_TEST)
@@ -61,7 +60,7 @@ if(BUILD_TEST)
     robot_model
     ${catkin_LIBRARIES}
     ${OsqpEigen_LIBRARIES}
-    ${pinocchio_LIBRARIES}
+    pinocchio::pinocchio
     )
 
   add_executable(test_node src/test/test_node.cpp)
@@ -70,7 +69,7 @@ if(BUILD_TEST)
     robot_model_test
     ${catkin_LIBRARIES}
     ${OsqpEigen_LIBRARIES}
-    ${pinocchio_LIBRARIES}
+    pinocchio::pinocchio
     )
 endif()
 
@@ -83,7 +82,7 @@ if(BUILD_BENCH)
     robot_model
     ${catkin_LIBRARIES}
     ${OsqpEigen_LIBRARIES}
-    ${pinocchio_LIBRARIES}
+    pinocchio::pinocchio
     benchmark::benchmark
     )
 
@@ -93,7 +92,7 @@ if(BUILD_BENCH)
     robot_model
     ${catkin_LIBRARIES}
     ${OsqpEigen_LIBRARIES}
-    ${pinocchio_LIBRARIES}
+    pinocchio::pinocchio
     benchmark::benchmark
     )
 
@@ -103,7 +102,7 @@ if(BUILD_BENCH)
     robot_model
     ${catkin_LIBRARIES}
     ${OsqpEigen_LIBRARIES}
-    ${pinocchio_LIBRARIES}
+    pinocchio::pinocchio
     benchmark::benchmark
     )
 endif()
