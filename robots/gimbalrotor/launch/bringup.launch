@@ -105,4 +105,8 @@
 
   <node name="joint_states_merger" pkg="gimbalrotor" type="joint_state_merger.py" output="screen" />
 
+  <include file="$(find gimbalrotor)/launch/arm.launch" if="$(eval arg('airframe') == 'grape_with_arm')">
+    <arg name="airframe" default="$(arg airframe)" />
+  </include>
+
 </launch>
