@@ -87,7 +87,7 @@
 
   ###########  Servo Bridge  ###########
   <node pkg="aerial_robot_model" type="servo_bridge_node" name="servo_bridge" ns="$(arg robot_ns)" output="screen">
-    <remap from="joint_states" to="joint_states_gimbal"/>
+    <remap from="joint_states" to="joint_states_gimbal" if="$(eval arg('airframe') == 'grape_with_arm')"/>
   </node>
 
   ########## Simulation in Gazebo #########
@@ -103,10 +103,15 @@
     <arg name="spawn_yaw" value="$(arg spawn_yaw)" />
   </include>
 
-  <node name="joint_states_merger" pkg="gimbalrotor" type="joint_state_merger.py" output="screen" />
+  ########## Manipulator #########
+  <group if="$(eval arg('airframe') == 'grape_with_arm')">
+    <group if="$(arg real_machine)">
+      <node name="joint_states_merger" pkg="gimbalrotor" type="joint_state_merger.py" output="screen" />
 
-  <include file="$(find gimbalrotor)/launch/arm.launch" if="$(eval arg('airframe') == 'grape_with_arm')">
-    <arg name="airframe" default="$(arg airframe)" />
-  </include>
+      <include file="$(find gimbalrotor)/launch/arm.launch">
+        <arg name="airframe" default="$(arg airframe)" />
+      </include>
+    </group>
+  </group>
 
 </launch>
