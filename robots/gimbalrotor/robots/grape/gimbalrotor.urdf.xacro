@@ -5,6 +5,4 @@
     <xacro:include filename="$(find gimbalrotor)/urdf/grape/gimbalrotor.urdf.xacro" />
     <xacro:include filename="$(find gimbalrotor)/urdf/grape/common.xacro" />
 
-    
-
 </robot>
