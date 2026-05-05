@@ -10,9 +10,6 @@ int main(int argc, char** argv)
 
   aerial_robot_dynamics::PinocchioRobotModelRos pinocchio_robot_model_ros(nh);
 
-  std::cout << "Robot Description: " << pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription()
-            << std::endl;
-
   aerial_robot_dynamics::PinocchioRobotModel pinocchio_robot_model(
       pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription(),
       pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), true, 1.0);
