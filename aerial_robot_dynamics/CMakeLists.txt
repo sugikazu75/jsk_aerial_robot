@@ -23,7 +23,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -DNDEBUG")
 
-option(BUILD_TESTING "Build Test Code" ON)
+option(BUILD_TESTING "Build Test Code" OFF)
 option(BUILD_BENCHMARK "Build Benchmark Code" OFF)
 
 catkin_package(
@@ -33,7 +33,6 @@ catkin_package(
 
 include_directories(
   include
-  test
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OsqpEigen_INCLUDE_DIRS}
@@ -47,75 +46,16 @@ target_link_libraries(robot_model
   pinocchio::pinocchio
   )
 
-if(BUILD_TESTING)
-  find_package(rostest REQUIRED)
-
-  add_library(robot_model_test
-    src/test/fd_test.cpp
-    src/test/fd_derivative_test.cpp
-    src/test/id_test.cpp
-    src/test/tauext_by_thrust_derivative_q_derivative_test.cpp
-    src/test/tauext_by_thrust_q_derivative_comparison_test.cpp
-    src/test/tauext_by_thrust_q_derivative_test.cpp
-    )
-  target_link_libraries(robot_model_test
-    robot_model
-    ${catkin_LIBRARIES}
-    ${OsqpEigen_LIBRARIES}
-    pinocchio::pinocchio
-    )
-
-  add_rostest_gtest(pinocchio_robot_model_gtest
-    test/pinocchio_robot_model.test
-    src/test/pinocchio_robot_model_gtest.cpp
-    )
-  if(TARGET pinocchio_robot_model_gtest)
-    set_target_properties(pinocchio_robot_model_gtest PROPERTIES EXCLUDE_FROM_ALL FALSE)
-    target_link_libraries(pinocchio_robot_model_gtest
-      robot_model
-      robot_model_test
-      ${catkin_LIBRARIES}
-      ${OsqpEigen_LIBRARIES}
-      pinocchio::pinocchio
-      )
-  endif()
-endif()
-
-if(BUILD_BENCHMARK)
-  find_package(benchmark REQUIRED)
-
-  add_executable(tauext_partial_q_derivative_hessian_benchmark
-    src/benchmark/tauext_partial_q_derivative_hessian_benchmark.cpp)
-  target_link_libraries(tauext_partial_q_derivative_hessian_benchmark
-    robot_model
-    ${catkin_LIBRARIES}
-    ${OsqpEigen_LIBRARIES}
-    pinocchio::pinocchio
-    benchmark::benchmark
-    )
-
-  add_executable(tauext_partial_q_derivative_rnea_benchmark
-    src/benchmark/tauext_partial_q_derivative_rnea_benchmark.cpp)
-  target_link_libraries(tauext_partial_q_derivative_rnea_benchmark
-    robot_model
-    ${catkin_LIBRARIES}
-    ${OsqpEigen_LIBRARIES}
-    pinocchio::pinocchio
-    benchmark::benchmark
-    )
-
-  add_executable(tauext_partial_q_derivative_numerical_benchmark
-    src/benchmark/tauext_partial_q_derivative_numerical_benchmark.cpp)
-  target_link_libraries(tauext_partial_q_derivative_numerical_benchmark
-    robot_model
-    ${catkin_LIBRARIES}
-    ${OsqpEigen_LIBRARIES}
-    pinocchio::pinocchio
-    benchmark::benchmark
-    )
-endif()
-
 install(DIRECTORY launch scripts
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
 )
+
+if(BUILD_BENCHMARK)
+  add_subdirectory(benchmark)
+endif()
+
+if(BUILD_TESTING AND CATKIN_ENABLE_TESTING)
+  find_package(rostest REQUIRED)
+  add_subdirectory(test)
+endif()
