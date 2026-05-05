@@ -13,13 +13,10 @@
 #include <pinocchio/algorithm/rnea-derivatives.hpp>
 #include <pinocchio/parsers/urdf.hpp>
 
-#include <aerial_robot_dynamics/math_utils.h>
-
 #include <OsqpEigen/OsqpEigen.h>
 
 #include <chrono>
 #include <urdf/model.h>
-#include <ros/ros.h>
 #include <tinyxml.h>
 #include <iostream>
 #include <memory>
@@ -29,7 +26,8 @@ namespace aerial_robot_dynamics
 class PinocchioRobotModel
 {
 public:
-  PinocchioRobotModel(bool is_floating_base = true);
+  PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description, bool is_floating_base,
+                      double thrust_hessian_weight);
   ~PinocchioRobotModel() = default;
 
   std::shared_ptr<pinocchio::Model> getModel() const
@@ -56,6 +54,14 @@ public:
   Eigen::MatrixXd computeTauExtByThrustDerivative(const Eigen::VectorXd& q);
   Eigen::MatrixXd computeTauExtByThrustQDerivative(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
 
+  const std::string& getRobotDescription() const
+  {
+    return robot_description_;
+  }
+  const std::string& getPinocchioRobotDescription() const
+  {
+    return pinocchio_robot_description_;
+  }
   const bool& getIsFloatingBase() const
   {
     return is_floating_base_;
@@ -103,6 +109,8 @@ public:
   Eigen::VectorXd getResetConfiguration();
 
 private:
+  std::string robot_description_;
+  std::string pinocchio_robot_description_;
   urdf::Model urdf_;
   std::shared_ptr<pinocchio::Model> model_;
   std::shared_ptr<pinocchio::Model> zero_gravity_model_;
@@ -120,7 +128,7 @@ private:
   Eigen::VectorXd upper_bound_;
 
   // model parameters
-  bool is_floating_base_;
+  bool is_floating_base_ = true;
   int rotor_num_;
   double m_f_rate_ = 0.0;
   Eigen::VectorXd joint_torque_limits_;
@@ -128,15 +136,6 @@ private:
   Eigen::VectorXd thrust_lower_limits_;
 
   // ID solver parameters
-  double thrust_hessian_weight_;
-
-  bool getRobotModelXml(const std::string& param_name, std::string& pinocchio_robot_description,
-                        ros::NodeHandle nh = ros::NodeHandle());
-
-  template <class T>
-  void getParam(ros::NodeHandle nh, std::string param_name, T& param, T default_value)
-  {
-    nh.param<T>(param_name, param, default_value);
-  }
+  double thrust_hessian_weight_ = 1.0;
 };
 }  // namespace aerial_robot_dynamics

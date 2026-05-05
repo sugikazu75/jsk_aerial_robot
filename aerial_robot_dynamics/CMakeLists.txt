@@ -23,8 +23,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -DNDEBUG")
 
-option(BUILD_TEST "Build Test Code" ON)
-option(BUILD_BENCH "Build Benchmark Code" OFF)
+option(BUILD_TESTING "Build Test Code" ON)
+option(BUILD_BENCHMARK "Build Benchmark Code" OFF)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -33,6 +33,7 @@ catkin_package(
 
 include_directories(
   include
+  test
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OsqpEigen_INCLUDE_DIRS}
@@ -46,7 +47,7 @@ target_link_libraries(robot_model
   pinocchio::pinocchio
   )
 
-if(BUILD_TEST)
+if(BUILD_TESTING)
   find_package(rostest REQUIRED)
 
   add_library(robot_model_test
@@ -80,7 +81,7 @@ if(BUILD_TEST)
   endif()
 endif()
 
-if(BUILD_BENCH)
+if(BUILD_BENCHMARK)
   find_package(benchmark REQUIRED)
 
   add_executable(tauext_partial_q_derivative_hessian_benchmark
