@@ -63,7 +63,7 @@ TEST_F(PinocchioRobotModelGTest, ForwardDynamicsDerivatives)
 //   constexpr int kTrials = 3;
 //   for (int i = 0; i < kTrials; ++i)
 //   {
-//     EXPECT_TRUE(aerial_robot_dynamics::inverseDynamicsTest(*robot_model_, true)) << "trial=" << i;
+//     EXPECT_TRUE(aerial_robot_dynamics::inverseDynamicsTest(*robot_model_, false)) << "trial=" << i;
 //   }
 // }
 
