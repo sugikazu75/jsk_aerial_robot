@@ -5,6 +5,9 @@
     <arg name="link_num" value="$(arg link_num)"/>
   </include>
 
+  <param name="dynamics/is_floating_base" value="false"/>
+  <param name="dynamics/thrust_hessian_weight" value="1.0"/>
+
   <test test-name="pinocchio_robot_model_gtest"
         pkg="aerial_robot_dynamics"
         type="pinocchio_robot_model_gtest"

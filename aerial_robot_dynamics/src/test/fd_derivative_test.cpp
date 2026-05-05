@@ -4,12 +4,12 @@
 
 using namespace aerial_robot_dynamics;
 
-bool PinocchioRobotModelTest::forwardDynamicsDerivativesTest(bool verbose)
+bool aerial_robot_dynamics::forwardDynamicsDerivativesTest(PinocchioRobotModel& robot_model, bool verbose)
 {
-  Eigen::VectorXd q = pinocchio::randomConfiguration(*(robot_model_->getModel()));
-  Eigen::VectorXd v = Eigen::VectorXd::Ones(robot_model_->getModel()->nv);
-  Eigen::VectorXd tau = Eigen::VectorXd::Ones(robot_model_->getModel()->nv);
-  Eigen::VectorXd thrust = Eigen::VectorXd::Ones(robot_model_->getRotorNum());
+  Eigen::VectorXd q = pinocchio::randomConfiguration(*(robot_model.getModel()));
+  Eigen::VectorXd v = Eigen::VectorXd::Ones(robot_model.getModel()->nv);
+  Eigen::VectorXd tau = Eigen::VectorXd::Ones(robot_model.getModel()->nv);
+  Eigen::VectorXd thrust = Eigen::VectorXd::Ones(robot_model.getRotorNum());
 
   addNoise(v, 0.1);
   addNoise(tau, 0.1);
@@ -17,27 +17,27 @@ bool PinocchioRobotModelTest::forwardDynamicsDerivativesTest(bool verbose)
 
   // normal ABA Derivatives
   auto start = std::chrono::high_resolution_clock::now();
-  pinocchio::computeABADerivatives(*(robot_model_->getModel()), *(robot_model_->getData()), q, v, tau);
+  pinocchio::computeABADerivatives(*(robot_model.getModel()), *(robot_model.getData()), q, v, tau);
   auto end = std::chrono::high_resolution_clock::now();
   std::cout << "ABADrivatives time: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0 << " ms"
             << std::endl;
 
-  Eigen::MatrixXd aba_partial_dq = robot_model_->getData()->ddq_dq;
-  Eigen::MatrixXd aba_partial_dv = robot_model_->getData()->ddq_dv;
-  Eigen::MatrixXd aba_partial_dtau = robot_model_->getData()->Minv;
+  Eigen::MatrixXd aba_partial_dq = robot_model.getData()->ddq_dq;
+  Eigen::MatrixXd aba_partial_dv = robot_model.getData()->ddq_dv;
+  Eigen::MatrixXd aba_partial_dtau = robot_model.getData()->Minv;
 
   // ABA Derivatives with thrust
   start = std::chrono::high_resolution_clock::now();
-  Eigen::MatrixXd aba_thrust_partial_dthrust = robot_model_->forwardDynamicsDerivatives(q, v, tau, thrust);
+  Eigen::MatrixXd aba_thrust_partial_dthrust = robot_model.forwardDynamicsDerivatives(q, v, tau, thrust);
   end = std::chrono::high_resolution_clock::now();
   std::cout << "ABA with thrust Derivatives time: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0 << " ms"
             << std::endl;
 
-  Eigen::MatrixXd aba_thrust_partial_dq = robot_model_->getData()->ddq_dq;
-  Eigen::MatrixXd aba_thrust_partial_dv = robot_model_->getData()->ddq_dv;
-  Eigen::MatrixXd aba_thrust_partial_dtau = robot_model_->getData()->Minv;
+  Eigen::MatrixXd aba_thrust_partial_dq = robot_model.getData()->ddq_dq;
+  Eigen::MatrixXd aba_thrust_partial_dv = robot_model.getData()->ddq_dv;
+  Eigen::MatrixXd aba_thrust_partial_dtau = robot_model.getData()->Minv;
 
   if (verbose)
   {
@@ -51,29 +51,29 @@ bool PinocchioRobotModelTest::forwardDynamicsDerivativesTest(bool verbose)
   double epsilon = 1e-6;
   Eigen::VectorXd original_q = q;
   Eigen::VectorXd original_thrust = thrust;
-  Eigen::VectorXd original_a = robot_model_->forwardDynamics(original_q, v, tau, original_thrust);
+  Eigen::VectorXd original_a = robot_model.forwardDynamics(original_q, v, tau, original_thrust);
 
   // check partial_dq
   Eigen::MatrixXd aba_thrust_partial_dq_num =
-      Eigen::MatrixXd::Zero(robot_model_->getModel()->nv, robot_model_->getModel()->nv);
-  for (int i = 0; i < robot_model_->getModel()->nv; i++)
+      Eigen::MatrixXd::Zero(robot_model.getModel()->nv, robot_model.getModel()->nv);
+  for (int i = 0; i < robot_model.getModel()->nv; i++)
   {
     q = original_q;
-    Eigen::VectorXd delta_v = Eigen::VectorXd::Zero(robot_model_->getModel()->nv);
+    Eigen::VectorXd delta_v = Eigen::VectorXd::Zero(robot_model.getModel()->nv);
     delta_v(i) = 1.0;
-    q = pinocchio::integrate(*(robot_model_->getModel()), original_q, delta_v * epsilon);
-    Eigen::VectorXd a_plus = robot_model_->forwardDynamics(q, v, tau, original_thrust);
+    q = pinocchio::integrate(*(robot_model.getModel()), original_q, delta_v * epsilon);
+    Eigen::VectorXd a_plus = robot_model.forwardDynamics(q, v, tau, original_thrust);
     aba_thrust_partial_dq_num.col(i) = (a_plus - original_a) / epsilon;
   }
 
   // check partial_dthrust
   Eigen::MatrixXd aba_thrust_partial_dthrust_num =
-      Eigen::MatrixXd::Zero(robot_model_->getModel()->nv, robot_model_->getRotorNum());
-  for (int i = 0; i < robot_model_->getRotorNum(); i++)
+      Eigen::MatrixXd::Zero(robot_model.getModel()->nv, robot_model.getRotorNum());
+  for (int i = 0; i < robot_model.getRotorNum(); i++)
   {
     thrust = original_thrust;
     thrust(i) += epsilon;
-    Eigen::VectorXd a_plus = robot_model_->forwardDynamics(original_q, v, tau, thrust);
+    Eigen::VectorXd a_plus = robot_model.forwardDynamics(original_q, v, tau, thrust);
     aba_thrust_partial_dthrust_num.col(i) = (a_plus - original_a) / epsilon;
   }
 

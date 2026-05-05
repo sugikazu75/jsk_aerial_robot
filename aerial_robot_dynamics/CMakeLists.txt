@@ -67,10 +67,10 @@ if(BUILD_TESTING)
 
   add_rostest_gtest(pinocchio_robot_model_gtest
     test/pinocchio_robot_model.test
-    src/test/gtest_main.cpp
     src/test/pinocchio_robot_model_gtest.cpp
     )
   if(TARGET pinocchio_robot_model_gtest)
+    set_target_properties(pinocchio_robot_model_gtest PROPERTIES EXCLUDE_FROM_ALL FALSE)
     target_link_libraries(pinocchio_robot_model_gtest
       robot_model
       robot_model_test

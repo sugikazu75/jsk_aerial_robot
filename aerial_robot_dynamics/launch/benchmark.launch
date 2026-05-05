@@ -1,5 +1,0 @@
-<launch>
-
-  <node name="bench" pkg="aerial_robot_dynamics" type="tauext_partial_q_derivative_hessian_benchmark" launch-prefix="gdb -ex run --args" output="screen"/>
-
-</launch>

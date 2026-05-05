@@ -4,20 +4,21 @@
 
 using namespace aerial_robot_dynamics;
 
-bool PinocchioRobotModelTest::computeTauExtByThrustDerivativeQDerivativesTest(bool verbose)
+bool aerial_robot_dynamics::computeTauExtByThrustDerivativeQDerivativesTest(PinocchioRobotModel& robot_model,
+                                                                            bool verbose)
 {
-  Eigen::VectorXd q = robot_model_->getResetConfiguration();
+  Eigen::VectorXd q = robot_model.getResetConfiguration();
 
   auto start = std::chrono::high_resolution_clock::now();
   std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q_ana =
-      robot_model_->computeTauExtByThrustDerivativeQDerivatives(q);  // compute analytical derivatives
+      robot_model.computeTauExtByThrustDerivativeQDerivatives(q);  // compute analytical derivatives
   auto end = std::chrono::high_resolution_clock::now();
   std::cout << "TauExt by Thrust Derivative Q Derivatives Analytical time: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0 << " ms"
             << std::endl;
   start = std::chrono::high_resolution_clock::now();
   std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q_num =
-      robot_model_->computeTauExtByThrustDerivativeQDerivativesNum(q);  // compute numerical derivatives
+      robot_model.computeTauExtByThrustDerivativeQDerivativesNum(q);  // compute numerical derivatives
   end = std::chrono::high_resolution_clock::now();
   std::cout << "TauExt by Thrust Derivative Q Derivatives Numerical time: "
             << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0 << " ms"
@@ -35,7 +36,7 @@ bool PinocchioRobotModelTest::computeTauExtByThrustDerivativeQDerivativesTest(bo
   }
 
   bool ok = true;
-  for (int i = 0; i < robot_model_->getModel()->nv; i++)
+  for (int i = 0; i < robot_model.getModel()->nv; i++)
   {
     if ((tauext_partial_thrust_partial_q_ana.at(i) - tauext_partial_thrust_partial_q_num.at(i)).cwiseAbs().maxCoeff() >
         1e-4)
