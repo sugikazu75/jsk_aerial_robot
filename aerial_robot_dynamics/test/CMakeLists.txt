@@ -25,14 +25,11 @@ target_link_libraries(robot_model_test
 add_rostest_gtest(pinocchio_robot_model_gtest
   pinocchio_robot_model.test
   pinocchio_robot_model_gtest.cpp
-)
-if(TARGET pinocchio_robot_model_gtest)
-  set_target_properties(pinocchio_robot_model_gtest PROPERTIES EXCLUDE_FROM_ALL FALSE)
-  target_link_libraries(pinocchio_robot_model_gtest
-    robot_model
-    robot_model_test
-    ${catkin_LIBRARIES}
-    ${OsqpEigen_LIBRARIES}
-    pinocchio::pinocchio
   )
-endif()
+target_link_libraries(pinocchio_robot_model_gtest
+  robot_model
+  robot_model_test
+  ${catkin_LIBRARIES}
+  ${OsqpEigen_LIBRARIES}
+  pinocchio::pinocchio
+  )
