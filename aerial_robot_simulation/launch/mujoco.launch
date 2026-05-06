@@ -28,6 +28,9 @@
             type: $(arg hw_sim_type)
             control_period: 0.001
         - type: mujoco_ros_sensors/MujocoRosSensorsPlugin
+        - type: aerial_robot_simulation/ThrustVisualizerPlugin
+          min_force: 0.001
+          rgba: [0.0, 0.8, 1.0, 0.9]
     </rosparam>
 
   </group>
