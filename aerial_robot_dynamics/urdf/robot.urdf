@@ -20,8 +20,8 @@
     <axis xyz="0 0 1"/>
   </joint>
 
+  <xacro:property name="link_length" value="0.5"/>
   <xacro:macro name="link" params="self child">
-    <xacro:property name="link_length" value="0.5"/>
     <xacro:property name="link_width" value="0.05"/>
     <xacro:property name="link_mass" value="0.5"/>
     <xacro:property name="min_force" value="0.0"/>
@@ -44,7 +44,7 @@
         <material name="brack">
           <color rgba="0.0 0.0 0.0 1.0"/>
         </material>
-        </visual>
+      </visual>
     </link>
 
     <link name="gimbal${self}_roll_link">
@@ -103,7 +103,7 @@
         <material name="red">
           <color rgba="1.0 0.0 0.0 1.0"/>
         </material>
-        </visual>
+      </visual>
     </link>
 
     <joint name="rotor${self}" type="continuous">
@@ -149,6 +149,21 @@
   <xacro:macro name="loop_links" params="current total">
     <xacro:if value="${current == total}">
       <xacro:link self="${current}" child="${current}"/>
+      <link name="link${current}_end">
+        <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <mass value="0.00001"/>
+          <inertia
+              ixx="0.000001" ixy="0.0" ixz="0.0"
+              iyy="0.000001" iyz="0.0"
+              izz="0.000002"/>
+        </inertial>
+      </link>
+      <joint name="link${current}_end_joint" type="fixed">
+        <parent link="link${current}"/>
+        <child link="link${current}_end"/>
+        <origin xyz="${link_length} 0 0" rpy="0 0 0"/>
+      </joint>
     </xacro:if>
 
     <xacro:unless value="${current == total}">
