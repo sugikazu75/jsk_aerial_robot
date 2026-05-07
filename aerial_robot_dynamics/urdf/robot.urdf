@@ -36,6 +36,15 @@
             iyy="${1/12 * link_mass * (link_length * link_length + link_width * link_width)}" iyz="0.0"
             izz="${1/12 * link_mass * (link_length * link_length + link_width * link_width)}"/>
       </inertial>
+      <visual>
+        <origin xyz="${link_length / 2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder length="${link_length}" radius="0.02"/>
+        </geometry>
+        <material name="brack">
+          <color rgba="0.0 0.0 0.0 1.0"/>
+        </material>
+        </visual>
     </link>
 
     <link name="gimbal${self}_roll_link">
@@ -86,6 +95,15 @@
             iyy="0.00001" iyz="0.0"
             izz="0.00002"/>
       </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.02" radius="${link_length/4}"/>
+        </geometry>
+        <material name="red">
+          <color rgba="1.0 0.0 0.0 1.0"/>
+        </material>
+        </visual>
     </link>
 
     <joint name="rotor${self}" type="continuous">
