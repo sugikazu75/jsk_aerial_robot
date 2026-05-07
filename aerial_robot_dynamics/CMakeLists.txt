@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(aerial_robot_dynamics)
 
+if(POLICY CMP0057)
+  cmake_policy(SET CMP0057 NEW)
+endif()
+
 add_compile_options(-std=c++17)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -8,8 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   urdf
   )
 
+catkin_python_setup()
+
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
+find_package(pybind11 REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(urdfdom_headers REQUIRED)
@@ -44,6 +51,31 @@ target_link_libraries(robot_model
   ${catkin_LIBRARIES}
   ${OsqpEigen_LIBRARIES}
   pinocchio::pinocchio
+  )
+
+pybind11_add_module(_robot_model src/python/robot_model_pybind.cpp)
+target_link_libraries(_robot_model PRIVATE
+  robot_model
+  ${catkin_LIBRARIES}
+  ${OsqpEigen_LIBRARIES}
+  pinocchio::pinocchio
+  )
+set_target_properties(_robot_model PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  )
+
+install(TARGETS robot_model
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+install(TARGETS _robot_model
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
   )
 
 install(DIRECTORY launch scripts
