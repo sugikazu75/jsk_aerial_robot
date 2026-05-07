@@ -23,15 +23,17 @@ find_package(urdfdom_headers REQUIRED)
 
 if(OPENMP_FOUND)
   message(STATUS "OpenMP found.")
-  MESSAGE("OpenMP found.")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -DNDEBUG")
 
 option(BUILD_TESTING "Build Test Code" OFF)
 option(BUILD_BENCHMARK "Build Benchmark Code" OFF)
+
+function(configure_aerial_robot_dynamics_target target_name)
+  target_compile_options(${target_name} PRIVATE -O3 -g -DNDEBUG)
+  if(OPENMP_FOUND AND NOT TARGET OpenMP::OpenMP_CXX)
+    target_compile_options(${target_name} PRIVATE ${OpenMP_CXX_FLAGS})
+  endif()
+endfunction()
 
 catkin_package(
   INCLUDE_DIRS include
@@ -47,14 +49,25 @@ include_directories(
   )
 
 add_library(robot_model src/robot_model.cpp)
+configure_aerial_robot_dynamics_target(robot_model)
 target_link_libraries(robot_model
   ${catkin_LIBRARIES}
   ${OsqpEigen_LIBRARIES}
   pinocchio::pinocchio
   )
+if(OPENMP_FOUND)
+  if(TARGET OpenMP::OpenMP_CXX)
+    target_link_libraries(robot_model OpenMP::OpenMP_CXX)
+  else()
+    target_link_libraries(robot_model ${OpenMP_CXX_FLAGS})
+  endif()
+endif()
 
-pybind11_add_module(_robot_model src/python/robot_model_pybind.cpp)
+add_library(_robot_model MODULE src/python/robot_model_pybind.cpp)
+configure_aerial_robot_dynamics_target(_robot_model)
+pybind11_extension(_robot_model)
 target_link_libraries(_robot_model PRIVATE
+  pybind11::module
   robot_model
   ${catkin_LIBRARIES}
   ${OsqpEigen_LIBRARIES}
