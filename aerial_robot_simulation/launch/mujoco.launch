@@ -8,6 +8,7 @@
   <arg name="use_spinal" default="true"/>
   <arg name="hw_sim_type" value="mujoco_ros_control/AerialRobotHWSim" if="$(arg use_spinal)"/>
   <arg name="hw_sim_type" value="mujoco_ros_control/DefaultAerialRobotHWSim" unless="$(arg use_spinal)"/>
+  <arg name="mujoco_threads" default="1"/>
 
   <group ns="$(arg robot_ns)">
     <include file="$(find mujoco_ros)/launch/launch_server.launch" >
@@ -18,6 +19,7 @@
       <arg name="use_sim_time" value="true"/>
       <arg name="unpause" value="true"/>
       <arg name="initial_joint_states" value="$(arg initial_joint_states)" unless="$(eval initial_joint_states == '')"/>
+      <arg name="mujoco_threads" value="$(arg mujoco_threads)"/>
     </include>
 
     <rosparam subst_value="true">
