@@ -218,6 +218,8 @@ void FwddynMpcController::sendCmd()
 
   if (n_joints_ > 0)
     publishJointsCtrl();
+
+  broadcastOptimizedRootTransforms();
 }
 
 Eigen::VectorXd FwddynMpcController::buildCurrentState()
@@ -255,6 +257,29 @@ Eigen::VectorXd FwddynMpcController::buildCurrentState()
     x.tail(rotor_num) = Eigen::VectorXd::Zero(rotor_num);
 
   return x;
+}
+
+void FwddynMpcController::broadcastOptimizedRootTransforms()
+{
+  const auto& xs = mpc_problem_.xs();
+  if (xs.empty())
+    return;
+
+  const ros::Time stamp = ros::Time::now();
+  for (size_t i = 0; i < xs.size(); ++i)
+  {
+    if (xs[i].size() < 7)
+      continue;
+
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(xs[i](0), xs[i](1), xs[i](2)));
+    tf::Quaternion quat(xs[i](3), xs[i](4), xs[i](5), xs[i](6));
+    quat.normalize();
+    transform.setRotation(quat);
+
+    optimized_root_tf_broadcaster_.sendTransform(
+        tf::StampedTransform(transform, stamp, "world", "mpc_optimized_root_" + std::to_string(i)));
+  }
 }
 
 void FwddynMpcController::publishJointsCtrl()

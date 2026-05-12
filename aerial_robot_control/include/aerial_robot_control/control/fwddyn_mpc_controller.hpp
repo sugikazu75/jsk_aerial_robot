@@ -8,6 +8,7 @@
 #include <aerial_robot_dynamics/robot_model.h>
 #include <sensor_msgs/JointState.h>
 #include <spinal/FourAxisCommand.h>
+#include <tf/transform_broadcaster.h>
 
 #include <map>
 
@@ -37,6 +38,7 @@ private:
   ros::Publisher four_axis_command_pub_;
   ros::Publisher joints_ctrl_pub_;
   ros::Subscriber joint_state_sub_;
+  tf::TransformBroadcaster optimized_root_tf_broadcaster_;
 
   sensor_msgs::JointState joint_state_;
   bool joint_state_received_;
@@ -76,6 +78,7 @@ private:
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
   Eigen::VectorXd buildCurrentState();
+  void broadcastOptimizedRootTransforms();
   void publishJointsCtrl();
 };
 
