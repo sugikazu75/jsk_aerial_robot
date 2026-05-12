@@ -75,6 +75,10 @@ private:
   // reference state (nq + nv) used for state regularisation
   Eigen::VectorXd x_ref_;
 
+  // for debugging
+  double tf_broadcast_duration_ = 0.1;
+  double tf_broadcast_last_time_ = 0.0;
+
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
   Eigen::VectorXd buildCurrentState();

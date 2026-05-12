@@ -227,7 +227,11 @@ void FwddynMpcController::sendCmd()
   if (n_joints_ > 0)
     publishJointsCtrl();
 
-  broadcastOptimizedRootTransforms();
+  if (ros::Time::now().toSec() - tf_broadcast_last_time_ >= tf_broadcast_duration_)
+  {
+    broadcastOptimizedRootTransforms();
+    tf_broadcast_last_time_ = ros::Time::now().toSec();
+  }
 }
 
 Eigen::VectorXd FwddynMpcController::buildCurrentState()
