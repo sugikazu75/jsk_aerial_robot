@@ -37,6 +37,7 @@ protected:
 private:
   ros::Publisher four_axis_command_pub_;
   ros::Publisher joints_ctrl_pub_;
+  ros::Publisher target_cog_pos_pub_;
   ros::Subscriber joint_state_sub_;
   tf::TransformBroadcaster optimized_root_tf_broadcaster_;
 
@@ -76,8 +77,10 @@ private:
   Eigen::VectorXd x_ref_;
 
   // for debugging
+  double target_cog_pos_pub_duration_ = 1.0;
+  double last_target_cog_pos_pub_time_ = 0.0;
   double tf_broadcast_duration_ = 0.1;
-  double tf_broadcast_last_time_ = 0.0;
+  double last_tf_broadcast_time_ = 0.0;
 
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 

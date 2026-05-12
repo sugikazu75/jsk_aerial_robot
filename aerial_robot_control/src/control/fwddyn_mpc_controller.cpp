@@ -59,6 +59,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   // publishers
   four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
   joints_ctrl_pub_ = nh_.advertise<sensor_msgs::JointState>("joints_ctrl", 10);
+  target_cog_pos_pub_ = nh_.advertise<geometry_msgs::PointStamped>("mpc_target_cog_pos", 10);
 
   // joint state subscriber
   joint_state_sub_ = nh_.subscribe("joint_states", 10, &FwddynMpcController::jointStateCallback, this);
@@ -227,10 +228,24 @@ void FwddynMpcController::sendCmd()
   if (n_joints_ > 0)
     publishJointsCtrl();
 
-  if (ros::Time::now().toSec() - tf_broadcast_last_time_ >= tf_broadcast_duration_)
+  if (ros::Time::now().toSec() - last_tf_broadcast_time_ >= tf_broadcast_duration_)
   {
     broadcastOptimizedRootTransforms();
-    tf_broadcast_last_time_ = ros::Time::now().toSec();
+    last_tf_broadcast_time_ = ros::Time::now().toSec();
+  }
+
+  if (ros::Time::now().toSec() - last_target_cog_pos_pub_time_ >= target_cog_pos_pub_duration_)
+  {
+    // publish the target CoM position for visualization
+    geometry_msgs::PointStamped target_cog_msg;
+    const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
+    target_cog_msg.header.stamp = ros::Time::now();
+    target_cog_msg.header.frame_id = "world";
+    target_cog_msg.point.x = target_cog_pos.x();
+    target_cog_msg.point.y = target_cog_pos.y();
+    target_cog_msg.point.z = target_cog_pos.z();
+    target_cog_pos_pub_.publish(target_cog_msg);
+    last_target_cog_pos_pub_time_ = ros::Time::now().toSec();
   }
 }
 
