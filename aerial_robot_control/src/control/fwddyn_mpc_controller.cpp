@@ -1,0 +1,268 @@
+// -*- mode: c++ -*-
+#include <pinocchio/fwd.hpp>
+#include <pinocchio/algorithm/center-of-mass.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/joint-configuration.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+
+#include <aerial_robot_control/control/fwddyn_mpc_controller.hpp>
+
+#include <tf/transform_datatypes.h>
+#include <aerial_robot_estimation/state_estimation.h>
+
+namespace aerial_robot_control
+{
+
+FwddynMpcController::FwddynMpcController()
+  : ControlBase()
+  , joint_state_received_(false)
+  , n_joints_(0)
+  , num_mpc_nodes_(50)
+  , mpc_max_iter_(1)
+  , max_init_iter_(100)
+  , mpc_dt_(0.02)
+  , com_track_weight_(Eigen::Vector3d::Constant(1e4))
+  , control_weight_(1e-3)
+  , thrust_barrier_weight_(1e1)
+{
+}
+
+void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
+                                     boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
+                                     boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+                                     boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+                                     double ctrl_loop_rate)
+{
+  ControlBase::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
+
+  ros::NodeHandle mpc_nh(nh_, "mpc");
+  mpc_nh.param<int>("num_nodes", num_mpc_nodes_, num_mpc_nodes_);
+  mpc_nh.param<int>("max_iter", mpc_max_iter_, mpc_max_iter_);
+  mpc_nh.param<int>("max_init_iter", max_init_iter_, max_init_iter_);
+  mpc_nh.param<double>("dt", mpc_dt_, mpc_dt_);
+  mpc_nh.param<double>("control_weight", control_weight_, control_weight_);
+  mpc_nh.param<double>("thrust_barrier_weight", thrust_barrier_weight_, thrust_barrier_weight_);
+
+  std::vector<double> com_w, x_w, x_ref;
+  if (mpc_nh.getParam("com_track_weight", com_w) && com_w.size() == 3)
+    com_track_weight_ = Eigen::Map<Eigen::Vector3d>(com_w.data());
+
+  // publishers
+  four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
+  joints_ctrl_pub_ = nh_.advertise<sensor_msgs::JointState>("joints_ctrl", 10);
+
+  // joint state subscriber
+  joint_state_sub_ = nh_.subscribe("joint_states", 10, &FwddynMpcController::jointStateCallback, this);
+
+  pinocchio_robot_model_ = std::make_shared<aerial_robot_dynamics::PinocchioRobotModel>(true);
+  pin_model_ = pinocchio_robot_model_->getModel();
+
+  curr_q_ = Eigen::VectorXd::Zero(pin_model_->nq);
+  curr_dq_ = Eigen::VectorXd::Zero(pin_model_->nv);
+  curr_tau_ = Eigen::VectorXd::Zero(pin_model_->nv);
+
+  const int rotor_num = pinocchio_robot_model_->getRotorNum();
+  n_joints_ = pin_model_->nv - 6;
+
+  // build joint-name -> pinocchio index maps (skip universe=0 and root_joint=1)
+  for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)pin_model_->njoints; i++)
+  {
+    const std::string& joint_name = pin_model_->names[i];
+    joint_name_to_q_idx_[joint_name] = pin_model_->joints[i].idx_q();
+    joint_name_to_v_idx_[joint_name] = pin_model_->joints[i].idx_v();
+  }
+
+  // state weight (2*nv elements)
+  if (mpc_nh.getParam("x_state_weight", x_w))
+  {
+    if ((int)x_w.size() == 2 * pin_model_->nv)
+      x_state_weight_ = Eigen::Map<Eigen::VectorXd>(x_w.data(), x_w.size());
+    else
+      ROS_ERROR_STREAM("[FwddynMpcController] x_state_weight size mismatch: expected " << 2 * pin_model_->nv << ", got "
+                                                                                       << x_w.size());
+  }
+  else
+    ROS_ERROR_STREAM("[FwddynMpcController] Failed to get x_state_weight from parameter server.");
+
+  // state reference
+  if (mpc_nh.getParam("x_ref", x_ref))
+  {
+    x_ref_ = Eigen::Map<Eigen::VectorXd>(x_ref.data(), x_ref.size());
+  }
+  else
+  {
+    ROS_ERROR_STREAM("[FwddynMpcController] Failed to get x_ref from parameter server.");
+  }
+
+  // thrust limits
+  thrust_lb_ = pinocchio_robot_model_->getThrustLowerLimits();
+  thrust_ub_ = pinocchio_robot_model_->getThrustUpperLimits();
+
+  FwddynMpcControlProblem::Parameters mpc_parameters;
+  mpc_parameters.num_nodes = num_mpc_nodes_;
+  mpc_parameters.max_iter = mpc_max_iter_;
+  mpc_parameters.max_init_iter = max_init_iter_;
+  mpc_parameters.dt = mpc_dt_;
+  mpc_parameters.com_track_weight = com_track_weight_;
+  mpc_parameters.x_state_weight = x_state_weight_;
+  mpc_parameters.control_weight = control_weight_;
+  mpc_parameters.thrust_barrier_weight = thrust_barrier_weight_;
+  mpc_parameters.thrust_lb = thrust_lb_;
+  mpc_parameters.thrust_ub = thrust_ub_;
+  mpc_parameters.x_ref = buildStateReference();
+  mpc_problem_.initialize(pinocchio_robot_model_, mpc_parameters);
+
+  ROS_INFO("[FwddynMpcController] nq=%d nv=%d rotor_num=%d n_joints=%d nodes=%d dt=%.3f", pin_model_->nq,
+           pin_model_->nv, rotor_num, n_joints_, num_mpc_nodes_, mpc_dt_);
+}
+
+void FwddynMpcController::jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+  for (size_t i = 0; i < msg->position.size(); i++)
+  {
+    int joint_id = pin_model_->getJointId(msg->name[i]);
+    if (joint_id >= 0 && joint_id < pin_model_->njoints)
+    {
+      int joint_index_q = pin_model_->joints[joint_id].idx_q();
+      int joint_index_v = pin_model_->joints[joint_id].idx_v();
+      curr_q_[joint_index_q] = msg->position[i];
+      curr_dq_[joint_index_v] = msg->velocity[i];
+      curr_tau_[joint_index_v] = msg->effort[i];
+    }
+  }
+}
+
+bool FwddynMpcController::update()
+{
+  if (!ControlBase::update())
+    return false;
+
+  if (!robot_model_->initialized())
+    return false;
+
+  controlCore();
+  sendCmd();
+  return true;
+}
+
+void FwddynMpcController::reset()
+{
+  ControlBase::reset();
+
+  ROS_INFO_STREAM("[FwddynMpcController] reset");
+  mpc_problem_.reset();
+}
+
+Eigen::VectorXd FwddynMpcController::buildCurrentState()
+{
+  const int nq = pin_model_->nq;
+  const int nv = pin_model_->nv;
+  const int rotor_num = pinocchio_robot_model_->getRotorNum();
+
+  // root
+  Eigen::VectorXd x = Eigen::VectorXd::Zero(nq + nv + rotor_num);
+  tf::Vector3 root_pos = estimator_->getPos(Frame::ROOT, estimate_mode_);
+  tf::Matrix3x3 root_rot = estimator_->getOrientation(Frame::ROOT, estimate_mode_);
+  tf::Vector3 root_vel = estimator_->getVel(Frame::ROOT_LOCAL, estimate_mode_);
+  tf::Vector3 root_angular_vel = estimator_->getAngularVel(Frame::ROOT, estimate_mode_);
+
+  x.head(3) << root_pos.x(), root_pos.y(), root_pos.z();
+  tf::Quaternion root_quat;
+  root_rot.getRotation(root_quat);
+  x.segment(3, 4) << root_quat.x(), root_quat.y(), root_quat.z(), root_quat.w();
+  x.segment(nq, 3) << root_vel.x(), root_vel.y(), root_vel.z();
+  x.segment(nq + 3, 3) << root_angular_vel.x(), root_angular_vel.y(), root_angular_vel.z();
+
+  // joints
+  if (n_joints_ > 0)
+  {
+    x.segment(7, nq - 7) = curr_q_.segment(7, nq - 7);
+    x.segment(nq + 6, nv - 6) = curr_dq_.segment(6, nv - 6);
+  }
+
+  // thrusts
+  const auto& xs = mpc_problem_.xs();
+  if (!xs.empty() && xs[0].size() == x.size())
+    x.tail(rotor_num) = xs[0].tail(rotor_num);
+  else
+    x.tail(rotor_num) = Eigen::VectorXd::Zero(rotor_num);
+
+  return x;
+}
+
+Eigen::VectorXd FwddynMpcController::buildStateReference() const
+{
+  const int state_dim = pin_model_->nq + pin_model_->nv;
+  if (x_ref_.size() == state_dim)
+    return x_ref_;
+
+  Eigen::VectorXd x_ref = Eigen::VectorXd::Zero(state_dim);
+  x_ref.segment<4>(3) << 0.0, 0.0, 0.0, 1.0;
+  return x_ref;
+}
+
+void FwddynMpcController::controlCore()
+{
+  const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
+  const Eigen::Vector3d com_target(target_cog_pos.x(), target_cog_pos.y(), target_cog_pos.z());
+
+  Eigen::VectorXd x0 = buildCurrentState();
+  mpc_problem_.update(x0, com_target, buildStateReference(), ctrl_loop_du_);
+  control_timestamp_ = ros::Time::now().toSec();
+}
+
+void FwddynMpcController::sendCmd()
+{
+  const auto& xs = mpc_problem_.xs();
+  const auto& us = mpc_problem_.us();
+  if (xs.size() < 2 || us.empty())
+    return;
+
+  const int rotor_num = pinocchio_robot_model_->getRotorNum();
+  const int nq = pin_model_->nq;
+  const int nv = pin_model_->nv;
+
+  // commanded thrust = thrust component of next predicted state
+  const Eigen::VectorXd thrust = xs[1].segment(nq + nv, rotor_num);
+
+  spinal::FourAxisCommand cmd;
+  cmd.angles[0] = 0.0f;
+  cmd.angles[1] = 0.0f;
+  cmd.angles[2] = 0.0f;
+  cmd.base_thrust.resize(rotor_num);
+  for (int i = 0; i < rotor_num; i++)
+    cmd.base_thrust[i] = static_cast<float>(thrust(i));
+
+  four_axis_command_pub_.publish(cmd);
+
+  if (n_joints_ > 0)
+    publishJointsCtrl();
+}
+
+void FwddynMpcController::publishJointsCtrl()
+{
+  const int rotor_num = pinocchio_robot_model_->getRotorNum();
+  const auto& xs = mpc_problem_.xs();
+  const auto& us = mpc_problem_.us();
+
+  sensor_msgs::JointState joint_state;
+  for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)pin_model_->njoints; i++)
+  {
+    const std::string& joint_name = pin_model_->names[i];
+    const int q_idx = pin_model_->joints[pin_model_->getJointId(joint_name)].idx_q();
+    const int v_idx = pin_model_->joints[pin_model_->getJointId(joint_name)].idx_v();
+
+    joint_state.name.push_back(joint_name);
+    joint_state.position.push_back(xs[1](q_idx));
+    joint_state.velocity.push_back(xs[1](pin_model_->nq + v_idx));
+    joint_state.effort.push_back(us[0](rotor_num + (v_idx - 6)));  // skip free-flyer DOFs
+  }
+
+  joints_ctrl_pub_.publish(joint_state);
+}
+
+}  // namespace aerial_robot_control
+
+// plugin registration
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(aerial_robot_control::FwddynMpcController, aerial_robot_control::ControlBase);
