@@ -35,7 +35,25 @@ public:
     double thrust_barrier_weight = 1e1;
     Eigen::VectorXd thrust_lb;
     Eigen::VectorXd thrust_ub;
-    Eigen::VectorXd x_ref;
+
+    void print()
+    {
+      std::cout << "MPC Parameters:" << std::endl;
+      std::cout << "  num_nodes: " << num_nodes << std::endl;
+      std::cout << "  max_iter: " << max_iter << std::endl;
+      std::cout << "  max_init_iter: " << max_init_iter << std::endl;
+      std::cout << "  dt: " << dt << std::endl;
+      std::cout << "  com_track_weight: " << com_track_weight.transpose() << std::endl;
+      std::cout << "  control_weight: " << control_weight << std::endl;
+      std::cout << "  thrust_barrier_weight: " << thrust_barrier_weight << std::endl;
+      if (x_state_weight.size() > 0)
+        std::cout << "  x_state_weight: " << x_state_weight.transpose() << std::endl;
+      if (thrust_lb.size() > 0 && thrust_ub.size() > 0)
+      {
+        std::cout << "  thrust_lb: " << thrust_lb.transpose() << std::endl;
+        std::cout << "  thrust_ub: " << thrust_ub.transpose() << std::endl;
+      }
+    }
   };
 
   FwddynMpcControlProblem() = default;
@@ -44,8 +62,10 @@ public:
                   const Parameters& parameters);
   void reset();
 
-  bool update(const Eigen::VectorXd& x0, const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref,
-              double elapsed_time);
+  void buildMPCProblem(const Eigen::VectorXd& x0, const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
+  void setInitialState(const Eigen::VectorXd& x0);
+  void slideHorizon(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
+  bool solveMPC(int max_iter, bool verbose = false);
 
   bool isInitialized() const
   {
@@ -70,15 +90,10 @@ public:
   }
 
 private:
-  std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrusts> createMPCNode(const Eigen::Vector3d& com_target);
-  void buildMPCProblem(const Eigen::VectorXd& x0, const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
-  void updateReferences(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
-  void slideHorizon(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
-  void solveMPC(int max_iter, bool verbose = false);
+  std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrusts> createMPCNode(const Eigen::Vector3d& com_target,
+                                                                                  const Eigen::VectorXd& x_ref);
 
   bool initialized_ = false;
-  bool first_run_ = true;
-  double elapsed_time_ = 0.0;
 
   Parameters parameters_;
 

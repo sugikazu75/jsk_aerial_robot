@@ -21,6 +21,7 @@ FwddynMpcController::FwddynMpcController()
   , mpc_max_iter_(1)
   , max_init_iter_(100)
   , mpc_dt_(0.02)
+  , mpc_elapsed_time_(0.0)
   , com_track_weight_(Eigen::Vector3d::Constant(1e4))
   , control_weight_(1e-3)
   , thrust_barrier_weight_(1e1)
@@ -87,7 +88,11 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   // state reference
   if (mpc_nh.getParam("x_ref", x_ref))
   {
-    x_ref_ = Eigen::Map<Eigen::VectorXd>(x_ref.data(), x_ref.size());
+    if ((int)x_ref.size() == pin_model_->nq + pin_model_->nv)
+      x_ref_ = Eigen::Map<Eigen::VectorXd>(x_ref.data(), x_ref.size());
+    else
+      ROS_ERROR_STREAM("[FwddynMpcController] x_ref size mismatch: expected " << pin_model_->nq + pin_model_->nv
+                                                                              << ", got " << x_ref.size());
   }
   else
   {
@@ -98,6 +103,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   thrust_lb_ = pinocchio_robot_model_->getThrustLowerLimits();
   thrust_ub_ = pinocchio_robot_model_->getThrustUpperLimits();
 
+  // initialize MPC problem
   FwddynMpcControlProblem::Parameters mpc_parameters;
   mpc_parameters.num_nodes = num_mpc_nodes_;
   mpc_parameters.max_iter = mpc_max_iter_;
@@ -109,27 +115,39 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   mpc_parameters.thrust_barrier_weight = thrust_barrier_weight_;
   mpc_parameters.thrust_lb = thrust_lb_;
   mpc_parameters.thrust_ub = thrust_ub_;
-  mpc_parameters.x_ref = buildStateReference();
+  mpc_parameters.print();
+
   mpc_problem_.initialize(pinocchio_robot_model_, mpc_parameters);
 
   ROS_INFO("[FwddynMpcController] nq=%d nv=%d rotor_num=%d n_joints=%d nodes=%d dt=%.3f", pin_model_->nq,
            pin_model_->nv, rotor_num, n_joints_, num_mpc_nodes_, mpc_dt_);
 }
 
-void FwddynMpcController::jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+void FwddynMpcController::activate()
 {
-  for (size_t i = 0; i < msg->position.size(); i++)
-  {
-    int joint_id = pin_model_->getJointId(msg->name[i]);
-    if (joint_id >= 0 && joint_id < pin_model_->njoints)
-    {
-      int joint_index_q = pin_model_->joints[joint_id].idx_q();
-      int joint_index_v = pin_model_->joints[joint_id].idx_v();
-      curr_q_[joint_index_q] = msg->position[i];
-      curr_dq_[joint_index_v] = msg->velocity[i];
-      curr_tau_[joint_index_v] = msg->effort[i];
-    }
-  }
+  ControlBase::activate();
+
+  Eigen::VectorXd x = buildCurrentState();
+  tf::Vector3 root_rpy = estimator_->getEuler(Frame::ROOT, estimate_mode_);
+  Eigen::Quaterniond root_quat_yaw(Eigen::AngleAxisd(root_rpy.z(), Eigen::Vector3d::UnitZ()));
+  root_quat_yaw.normalize();
+  x.segment(3, 4) << root_quat_yaw.x(), root_quat_yaw.y(), root_quat_yaw.z(), root_quat_yaw.w();
+
+  std::cout << "[FwddynMpcController] Initial state (with yaw-only orientation): " << x.transpose() << std::endl;
+
+  // update root link reference to current state
+  x_ref_.head(7) = x.head(7);
+
+  std::cout << "[FwddynMpcController] Initial reference state: " << x_ref_.transpose() << std::endl;
+
+  // CoM reference
+  const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
+  const Eigen::Vector3d com_target(target_cog_pos.x(), target_cog_pos.y(), target_cog_pos.z());
+  std::cout << "[FwddynMpcController] Initial CoM target: " << com_target.transpose() << std::endl;
+
+  // build and solveMPC
+  mpc_problem_.buildMPCProblem(x, com_target, x_ref_);
+  mpc_problem_.solveMPC(max_init_iter_, true);
 }
 
 bool FwddynMpcController::update()
@@ -150,7 +168,56 @@ void FwddynMpcController::reset()
   ControlBase::reset();
 
   ROS_INFO_STREAM("[FwddynMpcController] reset");
-  mpc_problem_.reset();
+  mpc_elapsed_time_ = 0.0;
+}
+
+void FwddynMpcController::controlCore()
+{
+  const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
+  const Eigen::Vector3d com_target(target_cog_pos.x(), target_cog_pos.y(), target_cog_pos.z());
+
+  Eigen::VectorXd x0 = buildCurrentState();
+
+  mpc_problem_.setInitialState(x0);
+
+  mpc_elapsed_time_ += ctrl_loop_du_;
+  if (mpc_elapsed_time_ >= mpc_dt_ - 1e-9)
+  {
+    mpc_problem_.slideHorizon(com_target, x_ref_);
+    mpc_elapsed_time_ -= mpc_dt_;
+  }
+
+  mpc_problem_.solveMPC(mpc_max_iter_);
+
+  control_timestamp_ = ros::Time::now().toSec();
+}
+
+void FwddynMpcController::sendCmd()
+{
+  const auto& xs = mpc_problem_.xs();
+  const auto& us = mpc_problem_.us();
+  if (xs.size() < 2 || us.empty())
+    return;
+
+  const int rotor_num = pinocchio_robot_model_->getRotorNum();
+  const int nq = pin_model_->nq;
+  const int nv = pin_model_->nv;
+
+  // commanded thrust = thrust component of next predicted state
+  const Eigen::VectorXd thrust = xs[1].segment(nq + nv, rotor_num);
+
+  spinal::FourAxisCommand cmd;
+  cmd.angles[0] = 0.0f;
+  cmd.angles[1] = 0.0f;
+  cmd.angles[2] = 0.0f;
+  cmd.base_thrust.resize(rotor_num);
+  for (int i = 0; i < rotor_num; i++)
+    cmd.base_thrust[i] = static_cast<float>(thrust(i));
+
+  four_axis_command_pub_.publish(cmd);
+
+  if (n_joints_ > 0)
+    publishJointsCtrl();
 }
 
 Eigen::VectorXd FwddynMpcController::buildCurrentState()
@@ -190,55 +257,6 @@ Eigen::VectorXd FwddynMpcController::buildCurrentState()
   return x;
 }
 
-Eigen::VectorXd FwddynMpcController::buildStateReference() const
-{
-  const int state_dim = pin_model_->nq + pin_model_->nv;
-  if (x_ref_.size() == state_dim)
-    return x_ref_;
-
-  Eigen::VectorXd x_ref = Eigen::VectorXd::Zero(state_dim);
-  x_ref.segment<4>(3) << 0.0, 0.0, 0.0, 1.0;
-  return x_ref;
-}
-
-void FwddynMpcController::controlCore()
-{
-  const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
-  const Eigen::Vector3d com_target(target_cog_pos.x(), target_cog_pos.y(), target_cog_pos.z());
-
-  Eigen::VectorXd x0 = buildCurrentState();
-  mpc_problem_.update(x0, com_target, buildStateReference(), ctrl_loop_du_);
-  control_timestamp_ = ros::Time::now().toSec();
-}
-
-void FwddynMpcController::sendCmd()
-{
-  const auto& xs = mpc_problem_.xs();
-  const auto& us = mpc_problem_.us();
-  if (xs.size() < 2 || us.empty())
-    return;
-
-  const int rotor_num = pinocchio_robot_model_->getRotorNum();
-  const int nq = pin_model_->nq;
-  const int nv = pin_model_->nv;
-
-  // commanded thrust = thrust component of next predicted state
-  const Eigen::VectorXd thrust = xs[1].segment(nq + nv, rotor_num);
-
-  spinal::FourAxisCommand cmd;
-  cmd.angles[0] = 0.0f;
-  cmd.angles[1] = 0.0f;
-  cmd.angles[2] = 0.0f;
-  cmd.base_thrust.resize(rotor_num);
-  for (int i = 0; i < rotor_num; i++)
-    cmd.base_thrust[i] = static_cast<float>(thrust(i));
-
-  four_axis_command_pub_.publish(cmd);
-
-  if (n_joints_ > 0)
-    publishJointsCtrl();
-}
-
 void FwddynMpcController::publishJointsCtrl()
 {
   const int rotor_num = pinocchio_robot_model_->getRotorNum();
@@ -259,6 +277,22 @@ void FwddynMpcController::publishJointsCtrl()
   }
 
   joints_ctrl_pub_.publish(joint_state);
+}
+
+void FwddynMpcController::jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+  for (size_t i = 0; i < msg->position.size(); i++)
+  {
+    int joint_id = pin_model_->getJointId(msg->name[i]);
+    if (joint_id >= 0 && joint_id < pin_model_->njoints)
+    {
+      int joint_index_q = pin_model_->joints[joint_id].idx_q();
+      int joint_index_v = pin_model_->joints[joint_id].idx_v();
+      curr_q_[joint_index_q] = msg->position[i];
+      curr_dq_[joint_index_v] = msg->velocity[i];
+      curr_tau_[joint_index_v] = msg->effort[i];
+    }
+  }
 }
 
 }  // namespace aerial_robot_control

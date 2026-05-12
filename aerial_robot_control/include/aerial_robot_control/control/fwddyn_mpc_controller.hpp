@@ -25,6 +25,7 @@ public:
                   boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
                   boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator, double ctrl_loop_rate) override;
 
+  void activate() override;
   bool update() override;
   void reset() override;
 
@@ -59,6 +60,7 @@ private:
   int mpc_max_iter_;
   int max_init_iter_;
   double mpc_dt_;
+  double mpc_elapsed_time_;
 
   // cost weights
   Eigen::Vector3d com_track_weight_;
@@ -74,7 +76,6 @@ private:
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
   Eigen::VectorXd buildCurrentState();
-  Eigen::VectorXd buildStateReference() const;
   void publishJointsCtrl();
 };
 

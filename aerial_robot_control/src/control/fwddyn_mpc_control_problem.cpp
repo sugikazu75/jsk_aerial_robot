@@ -8,6 +8,7 @@
 #include <crocoddyl/core/optctrl/shooting.hpp>
 #include <crocoddyl/core/residuals/control.hpp>
 #include <crocoddyl/core/solvers/fddp.hpp>
+#include <crocoddyl/core/utils/timer.hpp>
 #include <crocoddyl/multibody/actions/contact-fwddyn-with-thrusts.hpp>
 #include <crocoddyl/multibody/actuations/floating-base-thrust-rates.hpp>
 #include <crocoddyl/multibody/contacts/multiple-contacts.hpp>
@@ -56,8 +57,6 @@ void FwddynMpcControlProblem::initialize(
 
 void FwddynMpcControlProblem::reset()
 {
-  first_run_ = true;
-  elapsed_time_ = 0.0;
   shooting_problem_.reset();
   solver_.reset();
   xs_.clear();
@@ -66,53 +65,28 @@ void FwddynMpcControlProblem::reset()
   state_residuals_.clear();
 }
 
-bool FwddynMpcControlProblem::update(const Eigen::VectorXd& x0, const Eigen::Vector3d& com_target,
-                                     const Eigen::VectorXd& x_ref, double elapsed_time)
-{
-  if (!initialized_)
-    return false;
-
-  if (first_run_)
-  {
-    buildMPCProblem(x0, com_target, x_ref);
-    solveMPC(parameters_.max_init_iter, true);
-    first_run_ = false;
-    return true;
-  }
-
-  shooting_problem_->set_x0(x0);
-  xs_[0] = x0;
-  updateReferences(com_target, x_ref);
-
-  elapsed_time_ += elapsed_time;
-  if (elapsed_time_ >= parameters_.dt - 1e-9)
-  {
-    slideHorizon(com_target, x_ref);
-    elapsed_time_ -= parameters_.dt;
-  }
-
-  solveMPC(parameters_.max_iter);
-  return true;
-}
-
 std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrusts>
-FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target)
+FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref)
 {
   const std::size_t nu = actuation_->get_nu();
 
+  // contact
   auto contacts = std::make_shared<crocoddyl::ContactModelMultiple>(state_mb_, nu);
   auto costs = std::make_shared<crocoddyl::CostModelSum>(state_mb_, nu);
 
+  // CoM tracking
   auto com_res = std::make_shared<crocoddyl::ResidualModelCoMPosition>(state_mb_, com_target, nu);
   com_residuals_.push_back(com_res);
   auto com_act = std::make_shared<crocoddyl::ActivationModelWeightedQuad>(parameters_.com_track_weight);
   costs->addCost("comTrack", std::make_shared<crocoddyl::CostModelResidual>(state_mb_, com_act, com_res), 1.0);
 
-  auto state_res = std::make_shared<crocoddyl::ResidualModelState>(state_mb_, parameters_.x_ref, nu);
+  // State regularisation
+  auto state_res = std::make_shared<crocoddyl::ResidualModelState>(state_mb_, x_ref, nu);
   state_residuals_.push_back(state_res);
   auto state_act = std::make_shared<crocoddyl::ActivationModelWeightedQuad>(parameters_.x_state_weight);
   costs->addCost("stateReg", std::make_shared<crocoddyl::CostModelResidual>(state_mb_, state_act, state_res), 1.0);
 
+  // Control regularisation
   auto ctrl_res = std::make_shared<crocoddyl::ResidualModelControl>(state_mb_, nu);
   costs->addCost("ctrlReg", std::make_shared<crocoddyl::CostModelResidual>(state_mb_, ctrl_res),
                  parameters_.control_weight);
@@ -120,6 +94,7 @@ FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target)
   auto dam = std::make_shared<crocoddyl::DifferentialActionModelContactFwdDynamicsWithThrusts>(
       state_with_thrusts_, actuation_, contacts, costs, 1e-6, false);
 
+  // Thrust saturation barrier
   dam->set_thrust_barrier(
       Eigen::VectorXd::Constant(pinocchio_robot_model_->getRotorNum(), parameters_.thrust_barrier_weight),
       parameters_.thrust_lb, parameters_.thrust_ub);
@@ -130,16 +105,15 @@ FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target)
 void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const Eigen::Vector3d& com_target,
                                               const Eigen::VectorXd& x_ref)
 {
-  parameters_.x_ref = x_ref;
   com_residuals_.clear();
   state_residuals_.clear();
 
   std::vector<std::shared_ptr<crocoddyl::ActionModelAbstract>> running_models;
   running_models.reserve(parameters_.num_nodes);
   for (int i = 0; i < parameters_.num_nodes; ++i)
-    running_models.push_back(createMPCNode(com_target));
+    running_models.push_back(createMPCNode(com_target, x_ref));
 
-  auto terminal = createMPCNode(com_target);
+  auto terminal = createMPCNode(com_target, x_ref);
 
   shooting_problem_ = std::make_shared<crocoddyl::ShootingProblem>(x0, running_models, terminal);
   solver_ = std::make_shared<crocoddyl::SolverFDDP>(shooting_problem_);
@@ -153,37 +127,69 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
   }
 }
 
-void FwddynMpcControlProblem::updateReferences(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref)
+void FwddynMpcControlProblem::setInitialState(const Eigen::VectorXd& x0)
 {
-  parameters_.x_ref = x_ref;
-  for (auto& cr : com_residuals_)
-    cr->set_reference(com_target);
-  for (auto& sr : state_residuals_)
-    sr->set_reference(x_ref);
+  if (!shooting_problem_ || xs_.empty())
+    return;
+
+  shooting_problem_->set_x0(x0);
+  xs_[0] = x0;
 }
 
 void FwddynMpcControlProblem::slideHorizon(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref)
 {
-  parameters_.x_ref = x_ref;
-  auto new_terminal = createMPCNode(com_target);
+  // retreive the first running node and data (which will become the new terminal node)
+  std::shared_ptr<crocoddyl::ActionModelAbstract> new_terminal = shooting_problem_->get_runningModels().front();
+  std::shared_ptr<crocoddyl::ActionDataAbstract> new_terminal_data = shooting_problem_->get_runningDatas().front();
 
-  shooting_problem_->circularAppend(shooting_problem_->get_terminalModel());
-  shooting_problem_->updateModel(shooting_problem_->get_T(), new_terminal);
+  // append a terminal node to the end of running nodes, and remove the first node
+  shooting_problem_->circularAppend(shooting_problem_->get_terminalModel(), shooting_problem_->get_terminalData());
+
+  // update the terminal node with the first running node
+  shooting_problem_->updateNode(shooting_problem_->get_T(), new_terminal, new_terminal_data);
+
+  // update the references for the new terminal node
+  std::shared_ptr<crocoddyl::ResidualModelCoMPosition> new_com_res = com_residuals_.front();
+  std::shared_ptr<crocoddyl::ResidualModelState> new_state_res = state_residuals_.front();
+  new_com_res->set_reference(com_target);
+  new_state_res->set_reference(x_ref);
 
   com_residuals_.erase(com_residuals_.begin());
   state_residuals_.erase(state_residuals_.begin());
 
+  com_residuals_.push_back(new_com_res);
+  state_residuals_.push_back(new_state_res);
+
+  // update the initial guess by shifting the previous solution
   xs_.erase(xs_.begin());
   xs_.push_back(xs_.back());
   us_.erase(us_.begin());
   us_.push_back(us_.back());
 }
 
-void FwddynMpcControlProblem::solveMPC(int max_iter, bool verbose)
+bool FwddynMpcControlProblem::solveMPC(int max_iter, bool verbose)
 {
-  solver_->solve(xs_, us_, max_iter, verbose);
+  if (!solver_)
+    return false;
+
+  crocoddyl::Timer timer;
+  const bool solved = solver_->solve(xs_, us_, max_iter, false);
+  double solve_time = timer.get_duration();
+
+  if (verbose)
+  {
+    std::cout << "MPC solved: " << solved << std::endl;
+    std::cout << "total calculation time:" << solve_time << std::endl;
+    std::cout << "Number of iterations: " << solver_->get_iter() << std::endl;
+    std::cout << "time per iterate:" << solve_time / solver_->get_iter() << std::endl;
+    std::cout << "Total cost: " << solver_->get_cost() << std::endl;
+    std::cout << "Gradient norm: " << solver_->get_stop() << std::endl;
+    std::cout << std::endl;
+  }
+
   xs_ = solver_->get_xs();
   us_ = solver_->get_us();
+  return solved;
 }
 
 }  // namespace aerial_robot_control
