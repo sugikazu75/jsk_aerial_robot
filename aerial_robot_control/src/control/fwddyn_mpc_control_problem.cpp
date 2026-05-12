@@ -7,6 +7,7 @@
 #include <crocoddyl/core/integrator/euler.hpp>
 #include <crocoddyl/core/optctrl/shooting.hpp>
 #include <crocoddyl/core/residuals/control.hpp>
+#include <crocoddyl/core/solvers/box-fddp.hpp>
 #include <crocoddyl/core/solvers/fddp.hpp>
 #include <crocoddyl/core/utils/timer.hpp>
 #include <crocoddyl/multibody/actions/contact-fwddyn-with-thrusts.hpp>
@@ -44,8 +45,9 @@ void FwddynMpcControlProblem::initialize(
   {
     const int dir = pinocchio_robot_model_->getRotorDirection(i);
     thrusters.emplace_back(rotor_frame_indices.at(i), joint_M_rotors.at(i), m_f_rate,
-                           (dir == 1) ? crocoddyl::DT_CCW : crocoddyl::DT_CW, parameters_.thrust_lb(i),
-                           parameters_.thrust_ub(i));
+                           (dir == 1) ? crocoddyl::DT_CCW : crocoddyl::DT_CW,
+                           pinocchio_robot_model_->getThrustLowerLimits()(i),
+                           pinocchio_robot_model_->getThrustUpperLimits()(i), parameters_.delta_thrust_max);
   }
 
   state_with_thrusts_ = std::make_shared<crocoddyl::StateMultibodyWithThrusts>(state_mb_, rotor_num);
@@ -97,7 +99,7 @@ FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target, const 
   // Thrust saturation barrier
   dam->set_thrust_barrier(
       Eigen::VectorXd::Constant(pinocchio_robot_model_->getRotorNum(), parameters_.thrust_barrier_weight),
-      parameters_.thrust_lb, parameters_.thrust_ub);
+      pinocchio_robot_model_->getThrustLowerLimits(), pinocchio_robot_model_->getThrustUpperLimits());
 
   return std::make_shared<crocoddyl::IntegratedActionModelEulerWithThrusts>(dam, parameters_.dt);
 }
@@ -116,7 +118,7 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
   auto terminal = createMPCNode(com_target, x_ref);
 
   shooting_problem_ = std::make_shared<crocoddyl::ShootingProblem>(x0, running_models, terminal);
-  solver_ = std::make_shared<crocoddyl::SolverFDDP>(shooting_problem_);
+  solver_ = std::make_shared<crocoddyl::SolverBoxFDDP>(shooting_problem_);
 
   xs_.assign(parameters_.num_nodes + 1, x0);
   us_.resize(parameters_.num_nodes);

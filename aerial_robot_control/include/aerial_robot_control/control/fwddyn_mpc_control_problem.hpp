@@ -33,8 +33,7 @@ public:
     Eigen::VectorXd x_state_weight;
     double control_weight = 1e-3;
     double thrust_barrier_weight = 1e1;
-    Eigen::VectorXd thrust_lb;
-    Eigen::VectorXd thrust_ub;
+    double delta_thrust_max = 1.0;
 
     void print()
     {
@@ -48,11 +47,7 @@ public:
       std::cout << "  thrust_barrier_weight: " << thrust_barrier_weight << std::endl;
       if (x_state_weight.size() > 0)
         std::cout << "  x_state_weight: " << x_state_weight.transpose() << std::endl;
-      if (thrust_lb.size() > 0 && thrust_ub.size() > 0)
-      {
-        std::cout << "  thrust_lb: " << thrust_lb.transpose() << std::endl;
-        std::cout << "  thrust_ub: " << thrust_ub.transpose() << std::endl;
-      }
+      std::cout << "  delta_thrust_max: " << delta_thrust_max << std::endl;
     }
   };
 

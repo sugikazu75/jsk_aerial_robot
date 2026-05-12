@@ -70,8 +70,7 @@ private:
   Eigen::VectorXd x_state_weight_;
   double control_weight_;
   double thrust_barrier_weight_;
-  Eigen::VectorXd thrust_lb_;
-  Eigen::VectorXd thrust_ub_;
+  double delta_thrust_max_;
 
   // reference state (nq + nv) used for state regularisation
   Eigen::VectorXd x_ref_;

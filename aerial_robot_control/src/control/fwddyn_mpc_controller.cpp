@@ -1,4 +1,5 @@
 // -*- mode: c++ -*-
+
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/algorithm/center-of-mass.hpp>
 #include <pinocchio/algorithm/frames.hpp>
@@ -44,6 +45,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   mpc_nh.param<double>("dt", mpc_dt_, mpc_dt_);
   mpc_nh.param<double>("control_weight", control_weight_, control_weight_);
   mpc_nh.param<double>("thrust_barrier_weight", thrust_barrier_weight_, thrust_barrier_weight_);
+  mpc_nh.param<double>("delta_thrust_max", delta_thrust_max_, delta_thrust_max_);
 
   std::vector<double> com_w, x_w, x_ref;
   if (mpc_nh.getParam("com_track_weight", com_w))
@@ -108,10 +110,6 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
     ROS_ERROR_STREAM("[FwddynMpcController] Failed to get x_ref from parameter server.");
   }
 
-  // thrust limits
-  thrust_lb_ = pinocchio_robot_model_->getThrustLowerLimits();
-  thrust_ub_ = pinocchio_robot_model_->getThrustUpperLimits();
-
   // initialize MPC problem
   FwddynMpcControlProblem::Parameters mpc_parameters;
   mpc_parameters.num_nodes = num_mpc_nodes_;
@@ -122,8 +120,8 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   mpc_parameters.x_state_weight = x_state_weight_;
   mpc_parameters.control_weight = control_weight_;
   mpc_parameters.thrust_barrier_weight = thrust_barrier_weight_;
-  mpc_parameters.thrust_lb = thrust_lb_;
-  mpc_parameters.thrust_ub = thrust_ub_;
+  mpc_parameters.delta_thrust_max = delta_thrust_max_;
+
   mpc_parameters.print();
 
   mpc_problem_.initialize(pinocchio_robot_model_, mpc_parameters);
