@@ -36,6 +36,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
 {
   ControlBase::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
 
+  // load MPC parameters
   ros::NodeHandle mpc_nh(nh_, "mpc");
   mpc_nh.param<int>("num_nodes", num_mpc_nodes_, num_mpc_nodes_);
   mpc_nh.param<int>("max_iter", mpc_max_iter_, mpc_max_iter_);
@@ -45,8 +46,15 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   mpc_nh.param<double>("thrust_barrier_weight", thrust_barrier_weight_, thrust_barrier_weight_);
 
   std::vector<double> com_w, x_w, x_ref;
-  if (mpc_nh.getParam("com_track_weight", com_w) && com_w.size() == 3)
-    com_track_weight_ = Eigen::Map<Eigen::Vector3d>(com_w.data());
+  if (mpc_nh.getParam("com_track_weight", com_w))
+  {
+    if ((int)com_w.size() == 3)
+      com_track_weight_ = Eigen::Map<Eigen::Vector3d>(com_w.data());
+    else
+      ROS_ERROR_STREAM("[FwddynMpcController] com_track_weight size mismatch: expected 3, got " << com_w.size());
+  }
+  else
+    ROS_ERROR_STREAM("[FwddynMpcController] Failed to get com_track_weight from parameter server.");
 
   // publishers
   four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
