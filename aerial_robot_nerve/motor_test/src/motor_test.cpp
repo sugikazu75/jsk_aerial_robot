@@ -8,6 +8,7 @@
 #include <std_srvs/Empty.h>
 #include <takasako_sps/PowerInfo.h>
 #include <spinal/PwmTest.h>
+#include <spinal/ESCTelemetryArray.h>
 
 namespace Mode
 {
@@ -39,6 +40,8 @@ public:
     force_snesor_sub_ = nh_.subscribe(topic_name, 1, &MotorTest::forceSensorCallback, this, ros::TransportHints().tcpNoDelay());
     nhp_.param("power_info_sub_name", topic_name, std::string("power_info"));
     power_info_sub_ = nh_.subscribe(topic_name, 1, &MotorTest::powerInfoCallback, this, ros::TransportHints().tcpNoDelay());
+    nhp_.param("esc_telemetry_sub_name", topic_name, std::string("esc_telem"));
+    esc_telemetry_sub_ = nh_.subscribe(topic_name, 1, &MotorTest::escTelemetryCallback, this, ros::TransportHints().tcpNoDelay());
     nhp_.param("motor_pwm_sub_name", topic_name, std::string("power_pwm"));
     motor_pwm_pub_ = nh_.advertise<spinal::PwmTest>(topic_name,1);
 
@@ -72,6 +75,7 @@ private:
   ros::NodeHandle nhp_;
   ros::Subscriber force_snesor_sub_;
   ros::Subscriber power_info_sub_;
+  ros::Subscriber esc_telemetry_sub_;
   ros::Subscriber start_cmd_sub_;
   ros::Publisher motor_pwm_pub_;
   ros::Publisher sps_on_pub_;
@@ -90,6 +94,9 @@ private:
   double pwm_range_;
 
   float currency_ = 0.0;
+  uint32_t esc_rpm_ = 0;
+  int8_t esc_temperature_ = 0;
+  float esc_voltage_ = 0.0;
   ros::Time init_time_;
 
   std::ofstream ofs_;
@@ -114,6 +121,13 @@ private:
     currency_ = msg->currency;
   }
 
+  void escTelemetryCallback(const spinal::ESCTelemetryArrayConstPtr& msg)
+  {
+    esc_rpm_ = msg->esc_telemetry_1.rpm;
+    esc_temperature_ = msg->esc_telemetry_1.temperature;
+    esc_voltage_ = msg->esc_telemetry_1.voltage / 100.0f;  // 1000 -> 10.00V
+  }
+
   void forceSensorCallback(const geometry_msgs::WrenchStampedConstPtr & msg)
   {
     if(!start_flag_) return;
@@ -130,7 +144,10 @@ private:
         << msg->wrench.torque.x << " "
         << msg->wrench.torque.y << " "
         << msg->wrench.torque.z << " "
-        << currency_;
+        << currency_ << " "
+        << esc_rpm_ << " "
+        << (int)esc_temperature_ << " "
+        << esc_voltage_;
 
     if(test_mode_ == Mode::ONESHOT)
       {
