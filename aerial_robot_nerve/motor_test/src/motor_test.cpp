@@ -31,6 +31,10 @@ public:
     nhp_.param("stop_pwm_value", stop_pwm_value_, 1000);
     nhp_.param("pwm_range", pwm_range_, 2000.0);
 
+    /* ramp-up before each phase */
+    nhp_.param("ramp_step_pwm", ramp_step_pwm_, 50);
+    nhp_.param("ramp_interval", ramp_interval_, 0.1);
+
     /* one-shot mode */
     nhp_.param("raise_duration", raise_duration_, 1.0);
     nhp_.param("brake_duration", brake_duration_, 1.0);
@@ -93,6 +97,12 @@ private:
   int stop_pwm_value_, min_pwm_value_, max_pwm_value_;
   double pwm_range_;
 
+  bool ramp_flag_ = false;
+  int ramp_current_pwm_ = 0;
+  int ramp_step_pwm_ = 50;
+  double ramp_interval_ = 0.1;
+  ros::Time ramp_time_;
+
   float currency_ = 0.0;
   uint32_t esc_rpm_ = 0;
   int8_t esc_temperature_ = 0;
@@ -107,13 +117,14 @@ private:
     ofs_.open(file_name, std::ios::out);
 
     pwm_value_ = min_pwm_value_;
-
+    ramp_current_pwm_ = stop_pwm_value_;
     spinal::PwmTest cmd_msg;
-    cmd_msg.pwms.push_back(pwm_value_  / pwm_range_);
+    cmd_msg.pwms.push_back(stop_pwm_value_ / pwm_range_);
     motor_pwm_pub_.publish(cmd_msg);
-    init_time_ = ros::Time::now();
-    ROS_INFO("start pwm test");
+    ramp_flag_ = true;
+    ramp_time_ = ros::Time::now();
     start_flag_ = true;
+    ROS_INFO("start pwm test, ramping to %d", pwm_value_);
   }
 
   void powerInfoCallback(const takasako_sps::PowerInfoConstPtr& msg)
@@ -175,12 +186,41 @@ private:
   {
     if(!start_flag_) return;
 
+    if(ramp_flag_)
+      {
+        if(ros::Time::now().toSec() - ramp_time_.toSec() >= ramp_interval_)
+          {
+            ramp_current_pwm_ = std::min(ramp_current_pwm_ + ramp_step_pwm_, (int)pwm_value_);
+            spinal::PwmTest cmd_msg;
+            cmd_msg.pwms.push_back(ramp_current_pwm_ / pwm_range_);
+            motor_pwm_pub_.publish(cmd_msg);
+            ramp_time_ = ros::Time::now();
+            ROS_INFO("ramp pwm: %d / %d", ramp_current_pwm_, (int)pwm_value_);
+
+            if(ramp_current_pwm_ >= (int)pwm_value_)
+              {
+                ramp_flag_ = false;
+                init_time_ = ros::Time::now();
+                ROS_INFO("ramp complete, measuring at pwm: %d", pwm_value_);
+              }
+          }
+        return;
+      }
+
     if(ros::Time::now().toSec() - init_time_.toSec() > run_duration_)
       {
         if(test_mode_ == Mode::STEP)
           {
             pwm_value_ += pwm_incremental_value_;
-            init_time_ = ros::Time::now();
+            if(pwm_value_ <= max_pwm_value_)
+              {
+                ramp_current_pwm_ = stop_pwm_value_;
+                spinal::PwmTest ramp_msg;
+                ramp_msg.pwms.push_back(stop_pwm_value_ / pwm_range_);
+                motor_pwm_pub_.publish(ramp_msg);
+                ramp_flag_ = true;
+                ramp_time_ = ros::Time::now();
+              }
           }
         else if(test_mode_ == Mode::ONESHOT)
           {
@@ -211,7 +251,15 @@ private:
                     ROS_INFO("done force sensor calib");
                     once_flag_ = true;
                     pwm_value_ += pwm_incremental_value_;
-                    init_time_ = ros::Time::now();
+                    if(pwm_value_ <= max_pwm_value_)
+                      {
+                        ramp_current_pwm_ = stop_pwm_value_;
+                        spinal::PwmTest ramp_msg;
+                        ramp_msg.pwms.push_back(stop_pwm_value_ / pwm_range_);
+                        motor_pwm_pub_.publish(ramp_msg);
+                        ramp_flag_ = true;
+                        ramp_time_ = ros::Time::now();
+                      }
                   }
                 else
                   {
@@ -233,14 +281,6 @@ private:
             ofs_.close();
 
             return;
-          }
-
-        if(once_flag_)
-          {
-            ROS_INFO("target_pwm: %d", pwm_value_);
-            spinal::PwmTest cmd_msg;
-            cmd_msg.pwms.push_back(pwm_value_  / pwm_range_);
-            motor_pwm_pub_.publish(cmd_msg);
           }
       }
   }

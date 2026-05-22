@@ -2,14 +2,17 @@
 <launch>
   <!-- general parameters -->
   <arg name="test_mode" default="1" /> <!-- 0: STEP; 1: ONESHOT -->
-  <arg name="run_duration" default="2.0" />
+  <arg name="run_duration" default="4.0" />
   <arg name="pwm_incremental_value" default="25" />
-  <arg name="min_pwm_value" default="1200" />
-  <arg name="max_pwm_value" default="1700" />
+  <arg name="min_pwm_value" default="1025" />
+  <arg name="max_pwm_value" default="1950" />
   <!-- parameters for oneshot -->
-  <arg name="raise_duration" default="2.0" />
-  <arg name="brake_duration" default="4.0" />
-  <arg name="force_sensor" default="CFS034CA301U" /> <!-- other sensor: PFS055YA501U6 -->
+  <arg name="raise_duration" default="3.0" />
+  <arg name="brake_duration" default="5.0" />
+  <!-- ramp-up parameters -->
+  <arg name="ramp_step_pwm" default="1" />
+  <arg name="ramp_interval" default="0.01" />
+  <arg name="force_sensor" default="PFS055YA501U6" /> <!-- other sensor: PFS055YA501U6 -->
 
   <node name="power_node"  pkg="takasako_sps" type="scpi_tcp_client_node" output="screen" />
 
@@ -33,5 +36,7 @@
     <param name="max_pwm_value" value="$(arg max_pwm_value)" />
     <param name="raise_duration" value="$(arg raise_duration)" />
     <param name="brake_duration" value="$(arg brake_duration)" />
+    <param name="ramp_step_pwm" value="$(arg ramp_step_pwm)" />
+    <param name="ramp_interval" value="$(arg ramp_interval)" />
   </node>
 </launch>
