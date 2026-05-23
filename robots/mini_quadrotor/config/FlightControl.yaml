@@ -2,28 +2,28 @@ aerial_robot_control_name: aerial_robot_control/under_actuated_tilted_lqi_contro
 
 controller:
   xy:
-    p_gain: 5.0
-    i_gain: 0.05
-    d_gain: 5.0
-    limit_sum: 3
-    limit_p: 3
-    limit_i: 1.5
-    limit_d: 3
+    p_gain: 1.0   
+    i_gain: 0.0  
+    d_gain: 0.8   
+    limit_sum: 0.31
+    limit_p: 0.31
+    limit_i: 0.15
+    limit_d: 0.31
 
   z:
-    p_gain: 5.0
-    i_gain: 2.5
+    p_gain: 8.0
+    i_gain: 1.0
     d_gain: 5.0
-    limit_err_p: 1.0
+    limit_err_p: 20.0
     limit_sum: 10 # N for clamping thrust force
-    limit_p: 20 # m / s^2
-    limit_i: 40 # m / s^2
+    limit_p: 40 # m / s^2
+    limit_i: 30 # m / s^2
     limit_d: 20 # m / s^2
     landing_err_z: -0.2
     force_landing_descending_rate: -0.6
 
   yaw:
-    limit_sum: 6.0 # N for clamping thrust force
+    limit_sum: 6.0 # No for clamping thrust force
     limit_p: 4.0
     limit_i: 4.0
     limit_d: 4.0
@@ -36,8 +36,8 @@ controller:
     gyro_moment_compensation: true
     clamp_gain: true
 
-    roll_pitch_p: 15 # 20
-    roll_pitch_i: 0.5
+    roll_pitch_p: 50 # 20
+    roll_pitch_i: 0.05
     roll_pitch_d: 0.5 # 1.0 #0.15
 
     yaw_p: 60
@@ -50,5 +50,8 @@ controller:
     r4: 1.0
 
     trans_constraint_weight: 100
-    att_control_weight: 1
-
+    att_control_weight: 1    
+    min_acc_for_attitude: 0.05 # [m/s^2]
+    min_vertical_ref: 0.1
+    min_b3_z: 0.1
+    

@@ -1,0 +1,16 @@
+
+gravity_magnitude: 9.8
+
+environment:
+
+  buoyancy:
+    enabled: true
+    rho_water: 1000.0
+    submerged_ratio: 1.0    # 0: air, 1: water
+
+  drag:
+    enabled: true
+    linear: 0.3
+    quadratic: 5.0
+    angular: 0.05
+    quadratic_angular: 0.1
