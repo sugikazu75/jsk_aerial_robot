@@ -82,6 +82,11 @@ namespace aerial_robot_control
     double safe_landing_height_;
     double force_landing_descending_rate_;
 
+    bool use_gravity_buoyancy_ff_;
+    double rho_water_;
+    double robot_volume_;
+    double submerged_ratio_;
+
     tf::Vector3 pos_, target_pos_;
     tf::Vector3 vel_, target_vel_;
     tf::Vector3 target_acc_, target_ang_acc_;

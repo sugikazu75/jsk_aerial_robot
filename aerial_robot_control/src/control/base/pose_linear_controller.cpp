@@ -47,7 +47,11 @@ namespace aerial_robot_control
     rpy_(0,0,0), target_rpy_(0,0,0),
     target_acc_(0,0,0),
     target_omega_(0,0,0),
-    start_rp_integration_(false)
+    start_rp_integration_(false),
+    use_gravity_buoyancy_ff_(false),
+    rho_water_(1000.0),
+    robot_volume_(0.0),
+    submerged_ratio_(0.0)
   {
     pid_msg_.x.total.resize(1);
     pid_msg_.x.p_term.resize(1);
@@ -270,9 +274,16 @@ namespace aerial_robot_control
         target_acc_.setZ(0);
       }
 
+    if (use_gravity_buoyancy_ff_) {
+      double g_norm = robot_model_->getGravity().norm();
+      double ratio = std::max(0.0, std::min(submerged_ratio_, 1.0));
+      double buoy_acc = 0.0;
+      if (robot_model_->getMass() > 1e-6)
+        buoy_acc = ratio * rho_water_ * robot_volume_ * g_norm / robot_model_->getMass();
+      target_acc_.z() += g_norm - buoy_acc;
+    }
     pid_controllers_.at(Z).update(err_z, du_z, err_v_z, target_acc_.z());
-
-    if(pid_controllers_.at(Z).getErrI() < 0) pid_controllers_.at(Z).setErrI(0);
+    // if(pid_controllers_.at(Z).getErrI() < 0) pid_controllers_.at(Z).setErrI(0);
 
     if(navigator_->getForceLandingFlag())
       {
