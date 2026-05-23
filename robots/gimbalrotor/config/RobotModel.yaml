@@ -3,3 +3,6 @@ robot_model_plugin_name: gimbalrotor_robot_model # multirotor_robot_model
 
 wrench_mat_det_thre: 0
 
+robot_volume: 0.00108   # [m^3]batabata0.00095
+allow_negative_thrust: true
+

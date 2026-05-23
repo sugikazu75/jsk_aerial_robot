@@ -4,6 +4,9 @@ controller:
   torque_allocation_matrix_inv_pub_interval: 0.05
   wrench_allocation_matrix_pub_interval: 0.1
   gimbal_calc_in_fc : false
+  min_acc_for_attitude: 0.05 # [m/s^2]
+  min_vertical_ref: 0.1
+  min_b3_z: 0.1
 
   xy:
     p_gain: 2.0
