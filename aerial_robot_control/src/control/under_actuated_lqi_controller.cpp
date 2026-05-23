@@ -169,8 +169,8 @@ void UnderActuatedLQIController::controlCore()
                            pid_controllers_.at(Z).result());
   tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
 
-  target_pitch_ = target_acc_dash.x() / aerial_robot_estimation::G;
-  target_roll_ = -target_acc_dash.y() / aerial_robot_estimation::G;
+  target_pitch_ = target_acc_dash.x() / gravity_magnitude_;
+  target_roll_ = -target_acc_dash.y() / gravity_magnitude_;
 
   Eigen::VectorXd target_thrust_z_term = Eigen::VectorXd::Zero(motor_num_);
   for(int i = 0; i < motor_num_; i++)

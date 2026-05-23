@@ -82,6 +82,8 @@ namespace aerial_robot_control
     double safe_landing_height_;
     double force_landing_descending_rate_;
 
+    double gravity_magnitude_;
+
     bool use_gravity_buoyancy_ff_;
     double rho_water_;
     double robot_volume_;

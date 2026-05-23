@@ -167,7 +167,7 @@ namespace sensor_plugin
         // re-obtain the rotation and store to a map for later usage
         rots[i] = estimator_->getOrientation(Frame::BASELINK, i);
 
-        acc_w_.at(i) = rots.at(i) * acc_b_ - tf::Vector3(0, 0, aerial_robot_estimation::G);
+        acc_w_.at(i) = rots.at(i) * acc_b_ - tf::Vector3(0, 0, gravity_magnitude_);
         acc_non_bias_w_.at(i) = acc_w_.at(i) - acc_bias_w_.at(i);
       }
 
@@ -434,6 +434,9 @@ namespace sensor_plugin
   void Imu::rosParamInit()
   {
     std::string ns = nhp_.getNamespace();
+
+    ros::NodeHandle nh;
+    nh.param("gravity_magnitude", gravity_magnitude_, (double)aerial_robot_estimation::G);
 
     getParam<double>("level_acc_noise_sigma", level_acc_noise_sigma_, 0.01 );
     getParam<double>("z_acc_noise_sigma", z_acc_noise_sigma_, 0.01 );

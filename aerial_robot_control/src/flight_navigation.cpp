@@ -26,7 +26,8 @@ BaseNavigator::BaseNavigator():
   joy_stick_heart_beat_(false),
   joy_stick_prev_time_(0),
   teleop_flag_(true),
-  land_check_start_time_(0)
+  land_check_start_time_(0),
+  gravity_magnitude_(aerial_robot_estimation::G)
 {
   setNaviState(ARM_OFF_STATE);
 }
@@ -562,7 +563,7 @@ void BaseNavigator::joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg)
     case ACC_CONTROL_MODE:
       {
         /* acc command */
-        double acc_scale = max_teleop_rp_angle_ * aerial_robot_estimation::G;
+        double acc_scale = max_teleop_rp_angle_ * gravity_magnitude_;
         setTargetAccX(raw_x_cmd * acc_scale);
         setTargetAccY(raw_y_cmd * acc_scale);
 
@@ -1096,6 +1097,7 @@ void BaseNavigator::updatePoseFromTrajectory()
 void BaseNavigator::rosParamInit()
 {
   getParam<bool>(nhp_, "param_verbose", param_verbose_, false);
+  nh_.param("gravity_magnitude", gravity_magnitude_, (double)aerial_robot_estimation::G);
 
   ros::NodeHandle nh(nh_, "navigation");
   getParam<int>(nh, "xy_control_mode", xy_control_mode_, 0);

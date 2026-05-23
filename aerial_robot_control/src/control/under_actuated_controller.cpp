@@ -101,8 +101,8 @@ namespace aerial_robot_control
     Eigen::VectorXd target_thrust_z_term;
     if(hovering_approximate_)
       {
-        target_pitch_ = target_acc_dash.x() / aerial_robot_estimation::G;
-        target_roll_ = -target_acc_dash.y() / aerial_robot_estimation::G;
+        target_pitch_ = target_acc_dash.x() / gravity_magnitude_;
+        target_roll_ = -target_acc_dash.y() / gravity_magnitude_;
         target_thrust_z_term = q_mat_inv_.col(0) * target_acc_w.z();
       }
     else

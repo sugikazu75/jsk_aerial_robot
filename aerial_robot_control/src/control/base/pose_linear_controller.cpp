@@ -48,6 +48,7 @@ namespace aerial_robot_control
     target_acc_(0,0,0),
     target_omega_(0,0,0),
     start_rp_integration_(false),
+    gravity_magnitude_(aerial_robot_estimation::G),
     use_gravity_buoyancy_ff_(false),
     rho_water_(1000.0),
     robot_volume_(0.0),
@@ -87,6 +88,8 @@ namespace aerial_robot_control
                                double ctrl_loop_rate)
   {
     ControlBase::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
+
+    nh_.param("gravity_magnitude", gravity_magnitude_, (double)aerial_robot_estimation::G);
 
     ros::NodeHandle control_nh(nh_, "controller");
 

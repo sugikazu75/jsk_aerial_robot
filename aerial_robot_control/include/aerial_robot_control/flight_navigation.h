@@ -320,6 +320,8 @@ namespace aerial_robot_navigation
     bool check_joy_stick_heart_beat_;
     bool joy_stick_heart_beat_;
 
+    double gravity_magnitude_;
+
     double max_teleop_xy_vel_;
     double max_teleop_z_vel_;
     double max_teleop_yaw_vel_;

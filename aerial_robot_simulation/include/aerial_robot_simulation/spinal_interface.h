@@ -73,6 +73,7 @@ namespace hardware_interface
 
     /* attitude estimator */
     bool on_ground_;
+    double gravity_magnitude_;
     StateEstimate spinal_state_estimator_;
   };
 

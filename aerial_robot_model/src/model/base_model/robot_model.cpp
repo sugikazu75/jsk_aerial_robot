@@ -2,7 +2,7 @@
 
 namespace aerial_robot_model {
 
-  RobotModel::RobotModel(bool init_with_rosparam, bool verbose, bool fixed_model, double fc_f_min_thre, double fc_t_min_thre, double epsilon):
+  RobotModel::RobotModel(bool init_with_rosparam, bool verbose, bool fixed_model, double fc_f_min_thre, double fc_t_min_thre, double epsilon, double gravity_magnitude):
     verbose_(verbose),
     fixed_model_(fixed_model),
     fc_f_min_thre_(fc_f_min_thre),
@@ -15,15 +15,16 @@ namespace aerial_robot_model {
     thrust_max_(0),
     thrust_min_(0),
     mass_(0),
-    initialized_(false)
+    initialized_(false),
+    g_(gravity_magnitude)
   {
     if (init_with_rosparam)
       getParamFromRos();
 
     gravity_.resize(6);
-    gravity_ <<  0, 0, 9.80665, 0, 0, 0;
     gravity_3d_.resize(3);
-    gravity_3d_ << 0, 0, 9.80665;
+    gravity_ <<  0, 0, g_, 0, 0, 0;
+    gravity_3d_ << 0, 0, g_;
 
     kinematicsInit();
     stabilityInit();
@@ -42,6 +43,7 @@ namespace aerial_robot_model {
     nh.param("fc_f_min_thre", fc_f_min_thre_, 0.0);
     nh.param("fc_t_min_thre", fc_t_min_thre_, 0.0);
     nh.param("epsilon", epsilon_, 10.0);
+    nh.param("gravity_magnitude", g_, 9.80665);
   }
 
   void RobotModel::kinematicsInit()
@@ -655,4 +657,3 @@ namespace aerial_robot_model {
   }
 
 } //namespace aerial_robot_model
-

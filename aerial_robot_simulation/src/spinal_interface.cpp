@@ -41,6 +41,7 @@ namespace hardware_interface
   bool SpinalInterface::init(ros::NodeHandle& nh, int joint_num)
   {
     joint_num_ = joint_num;
+    nh.param("gravity_magnitude", gravity_magnitude_, (double)aerial_robot_estimation::G);
     spinal_state_estimator_.init(&nh);
 
     return true;
@@ -51,7 +52,7 @@ namespace hardware_interface
     if(on_ground_)
       {
         /* assume the robot is static, acc: [0, 0, g] */
-        setImuValue(0, 0, aerial_robot_estimation::G, 0, 0, 0);
+        setImuValue(0, 0, gravity_magnitude_, 0, 0, 0);
       }
 
     spinal_state_estimator_.update();
