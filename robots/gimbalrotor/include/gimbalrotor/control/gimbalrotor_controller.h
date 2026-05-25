@@ -47,6 +47,7 @@ private:
   int rotor_coef_;
   bool gimbal_calc_in_fc_;
   bool underactuate_;
+  bool allow_negative_thrust_;
   double target_roll_ = 0.0, target_pitch_ = 0.0;
 
   void rosParamInit();

@@ -45,10 +45,22 @@ void GimbalrotorController::reset()
 void GimbalrotorController::rosParamInit()
 {
   ros::NodeHandle control_nh(nh_, "controller");
+  ros::NodeHandle env_nh(nh_, "environment");
+  ros::NodeHandle buoy_nh(env_nh, "buoyancy");
+
   getParam<int>(control_nh, "gimbal_dof", gimbal_dof_, 1);
   getParam<bool>(control_nh, "gimbal_calc_in_fc", gimbal_calc_in_fc_, true);
   getParam<bool>(control_nh, "hovering_approximate", hovering_approximate_, false);
   getParam<bool>(control_nh, "underactuate", underactuate_, false);
+  // getParam<double>(control_nh, "min_acc_for_attitude", min_acc_for_attitude_, 0.3);
+  // getParam<double>(control_nh, "min_vertical_ref", min_vertical_ref_, 1.0);
+  // getParam<double>(control_nh, "min_b3_z", min_b3_z_, 0.1);
+  getParam<double>(nh_, "robot_volume", robot_volume_, 0.0);
+  getParam<double>(buoy_nh, "rho_water", rho_water_, 1000.0);
+  getParam<double>(buoy_nh, "submerged_ratio", submerged_ratio_, 0.0);
+  getParam<bool>(buoy_nh, "enabled", use_gravity_buoyancy_ff_, false);
+  use_gravity_buoyancy_ff_ = use_gravity_buoyancy_ff_ && submerged_ratio_ > 0.0;
+  getParam<bool>(nh_, "allow_negative_thrust", allow_negative_thrust_, false);
 }
 
 bool GimbalrotorController::update()
@@ -73,6 +85,11 @@ void GimbalrotorController::controlCore()
   tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
   tf::Vector3 target_acc_cog = uav_rot.inverse() * target_acc_w;
   Eigen::VectorXd target_wrench_acc_cog = Eigen::VectorXd::Zero(6);
+  double g_norm = robot_model_->getGravity().norm();
+  // double sign = (thrust_acc_w.z() >= 0) ? 1.0 : -1.0;
+  // if(!allow_negative_thrust_ && sign < 0.0) {
+  //   sign = 0.0;
+  // }
 
   if (underactuate_)
     target_wrench_acc_cog.head(3) = Eigen::Vector3d(target_acc_dash.x(), target_acc_dash.y(), target_acc_dash.z());
@@ -190,8 +207,8 @@ void GimbalrotorController::controlCore()
   {
     if (hovering_approximate_)
     {
-      target_roll_ = -target_acc_dash.y() / aerial_robot_estimation::G;
-      target_pitch_ = target_acc_dash.x() / aerial_robot_estimation::G;
+      target_roll_ = -target_acc_dash.y() / g_norm;
+      target_pitch_ = target_acc_dash.x() / g_norm;
       navigator_->setTargetRoll(target_roll_);
       navigator_->setTargetPitch(target_pitch_);
     }
