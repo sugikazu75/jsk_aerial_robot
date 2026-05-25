@@ -228,7 +228,7 @@ void AttitudeController::pwmsControl(void)
                   // target_pwm_: 0.5 ~ 1.0, neutral:0.75
                   if(fabs(target_pwm_[i] - IDLE_DUTY) < 1e-4f)
                     {
-                      motor_v = 0;
+                      motor_v = IDLE_DUTY;
                     }
                   else if(target_pwm_[i] < IDLE_DUTY)
                     {
