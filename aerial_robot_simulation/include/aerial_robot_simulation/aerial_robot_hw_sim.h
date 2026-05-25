@@ -111,6 +111,10 @@ protected:
   ignition::math::Vector3d ground_truth_rot_curr_drift_, ground_truth_vel_curr_drift_, ground_truth_angular_curr_drift_;
   double ground_truth_rot_drift_, ground_truth_vel_drift_, ground_truth_angular_drift_;
   double ground_truth_rot_drift_frequency_, ground_truth_vel_drift_frequency_, ground_truth_angular_drift_frequency_;
+  double robot_volume_, submerged_ratio_, rho_water_;
+  double fluid_linear_drag_, fluid_quadratic_drag_, fluid_angular_drag_, fluid_quadratic_angular_drag_;
+  bool use_buoyancy_;
+  bool use_fluid_drag_;
 
   geometry_msgs::TwistStamped cmd_vel_;
   geometry_msgs::PoseStamped cmd_pos_;

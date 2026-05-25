@@ -39,6 +39,7 @@
 
 
 #include <aerial_robot_simulation/aerial_robot_hw_sim.h>
+#include <cmath>
 
 namespace gazebo_ros_control
 {
@@ -178,6 +179,9 @@ namespace gazebo_ros_control
     sim_pos_sub_ = model_nh.subscribe("sim_cmd_pos", 1, &AerialRobotHWSim::cmdPosCallback, this);
 
     ros::NodeHandle simulation_nh = ros::NodeHandle(model_nh, "simulation");
+    ros::NodeHandle env_nh = ros::NodeHandle(model_nh, "environment");
+    ros::NodeHandle buoy_nh = ros::NodeHandle(env_nh, "buoyancy");
+    ros::NodeHandle drag_nh = ros::NodeHandle(env_nh, "drag");
     simulation_nh.param("ground_truth_pub_rate", ground_truth_pub_rate_, 0.01); // [sec]
     simulation_nh.param("ground_truth_pos_noise", ground_truth_pos_noise_, 0.0); // m
     simulation_nh.param("ground_truth_vel_noise", ground_truth_vel_noise_, 0.0); // m/s
@@ -197,6 +201,25 @@ namespace gazebo_ros_control
     mocap_pub_ = model_nh.advertise<geometry_msgs::PoseStamped>("mocap/pose", 1);
 
     simulation_nh.param("spinal_init_wait_time", spinal_init_wait_time_, 5.0); // [sec]
+    buoy_nh.param("enabled", use_buoyancy_, true);
+    buoy_nh.param("rho_water", rho_water_, 1000.0);
+    model_nh.param("robot_volume", robot_volume_, 0.0);
+    buoy_nh.param("submerged_ratio", submerged_ratio_, 0.0);
+    drag_nh.param("enabled", use_fluid_drag_, false);
+    drag_nh.param("linear", fluid_linear_drag_, 0.0);
+    drag_nh.param("quadratic", fluid_quadratic_drag_, 0.0);
+    drag_nh.param("angular", fluid_angular_drag_, 0.0);
+    drag_nh.param("quadratic_angular", fluid_quadratic_angular_drag_, 0.0);
+    ROS_WARN_STREAM("[fluid init] ns=" << simulation_nh.getNamespace()
+                    << ", use=" << use_buoyancy_
+                    << ", rho=" << rho_water_
+                    << ", volume=" << robot_volume_
+                    << ", lambda=" << submerged_ratio_
+                    << ", drag=" << use_fluid_drag_
+                    << ", linear=" << fluid_linear_drag_
+                    << ", quadratic=" << fluid_quadratic_drag_
+                    << ", angular=" << fluid_angular_drag_
+                    << ", quadratic_angular=" << fluid_quadratic_angular_drag_);
     start_t_ = ros::Time::now().toSec();
 
     return true;
@@ -362,6 +385,73 @@ namespace gazebo_ros_control
       }
     else if (control_mode_ ==  FORCE_CONTROL_MODE)
       {
+        ROS_WARN_THROTTLE(
+                          1.0,
+                          "[buoyancy state] mode=%u use=%d rho=%.3f volume=%.6f lambda=%.3f",
+                          control_mode_,
+                          use_buoyancy_,
+                          rho_water_,
+                          robot_volume_,
+                          submerged_ratio_);
+        if(use_buoyancy_) {
+          gazebo::physics::LinkPtr physics_link = parent_model_->GetLink("main_body");
+          if(!physics_link)
+            physics_link = parent_model_->GetLink(baselink_parent_);
+          if(!physics_link)
+            physics_link = parent_model_->GetLink(baselink_);
+          ROS_WARN_THROTTLE(1.0, "[buoyancy] link=%s",
+                            physics_link ? physics_link->GetName().c_str() : "null(NOT FOUND)");
+          if(physics_link) {
+            const double g_norm = 9.80665;
+            const double ratio = std::max(0.0, std::min(submerged_ratio_, 1.0));
+            const double buoy_force = ratio * rho_water_ * robot_volume_ * g_norm;
+            ROS_WARN_THROTTLE(1.0, "[buoyancy] force=%.3f N", buoy_force);
+
+#if GAZEBO_MAJOR_VERSION >= 8
+            physics_link->AddForce(ignition::math::Vector3d(0, 0, buoy_force));
+#else
+            physics_link->AddForce(gazebo::math::Vector3(0, 0, buoy_force));
+#endif
+          }
+        }
+//         if(use_fluid_drag_) {
+//           gazebo::physics::LinkPtr physics_link = parent_model_->GetLink("main_body");
+//           if(!physics_link)
+//             physics_link = parent_model_->GetLink(baselink_parent_);
+//           if(!physics_link)
+//             physics_link = parent_model_->GetLink(baselink_);
+//           if(physics_link) {
+// #if GAZEBO_MAJOR_VERSION >= 8
+//             const ignition::math::Vector3d v = physics_link->WorldLinearVel();
+//             const ignition::math::Vector3d w = physics_link->WorldAngularVel();
+//             ignition::math::Vector3d drag_force(
+//               -fluid_linear_drag_ * v.X() - fluid_quadratic_drag_ * std::abs(v.X()) * v.X(),
+//               -fluid_linear_drag_ * v.Y() - fluid_quadratic_drag_ * std::abs(v.Y()) * v.Y(),
+//               -fluid_linear_drag_ * v.Z() - fluid_quadratic_drag_ * std::abs(v.Z()) * v.Z());
+//             ignition::math::Vector3d drag_torque(
+//               -fluid_angular_drag_ * w.X() - fluid_quadratic_angular_drag_ * std::abs(w.X()) * w.X(),
+//               -fluid_angular_drag_ * w.Y() - fluid_quadratic_angular_drag_ * std::abs(w.Y()) * w.Y(),
+//               -fluid_angular_drag_ * w.Z() - fluid_quadratic_angular_drag_ * std::abs(w.Z()) * w.Z());
+//             physics_link->AddForce(drag_force);
+//             physics_link->AddTorque(drag_torque);
+// #else
+//             const gazebo::math::Vector3 v = physics_link->GetWorldLinearVel();
+//             const gazebo::math::Vector3 w = physics_link->GetWorldAngularVel();
+//             gazebo::math::Vector3 drag_force(
+//               -fluid_linear_drag_ * v.x - fluid_quadratic_drag_ * std::abs(v.x) * v.x,
+//               -fluid_linear_drag_ * v.y - fluid_quadratic_drag_ * std::abs(v.y) * v.y,
+//               -fluid_linear_drag_ * v.z - fluid_quadratic_drag_ * std::abs(v.z) * v.z);
+//             gazebo::math::Vector3 drag_torque(
+//               -fluid_angular_drag_ * w.x - fluid_quadratic_angular_drag_ * std::abs(w.x) * w.x,
+//               -fluid_angular_drag_ * w.y - fluid_quadratic_angular_drag_ * std::abs(w.y) * w.y,
+//               -fluid_angular_drag_ * w.z - fluid_quadratic_angular_drag_ * std::abs(w.z) * w.z);
+//             physics_link->AddForce(drag_force);
+//             physics_link->AddTorque(drag_torque);
+// #endif
+//             ROS_DEBUG_THROTTLE(1.0, "[fluid drag] link=%s", physics_link->GetName().c_str());
+//           }
+//         }
+
         for (int j = 0; j < rotor_n_dof_; j++)
           {
             hardware_interface::RotorHandle rotor = spinal_interface_.getHandle(sim_rotors_.at(j)->GetName());
