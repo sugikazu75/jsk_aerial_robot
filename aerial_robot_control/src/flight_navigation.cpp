@@ -625,7 +625,7 @@ void BaseNavigator::update()
       if(isInflightState())
         ROS_WARN("Sensor Unhealth Level%d: force landing state", estimator_->getUnhealthLevel());
       spinal::FlightConfigCmd flight_config_cmd;
-      flight_config_cmd.cmd = spinal::FlightConfigCmd::FORCE_LANDING_CMD;
+      // flight_config_cmd.cmd = spinal::FlightConfigCmd::FORCE_LANDING_CMD;
       flight_config_pub_.publish(flight_config_cmd);
       force_landing_flag_ = true;
     }
