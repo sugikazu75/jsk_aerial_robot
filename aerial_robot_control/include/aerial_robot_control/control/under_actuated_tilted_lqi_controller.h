@@ -43,7 +43,7 @@ namespace aerial_robot_control
   class UnderActuatedTiltedLQIController: public UnderActuatedLQIController
   {
   public:
-    UnderActuatedTiltedLQIController() {}
+    UnderActuatedTiltedLQIController() : b3_des_prev_(0.0, 0.0, 1.0) {}
     virtual ~UnderActuatedTiltedLQIController() = default;
 
     void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
@@ -58,6 +58,11 @@ namespace aerial_robot_control
 
     double trans_constraint_weight_;
     double att_control_weight_;
+    double min_acc_for_attitude_;
+    double min_vertical_ref_;
+    double min_b3_z_;
+    bool allow_negative_thrust_;
+    tf::Vector3 b3_des_prev_;
 
     double z_limit_;
 

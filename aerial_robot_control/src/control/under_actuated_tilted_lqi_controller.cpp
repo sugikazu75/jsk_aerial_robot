@@ -63,40 +63,99 @@ void UnderActuatedTiltedLQIController::controlCore()
                            pid_controllers_.at(Y).result(),
                            pid_controllers_.at(Z).result());
 
-  tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
+  double g_norm = robot_model_->getGravity().norm();
 
-  target_pitch_ = atan2(target_acc_dash.x(), target_acc_dash.z());
-  target_roll_ = atan2(-target_acc_dash.y(), sqrt(target_acc_dash.x() * target_acc_dash.x() + target_acc_dash.z() * target_acc_dash.z()));
+  tf::Vector3 thrust_acc_w = target_acc_w;
+  tf::Vector3 attitude_acc_w = target_acc_w;
 
-  if(navigator_->getForceLandingFlag())
-    {
-      target_pitch_ = 0;
-      target_roll_ = 0;
+  double lambda = std::max(0.0, std::min(submerged_ratio_, 1.0));
+  double buoy_acc = 0.0;
+  if(robot_model_->getMass() > 1e-6){
+    buoy_acc = lambda * rho_water_ * robot_volume_ *g_norm / robot_model_->getMass();
+  }
+
+  double thrust_acc_norm = thrust_acc_w.length();
+  double sign = (thrust_acc_w.z() >= 0) ? 1.0 : -1.0;
+  if(!allow_negative_thrust_ && sign < 0.0) {
+    sign = 0.0;
+  }
+
+  double vertical_ref = std::max(std::abs(g_norm - buoy_acc), min_vertical_ref_);
+  attitude_acc_w.setX(sign * attitude_acc_w.x());
+  attitude_acc_w.setY(sign * attitude_acc_w.y());
+  attitude_acc_w.setZ(vertical_ref);
+
+  tf::Vector3 thrust_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse()* attitude_acc_w;
+
+  tf::Vector3 b3_des = thrust_acc_dash;
+  if(b3_des.length() > min_acc_for_attitude_) {
+    b3_des.normalize();
+  } else {
+    b3_des = b3_des_prev_;
+  }
+
+  if(b3_des.z() < min_b3_z_) {
+    b3_des.setZ(min_b3_z_);
+    if(b3_des.length() > 0.0) {
+      b3_des.normalize();
+    } else {
+      b3_des = b3_des_prev_;
     }
+  }
+  b3_des_prev_ = b3_des;
 
-  Eigen::VectorXd f = robot_model_->getStaticThrust();
-  Eigen::VectorXd g = robot_model_->getGravity();
-  Eigen::VectorXd allocate_scales = f / g.norm();
-  Eigen::VectorXd target_thrust_z_term = allocate_scales * target_acc_w.length();
+  target_pitch_ = atan2(b3_des.x(), b3_des.z());
+  target_roll_  = atan2(-b3_des.y(), sqrt(b3_des.x() * b3_des.x() + b3_des.z() * b3_des.z()));
 
-  // constraint z (also  I term)
+  if(navigator_->getForceLandingFlag()) {
+    target_pitch_ = 0;
+    target_roll_  = 0;
+  }
+
+  Eigen::VectorXd allocate_scales;
+  if(g_norm > 1e-6) {
+    allocate_scales = robot_model_->getStaticThrust() / g_norm;
+  } else {
+    allocate_scales = getQInv().col(0);
+  }
+
+  Eigen::VectorXd target_thrust_z_term = allocate_scales * sign * thrust_acc_norm;
+
+  // constraint z (also I term)
   int index;
   double max_term = target_thrust_z_term.cwiseAbs().maxCoeff(&index);
   double residual = max_term - z_limit_;
 
-  if(residual > 0)
-    {
-      pid_controllers_.at(Z).setErrI(pid_controllers_.at(Z).getPrevErrI());
-      target_thrust_z_term *= (1 - residual / max_term);
-    }
+  if(residual > 0) {
+    pid_controllers_.at(Z).setErrI(pid_controllers_.at(Z).getPrevErrI());
+    target_thrust_z_term *= (1 - residual / max_term);
+  }
 
-  for(int i = 0; i < motor_num_; i++)
-    {
-      target_base_thrust_.at(i) = target_thrust_z_term(i);
-      pid_msg_.z.total.at(i) =  target_thrust_z_term(i);
-    }
+  for(int i = 0; i < motor_num_; i++) {
+    target_base_thrust_.at(i) = target_thrust_z_term(i);
+    pid_msg_.z.total.at(i)    = target_thrust_z_term(i);
+  }
 
   allocateYawTerm();
+
+  ROS_INFO_THROTTLE(
+      1.0,
+      "lambda: %.2f, mass: %.2f, buoy_acc: %.3f, vertical_ref: %.3f, target_acc_w: [%.3f %.3f %.3f], thrust_acc_w: [%.3f %.3f %.3f], norm: %.3f, b3: [%.3f %.3f %.3f], pitch: %.3f, roll: %.3f",
+      lambda, robot_model_->getMass(), buoy_acc, vertical_ref,
+      target_acc_w.x(), target_acc_w.y(), target_acc_w.z(),
+      thrust_acc_dash.x(), thrust_acc_dash.y(), thrust_acc_dash.z(), thrust_acc_norm, b3_des.x(), b3_des.y(), b3_des.z(),
+      target_pitch_, target_roll_);
+
+  ROS_INFO_THROTTLE(
+                    1.0,
+                    "z result: %.3f, p: %.3f, i: %.3f, d: %.3f, err_i: %.3f, target_acc_z: %.3f",
+                    pid_controllers_.at(Z).result(),
+                    pid_controllers_.at(Z).getPTerm(),
+                    pid_controllers_.at(Z).getITerm(),
+                    pid_controllers_.at(Z).getDTerm(),
+                    pid_controllers_.at(Z).getErrI(),
+                    target_acc_.z()
+                    );
 }
 
 bool UnderActuatedTiltedLQIController::optimalGain()
@@ -169,9 +228,20 @@ void UnderActuatedTiltedLQIController::rosParamInit()
 
   ros::NodeHandle control_nh(nh_, "controller");
   ros::NodeHandle lqi_nh(control_nh, "lqi");
+  ros::NodeHandle env_nh(nh_, "environment");
+  ros::NodeHandle buoy_nh(env_nh, "buoyancy");
 
   getParam<double>(lqi_nh, "trans_constraint_weight", trans_constraint_weight_, 1.0);
   getParam<double>(lqi_nh, "att_control_weight", att_control_weight_, 1.0);
+  getParam<double>(lqi_nh, "min_acc_for_attitude", min_acc_for_attitude_, 0.3);
+  getParam<double>(lqi_nh, "min_vertical_ref", min_vertical_ref_, 1.0);
+  getParam<double>(lqi_nh, "min_b3_z", min_b3_z_, 0.1);
+  getParam<double>(nh_, "robot_volume", robot_volume_, 0.001);
+  getParam<double>(buoy_nh, "rho_water", rho_water_, 1000.0);
+  getParam<double>(buoy_nh, "submerged_ratio", submerged_ratio_, 0.0);
+  getParam<bool>(buoy_nh, "enabled", use_gravity_buoyancy_ff_, false);
+  use_gravity_buoyancy_ff_ = use_gravity_buoyancy_ff_ && submerged_ratio_ > 0.0;
+  getParam<bool>(nh_, "allow_negative_thrust", allow_negative_thrust_, false);
 }
 
 
