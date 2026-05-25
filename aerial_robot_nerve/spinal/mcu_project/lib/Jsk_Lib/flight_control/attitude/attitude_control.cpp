@@ -336,7 +336,7 @@ void AttitudeController::update(void)
       rot.to_euler(&angles.x, &angles.y, &angles.z);
 
       /* failsafe 3: too large tile angle */
-      if(!force_landing_flag_  && (fabs(angles[X]) > MAX_TILT_ANGLE || fabs(angles[Y]) > MAX_TILT_ANGLE))
+      if(min_thrust_ >= 0 && !force_landing_flag_  && (fabs(angles[X]) > MAX_TILT_ANGLE || fabs(angles[Y]) > MAX_TILT_ANGLE))
         {
 #ifdef SIMULATION
           ROS_ERROR("failsafe: the roll pitch angles are too large, roll: %f (%f), pitch: %f (%f)",
@@ -448,10 +448,12 @@ void AttitudeController::update(void)
           /* average */
           float average_thrust = total_thrust / motor_number_;
 
-          if(average_thrust > force_landing_thrust_)
+          if(fabs(average_thrust) > force_landing_thrust_)
             {
+              /* reduce thrust magnitude toward zero from either direction */
+              float sign = (average_thrust > 0) ? 1.0f : -1.0f;
               for(int i = 0; i < motor_number_; i++)
-                base_thrust_term_[i] -= (base_thrust_term_[i] / average_thrust * FORCE_LANDING_INTEGRAL);
+                base_thrust_term_[i] -= sign * (base_thrust_term_[i] / average_thrust * FORCE_LANDING_INTEGRAL);
             }
         }
     }
@@ -510,7 +512,7 @@ void AttitudeController::fourAxisCommandCallback( const spinal::FourAxisCommand 
 
 
   /* failsafe: if the pitch and roll angle is too big, start force landing */
-  if(fabs(cmd_msg.angles[0]) > MAX_TILT_ANGLE || fabs(cmd_msg.angles[1]) > MAX_TILT_ANGLE )
+  if(min_thrust_ >= 0 && (fabs(cmd_msg.angles[0]) > MAX_TILT_ANGLE || fabs(cmd_msg.angles[1]) > MAX_TILT_ANGLE))
     {
       setForceLandingFlag(true);
 #ifdef SIMULATION
@@ -541,7 +543,11 @@ void AttitudeController::fourAxisCommandCallback( const spinal::FourAxisCommand 
       float total_thrust = 0;
       for(int i = 0; i < motor_number_; i++) total_thrust += cmd_msg.base_thrust[i];
       float average_thrust = total_thrust / motor_number_;
-      if(average_thrust < force_landing_thrust_) return;
+      if(fabs(average_thrust) < force_landing_thrust_) return;
+      float total_cur = 0;
+      for(int i = 0; i < motor_number_; i++) total_cur += base_thrust_term_[i];
+      float avg_cur = total_cur / motor_number_;
+      if(fabs(average_thrust) > fabs(avg_cur)) return;
     }
 
 
@@ -559,8 +565,8 @@ void AttitudeController::fourAxisCommandCallback( const spinal::FourAxisCommand 
 
   for(int i = 0; i < motor_number_; i++)
     {
-      // base thrust is about the z control
-      base_thrust_term_[i] = cmd_msg.base_thrust[i];
+      if(!force_landing_flag_)
+        base_thrust_term_[i] = cmd_msg.base_thrust[i];
 
       // reconstruct the pi term for yaw (temporary measure for pwm saturation avoidance)
       if(max_yaw_term_index_ != -1)
@@ -742,7 +748,7 @@ void AttitudeController::maxYawGainIndex()
 
 void AttitudeController::pwmTestCallback(const spinal::PwmTest& pwm_msg)
 {
-#ifndef SIMULATION  
+#ifndef SIMULATION
   if(pwm_msg.pwms_length && !pwm_test_flag_)
     {
       pwm_test_flag_ = true;
@@ -766,7 +772,7 @@ void AttitudeController::pwmTestCallback(const spinal::PwmTest& pwm_msg)
       for(int i = 0; i < pwm_msg.motor_index_length; i++){
         int motor_index = pwm_msg.motor_index[i];
                 /*fail safe*/
-        if (pwm_msg.pwms[i] >= IDLE_DUTY && pwm_msg.pwms[i] <= MAX_PWM)
+        if (pwm_msg.pwms[i] == 0.0f || (pwm_msg.pwms[i] >= 0.5f && pwm_msg.pwms[i] <= MAX_PWM))
           {
             pwm_test_value_[motor_index] = pwm_msg.pwms[i];
           }
@@ -782,7 +788,7 @@ void AttitudeController::pwmTestCallback(const spinal::PwmTest& pwm_msg)
       /*Simultaneous test mode*/
       for(int i = 0; i < MAX_MOTOR_NUMBER; i++){
         /*fail safe*/
-        if (pwm_msg.pwms[0] >= IDLE_DUTY && pwm_msg.pwms[0] <= MAX_PWM)
+        if (pwm_msg.pwms[0] == 0.0f || (pwm_msg.pwms[0] >= 0.5f && pwm_msg.pwms[0] <= MAX_PWM))
           {
             pwm_test_value_[i] = pwm_msg.pwms[0];
           }
@@ -909,7 +915,7 @@ void AttitudeController::pwmConversion()
     {
       float scaled_thrust = v_factor_ * target_thrust / rotor_devider_;
       float target_pwm = 0;
-      if (scaled_thrust < 0) scaled_thrust = 0;
+      // if (scaled_thrust < 0) scaled_thrust = 0;
 
       switch(pwm_conversion_mode_)
         {
@@ -944,6 +950,10 @@ void AttitudeController::pwmConversion()
       for(int i = 0; i < MAX_MOTOR_NUMBER; i++)
         {
           target_pwm_[i] = pwm_test_value_[i];
+        }
+      for(int i = 0; i < motor_number_ / rotor_coef_; i++)
+        {
+          pwms_msg_.motor_value[i] = (uint16_t)(target_pwm_[i] * 2000);
         }
       return;
     }
@@ -991,7 +1001,7 @@ void AttitudeController::pwmConversion()
           }
         }
 
-      if(min_thrust_> 0) min_duty_ = convert(min_thrust_);
+      if(min_thrust_ != 0) min_duty_ = convert(min_thrust_);
 
       voltage_update_last_time_ = HAL_GetTick();
     }
@@ -1005,6 +1015,8 @@ void AttitudeController::pwmConversion()
   /* check saturation level 2: z control saturation */
   float max_thrust = 0;
   int max_thrust_index = 0;
+  float min_thrust_actual = 0;
+  int min_thrust_actual_index = 0;
   for(int i = 0; i < motor_number_ / rotor_coef_; i++)
     {
       float thrust;
@@ -1027,6 +1039,11 @@ void AttitudeController::pwmConversion()
           max_thrust = thrust;
           max_thrust_index = i;
         }
+      if(min_thrust_actual > thrust)
+        {
+          min_thrust_actual = thrust;
+          min_thrust_actual_index = i;
+        }
     }
   if(start_control_flag_)
     {
@@ -1039,7 +1056,18 @@ void AttitudeController::pwmConversion()
         }
       else
         {
-          if(max_yaw_term_index_ != -1 && fabs(base_thrust_term_[0]) > 0 )
+          bool neg_saturated = false;
+          if(min_thrust_ < 0)
+            {
+              float residual_term_neg = min_thrust_actual / rotor_devider_ - min_thrust_;
+              if(residual_term_neg < 0 && base_thrust_term_[min_thrust_actual_index] < 0)
+                {
+                  base_thrust_decreasing_rate = residual_term_neg / (fabs(base_thrust_term_[min_thrust_actual_index]) / rotor_devider_);
+                  yaw_decreasing_rate = -1;
+                  neg_saturated = true;
+                }
+            }
+          if(max_yaw_term_index_ != -1 && fabs(base_thrust_term_[0]) > 0 && !neg_saturated)
             {
               /* check saturation level1: yaw control saturation */
               max_thrust = 0;
@@ -1098,11 +1126,11 @@ void AttitudeController::pwmConversion()
             }
           else
             {
-              yaw_decreasing_rate = -1;
+              if(!neg_saturated) yaw_decreasing_rate = -1;
             }
         }
     }
-  
+
   for(int i = 0; i < motor_number_; i++)
     target_thrust_[i] = roll_pitch_term_[i] + (1 + base_thrust_decreasing_rate) * base_thrust_term_[i] + (1 + yaw_decreasing_rate) * yaw_term_[i];
 
@@ -1140,6 +1168,21 @@ void AttitudeController::pwmConversion()
                 f_i.z = target_thrust_[i*2+1];
                 float gimbal_candidate = atan2f(-f_i.x, f_i.z);
                 target_thrust_[i] = ap::pythagorous2(f_i.x,f_i.z);
+                if(min_thrust_ < 0)
+                  {
+                    const float half_pi = 1.57079632679f;
+                    const float pi = 3.14159265359f;
+                    if(gimbal_candidate > half_pi)
+                      {
+                        gimbal_candidate -= pi;
+                        target_thrust_[i] *= -1.0f;
+                      }
+                    else if(gimbal_candidate < -half_pi)
+                      {
+                        gimbal_candidate += pi;
+                        target_thrust_[i] *= -1.0f;
+                      }
+                  }
 
                 /* simple lpf */
                 if(std::isfinite(gimbal_candidate)) target_gimbal_angles_[i] =(target_gimbal_angles_[i]+ gimbal_candidate)/2;
