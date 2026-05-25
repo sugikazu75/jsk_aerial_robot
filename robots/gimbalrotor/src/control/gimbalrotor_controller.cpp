@@ -254,7 +254,21 @@ void GimbalrotorController::controlCore()
     target_full_thrust_.at(i) = f_i_integrated.norm();
     if (gimbal_dof_ == 1)
     {
-      target_gimbal_angles_.at(i) = atan2(-f_i_integrated[0], f_i_integrated[1]);
+      double gimbal_angle = atan2(-f_i_integrated[0], f_i_integrated[1]);
+      if (allow_negative_thrust_)
+        {
+        if (gimbal_angle > M_PI_2)
+        {
+          gimbal_angle -= M_PI;
+          target_full_thrust_.at(i) *= -1.0;
+        }
+        else if (gimbal_angle < -M_PI_2)
+        {
+          gimbal_angle += M_PI;
+          target_full_thrust_.at(i) *= -1.0;
+        }
+      }
+      target_gimbal_angles_.at(i) = gimbal_angle;
     }
     else if (gimbal_dof_ == 2)
     {
