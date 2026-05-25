@@ -112,7 +112,7 @@
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
           <box size="0.131 0.0325 0.065"/>
-        </geometry>p
+        </geometry>
       </collision>
     </link>
     <joint name="base_arm_joint${child2}" type="fixed">

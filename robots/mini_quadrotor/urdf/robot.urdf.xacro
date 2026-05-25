@@ -13,8 +13,8 @@
 
   <!-- dynamics -->
   <m_f_rate value="-0.011" /> <!-- drag torque rate -->
-  <xacro:property name="max_force" value="8.0" /> <!-- [N] -->
-  <xacro:property name="min_force" value="0.0" /> <!-- [N] -->
+  <xacro:property name="max_force" value="8.0" />  <!-- [N] -->
+  <xacro:property name="min_force" value="-8.0" /> <!-- [N] bidirectional -->
 
   <!-- friction -->
   <xacro:macro name="damping_factor" params="link">
