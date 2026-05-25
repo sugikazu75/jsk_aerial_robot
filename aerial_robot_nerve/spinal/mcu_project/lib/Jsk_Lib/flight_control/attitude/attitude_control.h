@@ -49,14 +49,22 @@
 #include <spinal/PMatrixPseudoInverseWithInertia.h>
 #include <spinal/TorqueAllocationMatrixInv.h>
 
+#ifndef BIDIRECTIONAL
+#define BIDIRECTIONAL 0
+#endif
+
+#if BIDIRECTIONAL
+#define IDLE_DUTY 0.75f
+#else
 #define IDLE_DUTY 0.5f
+#endif
 #define FORCE_LANDING_INTEGRAL 0.0025f // 500Hz * 0.0025 = 1.25 N / sec
 
 #define MAX_MOTOR_NUMBER 10
 
 /* fail safe */
 #define FLIGHT_COMMAND_TIMEOUT 500 //500ms
-#define MAX_TILT_ANGLE 1.0f // rad
+#define MAX_TILT_ANGLE 1.5f // rad
 #define MAX_PWM 1.0f // duty
 
 #define CONTROL_TERM_PUB_INTERVAL 100
