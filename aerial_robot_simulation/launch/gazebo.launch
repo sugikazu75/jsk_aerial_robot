@@ -12,6 +12,7 @@
 
   <!-- gazebo world -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg launch_gazebo)">
+    <env name="GAZEBO_MODEL_PATH" value="$(find uuv_gazebo_worlds)/models:$(optenv GAZEBO_MODEL_PATH)"/>
     <arg name="world_name" value="$(arg worldtype)"/>
     <arg name="debug" value="false" />
     <arg name="gui" value="$(arg gui)" />
