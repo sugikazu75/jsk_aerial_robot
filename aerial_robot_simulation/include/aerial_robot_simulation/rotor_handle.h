@@ -85,7 +85,7 @@ namespace hardware_interface
 
     inline void setForce(double target_force, bool direct = false)
     {
-      if(direct || target_force < 1e-6)
+      if(direct || fabs(target_force) < 1e-6)
         {
           *force_ = target_force;
         }
