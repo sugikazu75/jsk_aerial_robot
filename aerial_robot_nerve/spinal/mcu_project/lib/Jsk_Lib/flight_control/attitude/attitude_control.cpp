@@ -218,14 +218,43 @@ void AttitudeController::pwmsControl(void)
       uint16_t motor_value[4] = { 0, 0, 0, 0 };
       for (int i = 0; i < 4; i++)
         {
-          // target_pwm_: 0.5 ~ 1.0
-          uint16_t motor_v = (uint16_t)((target_pwm_[i] - 0.5) / 0.5 * DSHOT_RANGE + DSHOT_MIN_THROTTLE);
+          uint16_t motor_v = 0;
 
-          if (motor_v > DSHOT_MAX_THROTTLE)
-            motor_v = DSHOT_MAX_THROTTLE;
-          else if (motor_v < DSHOT_MIN_THROTTLE)
-            motor_v = DSHOT_MIN_THROTTLE;
-    
+          if(start_control_flag_ || pwm_test_flag_)
+            {
+              if(target_pwm_[i] > 0)
+                {
+#if BIDIRECTIONAL
+                  // target_pwm_: 0.5 ~ 1.0, neutral:0.75
+                  if(fabs(target_pwm_[i] - IDLE_DUTY) < 1e-4f)
+                    {
+                      motor_v = 0;
+                    }
+                  else if(target_pwm_[i] < IDLE_DUTY)
+                    {
+                      float throttle = (IDLE_DUTY - target_pwm_[i]) / (IDLE_DUTY - 0.5); //if IDLE DUTY is wrong, protect to rotate propeller
+                      motor_v = (uint16_t)(throttle * DSHOT_RANGE * 0.5 + DSHOT_MIN_THROTTLE);
+                    }
+                  else
+                    {
+                      float throttle = (target_pwm_[i] - IDLE_DUTY) / (MAX_PWM - IDLE_DUTY);
+                      motor_v = (uint16_t)(DSHOT_RANGE * 0.5 + throttle * DSHOT_RANGE * 0.5 + DSHOT_MIN_THROTTLE);
+                    }
+#else
+                  // target_pwm_: 0.5 ~ 1.0
+                  motor_v = (uint16_t)((target_pwm_[i] - 0.5) / 0.5 * DSHOT_RANGE + DSHOT_MIN_THROTTLE);
+#endif
+                }
+            }
+
+          if (motor_v > 0)
+            {
+              if (motor_v > DSHOT_MAX_THROTTLE)
+                motor_v = DSHOT_MAX_THROTTLE;
+              else if (motor_v < DSHOT_MIN_THROTTLE)
+                motor_v = DSHOT_MIN_THROTTLE;
+            }
+
           motor_value[i] = motor_v;
         }
 
