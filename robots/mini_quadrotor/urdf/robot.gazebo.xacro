@@ -9,11 +9,44 @@
 
   <!-- gazebo plugin for default controller and sensors -->
   <xacro:include filename="$(find aerial_robot_simulation)/xacro/spinal.gazebo.xacro" />
-  <xacro:gazebo_spinal robot_name="$(arg robot_name)" />
+  <xacro:gazebo_spinal robot_name="$(arg robot_name)" gps_frame="fc" />
 
   <gazebo reference="main_body">
     <mu1>0.1</mu1>
     <mu2>0.1</mu2>
   </gazebo>
+
+  <gazebo>
+    <plugin name="uuv_plugin" filename="libuuv_underwater_object_ros_plugin.so">
+      <fluid_density>1000.0</fluid_density>
+      <flow_velocity_topic>/hydrodynamics/current_velocity</flow_velocity_topic>
+      <debug>1</debug>
+      <link name="main_body">
+        <neutrally_buoyant>0</neutrally_buoyant>
+        <volume>0.0</volume>
+        <box>
+          <width>0.28</width>
+          <length>0.28</length>
+          <height>0.072</height>
+        </box>
+        <center_of_buoyancy>0 0 0</center_of_buoyancy>
+        <hydrodynamic_model>
+          <type>fossen</type>
+          <added_mass>
+            0 0 0 0 0 0
+            0 0 0 0 0 0
+            0 0 0 0 0 0
+            0 0 0 0 0 0
+            0 0 0 0 0 0
+            0 0 0 0 0 0
+          </added_mass>
+          <linear_damping> -0.1 -0.1 -0.1 -0.01 -0.01 -0.01</linear_damping>
+          <quadratic_damping>-0.2 -0.2 -0.4 -0.02 -0.02 -0.02</quadratic_damping>
+        </hydrodynamic_model>
+      </link>
+    </plugin>
+  </gazebo>
+
+
 
 </robot>
