@@ -240,6 +240,12 @@ void BaseNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr & ms
           double root_to_cog_z = -cog_H_root.p.z();
           target_cog_pos_z = msg->target_pos_z + root_to_cog_z;
         }
+      else
+        {
+          ROS_ERROR("the target type is not supported");
+          return;
+        }
+
       setTargetPosZ(target_cog_pos_z);
       setTargetVelZ(0);
     }
