@@ -263,7 +263,36 @@ void BaseNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr & ms
     {
     case aerial_robot_msgs::FlightNav::POS_MODE:
       {
-        tf::Vector3 target_cog_pos(msg->target_pos_x, msg->target_pos_y, 0);
+        tf::Vector3 target_cog_pos;
+        if(msg->target == aerial_robot_msgs::FlightNav::BASELINK)
+          {
+            KDL::Vector w_r_fc_in_w = KDL::Vector(msg->target_pos_x, msg->target_pos_y, 0);
+            double target_cog_yaw = getTargetRPY().z();
+            KDL::Rotation w_R_cog = KDL::Rotation::RotZ(target_cog_yaw);
+            KDL::Vector fc_r_cog_in_fc = robot_model_->getCog2Baselink<KDL::Frame>().Inverse().p;
+            KDL::Rotation cog_R_fc = robot_model_->getCog2Baselink<KDL::Frame>().M;
+            KDL::Vector w_r_cog_in_w = w_r_fc_in_w + w_R_cog * cog_R_fc * fc_r_cog_in_fc;
+            target_cog_pos = tf::Vector3(w_r_cog_in_w.x(), w_r_cog_in_w.y(), 0);
+          }
+        else if(msg->target == aerial_robot_msgs::FlightNav::COG)
+          {
+            target_cog_pos = tf::Vector3(msg->target_pos_x, msg->target_pos_y, 0);
+          }
+        else if(msg->target == aerial_robot_msgs::FlightNav::ROOT)
+          {
+            KDL::Vector w_r_root_in_w = KDL::Vector(msg->target_pos_x, msg->target_pos_y, 0);
+            double target_cog_yaw = getTargetRPY().z();
+            KDL::Rotation w_R_cog = KDL::Rotation::RotZ(target_cog_yaw);
+            KDL::Vector root_r_cog_in_root = robot_model_->getCog<KDL::Frame>().p;
+            KDL::Rotation cog_R_root = robot_model_->getCog<KDL::Frame>().Inverse().M;
+            KDL::Vector w_r_cog_in_w = w_r_root_in_w + w_R_cog * cog_R_root * root_r_cog_in_root;
+            target_cog_pos = tf::Vector3(w_r_cog_in_w.x(), w_r_cog_in_w.y(), 0);
+          }
+        else
+          {
+            ROS_ERROR("the target type is not supported");
+            return;
+          }
 
         tf::Vector3 target_delta = getTargetPos() - target_cog_pos;
         target_delta.setZ(0);
