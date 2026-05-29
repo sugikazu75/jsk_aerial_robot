@@ -222,7 +222,25 @@ void BaseNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr & ms
     }
   else if(msg->pos_z_nav_mode == aerial_robot_msgs::FlightNav::POS_MODE)
     {
-      setTargetPosZ(msg->target_pos_z);
+      double target_cog_pos_z;
+      if(msg->target == aerial_robot_msgs::FlightNav::BASELINK)
+        {
+          KDL::Frame cog_H_baselink = robot_model_->getCog2Baselink<KDL::Frame>(); // assuming target cog frame is horizontal in the world frame
+          double baselink_to_cog_z = -cog_H_baselink.p.z();
+          target_cog_pos_z = msg->target_pos_z + baselink_to_cog_z;
+        }
+      else if(msg->target == aerial_robot_msgs::FlightNav::COG)
+        {
+          target_cog_pos_z = msg->target_pos_z;
+        }
+
+      else if(msg->target == aerial_robot_msgs::FlightNav::ROOT)
+        {
+          KDL::Frame cog_H_root = robot_model_->getCog<KDL::Frame>().Inverse(); // assuming target cog frame is horizontal in the world frame
+          double root_to_cog_z = -cog_H_root.p.z();
+          target_cog_pos_z = msg->target_pos_z + root_to_cog_z;
+        }
+      setTargetPosZ(target_cog_pos_z);
       setTargetVelZ(0);
     }
   else if(msg->pos_z_nav_mode == aerial_robot_msgs::FlightNav::POS_VEL_MODE)
