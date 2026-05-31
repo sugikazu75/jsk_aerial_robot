@@ -28,6 +28,7 @@
       <link name="base_link">
         <neutrally_buoyant>0</neutrally_buoyant>
         <volume>0.00565</volume>
+        <scaling_volume>0.0</scaling_volume>
         <box>
           <width>0.28</width>
           <length>0.28</length>
