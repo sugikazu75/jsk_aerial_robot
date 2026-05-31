@@ -31,7 +31,8 @@ public:
 
     Eigen::Vector3d com_track_weight = Eigen::Vector3d::Constant(1e4);
     Eigen::VectorXd x_state_weight;
-    double control_weight = 1e-3;
+    double control_weight = 1e-1;
+    double thrust_reg_weight = 1e-1;
     double thrust_barrier_weight = 1e1;
     double delta_thrust_max = 1.0;
 
@@ -45,6 +46,7 @@ public:
       std::cout << "  com_track_weight: " << com_track_weight.transpose() << std::endl;
       std::cout << "  control_weight: " << control_weight << std::endl;
       std::cout << "  thrust_barrier_weight: " << thrust_barrier_weight << std::endl;
+      std::cout << "  thrust_reg_weight: " << thrust_reg_weight << std::endl;
       if (x_state_weight.size() > 0)
         std::cout << "  x_state_weight: " << x_state_weight.transpose() << std::endl;
       std::cout << "  delta_thrust_max: " << delta_thrust_max << std::endl;

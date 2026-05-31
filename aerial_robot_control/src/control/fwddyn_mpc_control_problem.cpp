@@ -96,6 +96,10 @@ FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target, const 
   auto dam = std::make_shared<crocoddyl::DifferentialActionModelContactFwdDynamicsWithThrusts>(
       state_with_thrusts_, actuation_, contacts, costs, 1e-6, false);
 
+  // Thurst regularization
+  dam->set_thrust_reg_weight(
+      Eigen::VectorXd::Constant(pinocchio_robot_model_->getRotorNum(), parameters_.thrust_reg_weight));
+
   // Thrust saturation barrier
   dam->set_thrust_barrier(
       Eigen::VectorXd::Constant(pinocchio_robot_model_->getRotorNum(), parameters_.thrust_barrier_weight),
