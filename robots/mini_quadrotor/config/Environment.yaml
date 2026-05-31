@@ -4,7 +4,7 @@ gravity_magnitude: 9.8
 environment:
 
   buoyancy:
-    enabled: true
+    enabled: false
     rho_water: 1000.0
     submerged_ratio: 1.0    # 0: air, 1: water
 
