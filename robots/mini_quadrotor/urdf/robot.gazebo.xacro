@@ -11,9 +11,13 @@
   <xacro:include filename="$(find aerial_robot_simulation)/xacro/spinal.gazebo.xacro" />
   <xacro:gazebo_spinal robot_name="$(arg robot_name)" gps_frame="fc" />
 
-  <gazebo reference="main_body">
+  <gazebo reference="base_link">
     <mu1>0.1</mu1>
     <mu2>0.1</mu2>
+  </gazebo>
+
+  <gazebo reference="root_joint">
+    <disableFixedJointLumping>true</disableFixedJointLumping>
   </gazebo>
 
   <gazebo>
@@ -21,7 +25,7 @@
       <fluid_density>1000.0</fluid_density>
       <flow_velocity_topic>/hydrodynamics/current_velocity</flow_velocity_topic>
       <debug>1</debug>
-      <link name="main_body">
+      <link name="base_link">
         <neutrally_buoyant>0</neutrally_buoyant>
         <volume>0.0</volume>
         <box>
