@@ -57,20 +57,9 @@ private:
   int n_joints_;  // non-floating-base DOF
 
   FwddynMpcControlProblem mpc_problem_;
+  FwddynMpcControlProblem::Parameters mpc_parameters_;
 
-  // MPC tuning parameters
-  int num_mpc_nodes_;
-  int mpc_max_iter_;
-  int max_init_iter_;
-  double mpc_dt_;
   double mpc_elapsed_time_;
-
-  // cost weights
-  Eigen::Vector3d com_track_weight_;
-  Eigen::VectorXd x_state_weight_;
-  double control_weight_;
-  double thrust_barrier_weight_;
-  double delta_thrust_max_;
 
   // reference state (nq + nv) used for state regularisation
   Eigen::VectorXd x_ref_;
