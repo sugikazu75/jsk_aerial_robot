@@ -62,7 +62,7 @@ public:
   void buildMPCProblem(const Eigen::VectorXd& x0, const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
   void setInitialState(const Eigen::VectorXd& x0);
   void slideHorizon(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref);
-  bool solveMPC(int max_iter, bool verbose = false);
+  bool solveMPC(int max_iter, bool verbose = false, bool is_feasible = false);
 
   bool isInitialized() const
   {

@@ -171,15 +171,21 @@ void FwddynMpcControlProblem::slideHorizon(const Eigen::Vector3d& com_target, co
   xs_.push_back(xs_.back());
   us_.erase(us_.begin());
   us_.push_back(us_.back());
+
+  // rollout terminal node to close the dynamics gap introduced by the shift
+  const auto& last_model = shooting_problem_->get_runningModels().back();
+  const auto& last_data = shooting_problem_->get_runningDatas().back();
+  last_model->calc(last_data, xs_[xs_.size() - 2], us_.back());
+  xs_.back() = last_data->xnext;
 }
 
-bool FwddynMpcControlProblem::solveMPC(int max_iter, bool verbose)
+bool FwddynMpcControlProblem::solveMPC(int max_iter, bool verbose, bool is_feasible)
 {
   if (!solver_)
     return false;
 
   crocoddyl::Timer timer;
-  const bool solved = solver_->solve(xs_, us_, max_iter, false);
+  const bool solved = solver_->solve(xs_, us_, max_iter, is_feasible);
   double solve_time = timer.get_duration();
 
   if (verbose)
