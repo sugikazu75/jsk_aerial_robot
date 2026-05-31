@@ -27,7 +27,7 @@
       <debug>1</debug>
       <link name="base_link">
         <neutrally_buoyant>0</neutrally_buoyant>
-        <volume>0.0</volume>
+        <volume>0.00565</volume>
         <box>
           <width>0.28</width>
           <length>0.28</length>
@@ -44,8 +44,8 @@
             0 0 0 0 0 0
             0 0 0 0 0 0
           </added_mass>
-          <linear_damping> -0.1 -0.1 -0.1 -0.01 -0.01 -0.01</linear_damping>
-          <quadratic_damping>-0.2 -0.2 -0.4 -0.02 -0.02 -0.02</quadratic_damping>
+          <linear_damping> -1.0 -1.0 -1.0 -0.01 -0.01 -0.01</linear_damping>
+          <quadratic_damping>-10.0 -10.0 -10.0 -0.02 -0.02 -0.02</quadratic_damping>
         </hydrodynamic_model>
       </link>
     </plugin>
