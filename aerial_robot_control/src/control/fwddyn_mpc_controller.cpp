@@ -90,6 +90,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
   joints_ctrl_pub_ = nh_.advertise<sensor_msgs::JointState>("joints_ctrl", 10);
   target_cog_pos_pub_ = nh_.advertise<geometry_msgs::PointStamped>("mpc_target_cog_pos", 10);
+  thrust_rate_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("mpc/thrust_rate", 10);
 
   // joint state subscriber
   joint_state_sub_ = nh_.subscribe("joint_states", 10, &FwddynMpcController::jointStateCallback, this);
@@ -209,6 +210,15 @@ void FwddynMpcController::sendCmd()
     cmd.base_thrust[i] = static_cast<float>(thrust(i));
 
   four_axis_command_pub_.publish(cmd);
+
+  // optimized thrust rate
+  {
+    std_msgs::Float64MultiArray rate_msg;
+    rate_msg.data.resize(rotor_num);
+    for (int i = 0; i < rotor_num; i++)
+      rate_msg.data[i] = us[0](i);
+    thrust_rate_pub_.publish(rate_msg);
+  }
 
   if (n_joints_ > 0)
     publishJointsCtrl();

@@ -8,6 +8,7 @@
 #include <aerial_robot_dynamics/robot_model.h>
 #include <sensor_msgs/JointState.h>
 #include <spinal/FourAxisCommand.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <tf/transform_broadcaster.h>
 
 #include <map>
@@ -38,6 +39,7 @@ private:
   ros::Publisher four_axis_command_pub_;
   ros::Publisher joints_ctrl_pub_;
   ros::Publisher target_cog_pos_pub_;
+  ros::Publisher thrust_rate_pub_;
   ros::Subscriber joint_state_sub_;
   tf::TransformBroadcaster optimized_root_tf_broadcaster_;
 
