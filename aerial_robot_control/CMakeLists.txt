@@ -104,6 +104,14 @@ target_link_libraries (trajectory_generation ${catkin_LIBRARIES})
 add_executable(trajectory_generation_node src/trajectory/test.cpp)
 target_link_libraries (trajectory_generation_node ${catkin_LIBRARIES} trajectory_generation)
 
+add_executable(mpc_standalone_node src/mpc_standalone_node.cpp)
+target_link_libraries(mpc_standalone_node
+  ${catkin_LIBRARIES}
+  ${pinocchio_LIBRARIES}
+  crocoddyl::crocoddyl
+  OsqpEigen::OsqpEigen
+  flight_control_pluginlib)
+
 
 
 install(DIRECTORY include/${PROJECT_NAME}/
