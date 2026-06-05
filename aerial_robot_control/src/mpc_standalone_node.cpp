@@ -208,7 +208,7 @@ int main(int argc, char** argv)
 
     mpc_problem.setInitialState(x0);
     mpc_problem.slideHorizon(com_target, x_ref);
-    mpc_problem.solveMPC(mpc_params.max_iter, false, true);
+    mpc_problem.solveMPC(mpc_params.max_iter, true, false);
 
     const ros::Time stamp = ros::Time::now();
     const auto& xs_new = mpc_problem.xs();
