@@ -214,8 +214,8 @@ int main(int argc, char** argv)
     const auto& xs_new = mpc_problem.xs();
     const auto& us_new = mpc_problem.us();
 
-    // TF: broadcast root frame (skip if x0 contains NaN)
-    if (!x0.head(7).array().isFinite().all())
+    // TF: broadcast root frame (skip if x0 contains NaN/Inf)
+    if (x0.head(7).array().isFinite().all())
     {
       tf::Transform root_transform;
       root_transform.setOrigin(tf::Vector3(x0(0), x0(1), x0(2)));
@@ -224,6 +224,8 @@ int main(int argc, char** argv)
       root_transform.setRotation(root_quat);
       tf_broadcaster.sendTransform(tf::StampedTransform(root_transform, stamp, "world", tf_ns + "/root"));
     }
+    else
+      ROS_WARN_THROTTLE(1.0, "[mpc_standalone] NaN/Inf in x0, skipping root TF broadcast");
 
     // TF: broadcast predicted trajectory frames (skip individual frames that contain NaN)
     for (size_t i = 0; i < xs_new.size(); ++i)
@@ -239,8 +241,8 @@ int main(int argc, char** argv)
           tf::StampedTransform(transform, stamp, "world", tf_ns + "/mpc_optimized_root_" + std::to_string(i)));
     }
 
-    // joint_states (skip if x0 contains NaN to avoid publishing NaN joint positions)
-    if (!x0.array().isFinite().all())
+    // joint_states (skip if x0 contains NaN/Inf to avoid publishing invalid joint positions)
+    if (x0.array().isFinite().all())
     {
       sensor_msgs::JointState joint_state_msg;
       joint_state_msg.header.stamp = stamp;
@@ -253,6 +255,8 @@ int main(int argc, char** argv)
       }
       joint_states_pub.publish(joint_state_msg);
     }
+    else
+      ROS_WARN_THROTTLE(1.0, "[mpc_standalone] NaN/Inf in x0, skipping joint_states publish");
 
     // optimized thrust rates
     if (!us_new.empty())
@@ -276,8 +280,8 @@ int main(int argc, char** argv)
     }
 
     // CoM trajectory: line strip of predicted CoM positions + sphere at current CoM.
-    // Skip any state that contains NaN to prevent Ogre from crashing in rviz.
-    if (!x0.head(nq).array().isFinite().all())
+    // Skip any state that contains NaN/Inf to prevent Ogre from crashing in rviz.
+    if (x0.head(nq).array().isFinite().all())
     {
       visualization_msgs::MarkerArray markers;
 
@@ -330,6 +334,8 @@ int main(int argc, char** argv)
 
       traj_marker_pub.publish(markers);
     }
+    else
+      ROS_WARN_THROTTLE(1.0, "[mpc_standalone] NaN/Inf in x0, skipping trajectory marker publish");
 
     ros::spinOnce();
     rate.sleep();
