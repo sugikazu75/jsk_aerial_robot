@@ -56,6 +56,7 @@
    <param name="flight_navigation_plugin_name" value="aerial_robot_navigation/gimbalrotor_navigation" />
    <rosparam file="$(arg config_dir)/NavigationConfig.yaml" command="load" />
 
+    ###########  PinocchioRobotModel ###########
     <node name="pinocchio_robot_description_generator"
           pkg="aerial_robot_dynamics"
           type="pinocchio_robot_description_generator.py"
