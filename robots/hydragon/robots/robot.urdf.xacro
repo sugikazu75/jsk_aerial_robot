@@ -1,28 +1,28 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <robot name="hydragon" xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
-    <!-- general attribute -->
-    <baselink name="fc" />
-    <thrust_link name="thrust" />
+  <!-- general attribute -->
+  <baselink name="fc" />
+  <thrust_link name="thrust" />
 
-    <xacro:include filename="$(find hydragon)/urdf/common.xacro"/>
+  <xacro:include filename="$(find hydragon)/urdf/common.xacro"/>
 
-    <!-- dummy root link for KDL -->
-    <link name="root">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
-            <mass value="0.00001"/>
-            <inertia
-                ixx="0.000001" ixy="0.0" ixz="0.0"
-                iyy="0.000001" iyz="0.0"
-                izz="0.000002"/>
-        </inertial>
-    </link>
-    <joint name="root_joint" type="fixed">
-        <parent link="root"/>
-        <child link="front1_link"/>
-        <origin rpy="0 0 0" xyz="0 0 0"/>
-        <!-- <axis xyz="0 0 1"/> -->
-    </joint>
+  <!-- dummy root link for KDL -->
+  <link name="root">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00001"/>
+      <inertia
+          ixx="0.000001" ixy="0.0" ixz="0.0"
+          iyy="0.000001" iyz="0.0"
+          izz="0.000002"/>
+    </inertial>
+  </link>
+  <joint name="root_joint" type="fixed">
+    <parent link="root"/>
+    <child link="front1_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <!-- <axis xyz="0 0 1"/> -->
+  </joint>
 
 </robot>
