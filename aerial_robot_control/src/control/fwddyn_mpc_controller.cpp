@@ -43,7 +43,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   mpc_nh.param<double>("delta_thrust_max", mpc_parameters_.delta_thrust_max, mpc_parameters_.delta_thrust_max);
 
   // CoM tracking weight (3 elements)
-  std::vector<double> com_w, x_w, x_ref;
+  std::vector<double> com_w;
   if (mpc_nh.getParam("com_track_weight", com_w))
   {
     if ((int)com_w.size() == 3)
@@ -57,7 +57,25 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   else
     ROS_ERROR_STREAM("[FwddynMpcController] Failed to get com_track_weight from parameter server.");
 
+  // centroidal momentum weight (6 elements)
+  std::vector<double> centroidal_momentum_w;
+  if (mpc_nh.getParam("centroidal_momentum_weight", centroidal_momentum_w))
+  {
+    if ((int)centroidal_momentum_w.size() == 6)
+    {
+      Eigen::VectorXd centroidal_momentum_weight =
+          Eigen::Map<Eigen::VectorXd>(centroidal_momentum_w.data(), centroidal_momentum_w.size());
+      mpc_parameters_.centroidal_momentum_weight = centroidal_momentum_weight;
+    }
+    else
+      ROS_ERROR_STREAM("[FwddynMpcController] centroidal_momentum_weight size mismatch: expected 6, got "
+                       << centroidal_momentum_w.size());
+  }
+  else
+    ROS_ERROR_STREAM("[FwddynMpcController] Failed to get centroidal_momentum_weight from parameter server.");
+
   // state weight (2*nv elements)
+  std::vector<double> x_w;
   if (mpc_nh.getParam("x_state_weight", x_w))
   {
     if ((int)x_w.size() == 2 * pin_model_->nv)
@@ -73,6 +91,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
     ROS_ERROR_STREAM("[FwddynMpcController] Failed to get x_state_weight from parameter server.");
 
   // state reference
+  std::vector<double> x_ref;
   if (mpc_nh.getParam("x_ref", x_ref))
   {
     if ((int)x_ref.size() == pin_model_->nq + pin_model_->nv)

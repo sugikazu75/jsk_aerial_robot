@@ -30,6 +30,7 @@ public:
     double dt = 0.02;
 
     Eigen::Vector3d com_track_weight = Eigen::Vector3d::Constant(1e4);
+    Eigen::VectorXd centroidal_momentum_weight = Eigen::VectorXd::Constant(6, 1e1);
     Eigen::VectorXd x_state_weight;
     double control_weight = 1e-1;
     double thrust_reg_weight = 1e-1;
@@ -44,6 +45,7 @@ public:
       std::cout << "  max_init_iter: " << max_init_iter << std::endl;
       std::cout << "  dt: " << dt << std::endl;
       std::cout << "  com_track_weight: " << com_track_weight.transpose() << std::endl;
+      std::cout << "  centroidal_momentum_weight: " << centroidal_momentum_weight.transpose() << std::endl;
       std::cout << "  control_weight: " << control_weight << std::endl;
       std::cout << "  thrust_barrier_weight: " << thrust_barrier_weight << std::endl;
       std::cout << "  thrust_reg_weight: " << thrust_reg_weight << std::endl;

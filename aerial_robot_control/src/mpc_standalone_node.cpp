@@ -45,7 +45,7 @@ int main(int argc, char** argv)
   mpc_nh.param<double>("delta_thrust_max", mpc_params.delta_thrust_max, mpc_params.delta_thrust_max);
 
   // CoM tracking weight (3 elements)
-  std::vector<double> com_w, x_w, x_ref_vec;
+  std::vector<double> com_w;
   if (mpc_nh.getParam("com_track_weight", com_w))
   {
     if ((int)com_w.size() == 3)
@@ -59,7 +59,25 @@ int main(int argc, char** argv)
   else
     ROS_ERROR("[mpc_standalone] Failed to load com_track_weight");
 
+  // centroidal momentum weight (6 elements)
+  std::vector<double> centroidal_momentum_w;
+  if (mpc_nh.getParam("centroidal_momentum_weight", centroidal_momentum_w))
+  {
+    if ((int)centroidal_momentum_w.size() == 6)
+    {
+      Eigen::VectorXd centroidal_momentum_weight =
+          Eigen::Map<Eigen::VectorXd>(centroidal_momentum_w.data(), centroidal_momentum_w.size());
+      mpc_params.centroidal_momentum_weight = centroidal_momentum_weight;
+    }
+    else
+      ROS_ERROR_STREAM("[mpc_standalone] centroidal_momentum_weight size mismatch: expected 6, got "
+                       << centroidal_momentum_w.size());
+  }
+  else
+    ROS_ERROR("[mpc_standalone] Failed to load centroidal_momentum_weight");
+
   // state weight (2*nv elements)
+  std::vector<double> x_w;
   if (mpc_nh.getParam("x_state_weight", x_w))
   {
     if ((int)x_w.size() == 2 * nv)
@@ -76,6 +94,7 @@ int main(int argc, char** argv)
   mpc_params.print();
 
   // --- Load x_ref ---
+  std::vector<double> x_ref_vec;
   Eigen::VectorXd x_ref = Eigen::VectorXd::Zero(nq + nv);
   if (mpc_nh.getParam("x_ref", x_ref_vec))
   {

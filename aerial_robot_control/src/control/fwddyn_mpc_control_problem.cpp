@@ -13,6 +13,7 @@
 #include <crocoddyl/multibody/actions/contact-fwddyn-with-thrusts.hpp>
 #include <crocoddyl/multibody/actuations/floating-base-thrust-rates.hpp>
 #include <crocoddyl/multibody/contacts/multiple-contacts.hpp>
+#include <crocoddyl/multibody/residuals/centroidal-momentum.hpp>
 #include <crocoddyl/multibody/residuals/com-position.hpp>
 #include <crocoddyl/multibody/residuals/state.hpp>
 #include <crocoddyl/multibody/states/multibody.hpp>
@@ -87,6 +88,13 @@ FwddynMpcControlProblem::createMPCNode(const Eigen::Vector3d& com_target, const 
   state_residuals_.push_back(state_res);
   auto state_act = std::make_shared<crocoddyl::ActivationModelWeightedQuad>(parameters_.x_state_weight);
   costs->addCost("stateReg", std::make_shared<crocoddyl::CostModelResidual>(state_mb_, state_act, state_res), 1.0);
+
+  // Centroidal momentum regularisation
+  auto cm_res =
+      std::make_shared<crocoddyl::ResidualModelCentroidalMomentum>(state_mb_, Eigen::VectorXd::Constant(6, 0.0), nu);
+  auto cm_act = std::make_shared<crocoddyl::ActivationModelWeightedQuad>(parameters_.centroidal_momentum_weight);
+  costs->addCost("centroidalMomentumReg", std::make_shared<crocoddyl::CostModelResidual>(state_mb_, cm_act, cm_res),
+                 1.0);
 
   // Control regularisation
   auto ctrl_res = std::make_shared<crocoddyl::ResidualModelControl>(state_mb_, nu);
