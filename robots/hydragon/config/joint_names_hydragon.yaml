@@ -1,0 +1,1 @@
+controller_joint_names: ['', 'front1_roll', 'gimbal1_pitch', 'rotor1', 'end1_roll', 'joint1_yaw', 'front2_roll', 'gimbal2_pitch', 'rotor2', 'end2_roll', 'joint2_yaw', 'front3_roll', 'gimbal3_pitch', 'rotor3', 'end3_roll', 'joint3_yaw', 'front4_roll', 'gimbal4_pitch', 'rotor4', 'end4_roll', 'fc_joint', ]

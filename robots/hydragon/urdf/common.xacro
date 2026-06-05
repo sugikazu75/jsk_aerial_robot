@@ -1,0 +1,626 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<robot name="hydragon" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+  <link name="front1_link">
+    <inertial>
+      <origin xyz="-0.056027 -0.0013733 0.0074745" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.42744"/>
+      <inertia ixx="0.00021055" ixy="3.1246e-10" ixz="-4.0813e-08" iyy="0.00010191" iyz="-4.0104e-07" izz="0.00021817"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/front1_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_1"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/front1_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="body1_link">
+    <inertial>
+      <origin xyz="-0.16731 0.025056 -0.00016724" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.36482"/>
+      <inertia ixx="0.00016623" ixy="-3.3215e-07" ixz="-5.731e-09" iyy="0.00018621" iyz="-6.8029e-09" izz="0.00025293"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/body1_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_2"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/body1_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="duct1_link">
+    <inertial>
+      <origin xyz="-3.541e-05 0.00191 0.0014323" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.32337"/>
+      <inertia ixx="0.0012194" ixy="2.2289e-07" ixz="-1.5989e-07" iyy="0.00099811" iyz="1.3306e-05" izz="0.0019906"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/duct1_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_3"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/duct1_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="thrust1">
+    <inertial>
+      <origin xyz="-2.7492e-06 -2.3311e-06 0.0039586" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.010724"/>
+      <inertia ixx="1.6559e-05" ixy="-1.3587e-09" ixz="-2.9948e-11" iyy="1.6561e-05" iyz="1.3019e-11" izz="3.3082e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/thrust1.dae"/>
+      </geometry>
+      <material name="__unnamed_material_4"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/thrust1.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="end1_link">
+    <inertial>
+      <origin xyz="-0.036672 -2.1161e-05 0.0081671" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.31592"/>
+      <inertia ixx="5.7571e-05" ixy="6.2131e-09" ixz="8.7034e-08" iyy="9.2786e-05" iyz="-8.9098e-12" izz="7.7319e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/end1_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_5"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/end1_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="front2_link">
+    <inertial>
+      <origin xyz="-0.056027 -0.0013733 0.0074745" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.42744"/>
+      <inertia ixx="0.00021055" ixy="3.1247e-10" ixz="-4.0813e-08" iyy="0.00010191" iyz="-4.0104e-07" izz="0.00021817"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/front2_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_6"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/front2_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="body2_link">
+    <inertial>
+      <origin xyz="-0.16731 0.025056 -0.00016724" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.36482"/>
+      <inertia ixx="0.00016623" ixy="-3.3215e-07" ixz="-5.731e-09" iyy="0.00018621" iyz="-6.8029e-09" izz="0.00025293"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/body2_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_7"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/body2_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="duct2_link">
+    <inertial>
+      <origin xyz="-3.541e-05 0.00191 0.0014323" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.32337"/>
+      <inertia ixx="0.0012194" ixy="2.2289e-07" ixz="-1.5989e-07" iyy="0.00099811" iyz="1.3306e-05" izz="0.0019906"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/duct2_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_8"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/duct2_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="thrust2">
+    <inertial>
+      <origin xyz="-2.5539e-06 -2.3067e-06 0.0039586" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.010724"/>
+      <inertia ixx="1.6559e-05" ixy="-1.2942e-09" ixz="-2.6675e-11" iyy="1.6561e-05" iyz="1.4693e-11" izz="3.3081e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/thrust2.dae"/>
+      </geometry>
+      <material name="__unnamed_material_9"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/thrust2.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="end2_link">
+    <inertial>
+      <origin xyz="-0.036672 -2.1161e-05 0.0081671" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.31592"/>
+      <inertia ixx="5.7571e-05" ixy="6.2131e-09" ixz="8.7034e-08" iyy="9.2786e-05" iyz="-8.9132e-12" izz="7.7319e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/end2_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_10"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/end2_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="front3_link">
+    <inertial>
+      <origin xyz="-0.056027 -0.0013733 0.0074745" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.42744"/>
+      <inertia ixx="0.00021055" ixy="3.1248e-10" ixz="-4.0813e-08" iyy="0.00010191" iyz="-4.0104e-07" izz="0.00021817"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/front3_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_11"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/front3_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="body3_link">
+    <inertial>
+      <origin xyz="-0.16731 0.025056 -0.00016724" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.36482"/>
+      <inertia ixx="0.00016623" ixy="-3.3215e-07" ixz="-5.731e-09" iyy="0.00018621" iyz="-6.8029e-09" izz="0.00025293"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/body3_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_12"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/body3_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="duct3_link">
+    <inertial>
+      <origin xyz="-3.541e-05 0.00191 0.0014323" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.32337"/>
+      <inertia ixx="0.0012194" ixy="2.2289e-07" ixz="-1.5989e-07" iyy="0.00099811" iyz="1.3306e-05" izz="0.0019906"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/duct3_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_13"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/duct3_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="thrust3">
+    <inertial>
+      <origin xyz="-2.7294e-06 -2.4294e-06 0.0039586" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.010724"/>
+      <inertia ixx="1.6559e-05" ixy="-1.3706e-09" ixz="-2.9799e-11" iyy="1.6561e-05" iyz="1.1361e-11" izz="3.3082e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/thrust3.dae"/>
+      </geometry>
+      <material name="__unnamed_material_14"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/thrust3.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="end3_link">
+    <inertial>
+      <origin xyz="-0.036672 -2.1161e-05 0.0081671" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.31592"/>
+      <inertia ixx="5.7571e-05" ixy="6.2131e-09" ixz="8.7034e-08" iyy="9.2786e-05" iyz="-8.9132e-12" izz="7.7319e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/end3_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_15"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/end3_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="front4_link">
+    <inertial>
+      <origin xyz="-0.056027 -0.0013733 0.0074745" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.42744"/>
+      <inertia ixx="0.00021055" ixy="3.1248e-10" ixz="-4.0813e-08" iyy="0.00010191" iyz="-4.0104e-07" izz="0.00021817"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/front4_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_16"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/front4_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="body4_link">
+    <inertial>
+      <origin xyz="-0.16731 0.025056 -0.00016724" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.36482"/>
+      <inertia ixx="0.00016623" ixy="-3.3215e-07" ixz="-5.731e-09" iyy="0.00018621" iyz="-6.8029e-09" izz="0.00025293"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/body4_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_17"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/body4_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="duct4_link">
+    <inertial>
+      <origin xyz="-3.541e-05 0.00191 0.0014323" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.32337"/>
+      <inertia ixx="0.0012194" ixy="2.2289e-07" ixz="-1.5989e-07" iyy="0.00099811" iyz="1.3306e-05" izz="0.0019906"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/duct4_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_18"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/duct4_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="thrust4">
+    <inertial>
+      <origin xyz="-2.7354e-06 -2.3382e-06 0.0039586" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.010724"/>
+      <inertia ixx="1.6559e-05" ixy="-1.3583e-09" ixz="-2.999e-11" iyy="1.6561e-05" iyz="1.3027e-11" izz="3.3082e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/thrust4.dae"/>
+      </geometry>
+      <material name="__unnamed_material_19"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/thrust4.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="end4_link">
+    <inertial>
+      <origin xyz="-0.036672 -2.1161e-05 0.0081671" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.31592"/>
+      <inertia ixx="5.7571e-05" ixy="6.2131e-09" ixz="8.7034e-08" iyy="9.2786e-05" iyz="-8.9133e-12" izz="7.7319e-05"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/end4_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_20"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/end4_link.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <link name="fc">
+    <inertial>
+      <origin xyz="0.0187 0.0016986 -0.0012499" rpy="0.0 -0.0 0.0"/>
+      <mass value="0.013487"/>
+      <inertia ixx="1.8175e-06" ixy="3.5211e-09" ixz="2.4144e-11" iyy="1.8131e-06" iyz="-1.8205e-10" izz="3.6133e-06"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://hydragon/meshes/fc.dae"/>
+      </geometry>
+      <material name="__unnamed_material_21"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <!-- <collision> -->
+    <!--   <geometry> -->
+    <!--     <mesh filename="package://hydragon/meshes/fc.stl"/> -->
+    <!--   </geometry> -->
+    <!--   <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/> -->
+    <!-- </collision> -->
+  </link>
+  <joint name="front1_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="front1_link"/>
+    <child link="body1_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.10204 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="gimbal1_pitch" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body1_link"/>
+    <child link="duct1_link"/>
+    <axis xyz="0. 1. 0."/>
+    <origin xyz="-0.16998 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="rotor1" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="duct1_link"/>
+    <child link="thrust1"/>
+    <axis xyz=" 0.  0. -1."/>
+    <origin xyz="0.0 0.0 0.015" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="end1_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body1_link"/>
+    <child link="end1_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.33997 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="joint1_yaw" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="end1_link"/>
+    <child link="front2_link"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="-0.081991 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="front2_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="front2_link"/>
+    <child link="body2_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.10204 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="gimbal2_pitch" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body2_link"/>
+    <child link="duct2_link"/>
+    <axis xyz="0. 1. 0."/>
+    <origin xyz="-0.16998 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="rotor2" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="duct2_link"/>
+    <child link="thrust2"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="0.0 0.0 0.015" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="end2_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body2_link"/>
+    <child link="end2_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.33997 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="joint2_yaw" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="end2_link"/>
+    <child link="front3_link"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="-0.081991 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="front3_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="front3_link"/>
+    <child link="body3_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.10204 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="gimbal3_pitch" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body3_link"/>
+    <child link="duct3_link"/>
+    <axis xyz="0. 1. 0."/>
+    <origin xyz="-0.16998 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="rotor3" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="duct3_link"/>
+    <child link="thrust3"/>
+    <axis xyz=" 0.  0. -1."/>
+    <origin xyz="0.0 0.0 0.015" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="end3_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body3_link"/>
+    <child link="end3_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.33997 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="joint3_yaw" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="end3_link"/>
+    <child link="front4_link"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="-0.081991 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="front4_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="front4_link"/>
+    <child link="body4_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.10204 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="gimbal4_pitch" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body4_link"/>
+    <child link="duct4_link"/>
+    <axis xyz="0. 1. 0."/>
+    <origin xyz="-0.16998 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="rotor4" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="duct4_link"/>
+    <child link="thrust4"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="0.0 0.0 0.015" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="end4_roll" type="continuous">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="body4_link"/>
+    <child link="end4_link"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.33997 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <joint name="fc_joint" type="prismatic">
+    <limit effort="0.0" velocity="0.0" lower="0.0" upper="0.0"/>
+    <parent link="end2_link"/>
+    <child link="fc"/>
+    <axis xyz="0. 1. 0."/>
+    <origin xyz="-0.052067 -0.0022499 0.077061" rpy="0.0 -0.0 0.0"/>
+  </joint>
+  <material name="__unnamed_material_1">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_2">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_3">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_4">
+    <color rgba="0.69804 0.69804 0.69804 1.     "/>
+  </material>
+  <material name="__unnamed_material_5">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_6">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_7">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_8">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_9">
+    <color rgba="0.69804 0.69804 0.69804 1.     "/>
+  </material>
+  <material name="__unnamed_material_10">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_11">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_12">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_13">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_14">
+    <color rgba="0.69804 0.69804 0.69804 1.     "/>
+  </material>
+  <material name="__unnamed_material_15">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_16">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_17">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_18">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_19">
+    <color rgba="0.69804 0.69804 0.69804 1.     "/>
+  </material>
+  <material name="__unnamed_material_20">
+    <color rgba="0.75294 0.75294 0.75294 1.     "/>
+  </material>
+  <material name="__unnamed_material_21">
+    <color rgba="1. 1. 1. 1."/>
+  </material>
+</robot>
