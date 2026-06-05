@@ -1,6 +1,8 @@
 ### full vectoring robot model
 
-robot_model_plugin_name: dragon/full_vectoring_robot_model
+# robot_model_plugin_name: dragon/full_vectoring_robot_model
+robot_model_plugin_name: transformable_multirotor_robot_model
+
 
 # gimbal lock
 debug_verbose: false
