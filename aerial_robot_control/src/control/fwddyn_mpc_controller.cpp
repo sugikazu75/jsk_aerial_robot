@@ -219,6 +219,11 @@ void FwddynMpcController::sendCmd()
 
   // commanded thrust = thrust component of next predicted state
   const Eigen::VectorXd thrust = xs[1].segment(nq + nv, rotor_num);
+  if (!thrust.array().isFinite().all())
+  {
+    ROS_WARN_THROTTLE(1.0, "[FwddynMpcController] NaN/Inf in thrust, skipping sendCmd");
+    return;
+  }
 
   spinal::FourAxisCommand cmd;
   cmd.angles[0] = 0.0f;
@@ -309,7 +314,7 @@ void FwddynMpcController::broadcastOptimizedRootTransforms()
   const ros::Time stamp = ros::Time::now();
   for (size_t i = 0; i < xs.size(); ++i)
   {
-    if (xs[i].size() < 7)
+    if ((int)xs[i].size() < 7 || !xs[i].head(7).array().isFinite().all())
       continue;
 
     tf::Transform transform;
@@ -328,6 +333,9 @@ void FwddynMpcController::publishJointsCtrl()
   const int rotor_num = pinocchio_robot_model_->getRotorNum();
   const auto& xs = mpc_problem_.xs();
   const auto& us = mpc_problem_.us();
+
+  if (xs.size() < 2 || !xs[1].array().isFinite().all())
+    return;
 
   sensor_msgs::JointState joint_state;
   for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)pin_model_->njoints; i++)
