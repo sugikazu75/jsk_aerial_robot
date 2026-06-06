@@ -52,10 +52,10 @@
     <rosparam file="$(arg config_dir)/NavigationConfig.yaml" command="load" />
 
     ###########  PinocchioRobotModel ###########
-    <!-- <node name="pinocchio_robot_description_generator" -->
-    <!--       pkg="aerial_robot_dynamics" -->
-    <!--       type="pinocchio_robot_description_generator.py" -->
-    <!--       output="screen" /> -->
+    <node name="pinocchio_robot_description_generator"
+          pkg="aerial_robot_dynamics"
+          type="pinocchio_robot_description_generator.py"
+          output="screen" />
 
   </group>
 
