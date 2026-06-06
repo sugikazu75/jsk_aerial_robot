@@ -585,7 +585,7 @@
   </link>
 
   <joint name="front1_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="front1_link"/>
     <child link="body1_link"/>
     <axis xyz="1. 0. 0."/>
@@ -593,7 +593,7 @@
   </joint>
 
   <joint name="gimbal1_pitch" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="body1_link"/>
     <child link="duct1_link"/>
     <axis xyz="0. 1. 0."/>
@@ -609,7 +609,7 @@
   </joint>
 
   <joint name="end1_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="body1_link"/>
     <child link="end1_link"/>
     <axis xyz="1. 0. 0."/>
@@ -625,7 +625,7 @@
   </joint>
 
   <joint name="front2_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="front2_link"/>
     <child link="body2_link"/>
     <axis xyz="1. 0. 0."/>
@@ -649,7 +649,7 @@
   </joint>
 
   <joint name="end2_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="body2_link"/>
     <child link="end2_link"/>
     <axis xyz="1. 0. 0."/>
@@ -665,7 +665,7 @@
   </joint>
 
   <joint name="front3_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="front3_link"/>
     <child link="body3_link"/>
     <axis xyz="1. 0. 0."/>
@@ -689,7 +689,7 @@
   </joint>
 
   <joint name="end3_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="body3_link"/>
     <child link="end3_link"/>
     <axis xyz="1. 0. 0."/>
@@ -705,7 +705,7 @@
   </joint>
 
   <joint name="front4_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="front4_link"/>
     <child link="body4_link"/>
     <axis xyz="1. 0. 0."/>
@@ -729,7 +729,7 @@
   </joint>
 
   <joint name="end4_roll" type="revolute">
-    <limit effort="3" lower="-3.14" upper="3.14" velocity="12.5"/>
+    <limit effort="30" lower="-3.14" upper="3.14" velocity="12.5"/>
     <parent link="body4_link"/>
     <child link="end4_link"/>
     <axis xyz="1. 0. 0."/>
