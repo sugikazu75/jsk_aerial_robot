@@ -145,6 +145,7 @@ void FwddynMpcController::activate()
   Eigen::Quaterniond root_quat_yaw(Eigen::AngleAxisd(root_rpy.z(), Eigen::Vector3d::UnitZ()));
   root_quat_yaw.normalize();
   x.segment(3, 4) << root_quat_yaw.x(), root_quat_yaw.y(), root_quat_yaw.z(), root_quat_yaw.w();
+  x.segment(pin_model_->nq, pin_model_->nv) = Eigen::VectorXd::Zero(pin_model_->nv);  // zero joint velocity
   x.tail(motor_num_) = Eigen::VectorXd::Zero(motor_num_);
 
   std::cout << "[FwddynMpcController] Initial state (with yaw-only orientation): " << x.transpose() << std::endl;

@@ -1,6 +1,4 @@
 // -*- mode: c++ -*-
-// Standalone MPC node for gain tuning without simulation.
-// Runs MPC in a closed loop using ideal (disturbance-free) dynamics.
 
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/algorithm/center-of-mass.hpp>
@@ -19,6 +17,7 @@
 #include <tf/transform_datatypes.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/WrenchStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 
 int main(int argc, char** argv)
@@ -31,6 +30,7 @@ int main(int argc, char** argv)
   const int rotor_num = pinocchio_robot_model->getRotorNum();
   const int nq = pin_model->nq;
   const int nv = pin_model->nv;
+  std::cout << "[mpc_standalone] nq=" << nq << " nv=" << nv << " rotor_num=" << rotor_num << std::endl;
 
   // --- Load MPC parameters ---
   aerial_robot_control::FwddynMpcControlProblem::Parameters mpc_params;
@@ -113,19 +113,27 @@ int main(int argc, char** argv)
   x_ref(5) = 0.0;  // identity quaternion z=0
   x_ref(6) = 1.0;  // identity quaternion w=1
 
-  // --- Initial state: start on the ground (z=0), target hover at z=1.0 ---
+  // Initial state
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nq + nv + rotor_num);
   x0.head(nq) = x_ref.head(nq);
 
-  const Eigen::Vector3d com_target(0.0, 0.0, 1.0);
+  // CoM target (hover at 1 m height)
+  pinocchio::Data pin_data(*pin_model);
+  pinocchio::centerOfMass(*pin_model, pin_data, x0.head(nq));
+  const Eigen::Vector3d com_target(pin_data.com[0](0), pin_data.com[0](1), 1.0);
+  std::cout << "[mpc_standalone] Initial CoM: " << pin_data.com[0].transpose()
+            << ", target CoM: " << com_target.transpose() << std::endl;
 
   // --- Initialize and initial-solve MPC ---
   aerial_robot_control::FwddynMpcControlProblem mpc_problem;
   mpc_problem.initialize(pinocchio_robot_model, mpc_params);
   mpc_problem.buildMPCProblem(x0, com_target, x_ref);
+  std::cout << "[mpc_standalone] Initial state: " << x0.transpose() << std::endl;
+  std::cout << "[mpc_standalone] Initial input guess: " << mpc_problem.us()[0].transpose() << std::endl;
+
   ROS_INFO("[mpc_standalone] Initial solve (%d iter)...", mpc_params.max_init_iter);
-  mpc_problem.solveMPC(mpc_params.max_init_iter, true, false);
-  ROS_INFO("[mpc_standalone] Initial solve done.");
+  bool solved = mpc_problem.solveMPC(mpc_params.max_init_iter, true, false);
+  ROS_INFO_STREAM("[mpc_standalone] Initial solve: " << (solved ? "success" : "failure"));
 
   bool noise_enable;
   double noise_pos_std, noise_rpy_std, noise_vel_std, noise_angvel_std;
@@ -157,6 +165,12 @@ int main(int argc, char** argv)
   auto target_cog_pos_pub = nh.advertise<geometry_msgs::PointStamped>("mpc_target_cog_pos", 10);
   auto traj_marker_pub = nh.advertise<visualization_msgs::MarkerArray>("mpc/predicted_trajectory", 10);
   auto joint_states_pub = nh.advertise<sensor_msgs::JointState>("joint_states", 10);
+  std::vector<ros::Publisher> rotor_wrench_pubs;
+  for (int i = 0; i < rotor_num; ++i)
+  {
+    rotor_wrench_pubs.push_back(
+        nh.advertise<geometry_msgs::WrenchStamped>("mpc/rotor_" + std::to_string(i + 1) + "_wrench", 10));
+  }
 
   ROS_INFO("[mpc_standalone] MPC loop at %.2f Hz (dt=%.3f s)", 1.0 / mpc_params.dt, mpc_params.dt);
 
@@ -165,6 +179,10 @@ int main(int argc, char** argv)
   {
     // advance simulated state with ideal model dynamics
     const auto& xs = mpc_problem.xs();
+    const auto& us = mpc_problem.us();
+    const auto u0 =
+        !us.empty() ? us.at(0) : Eigen::VectorXd::Zero(rotor_num + nv);  // default to zero input if us is empty
+
     if (xs.size() >= 2)
     {
       if (!xs[1].array().isFinite().all())
@@ -172,6 +190,8 @@ int main(int argc, char** argv)
       else
         x0 = xs[1];
     }
+    if (!u0.array().isFinite().all())
+      ROS_WARN_THROTTLE(1.0, "[mpc_standalone] NaN in us[0], ignoring control input for state update");
 
     // add zero-mean Gaussian noise to the state for robustness evaluation
     if (noise_enable)
@@ -250,8 +270,12 @@ int main(int argc, char** argv)
       {
         const std::string& joint_name = pin_model->names[i];
         const int q_idx = pin_model->joints[i].idx_q();
+        const int v_idx = pin_model->joints[i].idx_v();
         joint_state_msg.name.push_back(joint_name);
         joint_state_msg.position.push_back(x0(q_idx));
+        joint_state_msg.velocity.push_back(x0(nq + pin_model->joints[i].idx_v()));
+        if (u0.size() == rotor_num + nv - 6)                           // ignore root
+          joint_state_msg.effort.push_back(us[0](rotor_num + v_idx));  // skip rotor
       }
       joint_states_pub.publish(joint_state_msg);
     }
@@ -266,6 +290,22 @@ int main(int argc, char** argv)
       for (int i = 0; i < rotor_num; ++i)
         rate_msg.data[i] = us_new[0](i);
       thrust_rate_pub.publish(rate_msg);
+    }
+
+    // optimized rotor wrenches
+    for (int i = 0; i < rotor_num; ++i)
+    {
+      geometry_msgs::WrenchStamped wrench_msg;
+      wrench_msg.header.stamp = stamp;
+      wrench_msg.header.frame_id = tf_ns + "/thrust" + std::to_string(i + 1);
+      wrench_msg.wrench.force.x = 0.0;
+      wrench_msg.wrench.force.y = 0.0;
+      wrench_msg.wrench.force.z = x0(nq + nv + i);  // thrust for rotor i
+      wrench_msg.wrench.torque.x = 0.0;
+      wrench_msg.wrench.torque.y = 0.0;
+      wrench_msg.wrench.torque.z = pinocchio_robot_model->getRotorDirection(i) * pinocchio_robot_model->getMFRate() *
+                                   x0(nq + nv + i);  // yaw torque for rotor i
+      rotor_wrench_pubs[i].publish(wrench_msg);
     }
 
     // target CoM position
