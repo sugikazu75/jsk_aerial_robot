@@ -4,6 +4,7 @@
   <!-- general attribute -->
   <baselink name="fc" />
   <thrust_link name="thrust" />
+  <m_f_rate value="-0.0156" />
 
   <xacro:include filename="$(find hydragon)/urdf/common.xacro"/>
 
