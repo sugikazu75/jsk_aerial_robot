@@ -25,7 +25,7 @@
 
   <xacro:macro name="damping_factor" params="link">
     <gazebo reference="${link}">
-      <dampingFactor>0.01</dampingFactor>
+      <dampingFactor>0.05</dampingFactor>
     </gazebo>
   </xacro:macro>
 
