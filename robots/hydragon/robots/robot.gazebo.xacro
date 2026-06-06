@@ -11,6 +11,46 @@
   <xacro:include filename="$(find aerial_robot_simulation)/xacro/spinal.gazebo.xacro" />
   <xacro:gazebo_spinal robot_name="$(arg robot_name)" />
 
+  <!-- friction -->
+  <xacro:macro name="friction" params="self">
+    <gazebo reference="front${self}_link">
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+    </gazebo>
+    <gazebo reference="end${self}_link">
+      <mu1>0.8</mu1>
+      <mu2>0.8</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="damping_factor" params="link">
+    <gazebo reference="${link}">
+      <dampingFactor>0.00</dampingFactor>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:friction self="1"/>
+  <xacro:friction self="2"/>
+  <xacro:friction self="3"/>
+  <xacro:friction self="4"/>
+
+  <xacro:damping_factor link="front1_link"/>
+  <xacro:damping_factor link="front2_link"/>
+  <xacro:damping_factor link="front3_link"/>
+  <xacro:damping_factor link="front4_link"/>
+  <xacro:damping_factor link="end1_link"/>
+  <xacro:damping_factor link="end2_link"/>
+  <xacro:damping_factor link="end3_link"/>
+  <xacro:damping_factor link="end4_link"/>
+  <xacro:damping_factor link="gimbal1_link"/>
+  <xacro:damping_factor link="gimbal2_link"/>
+  <xacro:damping_factor link="gimbal3_link"/>
+  <xacro:damping_factor link="gimbal4_link"/>
+  <xacro:damping_factor link="duct1_link"/>
+  <xacro:damping_factor link="duct2_link"/>
+  <xacro:damping_factor link="duct3_link"/>
+  <xacro:damping_factor link="duct4_link"/>
+
   <gazebo reference="thrust1">
     <mu1>0.1</mu1>
     <mu2>0.1</mu2>
