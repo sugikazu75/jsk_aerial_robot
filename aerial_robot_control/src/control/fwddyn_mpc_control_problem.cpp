@@ -154,6 +154,7 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
   const Eigen::Matrix<Scalar, 3, 1> com_target_f = com_target.cast<Scalar>();
   const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x_ref_f = x_ref.cast<Scalar>();
 
+  // create running and terminal models
   std::vector<std::shared_ptr<crocoddyl::ActionModelAbstractTpl<Scalar>>> running_models;
   running_models.reserve(parameters_.num_nodes);
   for (int i = 0; i < parameters_.num_nodes; ++i)
@@ -161,6 +162,7 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
 
   auto terminal = createMPCNode(com_target_f, x_ref_f);
 
+  // create OCP and solver
   shooting_problem_ = std::make_shared<crocoddyl::ShootingProblemTpl<Scalar>>(x0_f, running_models, terminal);
   solver_ = std::make_shared<crocoddyl::SolverBoxFDDPTpl<Scalar>>(shooting_problem_);
 

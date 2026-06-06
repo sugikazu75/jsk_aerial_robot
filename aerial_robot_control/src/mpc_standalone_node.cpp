@@ -1,6 +1,4 @@
 // -*- mode: c++ -*-
-// Standalone MPC node for gain tuning without simulation.
-// Runs MPC in a closed loop using ideal (disturbance-free) dynamics.
 
 #include <pinocchio/fwd.hpp>
 #include <pinocchio/algorithm/center-of-mass.hpp>
@@ -31,6 +29,7 @@ int main(int argc, char** argv)
   const int rotor_num = pinocchio_robot_model->getRotorNum();
   const int nq = pin_model->nq;
   const int nv = pin_model->nv;
+  std::cout << "[mpc_standalone] nq=" << nq << " nv=" << nv << " rotor_num=" << rotor_num << std::endl;
 
   // --- Load MPC parameters ---
   aerial_robot_control::FwddynMpcControlProblem::Parameters mpc_params;
@@ -113,7 +112,7 @@ int main(int argc, char** argv)
   x_ref(5) = 0.0;  // identity quaternion z=0
   x_ref(6) = 1.0;  // identity quaternion w=1
 
-  // --- Initial state: start on the ground (z=0), target hover at z=1.0 ---
+  // Initial state
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nq + nv + rotor_num);
   x0.head(nq) = x_ref.head(nq);
 
@@ -123,9 +122,12 @@ int main(int argc, char** argv)
   aerial_robot_control::FwddynMpcControlProblem mpc_problem;
   mpc_problem.initialize(pinocchio_robot_model, mpc_params);
   mpc_problem.buildMPCProblem(x0, com_target, x_ref);
+  std::cout << "[mpc_standalone] Initial state: " << x0.transpose() << std::endl;
+  std::cout << "[mpc_standalone] Initial input guess: " << mpc_problem.us()[0].transpose() << std::endl;
+
   ROS_INFO("[mpc_standalone] Initial solve (%d iter)...", mpc_params.max_init_iter);
-  mpc_problem.solveMPC(mpc_params.max_init_iter, true, false);
-  ROS_INFO("[mpc_standalone] Initial solve done.");
+  bool solved = mpc_problem.solveMPC(mpc_params.max_init_iter, true, false);
+  ROS_INFO_STREAM("[mpc_standalone] Initial solve: " << (solved ? "success" : "failure"));
 
   bool noise_enable;
   double noise_pos_std, noise_rpy_std, noise_vel_std, noise_angvel_std;
