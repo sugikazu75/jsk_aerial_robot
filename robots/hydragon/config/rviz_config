@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-      Splitter Ratio: 0.5
+      Splitter Ratio: 0.4588235318660736
     Tree Height: 549
   - Class: rviz/Selection
     Name: Selection
@@ -66,8 +66,6 @@ Visualization Manager:
           Value: true
         hydragon/body4_link:
           Value: true
-        hydragon/cog:
-          Value: true
         hydragon/duct1_link:
           Value: true
         hydragon/duct2_link:
@@ -84,6 +82,8 @@ Visualization Manager:
           Value: true
         hydragon/end4_link:
           Value: true
+        hydragon/fc:
+          Value: true
         hydragon/front1_link:
           Value: true
         hydragon/front2_link:
@@ -92,7 +92,217 @@ Visualization Manager:
           Value: true
         hydragon/front4_link:
           Value: true
+        hydragon/mpc_optimized_root_0:
+          Value: true
+        hydragon/mpc_optimized_root_1:
+          Value: true
+        hydragon/mpc_optimized_root_10:
+          Value: true
+        hydragon/mpc_optimized_root_100:
+          Value: true
+        hydragon/mpc_optimized_root_11:
+          Value: true
+        hydragon/mpc_optimized_root_12:
+          Value: true
+        hydragon/mpc_optimized_root_13:
+          Value: true
+        hydragon/mpc_optimized_root_14:
+          Value: true
+        hydragon/mpc_optimized_root_15:
+          Value: true
+        hydragon/mpc_optimized_root_16:
+          Value: true
+        hydragon/mpc_optimized_root_17:
+          Value: true
+        hydragon/mpc_optimized_root_18:
+          Value: true
+        hydragon/mpc_optimized_root_19:
+          Value: true
+        hydragon/mpc_optimized_root_2:
+          Value: true
+        hydragon/mpc_optimized_root_20:
+          Value: true
+        hydragon/mpc_optimized_root_21:
+          Value: true
+        hydragon/mpc_optimized_root_22:
+          Value: true
+        hydragon/mpc_optimized_root_23:
+          Value: true
+        hydragon/mpc_optimized_root_24:
+          Value: true
+        hydragon/mpc_optimized_root_25:
+          Value: true
+        hydragon/mpc_optimized_root_26:
+          Value: true
+        hydragon/mpc_optimized_root_27:
+          Value: true
+        hydragon/mpc_optimized_root_28:
+          Value: true
+        hydragon/mpc_optimized_root_29:
+          Value: true
+        hydragon/mpc_optimized_root_3:
+          Value: true
+        hydragon/mpc_optimized_root_30:
+          Value: true
+        hydragon/mpc_optimized_root_31:
+          Value: true
+        hydragon/mpc_optimized_root_32:
+          Value: true
+        hydragon/mpc_optimized_root_33:
+          Value: true
+        hydragon/mpc_optimized_root_34:
+          Value: true
+        hydragon/mpc_optimized_root_35:
+          Value: true
+        hydragon/mpc_optimized_root_36:
+          Value: true
+        hydragon/mpc_optimized_root_37:
+          Value: true
+        hydragon/mpc_optimized_root_38:
+          Value: true
+        hydragon/mpc_optimized_root_39:
+          Value: true
+        hydragon/mpc_optimized_root_4:
+          Value: true
+        hydragon/mpc_optimized_root_40:
+          Value: true
+        hydragon/mpc_optimized_root_41:
+          Value: true
+        hydragon/mpc_optimized_root_42:
+          Value: true
+        hydragon/mpc_optimized_root_43:
+          Value: true
+        hydragon/mpc_optimized_root_44:
+          Value: true
+        hydragon/mpc_optimized_root_45:
+          Value: true
+        hydragon/mpc_optimized_root_46:
+          Value: true
+        hydragon/mpc_optimized_root_47:
+          Value: true
+        hydragon/mpc_optimized_root_48:
+          Value: true
+        hydragon/mpc_optimized_root_49:
+          Value: true
+        hydragon/mpc_optimized_root_5:
+          Value: true
+        hydragon/mpc_optimized_root_50:
+          Value: true
+        hydragon/mpc_optimized_root_51:
+          Value: true
+        hydragon/mpc_optimized_root_52:
+          Value: true
+        hydragon/mpc_optimized_root_53:
+          Value: true
+        hydragon/mpc_optimized_root_54:
+          Value: true
+        hydragon/mpc_optimized_root_55:
+          Value: true
+        hydragon/mpc_optimized_root_56:
+          Value: true
+        hydragon/mpc_optimized_root_57:
+          Value: true
+        hydragon/mpc_optimized_root_58:
+          Value: true
+        hydragon/mpc_optimized_root_59:
+          Value: true
+        hydragon/mpc_optimized_root_6:
+          Value: true
+        hydragon/mpc_optimized_root_60:
+          Value: true
+        hydragon/mpc_optimized_root_61:
+          Value: true
+        hydragon/mpc_optimized_root_62:
+          Value: true
+        hydragon/mpc_optimized_root_63:
+          Value: true
+        hydragon/mpc_optimized_root_64:
+          Value: true
+        hydragon/mpc_optimized_root_65:
+          Value: true
+        hydragon/mpc_optimized_root_66:
+          Value: true
+        hydragon/mpc_optimized_root_67:
+          Value: true
+        hydragon/mpc_optimized_root_68:
+          Value: true
+        hydragon/mpc_optimized_root_69:
+          Value: true
+        hydragon/mpc_optimized_root_7:
+          Value: true
+        hydragon/mpc_optimized_root_70:
+          Value: true
+        hydragon/mpc_optimized_root_71:
+          Value: true
+        hydragon/mpc_optimized_root_72:
+          Value: true
+        hydragon/mpc_optimized_root_73:
+          Value: true
+        hydragon/mpc_optimized_root_74:
+          Value: true
+        hydragon/mpc_optimized_root_75:
+          Value: true
+        hydragon/mpc_optimized_root_76:
+          Value: true
+        hydragon/mpc_optimized_root_77:
+          Value: true
+        hydragon/mpc_optimized_root_78:
+          Value: true
+        hydragon/mpc_optimized_root_79:
+          Value: true
+        hydragon/mpc_optimized_root_8:
+          Value: true
+        hydragon/mpc_optimized_root_80:
+          Value: true
+        hydragon/mpc_optimized_root_81:
+          Value: true
+        hydragon/mpc_optimized_root_82:
+          Value: true
+        hydragon/mpc_optimized_root_83:
+          Value: true
+        hydragon/mpc_optimized_root_84:
+          Value: true
+        hydragon/mpc_optimized_root_85:
+          Value: true
+        hydragon/mpc_optimized_root_86:
+          Value: true
+        hydragon/mpc_optimized_root_87:
+          Value: true
+        hydragon/mpc_optimized_root_88:
+          Value: true
+        hydragon/mpc_optimized_root_89:
+          Value: true
+        hydragon/mpc_optimized_root_9:
+          Value: true
+        hydragon/mpc_optimized_root_90:
+          Value: true
+        hydragon/mpc_optimized_root_91:
+          Value: true
+        hydragon/mpc_optimized_root_92:
+          Value: true
+        hydragon/mpc_optimized_root_93:
+          Value: true
+        hydragon/mpc_optimized_root_94:
+          Value: true
+        hydragon/mpc_optimized_root_95:
+          Value: true
+        hydragon/mpc_optimized_root_96:
+          Value: true
+        hydragon/mpc_optimized_root_97:
+          Value: true
+        hydragon/mpc_optimized_root_98:
+          Value: true
+        hydragon/mpc_optimized_root_99:
+          Value: true
         hydragon/root:
+          Value: true
+        hydragon/thrust1:
+          Value: true
+        hydragon/thrust2:
+          Value: true
+        hydragon/thrust3:
+          Value: true
+        hydragon/thrust4:
           Value: true
         world:
           Value: true
@@ -104,33 +314,239 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
+          hydragon/mpc_optimized_root_0:
+            {}
+          hydragon/mpc_optimized_root_1:
+            {}
+          hydragon/mpc_optimized_root_10:
+            {}
+          hydragon/mpc_optimized_root_100:
+            {}
+          hydragon/mpc_optimized_root_11:
+            {}
+          hydragon/mpc_optimized_root_12:
+            {}
+          hydragon/mpc_optimized_root_13:
+            {}
+          hydragon/mpc_optimized_root_14:
+            {}
+          hydragon/mpc_optimized_root_15:
+            {}
+          hydragon/mpc_optimized_root_16:
+            {}
+          hydragon/mpc_optimized_root_17:
+            {}
+          hydragon/mpc_optimized_root_18:
+            {}
+          hydragon/mpc_optimized_root_19:
+            {}
+          hydragon/mpc_optimized_root_2:
+            {}
+          hydragon/mpc_optimized_root_20:
+            {}
+          hydragon/mpc_optimized_root_21:
+            {}
+          hydragon/mpc_optimized_root_22:
+            {}
+          hydragon/mpc_optimized_root_23:
+            {}
+          hydragon/mpc_optimized_root_24:
+            {}
+          hydragon/mpc_optimized_root_25:
+            {}
+          hydragon/mpc_optimized_root_26:
+            {}
+          hydragon/mpc_optimized_root_27:
+            {}
+          hydragon/mpc_optimized_root_28:
+            {}
+          hydragon/mpc_optimized_root_29:
+            {}
+          hydragon/mpc_optimized_root_3:
+            {}
+          hydragon/mpc_optimized_root_30:
+            {}
+          hydragon/mpc_optimized_root_31:
+            {}
+          hydragon/mpc_optimized_root_32:
+            {}
+          hydragon/mpc_optimized_root_33:
+            {}
+          hydragon/mpc_optimized_root_34:
+            {}
+          hydragon/mpc_optimized_root_35:
+            {}
+          hydragon/mpc_optimized_root_36:
+            {}
+          hydragon/mpc_optimized_root_37:
+            {}
+          hydragon/mpc_optimized_root_38:
+            {}
+          hydragon/mpc_optimized_root_39:
+            {}
+          hydragon/mpc_optimized_root_4:
+            {}
+          hydragon/mpc_optimized_root_40:
+            {}
+          hydragon/mpc_optimized_root_41:
+            {}
+          hydragon/mpc_optimized_root_42:
+            {}
+          hydragon/mpc_optimized_root_43:
+            {}
+          hydragon/mpc_optimized_root_44:
+            {}
+          hydragon/mpc_optimized_root_45:
+            {}
+          hydragon/mpc_optimized_root_46:
+            {}
+          hydragon/mpc_optimized_root_47:
+            {}
+          hydragon/mpc_optimized_root_48:
+            {}
+          hydragon/mpc_optimized_root_49:
+            {}
+          hydragon/mpc_optimized_root_5:
+            {}
+          hydragon/mpc_optimized_root_50:
+            {}
+          hydragon/mpc_optimized_root_51:
+            {}
+          hydragon/mpc_optimized_root_52:
+            {}
+          hydragon/mpc_optimized_root_53:
+            {}
+          hydragon/mpc_optimized_root_54:
+            {}
+          hydragon/mpc_optimized_root_55:
+            {}
+          hydragon/mpc_optimized_root_56:
+            {}
+          hydragon/mpc_optimized_root_57:
+            {}
+          hydragon/mpc_optimized_root_58:
+            {}
+          hydragon/mpc_optimized_root_59:
+            {}
+          hydragon/mpc_optimized_root_6:
+            {}
+          hydragon/mpc_optimized_root_60:
+            {}
+          hydragon/mpc_optimized_root_61:
+            {}
+          hydragon/mpc_optimized_root_62:
+            {}
+          hydragon/mpc_optimized_root_63:
+            {}
+          hydragon/mpc_optimized_root_64:
+            {}
+          hydragon/mpc_optimized_root_65:
+            {}
+          hydragon/mpc_optimized_root_66:
+            {}
+          hydragon/mpc_optimized_root_67:
+            {}
+          hydragon/mpc_optimized_root_68:
+            {}
+          hydragon/mpc_optimized_root_69:
+            {}
+          hydragon/mpc_optimized_root_7:
+            {}
+          hydragon/mpc_optimized_root_70:
+            {}
+          hydragon/mpc_optimized_root_71:
+            {}
+          hydragon/mpc_optimized_root_72:
+            {}
+          hydragon/mpc_optimized_root_73:
+            {}
+          hydragon/mpc_optimized_root_74:
+            {}
+          hydragon/mpc_optimized_root_75:
+            {}
+          hydragon/mpc_optimized_root_76:
+            {}
+          hydragon/mpc_optimized_root_77:
+            {}
+          hydragon/mpc_optimized_root_78:
+            {}
+          hydragon/mpc_optimized_root_79:
+            {}
+          hydragon/mpc_optimized_root_8:
+            {}
+          hydragon/mpc_optimized_root_80:
+            {}
+          hydragon/mpc_optimized_root_81:
+            {}
+          hydragon/mpc_optimized_root_82:
+            {}
+          hydragon/mpc_optimized_root_83:
+            {}
+          hydragon/mpc_optimized_root_84:
+            {}
+          hydragon/mpc_optimized_root_85:
+            {}
+          hydragon/mpc_optimized_root_86:
+            {}
+          hydragon/mpc_optimized_root_87:
+            {}
+          hydragon/mpc_optimized_root_88:
+            {}
+          hydragon/mpc_optimized_root_89:
+            {}
+          hydragon/mpc_optimized_root_9:
+            {}
+          hydragon/mpc_optimized_root_90:
+            {}
+          hydragon/mpc_optimized_root_91:
+            {}
+          hydragon/mpc_optimized_root_92:
+            {}
+          hydragon/mpc_optimized_root_93:
+            {}
+          hydragon/mpc_optimized_root_94:
+            {}
+          hydragon/mpc_optimized_root_95:
+            {}
+          hydragon/mpc_optimized_root_96:
+            {}
+          hydragon/mpc_optimized_root_97:
+            {}
+          hydragon/mpc_optimized_root_98:
+            {}
+          hydragon/mpc_optimized_root_99:
+            {}
           hydragon/root:
-            hydragon/cog:
-              {}
             hydragon/front1_link:
               hydragon/body1_link:
                 hydragon/duct1_link:
-                  {}
+                  hydragon/thrust1:
+                    {}
                 hydragon/end1_link:
                   hydragon/front2_link:
                     hydragon/body2_link:
                       hydragon/duct2_link:
-                        {}
+                        hydragon/thrust2:
+                          {}
                       hydragon/end2_link:
+                        hydragon/fc:
+                          {}
                         hydragon/front3_link:
                           hydragon/body3_link:
                             hydragon/duct3_link:
-                              {}
+                              hydragon/thrust3:
+                                {}
                             hydragon/end3_link:
                               hydragon/front4_link:
                                 hydragon/body4_link:
                                   hydragon/duct4_link:
-                                    {}
+                                    hydragon/thrust4:
+                                      {}
                                   hydragon/end4_link:
                                     {}
       Update Interval: 0
       Value: true
-    - Alpha: 1
+    - Alpha: 0.4000000059604645
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -144,70 +560,87 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         body2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         body3_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         body4_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         duct1_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         duct2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         duct3_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         duct4_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         end1_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         end2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         end3_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         end4_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         fc:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         front1_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         front2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         front3_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         front4_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         root:
           Alpha: 1
           Show Axes: false
@@ -238,6 +671,121 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/PointStamped
+      Color: 204; 41; 204
+      Enabled: true
+      History Length: 1
+      Name: PointStamped
+      Queue Size: 10
+      Radius: 0.019999999552965164
+      Topic: /hydragon/mpc_target_cog_pos
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/Effort
+      Enabled: true
+      History Length: 1
+      Joints:
+        end1_roll:
+          Value: true
+        end2_roll:
+          Value: true
+        end3_roll:
+          Value: true
+        end4_roll:
+          Value: true
+        front1_roll:
+          Value: true
+        front2_roll:
+          Value: true
+        front3_roll:
+          Value: true
+        front4_roll:
+          Value: true
+        gimbal1_pitch:
+          Value: true
+        gimbal2_pitch:
+          Value: true
+        gimbal3_pitch:
+          Value: true
+        gimbal4_pitch:
+          Value: true
+        joint1_yaw:
+          Value: true
+        joint2_yaw:
+          Value: true
+        joint3_yaw:
+          Value: true
+      Name: Effort
+      Queue Size: 10
+      Robot Description: hydragon/robot_description
+      Scale: 1
+      TF Prefix: hydragon
+      Topic: /hydragon/joint_states
+      Unreliable: false
+      Value: true
+      Width: 0.004999999888241291
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.019999999552965164
+      Force Color: 28; 113; 216
+      Hide Small Values: false
+      History Length: 1
+      Name: WrenchStamped
+      Queue Size: 10
+      Topic: /hydragon/mpc/rotor_1_wrench
+      Torque Arrow Scale: 0.05000000074505806
+      Torque Color: 153; 193; 241
+      Unreliable: true
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.019999999552965164
+      Force Color: 28; 113; 216
+      Hide Small Values: false
+      History Length: 1
+      Name: WrenchStamped
+      Queue Size: 10
+      Topic: /hydragon/mpc/rotor_2_wrench
+      Torque Arrow Scale: 0.05000000074505806
+      Torque Color: 153; 193; 241
+      Unreliable: true
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.019999999552965164
+      Force Color: 28; 113; 216
+      Hide Small Values: false
+      History Length: 1
+      Name: WrenchStamped
+      Queue Size: 10
+      Topic: /hydragon/mpc/rotor_3_wrench
+      Torque Arrow Scale: 0.05000000074505806
+      Torque Color: 153; 193; 241
+      Unreliable: true
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.019999999552965164
+      Force Color: 28; 113; 216
+      Hide Small Values: false
+      History Length: 1
+      Name: WrenchStamped
+      Queue Size: 10
+      Topic: /hydragon/mpc/rotor_4_wrench
+      Torque Arrow Scale: 0.05000000074505806
+      Torque Color: 153; 193; 241
+      Unreliable: true
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -266,7 +814,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 5.427826404571533
+      Distance: 3.0264780521392822
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -274,25 +822,25 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.2374730110168457
-        Y: -0.23272986710071564
-        Z: -0.2159014195203781
+        X: -0.6795030832290649
+        Y: -0.60117506980896
+        Z: 0.3415561020374298
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6203981041908264
+      Pitch: 0.49039918184280396
       Target Frame: <Fixed Frame>
-      Yaw: 1.3003977537155151
+      Yaw: 1.203584909439087
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
   Height: 846
   Hide Left Dock: false
-  Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000156000002b0fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000002b0000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002b0fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d000002b0000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b00000003efc0100000002fb0000000800540069006d00650100000000000004b0000003cc00fffffffb0000000800540069006d006501000000000000045000000000000000000000023f000002b000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Hide Right Dock: true
+  QMainWindow State: 000000ff00000000fd000000040000000000000156000002b0fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000002b0000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002b0fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000002b0000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004af0000003efc0100000002fb0000000800540069006d00650100000000000004af000003cc00fffffffb0000000800540069006d0065010000000000000450000000000000000000000353000002b000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -300,7 +848,7 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Views:
-    collapsed: false
-  Width: 1200
-  X: 60
-  Y: 0
+    collapsed: true
+  Width: 1199
+  X: 2405
+  Y: 130
