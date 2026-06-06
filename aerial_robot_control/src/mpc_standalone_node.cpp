@@ -116,7 +116,12 @@ int main(int argc, char** argv)
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nq + nv + rotor_num);
   x0.head(nq) = x_ref.head(nq);
 
-  const Eigen::Vector3d com_target(0.0, 0.0, 1.0);
+  // CoM target (hover at 1 m height)
+  pinocchio::Data pin_data(*pin_model);
+  pinocchio::centerOfMass(*pin_model, pin_data, x0.head(nq));
+  const Eigen::Vector3d com_target(pin_data.com[0](0), pin_data.com[0](1), 1.0);
+  std::cout << "[mpc_standalone] Initial CoM: " << pin_data.com[0].transpose()
+            << ", target CoM: " << com_target.transpose() << std::endl;
 
   // --- Initialize and initial-solve MPC ---
   aerial_robot_control::FwddynMpcControlProblem mpc_problem;
