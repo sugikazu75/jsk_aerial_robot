@@ -14,18 +14,18 @@
   <!-- friction -->
   <xacro:macro name="friction" params="self">
     <gazebo reference="front${self}_link">
-      <mu1>0.8</mu1>
-      <mu2>0.8</mu2>
+      <mu1>0.7</mu1>
+      <mu2>0.7</mu2>
     </gazebo>
     <gazebo reference="end${self}_link">
-      <mu1>0.8</mu1>
-      <mu2>0.8</mu2>
+      <mu1>0.7</mu1>
+      <mu2>0.7</mu2>
     </gazebo>
   </xacro:macro>
 
   <xacro:macro name="damping_factor" params="link">
     <gazebo reference="${link}">
-      <dampingFactor>0.00</dampingFactor>
+      <dampingFactor>0.01</dampingFactor>
     </gazebo>
   </xacro:macro>
 
