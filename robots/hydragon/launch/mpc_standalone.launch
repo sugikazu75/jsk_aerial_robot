@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_ns" value="hydragon"/>
+  <arg name="config_dir" default="$(find hydragon)/config"/>
+  <arg name="noise_enable"  default="false"/>
+  <arg name="headless" default="False"/>
+
+  <group ns="$(arg robot_ns)">
+    <param name="robot_description" command="$(find xacro)/xacro $(find hydragon)/robots/robot.urdf.xacro"/>
+
+    <rosparam file="$(arg config_dir)/FlightControl.yaml" command="load"/>
+
+    <param name="mpc_standalone/noise/enable" value="$(arg noise_enable)"/>
+
+    <node name="pinocchio_robot_description_generator" pkg="aerial_robot_dynamics" type="pinocchio_robot_description_generator.py" output="screen"/>
+
+    <node name="mpc_standalone_node" pkg="aerial_robot_control" type="mpc_standalone_node" output="screen"/>
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+      <param name="tf_prefix" value="$(arg robot_ns)"/>
+    </node>
+
+    <node name="rotor_tf_publisher" pkg="aerial_robot_model" type="rotor_tf_publisher" output="screen">
+      <param name="tf_prefix" value="$(arg robot_ns)"/>
+    </node>
+  </group>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find hydragon)/config/rviz_config" output="screen" unless="$(arg headless)"/>
+
+</launch>
