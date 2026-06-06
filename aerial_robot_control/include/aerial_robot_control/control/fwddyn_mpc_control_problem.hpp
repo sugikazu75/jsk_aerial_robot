@@ -22,6 +22,8 @@ namespace aerial_robot_control
 class FwddynMpcControlProblem
 {
 public:
+  using Scalar = float;
+
   struct Parameters
   {
     int num_nodes = 50;
@@ -89,8 +91,8 @@ public:
   }
 
 private:
-  std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrusts> createMPCNode(const Eigen::Vector3d& com_target,
-                                                                                  const Eigen::VectorXd& x_ref);
+  std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrustsTpl<Scalar>>
+  createMPCNode(const Eigen::Matrix<Scalar, 3, 1>& com_target, const Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x_ref);
 
   bool initialized_ = false;
 
@@ -98,19 +100,22 @@ private:
 
   std::shared_ptr<aerial_robot_dynamics::PinocchioRobotModel> pinocchio_robot_model_;
   std::shared_ptr<pinocchio::Model> pin_model_;
+  std::shared_ptr<pinocchio::ModelTpl<Scalar>> pin_model_f_;
 
-  std::shared_ptr<crocoddyl::StateMultibody> state_mb_;
-  std::shared_ptr<crocoddyl::StateMultibodyWithThrusts> state_with_thrusts_;
-  std::shared_ptr<crocoddyl::ActuationModelFloatingBaseThrusterRates> actuation_;
+  std::shared_ptr<crocoddyl::StateMultibodyTpl<Scalar>> state_mb_;
+  std::shared_ptr<crocoddyl::StateMultibodyWithThrustsTpl<Scalar>> state_with_thrusts_;
+  std::shared_ptr<crocoddyl::ActuationModelFloatingBaseThrusterRatesTpl<Scalar>> actuation_;
 
-  std::shared_ptr<crocoddyl::ShootingProblem> shooting_problem_;
-  std::shared_ptr<crocoddyl::SolverFDDP> solver_;
+  std::shared_ptr<crocoddyl::ShootingProblemTpl<Scalar>> shooting_problem_;
+  std::shared_ptr<crocoddyl::SolverBoxFDDPTpl<Scalar>> solver_;
 
+  std::vector<Eigen::Matrix<Scalar, Eigen::Dynamic, 1>> xs_f_;
+  std::vector<Eigen::Matrix<Scalar, Eigen::Dynamic, 1>> us_f_;
   std::vector<Eigen::VectorXd> xs_;
   std::vector<Eigen::VectorXd> us_;
 
-  std::vector<std::shared_ptr<crocoddyl::ResidualModelCoMPosition>> com_residuals_;
-  std::vector<std::shared_ptr<crocoddyl::ResidualModelState>> state_residuals_;
+  std::vector<std::shared_ptr<crocoddyl::ResidualModelCoMPositionTpl<Scalar>>> com_residuals_;
+  std::vector<std::shared_ptr<crocoddyl::ResidualModelStateTpl<Scalar>>> state_residuals_;
 };
 
 }  // namespace aerial_robot_control
