@@ -21,6 +21,9 @@
   <arg name="config_dir" default="$(find mini_quadrotor)/config" />
   <arg name="mujoco" default="False" />
   <arg name="demo" default="True" />
+  <arg name="gdb" default="False"/>
+  <arg name="launch-prefix" value="gdb -ex run --args" if="$(arg gdb)"/>
+  <arg name="launch-prefix" value="" unless="$(arg gdb)"/>
 
   ###########  Parameters  ###########
   <group ns="$(arg robot_ns)">
@@ -50,13 +53,19 @@
 
     ###########  Navigation  ###########
     <rosparam file="$(arg config_dir)/NavigationConfig.yaml" command="load" />
+
+    <node name="pinocchio_robot_description_generator"
+          pkg="aerial_robot_dynamics"
+          type="pinocchio_robot_description_generator.py"
+          output="screen" />
+
   </group>
 
   ###########  Base Platform  ###########
-  <node pkg="aerial_robot_base" type="aerial_robot_base_node" name="aerial_robot_base_node" ns="$(arg robot_ns)" output="screen" >
+  <node pkg="aerial_robot_base" type="aerial_robot_base_node" name="aerial_robot_base_node" ns="$(arg robot_ns)" output="screen" launch-prefix="$(arg launch-prefix)" >
     <param name="tf_prefix" value="$(arg robot_ns)"/>
     <param name="param_verbose" value="false"/>
-    <param name="main_rate" value="40"/>
+    <param name="main_rate" value="200"/>
   </node>
 
   ###########  Robot Model  ###########

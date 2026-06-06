@@ -56,13 +56,19 @@
    <param name="flight_navigation_plugin_name" value="aerial_robot_navigation/gimbalrotor_navigation" />
    <rosparam file="$(arg config_dir)/NavigationConfig.yaml" command="load" />
 
+    ###########  PinocchioRobotModel ###########
+    <node name="pinocchio_robot_description_generator"
+          pkg="aerial_robot_dynamics"
+          type="pinocchio_robot_description_generator.py"
+          output="screen" />
+
   </group>
 
   ###########  Base Platform  ###########
   <node pkg="aerial_robot_base" type="aerial_robot_base_node" name="aerial_robot_base_node" ns="$(arg robot_ns)" output="screen" >
     <param name="tf_prefix" value="$(arg robot_ns)"/>
     <param name="param_verbose" value="false"/>
-    <param name="main_rate" value="40"/>
+    <param name="main_rate" value="200"/>
   </node>
 
   ###########  Robot Model  ###########
