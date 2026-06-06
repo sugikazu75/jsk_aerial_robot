@@ -10,8 +10,7 @@ servo_controller:
     simulation:
       pid: {p: 10.0, i: 0.0, d: 1.0, i_clamp_min: -6.6, i_clamp_max: 6.6}
       init_value: 0.0
-      # type: effort_controllers/JointComputeTorqueController
-      type: effort_controllers/JointPositionController
+      type: effort_controllers/JointComputeTorqueController
 
     controller1:
       name: front1_roll

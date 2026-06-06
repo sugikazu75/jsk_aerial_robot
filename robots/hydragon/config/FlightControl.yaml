@@ -1,2 +1,43 @@
 # aerial_robot_control_name: aerial_robot_control/fwddyn_mpc_controller
 aerial_robot_control_name: aerial_robot_control/fully_actuated_controller
+
+mpc:
+  num_nodes: 100
+  max_iter: 2
+  max_init_iter: 400
+  dt: 0.005
+  com_track_weight: [50.0, 50.0, 10000.0]
+  centroidal_momentum_weight: [1000, 1000, 1000, 10000, 10000, 10000]
+  control_weight: 1.0
+  thrust_reg_weight: 1.0
+  thrust_barrier_weight: 10.0
+  delta_thrust_max: 10.0
+  verbose: true
+  verbose_log_duration: 1.0
+  diag_pub_duration: 0.1
+
+  x_state_weight: [0, 0, 0, 10, 10, 10,      # root
+                   100000.0, 100000.0, 10000.0,               # front1_roll, end1_roll, joint1_yaw
+                   100000.0, 100000.0, 10000.0,               # front2_roll, end2_roll, joint2_yaw
+                   100000.0, 100000.0, 10000.0,               # front3_roll, end3_roll, joint3_yaw
+                   100000.0, 100000.0,                        # front4_roll, end4_roll
+                   1.0, 1.0, 1.0, 1.0,            # gimbal4, gimbal3, gimbal2, gimbal1
+                   0, 0, 0, 0, 0, 0,                  # linvel, angvel
+                   1000.0, 1000.0, 100.0,              # front1_roll, end1_roll, joint1_yaw
+                   1000.0, 1000.0, 100.0,              # front2_roll, end2_roll, joint2_yaw
+                   1000.0, 1000.0, 100.0,              # front3_roll, end3_roll, joint3_yaw
+                   1000.0, 1000.0,                      # front4_roll, end4_roll
+                   10.0, 10.0, 10.0, 10.0]        # gimbal4, gimbal3, gimbal2, gimbal1
+
+  x_ref: [0, 0, 0, 0, 0, 0, 1,     # root
+          0, 0, 1.57,              # front1_roll, end1_roll, joint1_yaw
+          0, 0, 1.57,              # front2_roll, end2_roll, joint2_yaw
+          0, 0, 1.57,              # front3_roll, end3_roll, joint3_yaw
+          0, 0,                    # front4_roll, end4_roll
+          0, 0, 0, 0,              # gimbal4, gimbal3, gimbal2, gimbal1
+          0, 0, 0, 0, 0, 0,        # linvel, angvel
+          0, 0, 0,                 # front1_roll, end1_roll, joint1_yaw
+          0, 0, 0,                 # front2_roll, end2_roll, joint2_yaw
+          0, 0, 0,                 # front3_roll, end3_roll, joint3_yaw
+          0, 0,                    # front4_roll, end4_roll
+          0, 0, 0, 0]              # gimbal4, gimbal3, gimbal2, gimbal1
