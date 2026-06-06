@@ -162,6 +162,9 @@ void FwddynMpcController::activate()
   // build and solveMPC
   mpc_problem_.buildMPCProblem(x, com_target, x_ref_);
   mpc_problem_.solveMPC(mpc_parameters_.max_init_iter, true, false);
+
+  // Visualize the optimized root trajectory
+  broadcastOptimizedRootTransforms();
 }
 
 bool FwddynMpcController::update()
