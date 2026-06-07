@@ -91,6 +91,9 @@ int main(int argc, char** argv)
   else
     ROS_ERROR("[mpc_standalone] Failed to load x_state_weight (expected size %d)", 2 * nv);
 
+  double default_joint_vel = 0.1;
+  mpc_nh.param<double>("default_joint_vel", default_joint_vel, default_joint_vel);
+
   mpc_params.print();
 
   // --- Load x_ref ---
@@ -112,6 +115,41 @@ int main(int argc, char** argv)
   x_ref(4) = 0.0;  // identity quaternion y=0
   x_ref(5) = 0.0;  // identity quaternion z=0
   x_ref(6) = 1.0;  // identity quaternion w=1
+
+  // joint name -> pinocchio index maps (skip universe=0 and root_joint=1)
+  std::map<std::string, int> joint_name_to_q_idx;
+  std::map<std::string, int> joint_name_to_v_idx;
+  for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)pin_model->njoints; i++)
+  {
+    const std::string& jname = pin_model->names[i];
+    joint_name_to_q_idx[jname] = pin_model->joints[i].idx_q();
+    joint_name_to_v_idx[jname] = pin_model->joints[i].idx_v();
+  }
+
+  // per-joint targets: initialized from x_ref, updated by subscriber (only mentioned joints updated)
+  struct JointTarget
+  {
+    double position;
+    double velocity;
+  };
+  std::map<std::string, JointTarget> joint_targets;
+  for (const auto& [jname, q_idx] : joint_name_to_q_idx)
+    joint_targets[jname] = { x_ref(q_idx), 0.0 };
+
+  ros::Subscriber target_joint_state_sub = nh.subscribe<sensor_msgs::JointState>(
+      "final_target_joint_state", 1, [&](const sensor_msgs::JointState::ConstPtr& msg) {
+        for (size_t i = 0; i < msg->name.size(); ++i)
+        {
+          auto it = joint_targets.find(msg->name[i]);
+          if (it == joint_targets.end() || i >= msg->position.size())
+            continue;
+          it->second.position = msg->position[i];
+          it->second.velocity =
+              (i < msg->velocity.size() && std::isfinite(msg->velocity[i]) && msg->velocity[i] > 0.0) ?
+                  msg->velocity[i] :
+                  0.0;
+        }
+      });
 
   // Initial state
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nq + nv + rotor_num);
@@ -227,6 +265,31 @@ int main(int argc, char** argv)
     }
 
     mpc_problem.setInitialState(x0);
+
+    // interpolate x_ref joint positions toward joint_targets (always runs for all joints)
+    {
+      const double dt = mpc_params.dt;
+      for (const auto& [jname, target] : joint_targets)
+      {
+        const int q_idx = joint_name_to_q_idx.at(jname);
+        const int v_idx = joint_name_to_v_idx.at(jname);
+        const double vel = (target.velocity > 0.0) ? target.velocity : default_joint_vel;
+        const double error = target.position - x_ref(q_idx);
+        const double step = vel * dt;
+        if (std::abs(error) <= step)
+        {
+          x_ref(q_idx) = target.position;
+          x_ref(nq + v_idx) = 0.0;
+        }
+        else
+        {
+          const double sign = (error > 0.0) ? 1.0 : -1.0;
+          x_ref(q_idx) += sign * step;
+          x_ref(nq + v_idx) = sign * vel;
+        }
+      }
+    }
+
     mpc_problem.slideHorizon(com_target, x_ref);
     mpc_problem.solveMPC(mpc_params.max_iter, true, false);
 
