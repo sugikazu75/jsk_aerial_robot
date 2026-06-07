@@ -41,6 +41,7 @@ private:
   ros::Publisher target_cog_pos_pub_;
   ros::Publisher thrust_rate_pub_;
   ros::Subscriber joint_state_sub_;
+  ros::Subscriber target_joint_state_sub_;
   tf::TransformBroadcaster optimized_root_tf_broadcaster_;
 
   sensor_msgs::JointState joint_state_;
@@ -63,8 +64,18 @@ private:
 
   double mpc_elapsed_time_;
 
-  // reference state (nq + nv) used for state regularisation
   Eigen::VectorXd x_ref_;
+  Eigen::VectorXd x_ref_default_;
+
+  // per-joint target for interpolation; initialized from x_ref_default_, updated by subscriber
+  struct JointTarget
+  {
+    double position = 0.0;
+    double velocity = 0.0;  // interpolation speed; 0 means use default_joint_vel_
+  };
+  std::map<std::string, JointTarget> joint_targets_;
+
+  double default_joint_vel_ = 0.1;  // [rad/s] used when velocity not specified in JointTarget
 
   // for debugging
   double target_cog_pos_pub_duration_ = 1.0;
@@ -73,6 +84,8 @@ private:
   double last_tf_broadcast_time_ = 0.0;
 
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+  void targetJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+  void updateJointRefInterpolation();
 
   Eigen::VectorXd buildCurrentState();
   void broadcastOptimizedRootTransforms();

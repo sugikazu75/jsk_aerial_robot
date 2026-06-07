@@ -103,7 +103,11 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   else
     ROS_ERROR_STREAM("[FwddynMpcController] Failed to get x_ref from parameter server.");
 
+  x_ref_default_ = x_ref_;
+
   mpc_parameters_.print();
+
+  mpc_nh.param<double>("default_joint_vel", default_joint_vel_, default_joint_vel_);
 
   // publishers
   four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
@@ -111,8 +115,10 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   target_cog_pos_pub_ = nh_.advertise<geometry_msgs::PointStamped>("mpc_target_cog_pos", 10);
   thrust_rate_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("mpc/thrust_rate", 10);
 
-  // joint state subscriber
+  // subscribers
   joint_state_sub_ = nh_.subscribe("joint_states", 10, &FwddynMpcController::jointStateCallback, this);
+  target_joint_state_sub_ =
+      nh_.subscribe("final_target_joint_state", 1, &FwddynMpcController::targetJointStateCallback, this);
 
   curr_q_ = Eigen::VectorXd::Zero(pin_model_->nq);
   curr_dq_ = Eigen::VectorXd::Zero(pin_model_->nv);
@@ -125,8 +131,11 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)pin_model_->njoints; i++)
   {
     const std::string& joint_name = pin_model_->names[i];
-    joint_name_to_q_idx_[joint_name] = pin_model_->joints[i].idx_q();
-    joint_name_to_v_idx_[joint_name] = pin_model_->joints[i].idx_v();
+    const int q_idx = pin_model_->joints[i].idx_q();
+    const int v_idx = pin_model_->joints[i].idx_v();
+    joint_name_to_q_idx_[joint_name] = q_idx;
+    joint_name_to_v_idx_[joint_name] = v_idx;
+    joint_targets_[joint_name] = { x_ref_default_(q_idx), 0.0 };
   }
 
   // initialize MPC problem
@@ -187,6 +196,15 @@ void FwddynMpcController::reset()
 
   ROS_INFO_STREAM("[FwddynMpcController] reset");
   mpc_elapsed_time_ = 0.0;
+
+  // restore joint targets and x_ref joint part to the initial YAML values
+  for (const auto& [name, q_idx] : joint_name_to_q_idx_)
+  {
+    const int v_idx = joint_name_to_v_idx_.at(name);
+    joint_targets_[name] = { x_ref_default_(q_idx), 0.0 };
+    x_ref_(q_idx) = x_ref_default_(q_idx);
+    x_ref_(pin_model_->nq + v_idx) = 0.0;
+  }
 }
 
 void FwddynMpcController::controlCore()
@@ -197,6 +215,8 @@ void FwddynMpcController::controlCore()
   Eigen::VectorXd x0 = buildCurrentState();
 
   mpc_problem_.setInitialState(x0);
+
+  updateJointRefInterpolation();
 
   mpc_elapsed_time_ += ctrl_loop_du_;
   if (mpc_elapsed_time_ >= mpc_parameters_.dt - 1e-9)
@@ -355,6 +375,58 @@ void FwddynMpcController::publishJointsCtrl()
   }
 
   joints_ctrl_pub_.publish(joint_state);
+}
+
+void FwddynMpcController::targetJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+{
+  if (msg->name.size() != msg->position.size())
+  {
+    ROS_WARN_STREAM("[FwddynMpcController] Received target_joint_state with name/position size mismatch: "
+                    << msg->name.size() << " vs " << msg->position.size());
+    return;
+  }
+
+  for (size_t i = 0; i < msg->name.size(); ++i)
+  {
+    auto it = joint_targets_.find(msg->name[i]);
+    if (it == joint_targets_.end())
+      continue;
+
+    // Update target position
+    it->second.position = msg->position[i];
+
+    // Update target velocity if provided and valid; otherwise, keep the previous velocity (which may be 0)
+    if (msg->velocity.size() == msg->position.size())
+    {
+      it->second.velocity = (std::isfinite(msg->velocity[i]) && msg->velocity[i] > 0.0) ? msg->velocity[i] : 0.0;
+    }
+  }
+}
+
+void FwddynMpcController::updateJointRefInterpolation()
+{
+  const double dt = ctrl_loop_du_;
+
+  for (const auto& [name, target] : joint_targets_)
+  {
+    const int q_idx = joint_name_to_q_idx_.at(name);
+    const int v_idx = joint_name_to_v_idx_.at(name);
+    const double vel = (target.velocity > 0.0) ? target.velocity : default_joint_vel_;
+    const double error = target.position - x_ref_(q_idx);
+    const double step = vel * dt;
+
+    if (std::abs(error) <= step)
+    {
+      x_ref_(q_idx) = target.position;
+      x_ref_(pin_model_->nq + v_idx) = 0.0;
+    }
+    else
+    {
+      const double sign = (error > 0.0) ? 1.0 : -1.0;
+      x_ref_(q_idx) += sign * step;
+      x_ref_(pin_model_->nq + v_idx) = sign * vel;
+    }
+  }
 }
 
 void FwddynMpcController::jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg)
