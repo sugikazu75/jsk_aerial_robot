@@ -62,3 +62,33 @@
     local-name: pinocchio
     uri: https://github.com/stack-of-tasks/pinocchio.git
     version: v4.0.0
+
+# crocoddyl
+- git:
+    local-name: crocoddyl
+    uri: https://github.com/sugikazu75/crocoddyl.git
+    version: develop/articulated_aerial_robot
+
+# ros_controllers
+- git:
+    local-name: ros_controllers
+    uri: https://github.com/sugikazu75/ros_controllers.git
+    version: devel
+
+# blasfeo
+- git:
+    local-name: blasfeo
+    uri: https://github.com/sugikazu75/blasfeo.git
+    version: catkin
+
+# hpipm
+- git:
+    local-name: hpipm
+    uri: https://github.com/sugikazu75/hpipm.git
+    version: catkin
+
+# hpipm-cpp
+- git:
+    local-name: hpipm-cpp
+    uri: https://github.com/sugikazu75/hpipm-cpp.git
+    version: catkin
