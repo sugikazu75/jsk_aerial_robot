@@ -5,11 +5,16 @@ servo_controller:
     zero_point_offset: 2047
     torque_scale: 1.0 # TODO please update the scale
 
+    simulation:
+      pid: {p: 5.0, i: 0.1, d: 0.1, i_clamp_max: 2.0, i_clamp_min: -2.0}
+      init_value: 0
+      type: effort_controllers/JointPositionController
+
     filter_flag: true
     sample_freq: 50.0 # 50Hz
     cutoff_freq: 10.0 # 10Hz, test
 
-    controller1:
+    controller7:
       id: 6
       name: head_joint
       angle_sgn: -1
@@ -18,7 +23,7 @@ servo_controller:
         init_value: 0
         type: effort_controllers/JointPositionController
 
-    controller2:
+    controller8:
       id: 7
       name: tail_joint
       angle_sgn: -1
@@ -26,16 +31,6 @@ servo_controller:
         pid: {p: 20.0, i: 0.1, d: 1.0}
         init_value: 0
         type: effort_controllers/JointPositionController
-
-  gimbals:
-    no_real_state: false
-    angle_scale: 0.001534
-    zero_point_offset: 2047
-
-    simulation:
-      pid: {p: 5.0, i: 0.1, d: 0.1, i_clamp_max: 2.0, i_clamp_min: -2.0}
-      init_value: 0
-      type: effort_controllers/JointPositionController
 
     controller1:
       id: 0

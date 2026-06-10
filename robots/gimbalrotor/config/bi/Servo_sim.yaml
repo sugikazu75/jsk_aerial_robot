@@ -1,5 +1,5 @@
 servo_controller:
-  gimbals:
+  joints:
     angle_sgn: -1
     angle_scale: 0.00058904862
     zero_point_offset: 7500
