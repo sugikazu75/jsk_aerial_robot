@@ -5,6 +5,7 @@
   <arg name="sim" default="False" />
   <arg name="real_machine" default="$(arg rm)" />
   <arg name="simulation" default="$(arg sim)" />
+  <arg name="mpc" default="False" />
   <arg name="estimate_mode"  default= "0" />
   <arg name="sim_estimate_mode"  default= "2" />
   <arg name="headless" default="True" />
@@ -21,9 +22,6 @@
   <arg name="config_dir" default="$(find mini_quadrotor)/config" />
   <arg name="mujoco" default="False" />
   <arg name="demo" default="True" />
-  <arg name="gdb" default="False"/>
-  <arg name="launch-prefix" value="gdb -ex run --args" if="$(arg gdb)"/>
-  <arg name="launch-prefix" value="" unless="$(arg gdb)"/>
 
   ###########  Parameters  ###########
   <group ns="$(arg robot_ns)">
@@ -45,7 +43,8 @@
     <rosparam file="$(arg config_dir)/Battery.yaml" command="load" />
 
     ###########  Control  ###########
-    <rosparam file="$(arg config_dir)/FlightControl.yaml" command="load" />
+    <rosparam file="$(arg config_dir)/FlightControl.yaml" command="load" unless="$(arg mpc)"/>
+    <rosparam file="$(arg config_dir)/Mpc.yaml" command="load" if="$(arg mpc)"/>
 
     ###########  Sensor Fusion  ###########
     <rosparam file="$(arg config_dir)/StateEstimation.yaml" command="load" />
@@ -62,7 +61,7 @@
   </group>
 
   ###########  Base Platform  ###########
-  <node pkg="aerial_robot_base" type="aerial_robot_base_node" name="aerial_robot_base_node" ns="$(arg robot_ns)" output="screen" launch-prefix="$(arg launch-prefix)" >
+  <node pkg="aerial_robot_base" type="aerial_robot_base_node" name="aerial_robot_base_node" ns="$(arg robot_ns)" output="screen" >
     <param name="tf_prefix" value="$(arg robot_ns)"/>
     <param name="param_verbose" value="false"/>
     <param name="main_rate" value="200"/>
