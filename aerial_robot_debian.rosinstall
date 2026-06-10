@@ -74,21 +74,3 @@
     local-name: ros_controllers
     uri: https://github.com/sugikazu75/ros_controllers.git
     version: devel
-
-# blasfeo
-- git:
-    local-name: blasfeo
-    uri: https://github.com/sugikazu75/blasfeo.git
-    version: catkin
-
-# hpipm
-- git:
-    local-name: hpipm
-    uri: https://github.com/sugikazu75/hpipm.git
-    version: catkin
-
-# hpipm-cpp
-- git:
-    local-name: hpipm-cpp
-    uri: https://github.com/sugikazu75/hpipm-cpp.git
-    version: catkin
