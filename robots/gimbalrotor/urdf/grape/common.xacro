@@ -39,10 +39,10 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <xacro:virtual_link parent="main_body" child="rotor_arm1" xyz="-0.22309 -0.22309 0.0" rpy="0.0 -0.0 -2.3562"/>
-  <xacro:virtual_link parent="main_body" child="rotor_arm2" xyz="0.22309 -0.22309 0.0"  rpy="-0.0 -0.0 -0.7854"/>
-  <xacro:virtual_link parent="main_body" child="rotor_arm3" xyz="0.22309 0.22309 0.0"   rpy="0.0 -0.0 0.7854"/>
-  <xacro:virtual_link parent="main_body" child="rotor_arm4" xyz="-0.22309 0.22309 0.0"  rpy="0.0 -0.0 2.3562"/>
+  <xacro:virtual_link parent="main_body" child="motor_arm1" xyz="-0.22309 -0.22309 0.0" rpy="0.0 -0.0 -2.3562"/>
+  <xacro:virtual_link parent="main_body" child="motor_arm2" xyz="0.22309 -0.22309 0.0"  rpy="-0.0 -0.0 -0.7854"/>
+  <xacro:virtual_link parent="main_body" child="motor_arm3" xyz="0.22309 0.22309 0.0"   rpy="0.0 -0.0 0.7854"/>
+  <xacro:virtual_link parent="main_body" child="motor_arm4" xyz="-0.22309 0.22309 0.0"  rpy="0.0 -0.0 2.3562"/>
 
   <xacro:macro name="rotor_transmission" params="id">
     <transmission name="rotor_tran${id}">
