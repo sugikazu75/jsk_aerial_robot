@@ -14,7 +14,7 @@
 
 
     <!--  Control -->
-    <rosparam file="$(arg config_dir)/$(arg airframe)/GimbalrotorControl_sim.yaml" command="load"/>
+    <rosparam file="$(arg config_dir)/$(arg airframe)/GimbalrotorMpc.yaml" command="load"/>
 
 
     <!-- MPC test node -->
