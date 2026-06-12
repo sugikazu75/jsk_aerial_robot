@@ -2,7 +2,7 @@ aerial_robot_control_name: aerial_robot_control/fwddyn_mpc_controller
 
 mpc:
   num_nodes: 50
-  max_iter: 1
+  max_iter: 2
   max_init_iter: 100
   dt: 0.02
   num_threads: 4
