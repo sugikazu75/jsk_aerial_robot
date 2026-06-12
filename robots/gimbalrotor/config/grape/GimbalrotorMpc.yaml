@@ -5,6 +5,7 @@ mpc:
   max_iter: 1
   max_init_iter: 100
   dt: 0.02
+  num_threads: 4
   com_track_weight: [1000.0, 1000.0, 10000.0]
   control_weight: 0.01
   thrust_barrier_weight: 10.0
