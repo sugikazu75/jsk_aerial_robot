@@ -226,7 +226,7 @@ void FwddynMpcController::controlCore()
     mpc_elapsed_time_ -= mpc_parameters_.dt;
   }
 
-  mpc_problem_.solveMPC(mpc_parameters_.max_iter, false, true);
+  mpc_problem_.solveMPC(mpc_parameters_.max_iter, false, false);
 
   control_timestamp_ = ros::Time::now().toSec();
 }
