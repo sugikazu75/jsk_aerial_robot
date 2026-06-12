@@ -39,6 +39,7 @@ int main(int argc, char** argv)
   mpc_nh.param<int>("max_iter", mpc_params.max_iter, mpc_params.max_iter);
   mpc_nh.param<int>("max_init_iter", mpc_params.max_init_iter, mpc_params.max_init_iter);
   mpc_nh.param<double>("dt", mpc_params.dt, mpc_params.dt);
+  mpc_nh.param<int>("num_threads", mpc_params.num_threads, mpc_params.num_threads);
   mpc_nh.param<double>("control_weight", mpc_params.control_weight, mpc_params.control_weight);
   mpc_nh.param<double>("thrust_reg_weight", mpc_params.thrust_reg_weight, mpc_params.thrust_reg_weight);
   mpc_nh.param<double>("thrust_barrier_weight", mpc_params.thrust_barrier_weight, mpc_params.thrust_barrier_weight);

@@ -164,6 +164,7 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
 
   // create OCP and solver
   shooting_problem_ = std::make_shared<crocoddyl::ShootingProblemTpl<Scalar>>(x0_f, running_models, terminal);
+  shooting_problem_->set_nthreads(parameters_.num_threads);
   solver_ = std::make_shared<crocoddyl::SolverBoxFDDPTpl<Scalar>>(shooting_problem_);
 
   xs_f_.assign(parameters_.num_nodes + 1, x0_f);
