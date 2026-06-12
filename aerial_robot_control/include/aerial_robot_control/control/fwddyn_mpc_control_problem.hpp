@@ -30,6 +30,7 @@ public:
     int max_iter = 1;
     int max_init_iter = 100;
     double dt = 0.02;
+    int num_threads = 1;
 
     Eigen::Vector3d com_track_weight = Eigen::Vector3d::Constant(1e4);
     Eigen::VectorXd centroidal_momentum_weight = Eigen::VectorXd::Constant(6, 1e1);
@@ -46,6 +47,7 @@ public:
       std::cout << "  max_iter: " << max_iter << std::endl;
       std::cout << "  max_init_iter: " << max_init_iter << std::endl;
       std::cout << "  dt: " << dt << std::endl;
+      std::cout << "  num_threads: " << num_threads << std::endl;
       std::cout << "  com_track_weight: " << com_track_weight.transpose() << std::endl;
       std::cout << "  centroidal_momentum_weight: " << centroidal_momentum_weight.transpose() << std::endl;
       std::cout << "  control_weight: " << control_weight << std::endl;

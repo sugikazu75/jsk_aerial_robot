@@ -36,6 +36,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   mpc_nh.param<int>("max_iter", mpc_parameters_.max_iter, mpc_parameters_.max_iter);
   mpc_nh.param<int>("max_init_iter", mpc_parameters_.max_init_iter, mpc_parameters_.max_init_iter);
   mpc_nh.param<double>("dt", mpc_parameters_.dt, mpc_parameters_.dt);
+  mpc_nh.param<int>("num_threads", mpc_parameters_.num_threads, mpc_parameters_.num_threads);
   mpc_nh.param<double>("control_weight", mpc_parameters_.control_weight, mpc_parameters_.control_weight);
   mpc_nh.param<double>("thrust_reg_weight", mpc_parameters_.thrust_reg_weight, mpc_parameters_.thrust_reg_weight);
   mpc_nh.param<double>("thrust_barrier_weight", mpc_parameters_.thrust_barrier_weight,
