@@ -123,7 +123,6 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
 
   curr_q_ = Eigen::VectorXd::Zero(pin_model_->nq);
   curr_dq_ = Eigen::VectorXd::Zero(pin_model_->nv);
-  curr_tau_ = Eigen::VectorXd::Zero(pin_model_->nv);
 
   const int rotor_num = pinocchio_robot_model_->getRotorNum();
   n_joints_ = pin_model_->nv - 6;
@@ -439,9 +438,10 @@ void FwddynMpcController::jointStateCallback(const sensor_msgs::JointState::Cons
     {
       int joint_index_q = pin_model_->joints[joint_id].idx_q();
       int joint_index_v = pin_model_->joints[joint_id].idx_v();
-      curr_q_[joint_index_q] = msg->position[i];
-      curr_dq_[joint_index_v] = msg->velocity[i];
-      curr_tau_[joint_index_v] = msg->effort[i];
+      if (msg->position.size() > i)
+        curr_q_[joint_index_q] = msg->position[i];
+      if (msg->velocity.size() > i)
+        curr_dq_[joint_index_v] = msg->velocity[i];
     }
   }
 }
