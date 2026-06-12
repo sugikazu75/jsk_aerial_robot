@@ -206,7 +206,7 @@
     <!-- </collision> -->
   </link>
   <joint name="gimbal1" type="revolute">
-    <limit effort="1.5" velocity="6.0" lower="-3.14" upper="3.14"/>
+    <limit effort="1.5" velocity="6.0" lower="-1.0" upper="1.0"/>
     <parent link="main_body"/>
     <child link="gimbal1_link"/>
     <axis xyz="1. 0. 0."/>
@@ -220,7 +220,7 @@
     <origin xyz="0.0 0.0 0.056" rpy="0.0 -0.0 0.0"/>
   </joint>
   <joint name="gimbal2" type="revolute">
-    <limit effort="1.5" velocity="6.0" lower="-3.14" upper="3.14"/>
+    <limit effort="1.5" velocity="6.0" lower="-1.0" upper="1.0"/>
     <parent link="main_body"/>
     <child link="gimbal2_link"/>
     <axis xyz="1. 0. 0."/>
@@ -234,7 +234,7 @@
     <origin xyz="0.0 0.0 0.056" rpy="0.0 -0.0 0.0"/>
   </joint>
   <joint name="gimbal3" type="revolute">
-    <limit effort="1.5" velocity="6.0" lower="-3.14" upper="3.14"/>
+    <limit effort="1.5" velocity="6.0" lower="-1.0" upper="1.0"/>
     <parent link="main_body"/>
     <child link="gimbal3_link"/>
     <axis xyz="1. 0. 0."/>
@@ -248,7 +248,7 @@
     <origin xyz="0.0 0.0 0.056" rpy="0.0 -0.0 0.0"/>
   </joint>
   <joint name="gimbal4" type="revolute">
-    <limit effort="1.5" velocity="6.0" lower="-3.14" upper="3.14"/>
+    <limit effort="1.5" velocity="6.0" lower="-1.0" upper="1.0"/>
     <parent link="main_body"/>
     <child link="gimbal4_link"/>
     <axis xyz="1. 0. 0."/>
