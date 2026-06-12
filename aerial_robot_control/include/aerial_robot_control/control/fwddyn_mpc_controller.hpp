@@ -49,7 +49,6 @@ private:
 
   Eigen::VectorXd curr_q_;
   Eigen::VectorXd curr_dq_;
-  Eigen::VectorXd curr_tau_;
 
   std::shared_ptr<aerial_robot_dynamics::PinocchioRobotModel> pinocchio_robot_model_;
   std::shared_ptr<pinocchio::Model> pin_model_;
