@@ -9,6 +9,8 @@
 #include <crocoddyl/core/residuals/control.hpp>
 #include <crocoddyl/core/solvers/box-fddp.hpp>
 #include <crocoddyl/core/solvers/fddp.hpp>
+#include <crocoddyl/core/solvers/intro.hpp>
+#include <crocoddyl/core/solvers/hpipm-sqp.hpp>
 #include <crocoddyl/core/utils/timer.hpp>
 #include <crocoddyl/multibody/actions/contact-fwddyn-with-thrusts.hpp>
 #include <crocoddyl/multibody/actuations/floating-base-thrust-rates.hpp>
@@ -165,7 +167,17 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
   // create OCP and solver
   shooting_problem_ = std::make_shared<crocoddyl::ShootingProblemTpl<Scalar>>(x0_f, running_models, terminal);
   shooting_problem_->set_nthreads(parameters_.num_threads);
-  solver_ = std::make_shared<crocoddyl::SolverBoxFDDPTpl<Scalar>>(shooting_problem_);
+
+  if (parameters_.solver_type == SolverType::FDDP)
+    solver_ = std::make_shared<crocoddyl::SolverFDDPTpl<Scalar>>(shooting_problem_);
+  else if (parameters_.solver_type == SolverType::BOX_FDDP)
+    solver_ = std::make_shared<crocoddyl::SolverBoxFDDPTpl<Scalar>>(shooting_problem_);
+  else if (parameters_.solver_type == SolverType::INTRO)
+    solver_ = std::make_shared<crocoddyl::SolverIntroTpl<Scalar>>(shooting_problem_);
+  else if (parameters_.solver_type == SolverType::HPIPM_SQP)
+    solver_ = std::make_shared<crocoddyl::SolverHpipmSQPTpl<Scalar>>(shooting_problem_);
+  else
+    throw std::runtime_error("Invalid solver type");
 
   xs_f_.assign(parameters_.num_nodes + 1, x0_f);
   us_f_.resize(parameters_.num_nodes);

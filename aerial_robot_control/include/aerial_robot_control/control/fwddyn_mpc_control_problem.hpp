@@ -24,6 +24,14 @@ class FwddynMpcControlProblem
 public:
   using Scalar = float;
 
+  enum SolverType
+  {
+    FDDP = 0,
+    BOX_FDDP,
+    INTRO,
+    HPIPM_SQP
+  };
+
   struct Parameters
   {
     int num_nodes = 50;
@@ -31,6 +39,7 @@ public:
     int max_init_iter = 100;
     double dt = 0.02;
     int num_threads = 1;
+    SolverType solver_type = SolverType::FDDP;
 
     Eigen::Vector3d com_track_weight = Eigen::Vector3d::Constant(1e4);
     Eigen::VectorXd centroidal_momentum_weight = Eigen::VectorXd::Constant(6, 1e1);
@@ -48,6 +57,12 @@ public:
       std::cout << "  max_init_iter: " << max_init_iter << std::endl;
       std::cout << "  dt: " << dt << std::endl;
       std::cout << "  num_threads: " << num_threads << std::endl;
+      std::cout << "  solver_type: "
+                << (solver_type == SolverType::FDDP ? "FDDP" :
+                                                      (solver_type == SolverType::BOX_FDDP ?
+                                                           "BOX_FDDP" :
+                                                           (solver_type == SolverType::INTRO ? "INTRO" : "HPIPM_SQP")))
+                << std::endl;
       std::cout << "  com_track_weight: " << com_track_weight.transpose() << std::endl;
       std::cout << "  centroidal_momentum_weight: " << centroidal_momentum_weight.transpose() << std::endl;
       std::cout << "  control_weight: " << control_weight << std::endl;
@@ -109,7 +124,7 @@ private:
   std::shared_ptr<crocoddyl::ActuationModelFloatingBaseThrusterRatesTpl<Scalar>> actuation_;
 
   std::shared_ptr<crocoddyl::ShootingProblemTpl<Scalar>> shooting_problem_;
-  std::shared_ptr<crocoddyl::SolverBoxFDDPTpl<Scalar>> solver_;
+  std::shared_ptr<crocoddyl::SolverAbstractTpl<Scalar>> solver_;
 
   std::vector<Eigen::Matrix<Scalar, Eigen::Dynamic, 1>> xs_f_;
   std::vector<Eigen::Matrix<Scalar, Eigen::Dynamic, 1>> us_f_;
