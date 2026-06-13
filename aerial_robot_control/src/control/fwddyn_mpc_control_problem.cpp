@@ -202,7 +202,23 @@ void FwddynMpcControlProblem::setInitialState(const Eigen::VectorXd& x0)
   xs_[0] = x0;
 }
 
-void FwddynMpcControlProblem::slideHorizon(const Eigen::Vector3d& com_target, const Eigen::VectorXd& x_ref)
+void FwddynMpcControlProblem::setReferences(const std::vector<Eigen::Vector3d>& com_traj,
+                                            const std::vector<Eigen::VectorXd>& x_ref_traj)
+{
+  if (com_traj.size() != com_residuals_.size() || x_ref_traj.size() != state_residuals_.size())
+  {
+    std::cerr << "[FwddynMpcControlProblem] setReferences: size mismatch (expected " << com_residuals_.size()
+              << " nodes, got com_traj=" << com_traj.size() << ", x_ref_traj=" << x_ref_traj.size() << ")" << std::endl;
+    return;
+  }
+
+  for (std::size_t i = 0; i < com_residuals_.size(); ++i)
+    com_residuals_[i]->set_reference(com_traj[i].cast<Scalar>());
+  for (std::size_t i = 0; i < state_residuals_.size(); ++i)
+    state_residuals_[i]->set_reference(x_ref_traj[i].cast<Scalar>());
+}
+
+void FwddynMpcControlProblem::slideHorizon()
 {
   // retreive the first running node and data (which will become the new terminal node)
   std::shared_ptr<crocoddyl::ActionModelAbstractTpl<Scalar>> new_terminal =
@@ -216,11 +232,9 @@ void FwddynMpcControlProblem::slideHorizon(const Eigen::Vector3d& com_target, co
   // update the terminal node with the first running node
   shooting_problem_->updateNode(shooting_problem_->get_T(), new_terminal, new_terminal_data);
 
-  // update the references for the new terminal node
+  // shift the references for the new terminal node
   std::shared_ptr<crocoddyl::ResidualModelCoMPositionTpl<Scalar>> new_com_res = com_residuals_.front();
   std::shared_ptr<crocoddyl::ResidualModelStateTpl<Scalar>> new_state_res = state_residuals_.front();
-  new_com_res->set_reference(com_target.cast<Scalar>());
-  new_state_res->set_reference(x_ref.cast<Scalar>());
 
   com_residuals_.erase(com_residuals_.begin());
   state_residuals_.erase(state_residuals_.begin());

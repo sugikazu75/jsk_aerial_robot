@@ -6,10 +6,13 @@
 #include <aerial_robot_control/control/base/base.h>
 #include <aerial_robot_control/control/fwddyn_mpc_control_problem.hpp>
 #include <aerial_robot_dynamics/robot_model.h>
+#include <geometry_msgs/Vector3Stamped.h>
 #include <sensor_msgs/JointState.h>
 #include <spinal/FourAxisCommand.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <tf/transform_broadcaster.h>
+
+#include <Eigen/Geometry>
 
 #include <map>
 
@@ -42,6 +45,7 @@ private:
   ros::Publisher thrust_rate_pub_;
   ros::Subscriber joint_state_sub_;
   ros::Subscriber target_joint_state_sub_;
+  ros::Subscriber target_root_rpy_sub_;
   tf::TransformBroadcaster optimized_root_tf_broadcaster_;
 
   sensor_msgs::JointState joint_state_;
@@ -76,6 +80,19 @@ private:
 
   double default_joint_vel_ = 0.1;  // [rad/s] used when velocity not specified in JointTarget
 
+  // root-link attitude target for interpolation; the reference quaternion in x_ref_ is slerped toward this target
+  struct RootAttitudeTarget
+  {
+    Eigen::Quaterniond quaternion = Eigen::Quaterniond::Identity();  // world -> root, target orientation
+    double angular_velocity = 0.0;  // [rad/s] interpolation speed; 0 means use default_root_angular_vel_
+  };
+  RootAttitudeTarget root_attitude_target_;
+
+  double default_root_angular_vel_ = 0.1;  // [rad/s] used when angular_velocity not specified in RootAttitudeTarget
+
+  // max look-ahead displacement [m] of the CoM reference trajectory from the target position
+  double com_ref_max_offset_ = 1.0;
+
   // for debugging
   double target_cog_pos_pub_duration_ = 1.0;
   double last_target_cog_pos_pub_time_ = 0.0;
@@ -84,9 +101,13 @@ private:
 
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
   void targetJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
-  void updateJointRefInterpolation();
+  void targetRootRpyCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg);
+  void updateBaseRefInterpolation();
+  void syncRootAttitudeTarget();
 
   Eigen::VectorXd buildCurrentState();
+  std::vector<Eigen::Vector3d> buildComRefTrajectory();
+  std::vector<Eigen::VectorXd> buildStateRefTrajectory();
   void broadcastOptimizedRootTransforms();
   void publishJointsCtrl();
 };
