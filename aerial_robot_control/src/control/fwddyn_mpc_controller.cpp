@@ -111,6 +111,7 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
 
   mpc_nh.param<double>("default_joint_vel", default_joint_vel_, default_joint_vel_);
   mpc_nh.param<double>("default_root_angular_vel", default_root_angular_vel_, default_root_angular_vel_);
+  mpc_nh.param<double>("com_ref_max_offset", com_ref_max_offset_, com_ref_max_offset_);
 
   // publishers
   four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
@@ -219,26 +220,124 @@ void FwddynMpcController::reset()
 
 void FwddynMpcController::controlCore()
 {
-  const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
-  const Eigen::Vector3d com_target(target_cog_pos.x(), target_cog_pos.y(), target_cog_pos.z());
-
   Eigen::VectorXd x0 = buildCurrentState();
 
   mpc_problem_.setInitialState(x0);
 
-  updateJointRefInterpolation();
-  updateRootRefInterpolation();
+  updateBaseRefInterpolation();
 
   mpc_elapsed_time_ += ctrl_loop_du_;
   if (mpc_elapsed_time_ >= mpc_parameters_.dt - 1e-9)
   {
-    mpc_problem_.slideHorizon(com_target, x_ref_);
+    mpc_problem_.slideHorizon();
     mpc_elapsed_time_ -= mpc_parameters_.dt;
   }
+
+  // refresh references of CoM and state
+  const std::vector<Eigen::Vector3d> com_traj = buildComRefTrajectory();
+  const std::vector<Eigen::VectorXd> x_ref_traj = buildStateRefTrajectory();
+  mpc_problem_.setReferences(com_traj, x_ref_traj);
 
   mpc_problem_.solveMPC(mpc_parameters_.max_iter, false, false);
 
   control_timestamp_ = ros::Time::now().toSec();
+}
+
+std::vector<Eigen::Vector3d> FwddynMpcController::buildComRefTrajectory()
+{
+  const tf::Vector3 target_cog_pos = navigator_->getTargetPos();
+  const tf::Vector3 target_cog_vel = navigator_->getTargetVel();
+  const Eigen::Vector3d com0(target_cog_pos.x(), target_cog_pos.y(), target_cog_pos.z());  // node 0 reference (world)
+  const Eigen::Vector3d vel(target_cog_vel.x(), target_cog_vel.y(), target_cog_vel.z());   // target velocity (world)
+
+  const int num_nodes = mpc_parameters_.num_nodes;
+  const double dt = mpc_parameters_.dt;
+
+  // linear interpolation and clamp
+  std::vector<Eigen::Vector3d> com_traj;
+  com_traj.reserve(num_nodes + 1);
+  for (int i = 0; i <= num_nodes; ++i)
+  {
+    Eigen::Vector3d offset = vel * (i * dt);
+    const double offset_norm = offset.norm();
+    if (offset_norm > com_ref_max_offset_)
+      offset *= com_ref_max_offset_ / offset_norm;
+    com_traj.push_back(com0 + offset);
+  }
+  return com_traj;
+}
+
+std::vector<Eigen::VectorXd> FwddynMpcController::buildStateRefTrajectory()
+{
+  const int num_nodes = mpc_parameters_.num_nodes;
+  const double dt = mpc_parameters_.dt;
+  const int nq = pin_model_->nq;
+
+  // node 0 is the current base reference
+  std::vector<Eigen::VectorXd> x_ref_traj(num_nodes + 1, x_ref_);
+
+  // root attitude: precompute base/target and the body-frame geodesic toward the target
+  const Eigen::Quaterniond q_base(x_ref_(6), x_ref_(3), x_ref_(4), x_ref_(5));
+  const Eigen::Quaterniond q_base_n = q_base.normalized();
+  const Eigen::Quaterniond q_tgt = root_attitude_target_.quaternion.normalized();
+  Eigen::Quaterniond q_rel = q_base_n.conjugate() * q_tgt;
+  q_rel.normalize();
+  const Eigen::AngleAxisd aa(q_rel);
+  double total_angle = aa.angle();  // remaining rotation angle in [0, pi]
+  if (total_angle > M_PI)
+    total_angle = 2.0 * M_PI - total_angle;
+  const double ang_vel = (root_attitude_target_.angular_velocity > 0.0) ? root_attitude_target_.angular_velocity :
+                                                                          default_root_angular_vel_;
+
+  for (int k = 0; k <= num_nodes; ++k)
+  {
+    const double t = k * dt;  // look-ahead time of node k
+    Eigen::VectorXd& xr = x_ref_traj[k];
+
+    // joints: ramp each joint from its base value toward the target at the interpolation velocity
+    for (const auto& [name, target] : joint_targets_)
+    {
+      const int q_idx = joint_name_to_q_idx_.at(name);
+      const int v_idx = joint_name_to_v_idx_.at(name);
+      const double vel = (target.velocity > 0.0) ? target.velocity : default_joint_vel_;
+      const double base = x_ref_(q_idx);
+      const double error = target.position - base;
+      const double advance = vel * t;
+
+      if (std::abs(error) <= advance)
+      {
+        xr(q_idx) = target.position;
+        xr(nq + v_idx) = 0.0;
+      }
+      else
+      {
+        const double sign = (error > 0.0) ? 1.0 : -1.0;
+        xr(q_idx) = base + sign * advance;
+        xr(nq + v_idx) = sign * vel;
+      }
+    }
+
+    // root attitude: slerp from base toward target by the look-ahead rotation, saturating at the target
+    Eigen::Quaterniond q_node;
+    if (total_angle < 1e-6 || ang_vel * t >= total_angle)
+    {
+      q_node = q_tgt;
+      xr.segment(nq + 3, 3).setZero();
+    }
+    else
+    {
+      const double frac = (ang_vel * t) / total_angle;
+      q_node = q_base_n.slerp(frac, q_tgt);
+      xr.segment(nq + 3, 3) = aa.axis() * ang_vel;
+    }
+    q_node.normalize();
+    xr(3) = q_node.x();
+    xr(4) = q_node.y();
+    xr(5) = q_node.z();
+    xr(6) = q_node.w();
+  }
+
+  return x_ref_traj;
 }
 
 void FwddynMpcController::sendCmd()
@@ -414,32 +513,6 @@ void FwddynMpcController::targetJointStateCallback(const sensor_msgs::JointState
   }
 }
 
-void FwddynMpcController::updateJointRefInterpolation()
-{
-  const double dt = ctrl_loop_du_;
-
-  for (const auto& [name, target] : joint_targets_)
-  {
-    const int q_idx = joint_name_to_q_idx_.at(name);
-    const int v_idx = joint_name_to_v_idx_.at(name);
-    const double vel = (target.velocity > 0.0) ? target.velocity : default_joint_vel_;
-    const double error = target.position - x_ref_(q_idx);
-    const double step = vel * dt;
-
-    if (std::abs(error) <= step)
-    {
-      x_ref_(q_idx) = target.position;
-      x_ref_(pin_model_->nq + v_idx) = 0.0;
-    }
-    else
-    {
-      const double sign = (error > 0.0) ? 1.0 : -1.0;
-      x_ref_(q_idx) += sign * step;
-      x_ref_(pin_model_->nq + v_idx) = sign * vel;
-    }
-  }
-}
-
 void FwddynMpcController::targetRootRpyCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg)
 {
   // interpret (x, y, z) as the target roll, pitch, yaw of the root link in the world frame
@@ -463,12 +536,33 @@ void FwddynMpcController::syncRootAttitudeTarget()
   root_attitude_target_.angular_velocity = 0.0;
 }
 
-void FwddynMpcController::updateRootRefInterpolation()
+void FwddynMpcController::updateBaseRefInterpolation()
 {
   const double dt = ctrl_loop_du_;
   const int nq = pin_model_->nq;
 
-  // current reference orientation (x, y, z, w) -> Eigen (w, x, y, z)
+  for (const auto& [name, target] : joint_targets_)
+  {
+    const int q_idx = joint_name_to_q_idx_.at(name);
+    const int v_idx = joint_name_to_v_idx_.at(name);
+    const double vel = (target.velocity > 0.0) ? target.velocity : default_joint_vel_;
+    const double error = target.position - x_ref_(q_idx);
+    const double step = vel * dt;
+
+    if (std::abs(error) <= step)
+    {
+      x_ref_(q_idx) = target.position;
+      x_ref_(pin_model_->nq + v_idx) = 0.0;
+    }
+    else
+    {
+      const double sign = (error > 0.0) ? 1.0 : -1.0;
+      x_ref_(q_idx) += sign * step;
+      x_ref_(pin_model_->nq + v_idx) = sign * vel;
+    }
+  }
+
+  // root attitude
   Eigen::Quaterniond q_cur(x_ref_(6), x_ref_(3), x_ref_(4), x_ref_(5));
   q_cur.normalize();
   Eigen::Quaterniond q_tgt = root_attitude_target_.quaternion;
@@ -482,12 +576,12 @@ void FwddynMpcController::updateRootRefInterpolation()
   if (angle > M_PI)
     angle = 2.0 * M_PI - angle;
 
-  const double vel = (root_attitude_target_.angular_velocity > 0.0) ? root_attitude_target_.angular_velocity :
-                                                                      default_root_angular_vel_;
-  const double step = vel * dt;
+  const double ang_vel = (root_attitude_target_.angular_velocity > 0.0) ? root_attitude_target_.angular_velocity :
+                                                                          default_root_angular_vel_;
+  const double ang_step = ang_vel * dt;
 
   Eigen::Quaterniond q_new;
-  if (angle <= step || angle < 1e-6)
+  if (angle <= ang_step || angle < 1e-6)
   {
     // close enough: snap to the target and stop
     q_new = q_tgt;
@@ -495,10 +589,10 @@ void FwddynMpcController::updateRootRefInterpolation()
   }
   else
   {
-    const double t = step / angle;
+    const double t = ang_step / angle;
     q_new = q_cur.slerp(t, q_tgt);
     // feed-forward body-frame angular velocity along the geodesic toward the target
-    x_ref_.segment(nq + 3, 3) = aa.axis() * vel;
+    x_ref_.segment(nq + 3, 3) = aa.axis() * ang_vel;
   }
   q_new.normalize();
 

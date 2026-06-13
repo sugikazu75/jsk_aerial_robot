@@ -90,6 +90,9 @@ private:
 
   double default_root_angular_vel_ = 0.1;  // [rad/s] used when angular_velocity not specified in RootAttitudeTarget
 
+  // max look-ahead displacement [m] of the CoM reference trajectory from the target position
+  double com_ref_max_offset_ = 1.0;
+
   // for debugging
   double target_cog_pos_pub_duration_ = 1.0;
   double last_target_cog_pos_pub_time_ = 0.0;
@@ -99,11 +102,12 @@ private:
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
   void targetJointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
   void targetRootRpyCallback(const geometry_msgs::Vector3Stamped::ConstPtr& msg);
-  void updateJointRefInterpolation();
-  void updateRootRefInterpolation();
+  void updateBaseRefInterpolation();
   void syncRootAttitudeTarget();
 
   Eigen::VectorXd buildCurrentState();
+  std::vector<Eigen::Vector3d> buildComRefTrajectory();
+  std::vector<Eigen::VectorXd> buildStateRefTrajectory();
   void broadcastOptimizedRootTransforms();
   void publishJointsCtrl();
 };

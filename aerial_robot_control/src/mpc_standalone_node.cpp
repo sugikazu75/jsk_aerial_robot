@@ -292,7 +292,11 @@ int main(int argc, char** argv)
       }
     }
 
-    mpc_problem.slideHorizon(com_target, x_ref);
+    mpc_problem.slideHorizon();
+    // uniform references (fixed CoM target / single x_ref) for all num_nodes+1 nodes
+    const std::vector<Eigen::Vector3d> com_traj(mpc_params.num_nodes + 1, com_target);
+    const std::vector<Eigen::VectorXd> x_ref_traj(mpc_params.num_nodes + 1, x_ref);
+    mpc_problem.setReferences(com_traj, x_ref_traj);
     mpc_problem.solveMPC(mpc_params.max_iter, true, false);
 
     const ros::Time stamp = ros::Time::now();
