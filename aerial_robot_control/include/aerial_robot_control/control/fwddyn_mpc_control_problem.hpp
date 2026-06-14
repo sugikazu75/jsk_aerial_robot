@@ -47,7 +47,7 @@ public:
     double control_weight = 1e-1;
     double thrust_reg_weight = 1e-1;
     double thrust_barrier_weight = 1e1;
-    double delta_thrust_max = 1.0;
+    double delta_thrust_max = Scalar(1e5);
 
     void print()
     {

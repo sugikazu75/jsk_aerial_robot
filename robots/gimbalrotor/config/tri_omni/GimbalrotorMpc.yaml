@@ -11,7 +11,7 @@ mpc:
   control_weight: 1.0
   thrust_reg_weight: 1.0
   thrust_barrier_weight: 10.0
-  delta_thrust_max: 10.0
+  delta_thrust_max: 100000.0
   verbose: true
   verbose_log_duration: 1.0
   diag_pub_duration: 0.1
