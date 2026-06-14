@@ -19,7 +19,6 @@ find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(crocoddyl REQUIRED)
 find_package(OpenMP REQUIRED)
-find_package(hpipm-cpp REQUIRED)
 find_package(OsqpEigen REQUIRED)
 
 generate_dynamic_reconfigure_options(
