@@ -9,6 +9,6 @@ mpc:
   centroidal_momentum_weight: [10, 10, 10, 10, 10, 10]
   control_weight: 0.01
   thrust_barrier_weight: 10.0
-  delta_thrust_max: 1.0
+  delta_thrust_max: 100000.0
   x_state_weight: [0, 0, 0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
   x_ref: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
