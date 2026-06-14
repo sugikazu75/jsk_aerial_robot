@@ -7,6 +7,7 @@ mpc:
   dt: 0.02
   num_threads: 4
   com_track_weight: [1000.0, 1000.0, 10000.0]
+  centroidal_momentum_weight: [10, 10, 10, 10, 10, 10]
   control_weight: 0.01
   thrust_barrier_weight: 10.0
   delta_thrust_max: 1.0
