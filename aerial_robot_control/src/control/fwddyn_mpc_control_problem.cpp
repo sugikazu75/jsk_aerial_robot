@@ -10,7 +10,9 @@
 #include <crocoddyl/core/solvers/box-fddp.hpp>
 #include <crocoddyl/core/solvers/fddp.hpp>
 #include <crocoddyl/core/solvers/intro.hpp>
+#ifdef CROCODDYL_WITH_HPIPM
 #include <crocoddyl/core/solvers/hpipm-sqp.hpp>
+#endif
 #include <crocoddyl/core/utils/timer.hpp>
 #include <crocoddyl/multibody/actions/contact-fwddyn-with-thrusts.hpp>
 #include <crocoddyl/multibody/actuations/floating-base-thrust-rates.hpp>
@@ -175,7 +177,13 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
   else if (parameters_.solver_type == SolverType::INTRO)
     solver_ = std::make_shared<crocoddyl::SolverIntroTpl<Scalar>>(shooting_problem_);
   else if (parameters_.solver_type == SolverType::HPIPM_SQP)
+#ifdef CROCODDYL_WITH_HPIPM
     solver_ = std::make_shared<crocoddyl::SolverHpipmSQPTpl<Scalar>>(shooting_problem_);
+#else
+    throw std::runtime_error(
+        "HPIPM_SQP solver is selected but crocoddyl was built without HPIPM support "
+        "(CROCODDYL_WITH_HPIPM is not defined). Rebuild crocoddyl with BUILD_WITH_HPIPM=ON and hpipm-cpp available.");
+#endif
   else
     throw std::runtime_error("Invalid solver type");
 
