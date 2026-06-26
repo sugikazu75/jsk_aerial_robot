@@ -41,6 +41,7 @@ public:
     int num_threads = 1;
     SolverType solver_type = SolverType::FDDP;
 
+    Eigen::VectorXd q_ref;
     Eigen::Vector3d com_track_weight = Eigen::Vector3d::Constant(1e4);
     Eigen::VectorXd centroidal_momentum_weight = Eigen::VectorXd::Constant(6, 1e1);
     Eigen::VectorXd x_state_weight;
@@ -48,6 +49,7 @@ public:
     double thrust_reg_weight = 1e-1;
     double thrust_barrier_weight = 1e1;
     double delta_thrust_max = Scalar(1e5);
+    std::vector<std::string> locked_joint_names = {};
 
     void print()
     {
@@ -63,6 +65,7 @@ public:
                                                            "BOX_FDDP" :
                                                            (solver_type == SolverType::INTRO ? "INTRO" : "HPIPM_SQP")))
                 << std::endl;
+      std::cout << "  q_ref: " << q_ref.transpose() << std::endl;
       std::cout << "  com_track_weight: " << com_track_weight.transpose() << std::endl;
       std::cout << "  centroidal_momentum_weight: " << centroidal_momentum_weight.transpose() << std::endl;
       std::cout << "  control_weight: " << control_weight << std::endl;
@@ -71,6 +74,13 @@ public:
       if (x_state_weight.size() > 0)
         std::cout << "  x_state_weight: " << x_state_weight.transpose() << std::endl;
       std::cout << "  delta_thrust_max: " << delta_thrust_max << std::endl;
+      if (!locked_joint_names.empty())
+      {
+        std::cout << "  locked_joint_names: ";
+        for (const auto& name : locked_joint_names)
+          std::cout << name << " ";
+        std::cout << std::endl;
+      }
     }
   };
 
@@ -99,6 +109,11 @@ public:
   {
     return parameters_;
   }
+  // reduced pinocchio model actually used by the OCP (== full model when no joints are locked)
+  const std::shared_ptr<pinocchio::Model>& reducedModel() const
+  {
+    return pin_model_;
+  }
   const std::vector<Eigen::VectorXd>& xs() const
   {
     return xs_;
@@ -112,7 +127,18 @@ private:
   std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrustsTpl<Scalar>>
   createMPCNode(const Eigen::Matrix<Scalar, 3, 1>& com_target, const Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x_ref);
 
+  // reduce full-model vectors to the locked-joint (reduced) model layout
+  Eigen::VectorXd reduceStateRef(const Eigen::VectorXd& x_ref_full) const;      // [q; v]         -> reduced
+  Eigen::VectorXd reduceState(const Eigen::VectorXd& x_full) const;             // [q; v; thrust] -> reduced
+  Eigen::VectorXd reduceStateWeight(const Eigen::VectorXd& weight_full) const;  // [dq; dv]       -> reduced
+
   bool initialized_ = false;
+
+  // full-model dimensions and the q/v indices removed by joint locking (sorted ascending)
+  int nq_full_ = 0;
+  int nv_full_ = 0;
+  std::vector<int> locked_q_idx_;
+  std::vector<int> locked_v_idx_;
 
   Parameters parameters_;
 

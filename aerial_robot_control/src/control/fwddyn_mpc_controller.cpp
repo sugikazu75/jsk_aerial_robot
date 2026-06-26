@@ -44,6 +44,12 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
                        mpc_parameters_.thrust_barrier_weight);
   mpc_nh.param<double>("delta_thrust_max", mpc_parameters_.delta_thrust_max, mpc_parameters_.delta_thrust_max);
 
+  // load locked joint names
+  if (mpc_nh.hasParam("locked_joint_names"))
+  {
+    mpc_nh.getParam("locked_joint_names", mpc_parameters_.locked_joint_names);
+  }
+
   // CoM tracking weight (3 elements)
   std::vector<double> com_w;
   if (mpc_nh.getParam("com_track_weight", com_w))
@@ -104,6 +110,8 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   }
   else
     ROS_ERROR_STREAM("[FwddynMpcController] Failed to get x_ref from parameter server.");
+
+  mpc_parameters_.q_ref = x_ref_.head(pin_model_->nq);
 
   x_ref_default_ = x_ref_;
 
@@ -348,11 +356,9 @@ void FwddynMpcController::sendCmd()
     return;
 
   const int rotor_num = pinocchio_robot_model_->getRotorNum();
-  const int nq = pin_model_->nq;
-  const int nv = pin_model_->nv;
 
   // commanded thrust = thrust component of next predicted state
-  const Eigen::VectorXd thrust = xs[1].segment(nq + nv, rotor_num);
+  const Eigen::VectorXd thrust = xs[1].tail(rotor_num);
   if (!thrust.array().isFinite().all())
   {
     ROS_WARN_THROTTLE(1.0, "[FwddynMpcController] NaN/Inf in thrust, skipping sendCmd");
@@ -431,7 +437,7 @@ Eigen::VectorXd FwddynMpcController::buildCurrentState()
 
   // thrusts
   const auto& xs = mpc_problem_.xs();
-  if (!xs.empty() && xs[0].size() == x.size())
+  if (!xs.empty() && xs[0].size() >= rotor_num)
     x.tail(rotor_num) = xs[0].tail(rotor_num);
   else
     x.tail(rotor_num) = Eigen::VectorXd::Zero(rotor_num);
@@ -471,16 +477,18 @@ void FwddynMpcController::publishJointsCtrl()
   if (xs.size() < 2 || !xs[1].array().isFinite().all())
     return;
 
+  const auto& red_model = mpc_problem_.reducedModel();
+
   sensor_msgs::JointState joint_state;
-  for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)pin_model_->njoints; i++)
+  for (pinocchio::JointIndex i = 2; i < (pinocchio::JointIndex)red_model->njoints; i++)
   {
-    const std::string& joint_name = pin_model_->names[i];
-    const int q_idx = pin_model_->joints[pin_model_->getJointId(joint_name)].idx_q();
-    const int v_idx = pin_model_->joints[pin_model_->getJointId(joint_name)].idx_v();
+    const std::string& joint_name = red_model->names[i];
+    const int q_idx = red_model->joints[i].idx_q();
+    const int v_idx = red_model->joints[i].idx_v();
 
     joint_state.name.push_back(joint_name);
     joint_state.position.push_back(xs[1](q_idx));
-    joint_state.velocity.push_back(xs[1](pin_model_->nq + v_idx));
+    joint_state.velocity.push_back(xs[1](red_model->nq + v_idx));
     joint_state.effort.push_back(us[0](rotor_num + (v_idx - 6)));  // skip free-flyer DOFs
   }
 
