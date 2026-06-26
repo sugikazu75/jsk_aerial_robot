@@ -65,6 +65,29 @@ Eigen::VectorXd eraseRows(const Eigen::VectorXd& v, const std::vector<int>& remo
   return out;
 }
 
+Eigen::VectorXd insertRows(const Eigen::VectorXd& reduced, const std::vector<int>& insert_at,
+                           const Eigen::VectorXd& source_full)
+{
+  if (insert_at.empty())
+    return reduced;
+  Eigen::VectorXd out(source_full.size());
+  std::size_t k = 0;
+  Eigen::Index r = 0;
+  for (Eigen::Index i = 0; i < out.size(); ++i)
+  {
+    if (k < insert_at.size() && i == insert_at[k])
+    {
+      out(i) = source_full(i);
+      ++k;
+    }
+    else
+    {
+      out(i) = reduced(r++);
+    }
+  }
+  return out;
+}
+
 }  // namespace
 
 void FwddynMpcControlProblem::initialize(
@@ -190,6 +213,22 @@ Eigen::VectorXd FwddynMpcControlProblem::reduceState(const Eigen::VectorXd& x_fu
   const Eigen::VectorXd thrust = x_full.tail(x_full.size() - nq_full_ - nv_full_);
   Eigen::VectorXd out(q.size() + v.size() + thrust.size());
   out << q, v, thrust;
+  return out;
+}
+
+Eigen::VectorXd FwddynMpcControlProblem::expandState(const Eigen::VectorXd& x_reduced) const
+{
+  // inverse of reduceState: reduced [q; v; thrust] -> full [q; v; thrust]
+  if (locked_q_idx_.empty() && locked_v_idx_.empty())
+    return x_reduced;
+  const int nq_r = nq_full_ - static_cast<int>(locked_q_idx_.size());
+  const int nv_r = nv_full_ - static_cast<int>(locked_v_idx_.size());
+  const Eigen::VectorXd q_full = insertRows(x_reduced.head(nq_r), locked_q_idx_, parameters_.q_ref);
+  const Eigen::VectorXd v_full =
+      insertRows(x_reduced.segment(nq_r, nv_r), locked_v_idx_, Eigen::VectorXd::Zero(nv_full_));
+  const Eigen::VectorXd thrust = x_reduced.tail(x_reduced.size() - nq_r - nv_r);
+  Eigen::VectorXd out(nq_full_ + nv_full_ + thrust.size());
+  out << q_full, v_full, thrust;
   return out;
 }
 

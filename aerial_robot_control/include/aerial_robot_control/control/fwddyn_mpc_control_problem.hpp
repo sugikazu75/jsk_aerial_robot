@@ -114,6 +114,7 @@ public:
   {
     return pin_model_;
   }
+  Eigen::VectorXd expandState(const Eigen::VectorXd& x_reduced) const;
   const std::vector<Eigen::VectorXd>& xs() const
   {
     return xs_;
