@@ -84,6 +84,10 @@ public:
   {
     return rotor_frame_indices_;
   }
+  const std::vector<std::string>& getRotorNames() const
+  {
+    return rotor_names_;
+  }
   const Eigen::VectorXd& getJointTorqueLimits() const
   {
     return joint_torque_limits_;
