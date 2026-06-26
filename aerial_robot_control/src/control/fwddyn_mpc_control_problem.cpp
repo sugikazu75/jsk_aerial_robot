@@ -25,6 +25,9 @@
 
 #include <aerial_robot_dynamics/robot_model.h>
 
+#include <pinocchio/algorithm/joint-configuration.hpp>
+
+#include <algorithm>
 #include <cmath>
 
 namespace aerial_robot_control
@@ -42,6 +45,49 @@ toDoubleTrajectory(const std::vector<Eigen::Matrix<FwddynMpcControlProblem::Scal
   return result;
 }
 
+// remove the entries at the given (sorted, ascending) indices from v
+Eigen::VectorXd eraseRows(const Eigen::VectorXd& v, const std::vector<int>& remove)
+{
+  if (remove.empty())
+    return v;
+  Eigen::VectorXd out(v.size() - static_cast<Eigen::Index>(remove.size()));
+  std::size_t r = 0;
+  Eigen::Index o = 0;
+  for (Eigen::Index i = 0; i < v.size(); ++i)
+  {
+    if (r < remove.size() && i == remove[r])
+    {
+      ++r;
+      continue;
+    }
+    out(o++) = v(i);
+  }
+  return out;
+}
+
+Eigen::VectorXd insertRows(const Eigen::VectorXd& reduced, const std::vector<int>& insert_at,
+                           const Eigen::VectorXd& source_full)
+{
+  if (insert_at.empty())
+    return reduced;
+  Eigen::VectorXd out(source_full.size());
+  std::size_t k = 0;
+  Eigen::Index r = 0;
+  for (Eigen::Index i = 0; i < out.size(); ++i)
+  {
+    if (k < insert_at.size() && i == insert_at[k])
+    {
+      out(i) = source_full(i);
+      ++k;
+    }
+    else
+    {
+      out(i) = reduced(r++);
+    }
+  }
+  return out;
+}
+
 }  // namespace
 
 void FwddynMpcControlProblem::initialize(
@@ -50,21 +96,75 @@ void FwddynMpcControlProblem::initialize(
 {
   pinocchio_robot_model_ = pinocchio_robot_model;
   pin_model_ = pinocchio_robot_model_->getModel();
+
+  // full-model dimensions (used to reduce x_ref / x_state_weight / x0 to the locked-joint layout)
+  nq_full_ = pin_model_->nq;
+  nv_full_ = pin_model_->nv;
+  locked_q_idx_.clear();
+  locked_v_idx_.clear();
+
+  // convert pinocchio model to reduced model if there are locked joints
+  if (!parameters.locked_joint_names.empty())
+  {
+    pin_model_ = std::make_shared<pinocchio::Model>(*pin_model_);
+
+    // resolve duplication of fixed root_joint and pinocchio's free-flyer joint
+    for (auto& f : pin_model_->frames)
+      if (f.name == "root_joint" && f.type == pinocchio::FIXED_JOINT)
+        f.name = "root_joint_fixed";
+
+    std::vector<pinocchio::JointIndex> locked_joint_ids;
+    std::cout << "locked joint id: ";
+    for (const auto& joint_name : parameters.locked_joint_names)
+    {
+      if (!pin_model_->existJointName(joint_name))
+        throw std::runtime_error("Locked joint name " + joint_name + " not found");
+
+      pinocchio::JointIndex joint_id = pin_model_->getJointId(joint_name);
+      locked_joint_ids.push_back(joint_id);
+      std::cout << joint_id << " ";
+
+      // record the q/v indices occupied by this joint in the full model
+      const auto& jm = pin_model_->joints[joint_id];
+      for (int k = 0; k < jm.nq(); ++k)
+        locked_q_idx_.push_back(jm.idx_q() + k);
+      for (int k = 0; k < jm.nv(); ++k)
+        locked_v_idx_.push_back(jm.idx_v() + k);
+    }
+    std::cout << std::endl;
+    std::sort(locked_q_idx_.begin(), locked_q_idx_.end());
+    std::sort(locked_v_idx_.begin(), locked_v_idx_.end());
+    pin_model_ = std::make_shared<pinocchio::Model>(
+        pinocchio::buildReducedModel(*pin_model_, locked_joint_ids, parameters.q_ref));
+  }
+
   pin_model_f_ = std::make_shared<pinocchio::ModelTpl<Scalar>>(pin_model_->cast<Scalar>());
   parameters_ = parameters;
+
+  // reduce the state regularisation weight ([dq; dv], length 2*nv) to the locked-joint layout
+  if (!locked_v_idx_.empty())
+    parameters_.x_state_weight = reduceStateWeight(parameters_.x_state_weight);
 
   const int rotor_num = pinocchio_robot_model_->getRotorNum();
 
   state_mb_ = std::make_shared<crocoddyl::StateMultibodyTpl<Scalar>>(pin_model_f_);
 
+  const auto& rotor_names = pinocchio_robot_model_->getRotorNames();
+  pinocchio::Data pin_data(*pin_model_);
+  const Eigen::VectorXd q_neutral = pinocchio::neutral(*pin_model_);
+  pinocchio::framesForwardKinematics(*pin_model_, pin_data, q_neutral);
+
   std::vector<crocoddyl::DistributedThrusterTpl<Scalar>> thrusters;
-  const auto& rotor_frame_indices = pinocchio_robot_model_->getRotorFrameIndices();
-  const auto& joint_M_rotors = pinocchio_robot_model_->getJointMRotors();
   const Scalar m_f_rate = static_cast<Scalar>(std::abs(pinocchio_robot_model_->getMFRate()));
   for (int i = 0; i < rotor_num; ++i)
   {
+    const std::string& rotor_name = rotor_names.at(i);
+    const pinocchio::FrameIndex rotor_fid = pin_model_->getFrameId(rotor_name);
+    const pinocchio::JointIndex parent_joint = pin_model_->frames[rotor_fid].parentJoint;
+    const pinocchio::SE3 joint_M_rotor = pin_data.oMi[parent_joint].inverse() * pin_data.oMf[rotor_fid];
+
     const int dir = pinocchio_robot_model_->getRotorDirection(i);
-    thrusters.emplace_back(rotor_frame_indices.at(i), joint_M_rotors.at(i).cast<Scalar>(), m_f_rate,
+    thrusters.emplace_back(static_cast<int>(rotor_fid), joint_M_rotor.cast<Scalar>(), m_f_rate,
                            (dir == 1) ? crocoddyl::DT_CCW : crocoddyl::DT_CW,
                            static_cast<Scalar>(pinocchio_robot_model_->getThrustLowerLimits()(i)),
                            static_cast<Scalar>(pinocchio_robot_model_->getThrustUpperLimits()(i)),
@@ -89,6 +189,59 @@ void FwddynMpcControlProblem::reset()
   us_.clear();
   com_residuals_.clear();
   state_residuals_.clear();
+}
+
+Eigen::VectorXd FwddynMpcControlProblem::reduceStateRef(const Eigen::VectorXd& x_ref_full) const
+{
+  // x_ref layout: [q (nq_full), v (nv_full)]
+  if (locked_q_idx_.empty() && locked_v_idx_.empty())
+    return x_ref_full;
+  const Eigen::VectorXd q = eraseRows(x_ref_full.head(nq_full_), locked_q_idx_);
+  const Eigen::VectorXd v = eraseRows(x_ref_full.segment(nq_full_, nv_full_), locked_v_idx_);
+  Eigen::VectorXd out(q.size() + v.size());
+  out << q, v;
+  return out;
+}
+
+Eigen::VectorXd FwddynMpcControlProblem::reduceState(const Eigen::VectorXd& x_full) const
+{
+  // x0 layout: [q (nq_full), v (nv_full), thrust (rotor_num)] -- the thrust tail is kept as is
+  if (locked_q_idx_.empty() && locked_v_idx_.empty())
+    return x_full;
+  const Eigen::VectorXd q = eraseRows(x_full.head(nq_full_), locked_q_idx_);
+  const Eigen::VectorXd v = eraseRows(x_full.segment(nq_full_, nv_full_), locked_v_idx_);
+  const Eigen::VectorXd thrust = x_full.tail(x_full.size() - nq_full_ - nv_full_);
+  Eigen::VectorXd out(q.size() + v.size() + thrust.size());
+  out << q, v, thrust;
+  return out;
+}
+
+Eigen::VectorXd FwddynMpcControlProblem::expandState(const Eigen::VectorXd& x_reduced) const
+{
+  // inverse of reduceState: reduced [q; v; thrust] -> full [q; v; thrust]
+  if (locked_q_idx_.empty() && locked_v_idx_.empty())
+    return x_reduced;
+  const int nq_r = nq_full_ - static_cast<int>(locked_q_idx_.size());
+  const int nv_r = nv_full_ - static_cast<int>(locked_v_idx_.size());
+  const Eigen::VectorXd q_full = insertRows(x_reduced.head(nq_r), locked_q_idx_, parameters_.q_ref);
+  const Eigen::VectorXd v_full =
+      insertRows(x_reduced.segment(nq_r, nv_r), locked_v_idx_, Eigen::VectorXd::Zero(nv_full_));
+  const Eigen::VectorXd thrust = x_reduced.tail(x_reduced.size() - nq_r - nv_r);
+  Eigen::VectorXd out(nq_full_ + nv_full_ + thrust.size());
+  out << q_full, v_full, thrust;
+  return out;
+}
+
+Eigen::VectorXd FwddynMpcControlProblem::reduceStateWeight(const Eigen::VectorXd& weight_full) const
+{
+  // x_state_weight layout: [dq (nv_full), dv (nv_full)] -- both blocks use the v indices
+  if (locked_v_idx_.empty())
+    return weight_full;
+  const Eigen::VectorXd dq = eraseRows(weight_full.head(nv_full_), locked_v_idx_);
+  const Eigen::VectorXd dv = eraseRows(weight_full.segment(nv_full_, nv_full_), locked_v_idx_);
+  Eigen::VectorXd out(dq.size() + dv.size());
+  out << dq, dv;
+  return out;
 }
 
 std::shared_ptr<crocoddyl::IntegratedActionModelEulerWithThrustsTpl<FwddynMpcControlProblem::Scalar>>
@@ -154,9 +307,9 @@ void FwddynMpcControlProblem::buildMPCProblem(const Eigen::VectorXd& x0, const E
   com_residuals_.clear();
   state_residuals_.clear();
 
-  const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x0_f = x0.cast<Scalar>();
+  const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x0_f = reduceState(x0).cast<Scalar>();
   const Eigen::Matrix<Scalar, 3, 1> com_target_f = com_target.cast<Scalar>();
-  const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x_ref_f = x_ref.cast<Scalar>();
+  const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x_ref_f = reduceStateRef(x_ref).cast<Scalar>();
 
   // create running and terminal models
   std::vector<std::shared_ptr<crocoddyl::ActionModelAbstractTpl<Scalar>>> running_models;
@@ -204,10 +357,10 @@ void FwddynMpcControlProblem::setInitialState(const Eigen::VectorXd& x0)
   if (!shooting_problem_ || xs_.empty())
     return;
 
-  const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x0_f = x0.cast<Scalar>();
+  const Eigen::Matrix<Scalar, Eigen::Dynamic, 1> x0_f = reduceState(x0).cast<Scalar>();
   shooting_problem_->set_x0(x0_f);
   xs_f_[0] = x0_f;
-  xs_[0] = x0;
+  xs_[0] = x0_f.cast<double>();
 }
 
 void FwddynMpcControlProblem::setReferences(const std::vector<Eigen::Vector3d>& com_traj,
@@ -223,7 +376,7 @@ void FwddynMpcControlProblem::setReferences(const std::vector<Eigen::Vector3d>& 
   for (std::size_t i = 0; i < com_residuals_.size(); ++i)
     com_residuals_[i]->set_reference(com_traj[i].cast<Scalar>());
   for (std::size_t i = 0; i < state_residuals_.size(); ++i)
-    state_residuals_[i]->set_reference(x_ref_traj[i].cast<Scalar>());
+    state_residuals_[i]->set_reference(reduceStateRef(x_ref_traj[i]).cast<Scalar>());
 }
 
 void FwddynMpcControlProblem::slideHorizon()

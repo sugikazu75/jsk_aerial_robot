@@ -46,6 +46,10 @@ int main(int argc, char** argv)
   mpc_nh.param<double>("thrust_barrier_weight", mpc_params.thrust_barrier_weight, mpc_params.thrust_barrier_weight);
   mpc_nh.param<double>("delta_thrust_max", mpc_params.delta_thrust_max, mpc_params.delta_thrust_max);
 
+  // load locked joint names
+  if (mpc_nh.hasParam("locked_joint_names"))
+    mpc_nh.getParam("locked_joint_names", mpc_params.locked_joint_names);
+
   // CoM tracking weight (3 elements)
   std::vector<double> com_w;
   if (mpc_nh.getParam("com_track_weight", com_w))
@@ -117,6 +121,9 @@ int main(int argc, char** argv)
   x_ref(4) = 0.0;  // identity quaternion y=0
   x_ref(5) = 0.0;  // identity quaternion z=0
   x_ref(6) = 1.0;  // identity quaternion w=1
+
+  // reference configuration for joint locking (locked joints are held at these q values)
+  mpc_params.q_ref = x_ref.head(nq);
 
   // joint name -> pinocchio index maps (skip universe=0 and root_joint=1)
   std::map<std::string, int> joint_name_to_q_idx;
@@ -228,7 +235,7 @@ int main(int argc, char** argv)
       if (!xs[1].array().isFinite().all())
         ROS_WARN_THROTTLE(1.0, "[mpc_standalone] NaN in xs[1], keeping previous x0");
       else
-        x0 = xs[1];
+        x0 = mpc_problem.expandState(xs[1]);
     }
     if (!u0.array().isFinite().all())
       ROS_WARN_THROTTLE(1.0, "[mpc_standalone] NaN in us[0], ignoring control input for state update");
