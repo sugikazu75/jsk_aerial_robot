@@ -65,4 +65,4 @@
 - git:
     local-name: mujoco_ros_pkgs
     uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
-    version: PR/ros1/mujoco_3.x
+    version: PR/hybrid-devel/depend_mujoco
