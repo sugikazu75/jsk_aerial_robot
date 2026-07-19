@@ -3,10 +3,10 @@
 namespace mujoco_ros::control
 {
 
-bool DefaultAerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
+bool DefaultAerialRobotHWSim::InitSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
                                       const std::string& robot_namespace, ros::NodeHandle model_nh,
                                       const urdf::Model* const urdf_model,
-                                      std::vector<transmission_interface::TransmissionInfo> transmissions)
+                                      std::vector<transmission_interface::TransmissionInfo> transmissions, bool ignore_actuators)
 {
   std::vector<transmission_interface::TransmissionInfo> standard_transmissions;
   std::vector<transmission_interface::TransmissionInfo> rotor_transmissions;
@@ -32,7 +32,7 @@ bool DefaultAerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoc
   }
 
   /* Initialize standard joint handlers */
-  DefaultRobotHWSim::initSim(m_ptr, d_ptr, mujoco_env_ptr, robot_namespace, model_nh, urdf_model,
+  DefaultRobotHWSim::InitSim(m_ptr, d_ptr, mujoco_env_ptr, robot_namespace, model_nh, urdf_model,
                              standard_transmissions);
 
   /* Initialize rotor handlers */
@@ -81,9 +81,9 @@ bool DefaultAerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoc
   return true;
 }
 
-void DefaultAerialRobotHWSim::readSim(ros::Time time, ros::Duration period)
+void DefaultAerialRobotHWSim::ReadSim(ros::Time time, ros::Duration period)
 {
-  DefaultRobotHWSim::readSim(time, period);
+  DefaultRobotHWSim::ReadSim(time, period);
 
   // reset last publish time after simulator reset
   if (ros::Time(time).toSec() < odom_pub_last_time_ || ros::Time(time).toSec() < tf_broadcast_last_time_)
@@ -105,9 +105,9 @@ void DefaultAerialRobotHWSim::readSim(ros::Time time, ros::Duration period)
   }
 }
 
-void DefaultAerialRobotHWSim::writeSim(ros::Time time, ros::Duration period)
+void DefaultAerialRobotHWSim::WriteSim(ros::Time time, ros::Duration period)
 {
-  DefaultRobotHWSim::writeSim(time, period);
+  DefaultRobotHWSim::WriteSim(time, period);
 
   /* rotor part */
   for (size_t i = 0; i < rotor_names_.size(); i++)

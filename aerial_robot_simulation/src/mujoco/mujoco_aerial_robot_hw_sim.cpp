@@ -2,10 +2,10 @@
 
 namespace mujoco_ros::control
 {
-bool AerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
+bool AerialRobotHWSim::InitSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
                                const std::string& robot_namespace, ros::NodeHandle model_nh,
                                const urdf::Model* const urdf_model,
-                               std::vector<transmission_interface::TransmissionInfo> transmissions)
+                               std::vector<transmission_interface::TransmissionInfo> transmissions, bool ignore_actuators)
 {
   /* separate rotor transmissions and standard transmissions */
   std::vector<transmission_interface::TransmissionInfo> standard_transmissions;
@@ -37,7 +37,7 @@ bool AerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::
   }
 
   /* Initialize standard joint handlers */
-  DefaultRobotHWSim::initSim(m_ptr, d_ptr, mujoco_env_ptr, robot_namespace, model_nh, urdf_model,
+  DefaultRobotHWSim::InitSim(m_ptr, d_ptr, mujoco_env_ptr, robot_namespace, model_nh, urdf_model,
                              standard_transmissions);
 
   /* get entire mass */
@@ -74,7 +74,7 @@ bool AerialRobotHWSim::initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::
   return true;
 }
 
-void AerialRobotHWSim::readSim(ros::Time time, ros::Duration period)
+void AerialRobotHWSim::ReadSim(ros::Time time, ros::Duration period)
 {
   /* get the pose of the fc site in mujoco, and set it as the ground truth value for spinal interface */
   int fc_id = mj_name2id(m_ptr_, mjtObj_::mjOBJ_SITE, "fc");
@@ -155,13 +155,13 @@ void AerialRobotHWSim::readSim(ros::Time time, ros::Duration period)
     last_mocap_time_ = time;
   }
 
-  DefaultRobotHWSim::readSim(time, period);
+  DefaultRobotHWSim::ReadSim(time, period);
 }
 
-void AerialRobotHWSim::writeSim(ros::Time time, ros::Duration period)
+void AerialRobotHWSim::WriteSim(ros::Time time, ros::Duration period)
 {
   // normal joints control by default robot hw sim
-  DefaultRobotHWSim::writeSim(time, period);
+  DefaultRobotHWSim::WriteSim(time, period);
 
   // set rotor force got from spinal interface to mujoco actuator
   for (int i = 0; i < spinal_interface_.getMotorNum(); i++)
