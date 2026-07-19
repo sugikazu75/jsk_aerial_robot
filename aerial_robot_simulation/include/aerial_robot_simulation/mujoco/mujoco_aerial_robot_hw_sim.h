@@ -3,7 +3,7 @@
 #include <aerial_robot_simulation/mujoco/mujoco_spinal_interface.h>
 #include <aerial_robot_simulation/noise_model.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <mujoco_ros_control/default_robot_hw_sim.h>
+#include <mujoco_ros_control/default_robot_hw_sim.hpp>
 #include <nav_msgs/Odometry.h>
 
 namespace mujoco_ros::control
@@ -16,13 +16,13 @@ public:
   {
   }
 
-  bool initSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
+  bool InitSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
                const std::string& robot_namespace, ros::NodeHandle model_nh, const urdf::Model* const urdf_model,
-               std::vector<transmission_interface::TransmissionInfo> transmissions) override;
+               std::vector<transmission_interface::TransmissionInfo> transmissions, bool ignore_actuators = false) override;
 
-  void readSim(ros::Time time, ros::Duration period) override;
+  void ReadSim(ros::Time time, ros::Duration period) override;
 
-  void writeSim(ros::Time time, ros::Duration period) override;
+  void WriteSim(ros::Time time, ros::Duration period) override;
 
 protected:
   hardware_interface::MujocoSpinalInterface spinal_interface_;

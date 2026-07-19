@@ -8,7 +8,7 @@
 namespace mujoco_ros
 {
 
-bool ThrustVisualizerPlugin::load(const mjModel* model, mjData* /*data*/)
+bool ThrustVisualizerPlugin::Load(const mjModel* model, mjData* /*data*/)
 {
   applyVisualDefaults(model);
   if (!configureFromParams())
@@ -29,11 +29,11 @@ bool ThrustVisualizerPlugin::load(const mjModel* model, mjData* /*data*/)
   return true;
 }
 
-void ThrustVisualizerPlugin::reset()
+void ThrustVisualizerPlugin::Reset()
 {
 }
 
-void ThrustVisualizerPlugin::renderCallback(const mjModel* model, mjData* data, mjvScene* scene)
+void ThrustVisualizerPlugin::RenderCallback(const mjModel* model, mjData* data, mjvScene* scene)
 {
   for (const auto& arrow : arrows_)
   {

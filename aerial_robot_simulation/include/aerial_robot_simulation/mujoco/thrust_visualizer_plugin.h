@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <mujoco_ros/plugin_utils.h>
+#include <mujoco_ros/ros_one/plugin_utils.hpp>
 
 namespace mujoco_ros
 {
@@ -15,9 +15,9 @@ public:
   ThrustVisualizerPlugin() = default;
   ~ThrustVisualizerPlugin() override = default;
 
-  bool load(const mjModel* model, mjData* data) override;
-  void reset() override;
-  void renderCallback(const mjModel* model, mjData* data, mjvScene* scene) override;
+  bool Load(const mjModel* model, mjData* data) override;
+  void Reset() override;
+  void RenderCallback(const mjModel* model, mjData* data, mjvScene* scene) override;
 
 private:
   struct ArrowSource
