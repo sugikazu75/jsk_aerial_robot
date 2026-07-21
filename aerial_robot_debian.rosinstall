@@ -65,7 +65,7 @@
 - git:
     local-name: mujoco_ros_pkgs
     uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
-    version: PR/hybrid-devel/depend_mujoco
+    version: devel
 
 # pinocchio
 - git:
