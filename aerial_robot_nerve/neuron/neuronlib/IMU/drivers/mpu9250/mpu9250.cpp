@@ -18,11 +18,11 @@ void MPU9250::init(SPI_HandleTypeDef* hspi)
 {
   IMU::init(hspi);
 
-  ahb_tx_suspend_flag_ = false;
+  // ahb_tx_suspend_flag_ = false;
 
   for(int i =0; i < SENSOR_DATA_LENGTH; i++)
     {
-      dummy_[i] = 0;
+      // dummy_[i] = 0;
       adc_[i] = 0;
     }
 

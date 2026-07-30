@@ -71,7 +71,7 @@ osSemaphoreId canTxSemHandle;
 /* USER CODE BEGIN PV */
 osMailQId canMsgMailHandle;
 
-IMU imu_;
+MPU9250 imu_;
 Motor motor_;
 Servo servo_;
 /* USER CODE END PV */
@@ -201,7 +201,7 @@ int main(void)
   }
 
   motor_ = Motor(slave_id);
-  imu_ = IMU(slave_id);
+  imu_ = MPU9250(slave_id);
   servo_ = Servo(slave_id);
 
   Initializer initializer(slave_id, servo_, imu_);
