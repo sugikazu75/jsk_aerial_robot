@@ -65,7 +65,7 @@ extern osMutexId servoMutexHandle;
 bool start_process_flag_ = false;
 bool receive_flag_ = false;
 Motor motor_;
-IMU imu_;
+MPU9250 imu_;
 Servo servo_;
 
 
@@ -207,7 +207,7 @@ int main(void)
     return 0;
   }
   motor_ = Motor(slave_id);
-  imu_ = IMU(slave_id);
+  imu_ = MPU9250(slave_id);
   servo_ = Servo(slave_id);
 
   Initializer initializer(slave_id, servo_, imu_);
