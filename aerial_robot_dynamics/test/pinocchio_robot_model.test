@@ -1,5 +1,7 @@
 <launch>
   <arg name="link_num" default="4"/>
+  <arg name="rostest" default="True"/>
+  <arg name="gtest_args" default=""/>
 
   <include file="$(find aerial_robot_dynamics)/launch/set_robot_description.launch">
     <arg name="link_num" value="$(arg link_num)"/>
@@ -8,9 +10,32 @@
   <param name="dynamics/is_floating_base" value="false"/>
   <param name="dynamics/thrust_hessian_weight" value="1.0"/>
 
-  <test test-name="pinocchio_robot_model_gtest"
-        pkg="aerial_robot_dynamics"
-        type="pinocchio_robot_model_gtest"
-        time-limit="180.0"
-        />
+  <!-- test codes -->
+  <group if="$(arg rostest)">
+    <test test-name="pinocchio_robot_model_gtest"
+          pkg="aerial_robot_dynamics"
+          type="pinocchio_robot_model_gtest"
+          time-limit="180.0"
+          args="$(arg gtest_args)"
+          >
+      <param name="verbose" value="false"/>
+      <param name="trials" value="3"/>
+    </test>
+  </group>
+
+  <!-- run the same gtest as a plain node, to debug by hand:
+       roslaunch aerial_robot_dynamics pinocchio_robot_model.test rostest:=false -->
+  <group unless="$(arg rostest)">
+    <node name="pinocchio_robot_model_test_node"
+          pkg="aerial_robot_dynamics"
+          type="pinocchio_robot_model_gtest"
+          output="screen"
+          required="true"
+          args="$(arg gtest_args)"
+          >
+      <param name="verbose" value="true"/>
+      <param name="trials" value="1"/>
+    </node>
+  </group>
+
 </launch>

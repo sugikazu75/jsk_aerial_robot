@@ -11,22 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(OsqpEigen REQUIRED)
-find_package(OpenMP REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 
-if(OPENMP_FOUND)
-  message(STATUS "OpenMP found.")
+option(BUILD_BENCH "Build Benchmark Code" OFF)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
-
-option(BUILD_TESTING "Build Test Code" OFF)
-option(BUILD_BENCHMARK "Build Benchmark Code" OFF)
-
-function(configure_aerial_robot_dynamics_target target_name)
-  target_compile_options(${target_name} PRIVATE -O3 -g -DNDEBUG)
-  if(OPENMP_FOUND AND NOT TARGET OpenMP::OpenMP_CXX)
-    target_compile_options(${target_name} PRIVATE ${OpenMP_CXX_FLAGS})
-  endif()
-endfunction()
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
 
 catkin_package(
   INCLUDE_DIRS include
@@ -39,35 +31,36 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${OsqpEigen_INCLUDE_DIRS}
   ${urdfdom_headers_INCLUDE_DIRS}
   )
 
 add_library(robot_model src/robot_model.cpp)
-configure_aerial_robot_dynamics_target(robot_model)
 target_link_libraries(robot_model
   ${catkin_LIBRARIES}
-  ${OsqpEigen_LIBRARIES}
   pinocchio::pinocchio
+  OsqpEigen::OsqpEigen
   )
-if(OPENMP_FOUND)
-  if(TARGET OpenMP::OpenMP_CXX)
-    target_link_libraries(robot_model OpenMP::OpenMP_CXX)
-  else()
-    target_link_libraries(robot_model ${OpenMP_CXX_FLAGS})
-  endif()
-endif()
+
+install(TARGETS robot_model
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
 install(DIRECTORY launch scripts
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
 )
 
-if(BUILD_BENCHMARK)
+if(BUILD_BENCH)
   add_subdirectory(benchmark)
 endif()
 
-if(BUILD_TESTING AND CATKIN_ENABLE_TESTING)
+if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
   add_subdirectory(test)
 endif()
