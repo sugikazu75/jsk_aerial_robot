@@ -23,19 +23,4 @@
     </test>
   </group>
 
-  <!-- run the same gtest as a plain node, to debug by hand:
-       roslaunch aerial_robot_dynamics pinocchio_robot_model.test rostest:=false -->
-  <group unless="$(arg rostest)">
-    <node name="pinocchio_robot_model_test_node"
-          pkg="aerial_robot_dynamics"
-          type="pinocchio_robot_model_gtest"
-          output="screen"
-          required="true"
-          args="$(arg gtest_args)"
-          >
-      <param name="verbose" value="true"/>
-      <param name="trials" value="1"/>
-    </node>
-  </group>
-
 </launch>
