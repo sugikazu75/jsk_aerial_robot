@@ -31,6 +31,8 @@ endfunction()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES robot_model
+  CATKIN_DEPENDS roscpp urdf
+  CFG_EXTRAS aerial_robot_dynamics-extras.cmake
   )
 
 include_directories(
