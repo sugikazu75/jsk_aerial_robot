@@ -48,10 +48,9 @@ TEST(TauExtByThrustDerivativeQDerivatives, MatchNumericalDerivatives)
 
     for (int i = 0; i < robot_model.getModel()->nv; i++)
     {
-      EXPECT_LT((tauext_partial_thrust_partial_q_ana.at(i) - tauext_partial_thrust_partial_q_num.at(i))
-                    .cwiseAbs()
-                    .maxCoeff(),
-                1e-4)
+      EXPECT_LT(
+          (tauext_partial_thrust_partial_q_ana.at(i) - tauext_partial_thrust_partial_q_num.at(i)).cwiseAbs().maxCoeff(),
+          1e-4)
           << "tauext_partial_thrust_partial_q_ana[" << i << "] is not equal to tauext_partial_thrust_partial_q_num["
           << i << "]";
     }
