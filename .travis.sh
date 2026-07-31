@@ -13,18 +13,9 @@ if [[ "$ROS_DISTRO" ==  "one" ]]; then
 else
     sudo sh -c "echo \"deb ${REPOSITORY} `lsb_release -cs` main\" > /etc/apt/sources.list.d/ros-latest.list"
     curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
-
-    if [[ "$ROS_DISTRO" ==  "noetic" ]]; then
-        # focal ships CMake 3.16, but pinocchio needs >= 3.22. Get 3.31 from Kitware (4.x breaks cmake_minimum_required < 3.5)
-        curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg
-        sudo sh -c "echo \"deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ `lsb_release -cs` main\" > /etc/apt/sources.list.d/kitware.list"
-        printf 'Package: cmake cmake-data cmake-curses-gui cmake-qt-gui\nPin: version 3.*\nPin-Priority: 1001\n' | sudo tee /etc/apt/preferences.d/kitware-cmake3
-    fi
-
     sudo apt-get update -qq
 
     if [[ "$ROS_DISTRO" ==  "noetic" ]]; then
-        sudo apt-get install -y -q cmake
         sudo apt-get install -y -q python3-catkin-pkg python3-catkin-tools python3-rosdep python3-wstool python3-rosinstall-generator python3-osrf-pycommon python-is-python3
     else
         sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator
