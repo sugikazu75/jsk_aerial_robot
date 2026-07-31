@@ -20,8 +20,8 @@
     <axis xyz="0 0 1"/>
   </joint>
 
+  <xacro:property name="link_length" value="0.5"/>
   <xacro:macro name="link" params="self child">
-    <xacro:property name="link_length" value="0.5"/>
     <xacro:property name="link_width" value="0.05"/>
     <xacro:property name="link_mass" value="0.5"/>
     <xacro:property name="min_force" value="0.0"/>
@@ -36,6 +36,15 @@
             iyy="${1/12 * link_mass * (link_length * link_length + link_width * link_width)}" iyz="0.0"
             izz="${1/12 * link_mass * (link_length * link_length + link_width * link_width)}"/>
       </inertial>
+      <visual>
+        <origin xyz="${link_length / 2} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry>
+          <cylinder length="${link_length}" radius="0.02"/>
+        </geometry>
+        <material name="brack">
+          <color rgba="0.0 0.0 0.0 1.0"/>
+        </material>
+      </visual>
     </link>
 
     <link name="gimbal${self}_roll_link">
@@ -86,6 +95,15 @@
             iyy="0.00001" iyz="0.0"
             izz="0.00002"/>
       </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <cylinder length="0.02" radius="${link_length/4}"/>
+        </geometry>
+        <material name="red">
+          <color rgba="1.0 0.0 0.0 1.0"/>
+        </material>
+      </visual>
     </link>
 
     <joint name="rotor${self}" type="continuous">
@@ -131,6 +149,21 @@
   <xacro:macro name="loop_links" params="current total">
     <xacro:if value="${current == total}">
       <xacro:link self="${current}" child="${current}"/>
+      <link name="link${current}_end">
+        <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <mass value="0.00001"/>
+          <inertia
+              ixx="0.000001" ixy="0.0" ixz="0.0"
+              iyy="0.000001" iyz="0.0"
+              izz="0.000002"/>
+        </inertial>
+      </link>
+      <joint name="link${current}_end_joint" type="fixed">
+        <parent link="link${current}"/>
+        <child link="link${current}_end"/>
+        <origin xyz="${link_length} 0 0" rpy="0 0 0"/>
+      </joint>
     </xacro:if>
 
     <xacro:unless value="${current == total}">

@@ -2,31 +2,34 @@
 
 using namespace aerial_robot_dynamics;
 
-PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
+PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
+                                         bool is_floating_base)
+  : PinocchioRobotModel(robot_description, pinocchio_robot_description, is_floating_base, Config())
 {
-  is_floating_base_ = is_floating_base;
+}
 
+PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
+                                         bool is_floating_base, const Config& config)
+  : robot_description_(robot_description)
+  , pinocchio_robot_description_(pinocchio_robot_description)
+  , is_floating_base_(is_floating_base)
+  , config_(config)
+{
   // Initialize the model and data
   model_ = std::make_shared<pinocchio::Model>();
 
-  if (!urdf_.initParam("robot_description"))
+  if (!urdf_.initString(robot_description_))
   {
-    ROS_ERROR("Failed to extract urdf model from rosparam");
+    std::cout << "Failed to extract urdf model from string." << std::endl;
     return;
   }
   std::vector<urdf::LinkSharedPtr> urdf_links;
   urdf_.getLinks(urdf_links);
 
-  // Initialize model with URDF file
-  std::string pinocchio_robot_description = "";
-  while (!getRobotModelXml("pinocchio_robot_description", pinocchio_robot_description))
-  {
-  }
-
   if (is_floating_base_)
-    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description, pinocchio::JointModelFreeFlyer(), *model_);
+    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description_, pinocchio::JointModelFreeFlyer(), *model_);
   else
-    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description, *model_);
+    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description_, *model_);
 
   if (is_floating_base_)
   {
@@ -55,13 +58,13 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
 
   // Parse the URDF string to xml
   TiXmlDocument robot_model_xml;
-  robot_model_xml.Parse(pinocchio_robot_description.c_str());
+  robot_model_xml.Parse(pinocchio_robot_description_.c_str());
 
   // get baselink name from urdf
   TiXmlElement* baselink_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("baselink");
   std::string baselink;
   if (!baselink_attr)
-    ROS_DEBUG("Can not get baselink attribute from urdf model");
+    std::cout << "Can not get baselink attribute from urdf model" << std::endl;
   else
     baselink = std::string(baselink_attr->Attribute("name"));
   std::cout << "Baselink name: " << baselink << std::endl;
@@ -69,7 +72,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
   // get rotor property
   TiXmlElement* m_f_rate_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("m_f_rate");
   if (!m_f_rate_attr)
-    ROS_ERROR("Can not get m_f_rate attribute from urdf model");
+    std::cout << "Can not get m_f_rate attribute from urdf model" << std::endl;
   else
     m_f_rate_attr->Attribute("value", &m_f_rate_);
   std::cout << "m_f_rate: " << m_f_rate_ << std::endl;
@@ -128,7 +131,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
   {
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
+    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
     pinocchio::SE3 w_M_rotor = data_->oMf[rotor_frame_index];
     pinocchio::SE3 w_M_joint = data_->oMi[rotor_parent_joint_index];
@@ -182,17 +185,13 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
     std::cout << frame_name << std::endl;
   }
 
-  // Get parameters from ROS parameter server
-  ros::NodeHandle nh = ros::NodeHandle();
-  ros::NodeHandle dynamics_nh(nh, "dynamics");
-  getParam<double>(dynamics_nh, "thrust_hessian_weight", thrust_hessian_weight_, 1.0);
-  std::cout << "hessian weight: " << thrust_hessian_weight_ << std::endl;
+  std::cout << "hessian weight: " << config_.thrust_hessian_weight << std::endl;
 }
 
 Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
                                                      const Eigen::VectorXd& tau, Eigen::VectorXd& thrust)
 {
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
 
   // Compute the forward dynamics with external forces
   Eigen::VectorXd a = pinocchio::aba(*model_, *data_, q, v, tau, fext, pinocchio::Convention::LOCAL);
@@ -203,7 +202,7 @@ Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, c
 Eigen::MatrixXd PinocchioRobotModel::forwardDynamicsDerivatives(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
                                                                 const Eigen::VectorXd& tau, Eigen::VectorXd& thrust)
 {
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
 
   // Compute the forward dynamics with external forces
   pinocchio::computeABADerivatives(*model_, *data_, q, v, tau, fext);
@@ -227,7 +226,7 @@ bool PinocchioRobotModel::inverseDynamics(const Eigen::VectorXd& q, const Eigen:
   // make hessian matrix
   Eigen::MatrixXd H = Eigen::MatrixXd::Zero(n_variables, n_variables);
   H.setIdentity();
-  H.bottomRightCorner(rotor_num_, rotor_num_) *= thrust_hessian_weight_;
+  H.bottomRightCorner(rotor_num_, rotor_num_) *= config_.thrust_hessian_weight;
 
   // make gradient vector
   gradient_ = Eigen::VectorXd::Zero(n_variables);
@@ -291,109 +290,6 @@ bool PinocchioRobotModel::inverseDynamics(const Eigen::VectorXd& q, const Eigen:
   return ok;
 }
 
-bool PinocchioRobotModel::inverseDynamicsDerivatives(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
-                                                     const Eigen::VectorXd& a, Eigen::MatrixXd& id_partial_dq,
-                                                     Eigen::MatrixXd& id_partial_dv, Eigen::MatrixXd& id_partial_da)
-{
-  // make solver parameters
-  int n_variables = model_->nv + rotor_num_;
-  int n_ineq_constraints = model_->nv + rotor_num_;  // box constraint
-  int n_eq_constraints = model_->nv;                 // rnea constraint
-  int n_constraints = n_ineq_constraints + n_eq_constraints;
-
-  // Compute the inverse dynamics with external forces
-  Eigen::VectorXd id_solution;
-  bool ok = this->inverseDynamics(q, v, a, id_solution);
-  Eigen::VectorXd id_solution_thrust = id_solution.tail(rotor_num_);
-  Eigen::VectorXd id_dual_solution = id_solver_.getDualSolution();
-  Eigen::VectorXd id_ineq_dual_solution = id_dual_solution.head(n_ineq_constraints);
-  Eigen::VectorXd id_eq_dual_solution = id_dual_solution.tail(n_eq_constraints);
-
-  int n_active_ineq_constraints = 0;
-  for (int i = 0; i < n_ineq_constraints; i++)
-  {
-    if (fabs(id_dual_solution(i)) > 1e-6)
-    {
-      n_active_ineq_constraints++;
-    }
-  }
-
-  // hessian
-  Eigen::MatrixXd H = Eigen::MatrixXd::Zero(n_variables, n_variables);
-  H.setIdentity();
-  H.bottomRightCorner(rotor_num_, rotor_num_) *= thrust_hessian_weight_;
-
-  // equality constraint matrix
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(n_eq_constraints, n_variables);
-  A.setIdentity();                                                                                  // box constraint
-  A.block(0, model_->nv, n_eq_constraints, rotor_num_) = this->computeTauExtByThrustDerivative(q);  // thrust constraint
-
-  // active inequality constraint matrix and bound
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(n_active_ineq_constraints, n_variables);
-  int last_row = 0;
-  for (int i = 0; i < n_ineq_constraints; i++)
-  {
-    if (fabs(id_dual_solution(i)) > 1e-6)
-    {
-      C.row(last_row) = A.row(i);
-      last_row++;
-    }
-  }
-
-  // make KKT condition matrix
-  Eigen::MatrixXd K = Eigen::MatrixXd::Zero(n_variables + n_eq_constraints + n_active_ineq_constraints,
-                                            n_variables + n_eq_constraints + n_active_ineq_constraints);
-  K.block(0, 0, n_variables, n_variables) = H;
-  K.block(n_variables, 0, n_eq_constraints, n_variables) = A;
-  K.block(n_variables + n_eq_constraints, 0, n_active_ineq_constraints, n_variables) = C;
-  K.block(0, n_variables, n_variables, n_eq_constraints) = A.transpose();
-  K.block(0, n_variables + n_eq_constraints, n_variables, n_active_ineq_constraints) = C.transpose();
-
-  Eigen::SparseMatrix<double> K_s = K.sparseView();
-  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> K_ldlt;
-  K_ldlt.compute(K_s);
-
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(id_solution_thrust);
-  pinocchio::computeRNEADerivatives(*model_, *data_, q, v, a);  // not sure we need set fext
-
-  Eigen::MatrixXd rnea_partial_dq = data_->dtau_dq;
-  Eigen::MatrixXd rnea_partial_dv = data_->dtau_dv;
-  Eigen::MatrixXd rnea_partial_da = data_->M;
-  rnea_partial_da.triangularView<Eigen::StrictlyLower>() = rnea_partial_da.transpose();
-
-  Eigen::MatrixXd kkt_sensitivity =
-      Eigen::MatrixXd::Zero(n_variables + n_eq_constraints + n_active_ineq_constraints,
-                            model_->nv);  // the number of cols is equal to parameters = model_->nv
-
-  std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q = this->computeTauExtByThrustDerivativeQDerivatives(q);
-  std::vector<Eigen::MatrixXd> A_partial_dq(model_->nv, Eigen::MatrixXd::Zero(n_eq_constraints, n_variables));
-  std::vector<Eigen::MatrixXd> A_partial_dq_transpose(model_->nv, Eigen::MatrixXd::Zero(n_variables, n_eq_constraints));
-  for (int i = 0; i < tauext_partial_thrust_partial_q.size(); i++)
-  {
-    A_partial_dq.at(i).block(0, model_->nv, n_eq_constraints, rotor_num_) = tauext_partial_thrust_partial_q.at(i);
-    A_partial_dq_transpose.at(i) = A_partial_dq.at(i).transpose();
-  }
-  Eigen::MatrixXd A_partial_dq_transpose_lambda_contraction =
-      tensorContraction(A_partial_dq_transpose, id_eq_dual_solution);
-  Eigen::MatrixXd A_partial_dq_u_contraction = tensorContraction(A_partial_dq, id_solution);
-
-  kkt_sensitivity.setZero();
-  kkt_sensitivity.topRows(n_variables) = -A_partial_dq_transpose_lambda_contraction;
-  ;
-  kkt_sensitivity.block(n_variables, 0, n_eq_constraints, model_->nv) = -A_partial_dq_u_contraction + rnea_partial_dq;
-  id_partial_dq = K_ldlt.solve(kkt_sensitivity).topRows(n_variables);
-
-  kkt_sensitivity.setZero();
-  kkt_sensitivity.block(n_variables, 0, n_eq_constraints, model_->nv) = rnea_partial_dv;
-  id_partial_dv = K_ldlt.solve(kkt_sensitivity).topRows(n_variables);
-
-  kkt_sensitivity.setZero();
-  kkt_sensitivity.block(n_variables, 0, n_eq_constraints, model_->nv) = rnea_partial_da;
-  id_partial_da = K_ldlt.solve(kkt_sensitivity).topRows(n_variables);
-
-  return ok;
-}
-
 std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativeQDerivatives(const Eigen::VectorXd& q)
 {
   std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q(model_->nv,
@@ -406,7 +302,7 @@ std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativ
     // get rotor joint index
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
+    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
     // get rotor joint kinematic hessian
     rotor_i_parent_joint_hessian.setZero();
@@ -494,23 +390,22 @@ Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivative(const Eige
                                                                       const Eigen::VectorXd& thrust)
 {
   // Compute RNEA derivatives with external forces
-  pinocchio::container::aligned_vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
   pinocchio::computeRNEADerivatives(*zero_gravity_model_, *data_, q, Eigen::VectorXd::Zero(model_->nv),
                                     Eigen::VectorXd::Zero(model_->nv), fext);
 
   return -data_->dtau_dq;
 }
 
-pinocchio::container::aligned_vector<pinocchio::Force>
-PinocchioRobotModel::computeFExtByThrust(const Eigen::VectorXd& thrust)
+std::vector<pinocchio::Force> PinocchioRobotModel::computeFExtByThrust(const Eigen::VectorXd& thrust)
 {
   // Compute external wrench by thrust
-  pinocchio::container::aligned_vector<pinocchio::Force> fext(model_->njoints, pinocchio::Force::Zero());
+  std::vector<pinocchio::Force> fext(model_->njoints, pinocchio::Force::Zero());
   for (int i = 0; i < rotor_num_; i++)
   {
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parent;
+    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
     // LOCAL
     pinocchio::Force rotor_frame_wrench;
@@ -525,19 +420,6 @@ PinocchioRobotModel::computeFExtByThrust(const Eigen::VectorXd& thrust)
   }
 
   return fext;
-}
-
-bool PinocchioRobotModel::getRobotModelXml(const std::string& param_name, std::string& pinocchio_robot_description,
-                                           ros::NodeHandle nh)
-{
-  // This function should retrieve the robot model XML string from the parameter server
-  if (!nh.getParam(param_name, pinocchio_robot_description))
-  {
-    ROS_ERROR_STREAM_THROTTLE(1.0, "Failed to get " << param_name << " from ros parameter server");
-    return false;
-  }
-  else
-    return true;
 }
 
 Eigen::VectorXd PinocchioRobotModel::getResetConfiguration()

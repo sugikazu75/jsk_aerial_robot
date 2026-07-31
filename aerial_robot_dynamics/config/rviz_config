@@ -54,19 +54,106 @@ Visualization Manager:
     - Alpha: 0.5
       Class: rviz/RobotModel
       Collision Enabled: false
-      Enabled: false
+      Enabled: true
       Links:
-        All Links Enabled:
-          {}
+        All Links Enabled: true
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        gimbal1_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal1_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal2_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal2_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal3_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal3_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal4_pitch_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        gimbal4_roll_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        joint1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        joint2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        joint3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        root:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        thrust1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        thrust2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        thrust3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        thrust4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
-      Value: false
+      Value: true
       Visual Enabled: true
     - Class: rviz/TF
       Enabled: true
@@ -116,9 +203,9 @@ Visualization Manager:
         thrust4:
           Value: true
       Marker Alpha: 1
-      Marker Scale: 0.6000000238418579
+      Marker Scale: 0.30000001192092896
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
@@ -150,7 +237,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 48; 48; 48
+    Background Color: 255; 255; 255
     Default Light: true
     Fixed Frame: root
     Frame Rate: 30
@@ -212,5 +299,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1200
-  X: 4059
-  Y: 514
+  X: 4027
+  Y: 482
