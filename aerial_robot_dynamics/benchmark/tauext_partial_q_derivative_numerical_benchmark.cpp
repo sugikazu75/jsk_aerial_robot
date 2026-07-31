@@ -12,7 +12,7 @@ int main(int argc, char** argv)
 
   aerial_robot_dynamics::PinocchioRobotModel pinocchio_robot_model(
       pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription(),
-      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), true, 1.0);
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), true);
 
   const int DATA_SIZE = 4096;
   std::vector<Eigen::VectorXd> q_vec(DATA_SIZE);

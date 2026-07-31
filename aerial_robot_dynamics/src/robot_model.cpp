@@ -3,11 +3,11 @@
 using namespace aerial_robot_dynamics;
 
 PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
-                                         bool is_floating_base, double thrust_hessian_weight)
+                                         bool is_floating_base, const Config& config)
   : robot_description_(robot_description)
   , pinocchio_robot_description_(pinocchio_robot_description)
   , is_floating_base_(is_floating_base)
-  , thrust_hessian_weight_(thrust_hessian_weight)
+  , config_(config)
 {
   // Initialize the model and data
   model_ = std::make_shared<pinocchio::Model>();
@@ -179,7 +179,7 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
     std::cout << frame_name << std::endl;
   }
 
-  std::cout << "hessian weight: " << thrust_hessian_weight_ << std::endl;
+  std::cout << "hessian weight: " << config_.thrust_hessian_weight << std::endl;
 }
 
 Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
@@ -220,7 +220,7 @@ bool PinocchioRobotModel::inverseDynamics(const Eigen::VectorXd& q, const Eigen:
   // make hessian matrix
   Eigen::MatrixXd H = Eigen::MatrixXd::Zero(n_variables, n_variables);
   H.setIdentity();
-  H.bottomRightCorner(rotor_num_, rotor_num_) *= thrust_hessian_weight_;
+  H.bottomRightCorner(rotor_num_, rotor_num_) *= config_.thrust_hessian_weight;
 
   // make gradient vector
   gradient_ = Eigen::VectorXd::Zero(n_variables);

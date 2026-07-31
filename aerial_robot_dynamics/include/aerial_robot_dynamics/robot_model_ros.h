@@ -31,12 +31,14 @@ public:
 
     ros::NodeHandle dynamics_nh(nh_, "dynamics");
     bool is_floating_base = true;
-    double thrust_hessian_weight = 1.0;
     getParam<bool>(dynamics_nh, "is_floating_base", is_floating_base, true);
-    getParam<double>(dynamics_nh, "thrust_hessian_weight", thrust_hessian_weight, 1.0);
 
-    pinocchio_robot_model_ = std::make_shared<PinocchioRobotModel>(robot_description, pinocchio_robot_description,
-                                                                   is_floating_base, thrust_hessian_weight);
+    // the defaults of Config are kept for the parameters which are not set
+    PinocchioRobotModel::Config config;
+    getParam<double>(dynamics_nh, "thrust_hessian_weight", config.thrust_hessian_weight, config.thrust_hessian_weight);
+
+    pinocchio_robot_model_ =
+        std::make_shared<PinocchioRobotModel>(robot_description, pinocchio_robot_description, is_floating_base, config);
   }
   ~PinocchioRobotModelRos() = default;
 

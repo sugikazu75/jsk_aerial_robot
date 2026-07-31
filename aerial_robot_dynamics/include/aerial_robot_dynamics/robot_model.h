@@ -26,8 +26,13 @@ namespace aerial_robot_dynamics
 class PinocchioRobotModel
 {
 public:
+  struct Config
+  {
+    double thrust_hessian_weight = 1.0;
+  };
+
   PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description, bool is_floating_base,
-                      double thrust_hessian_weight);
+                      const Config& config = Config());
   ~PinocchioRobotModel() = default;
 
   std::shared_ptr<pinocchio::Model> getModel() const
@@ -102,9 +107,13 @@ public:
   {
     return thrust_lower_limits_;
   }
+  const Config& getConfig() const
+  {
+    return config_;
+  }
   const double getThrustHessianWeight() const
   {
-    return thrust_hessian_weight_;
+    return config_.thrust_hessian_weight;
   }
   Eigen::VectorXd getResetConfiguration();
 
@@ -135,7 +144,6 @@ private:
   Eigen::VectorXd thrust_upper_limits_;
   Eigen::VectorXd thrust_lower_limits_;
 
-  // ID solver parameters
-  double thrust_hessian_weight_ = 1.0;
+  Config config_;
 };
 }  // namespace aerial_robot_dynamics
