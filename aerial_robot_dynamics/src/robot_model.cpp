@@ -3,6 +3,12 @@
 using namespace aerial_robot_dynamics;
 
 PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
+                                         bool is_floating_base)
+  : PinocchioRobotModel(robot_description, pinocchio_robot_description, is_floating_base, Config())
+{
+}
+
+PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
                                          bool is_floating_base, const Config& config)
   : robot_description_(robot_description)
   , pinocchio_robot_description_(pinocchio_robot_description)

@@ -31,8 +31,9 @@ public:
     double thrust_hessian_weight = 1.0;
   };
 
+  PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description, bool is_floating_base);
   PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description, bool is_floating_base,
-                      const Config& config = Config());
+                      const Config& config);
   ~PinocchioRobotModel() = default;
 
   std::shared_ptr<pinocchio::Model> getModel() const
