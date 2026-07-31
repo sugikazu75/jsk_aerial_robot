@@ -2,31 +2,34 @@
 
 using namespace aerial_robot_dynamics;
 
-PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
+PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
+                                         bool is_floating_base)
+  : PinocchioRobotModel(robot_description, pinocchio_robot_description, is_floating_base, Config())
 {
-  is_floating_base_ = is_floating_base;
+}
 
+PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description,
+                                         bool is_floating_base, const Config& config)
+  : robot_description_(robot_description)
+  , pinocchio_robot_description_(pinocchio_robot_description)
+  , is_floating_base_(is_floating_base)
+  , config_(config)
+{
   // Initialize the model and data
   model_ = std::make_shared<pinocchio::Model>();
 
-  if (!urdf_.initParam("robot_description"))
+  if (!urdf_.initString(robot_description_))
   {
-    ROS_ERROR("Failed to extract urdf model from rosparam");
+    std::cout << "Failed to extract urdf model from string." << std::endl;
     return;
   }
   std::vector<urdf::LinkSharedPtr> urdf_links;
   urdf_.getLinks(urdf_links);
 
-  // Initialize model with URDF file
-  std::string pinocchio_robot_description = "";
-  while (!getRobotModelXml("pinocchio_robot_description", pinocchio_robot_description))
-  {
-  }
-
   if (is_floating_base_)
-    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description, pinocchio::JointModelFreeFlyer(), *model_);
+    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description_, pinocchio::JointModelFreeFlyer(), *model_);
   else
-    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description, *model_);
+    pinocchio::urdf::buildModelFromXML(pinocchio_robot_description_, *model_);
 
   if (is_floating_base_)
   {
@@ -55,13 +58,13 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
 
   // Parse the URDF string to xml
   TiXmlDocument robot_model_xml;
-  robot_model_xml.Parse(pinocchio_robot_description.c_str());
+  robot_model_xml.Parse(pinocchio_robot_description_.c_str());
 
   // get baselink name from urdf
   TiXmlElement* baselink_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("baselink");
   std::string baselink;
   if (!baselink_attr)
-    ROS_DEBUG("Can not get baselink attribute from urdf model");
+    std::cout << "Can not get baselink attribute from urdf model" << std::endl;
   else
     baselink = std::string(baselink_attr->Attribute("name"));
   std::cout << "Baselink name: " << baselink << std::endl;
@@ -69,7 +72,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
   // get rotor property
   TiXmlElement* m_f_rate_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("m_f_rate");
   if (!m_f_rate_attr)
-    ROS_ERROR("Can not get m_f_rate attribute from urdf model");
+    std::cout << "Can not get m_f_rate attribute from urdf model" << std::endl;
   else
     m_f_rate_attr->Attribute("value", &m_f_rate_);
   std::cout << "m_f_rate: " << m_f_rate_ << std::endl;
@@ -182,11 +185,7 @@ PinocchioRobotModel::PinocchioRobotModel(bool is_floating_base)
     std::cout << frame_name << std::endl;
   }
 
-  // Get parameters from ROS parameter server
-  ros::NodeHandle nh = ros::NodeHandle();
-  ros::NodeHandle dynamics_nh(nh, "dynamics");
-  getParam<double>(dynamics_nh, "thrust_hessian_weight", thrust_hessian_weight_, 1.0);
-  std::cout << "hessian weight: " << thrust_hessian_weight_ << std::endl;
+  std::cout << "hessian weight: " << config_.thrust_hessian_weight << std::endl;
 }
 
 Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
@@ -227,7 +226,7 @@ bool PinocchioRobotModel::inverseDynamics(const Eigen::VectorXd& q, const Eigen:
   // make hessian matrix
   Eigen::MatrixXd H = Eigen::MatrixXd::Zero(n_variables, n_variables);
   H.setIdentity();
-  H.bottomRightCorner(rotor_num_, rotor_num_) *= thrust_hessian_weight_;
+  H.bottomRightCorner(rotor_num_, rotor_num_) *= config_.thrust_hessian_weight;
 
   // make gradient vector
   gradient_ = Eigen::VectorXd::Zero(n_variables);
@@ -421,19 +420,6 @@ std::vector<pinocchio::Force> PinocchioRobotModel::computeFExtByThrust(const Eig
   }
 
   return fext;
-}
-
-bool PinocchioRobotModel::getRobotModelXml(const std::string& param_name, std::string& pinocchio_robot_description,
-                                           ros::NodeHandle nh)
-{
-  // This function should retrieve the robot model XML string from the parameter server
-  if (!nh.getParam(param_name, pinocchio_robot_description))
-  {
-    ROS_ERROR_STREAM_THROTTLE(1.0, "Failed to get " << param_name << " from ros parameter server");
-    return false;
-  }
-  else
-    return true;
 }
 
 Eigen::VectorXd PinocchioRobotModel::getResetConfiguration()

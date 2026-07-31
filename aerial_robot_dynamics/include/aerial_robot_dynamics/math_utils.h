@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <random>
 #include <vector>
 
 namespace aerial_robot_dynamics

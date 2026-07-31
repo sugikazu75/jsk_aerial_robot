@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <aerial_robot_dynamics/robot_model.h>
+#include <aerial_robot_dynamics/robot_model_ros.h>
 #include <aerial_robot_dynamics/math_utils.h>
 
 int main(int argc, char** argv)
@@ -7,26 +8,11 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "test");
   ros::NodeHandle nh;
 
-  bool verbose = false;
-  bool is_floating_base = true;
-  if (argc > 1)
-  {
-    std::string arg = argv[1];
-    if (arg != "0")
-      verbose = true;
-  }
-  if (argc > 2)
-  {
-    std::string arg = argv[2];
-    if (arg == "0")
-      is_floating_base = false;
-  }
+  aerial_robot_dynamics::PinocchioRobotModelRos pinocchio_robot_model_ros(nh);
 
-  aerial_robot_dynamics::PinocchioRobotModel pinocchio_robot_model(is_floating_base);
-
-  // Test the robot model
-  std::cout << "verbose: " << verbose << std::endl;
-  std::cout << "is_floating_base: " << is_floating_base << std::endl;
+  aerial_robot_dynamics::PinocchioRobotModel pinocchio_robot_model(
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription(),
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), true);
 
   const int DATA_SIZE = 4096;
   std::vector<Eigen::VectorXd> q_vec(DATA_SIZE);
