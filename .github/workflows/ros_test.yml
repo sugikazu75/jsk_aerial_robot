@@ -13,7 +13,7 @@ jobs:
             ROS_DISTRO : one
             DOCKER_IMAGE : ubuntu:noble
           - runs-on: ubuntu-22.04-arm
-            ROS_DISTRO : noetic
+            ROS_DISTRO : one
             DOCKER_IMAGE : ubuntu:jammy
     runs-on: ${{ matrix.runs-on }}
     name: ros_build_test-${{ matrix.runs-on }}-${{ matrix.DOCKER_IMAGE }}
