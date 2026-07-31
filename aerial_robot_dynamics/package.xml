@@ -10,18 +10,18 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>osqp-eigen</build_depend>
-  <build_depend>pinocchio</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>urdf</build_depend>
+  <build_depend>benchmark</build_depend>
+
+  <depend>eigen</depend>
+  <depend>osqp-eigen</depend>
+  <depend>pinocchio</depend>
+  <depend>roscpp</depend>
+  <depend>urdf</depend>
 
   <exec_depend>joint_state_publisher_gui</exec_depend>
-  <exec_depend>osqp-eigen</exec_depend>
-  <exec_depend>pinocchio</exec_depend>
+  <exec_depend>benchmark</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz</exec_depend>
-  <exec_depend>roscpp</exec_depend>
-  <exec_depend>urdf</exec_depend>
   <exec_depend>xacro</exec_depend>
   <test_depend>rostest</test_depend>
 
