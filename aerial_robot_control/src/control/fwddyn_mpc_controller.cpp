@@ -8,6 +8,7 @@
 
 #include <aerial_robot_control/control/fwddyn_mpc_controller.hpp>
 
+#include <aerial_robot_dynamics/robot_model_ros.h>
 #include <tf/transform_datatypes.h>
 #include <aerial_robot_estimation/state_estimation.h>
 
@@ -27,7 +28,10 @@ void FwddynMpcController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
 {
   ControlBase::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
 
-  pinocchio_robot_model_ = std::make_shared<aerial_robot_dynamics::PinocchioRobotModel>(true);
+  aerial_robot_dynamics::PinocchioRobotModelRos pinocchio_robot_model_ros(nh_);
+  pinocchio_robot_model_ = std::make_shared<aerial_robot_dynamics::PinocchioRobotModel>(
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription(),
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), true);
   pin_model_ = pinocchio_robot_model_->getModel();
 
   // load MPC parameters

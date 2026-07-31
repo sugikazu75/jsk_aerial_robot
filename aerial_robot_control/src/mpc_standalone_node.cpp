@@ -8,6 +8,7 @@
 
 #include <aerial_robot_control/control/fwddyn_mpc_control_problem.hpp>
 #include <aerial_robot_dynamics/robot_model.h>
+#include <aerial_robot_dynamics/robot_model_ros.h>
 
 #include <random>
 
@@ -25,7 +26,10 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "mpc_standalone_node");
   ros::NodeHandle nh;
 
-  auto pinocchio_robot_model = std::make_shared<aerial_robot_dynamics::PinocchioRobotModel>(true);
+  aerial_robot_dynamics::PinocchioRobotModelRos pinocchio_robot_model_ros(nh);
+  auto pinocchio_robot_model = std::make_shared<aerial_robot_dynamics::PinocchioRobotModel>(
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription(),
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), true);
   auto pin_model = pinocchio_robot_model->getModel();
   const int rotor_num = pinocchio_robot_model->getRotorNum();
   const int nq = pin_model->nq;
