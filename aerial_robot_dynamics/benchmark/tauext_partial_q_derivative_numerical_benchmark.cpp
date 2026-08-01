@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     aerial_robot_dynamics::addNoise(thrust_vec[i], 0.1);
   }
 
-  benchmark::RegisterBenchmark("BM_tauext_partial_q_numerical", [&](benchmark::State& state) {
+  benchmark::RegisterBenchmark("ThrustGenforceDqNumericalBenchmark", [&](benchmark::State& state) {
     size_t idx = 0;
 
     for (auto _ : state)
