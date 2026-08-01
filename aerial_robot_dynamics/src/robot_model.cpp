@@ -406,6 +406,21 @@ Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivativeStaticTorqu
   return -dtau_dq;
 }
 
+Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivativeHessian(const Eigen::VectorXd& q,
+                                                                             const Eigen::VectorXd& thrust)
+{
+  // hessian based method. thrust_genforce_units_dq * thrust
+  std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q = this->computeTauExtByThrustDerivativeQDerivatives(q);
+
+  Eigen::MatrixXd tauext_by_thrust_q_derivative = Eigen::MatrixXd::Zero(model_->nv, model_->nv);
+  for (int i = 0; i < model_->nv; i++)
+  {
+    tauext_by_thrust_q_derivative.col(i) = tauext_partial_thrust_partial_q.at(i) * thrust;
+  }
+
+  return tauext_by_thrust_q_derivative;
+}
+
 Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivativeNum(const Eigen::VectorXd& q,
                                                                          const Eigen::VectorXd& thrust)
 {

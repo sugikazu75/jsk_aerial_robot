@@ -27,16 +27,12 @@ TEST(TauExtByThrustQDerivative, ThrustGenforceDqRneaHessianComparison)
     Eigen::MatrixXd tauext_by_thrust_q_derivative_hessian = Eigen::MatrixXd::Zero(nv, nv);
     Eigen::MatrixXd tauext_by_thrust_q_derivative_rnea = Eigen::MatrixXd::Zero(nv, nv);
 
-    // hessian based method. thrust_genforce_units_dq * thrust
+    // hessian based method
     {
       auto start = std::chrono::high_resolution_clock::now();
-      std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q =
-          robot_model.computeTauExtByThrustDerivativeQDerivatives(q);  // compute analytical derivatives
-      for (int i = 0; i < nv; i++)
-      {
-        tauext_by_thrust_q_derivative_hessian.col(i) = tauext_partial_thrust_partial_q.at(i) * thrust;
-      }
+      tauext_by_thrust_q_derivative_hessian = robot_model.computeTauExtByThrustQDerivativeHessian(q, thrust);
       auto end = std::chrono::high_resolution_clock::now();
+
       std::cout << "TauExt by Thrust Q Derivative Hessian time: "
                 << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0 << " ms"
                 << std::endl;
@@ -53,6 +49,7 @@ TEST(TauExtByThrustQDerivative, ThrustGenforceDqRneaHessianComparison)
       auto start = std::chrono::high_resolution_clock::now();
       tauext_by_thrust_q_derivative_rnea = robot_model.computeTauExtByThrustQDerivative(q, thrust);
       auto end = std::chrono::high_resolution_clock::now();
+
       std::cout << "TauExt by Thrust Q Derivative RNEA time: "
                 << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() / 1000.0 << " ms"
                 << std::endl;

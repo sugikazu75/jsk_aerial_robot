@@ -34,15 +34,7 @@ int main(int argc, char** argv)
       const auto& thrust = thrust_vec[idx & (DATA_SIZE - 1)];
 
       Eigen::MatrixXd tauext_by_thrust_q_derivative_hessian =
-          Eigen::MatrixXd::Zero(pinocchio_robot_model.getModel()->nv, pinocchio_robot_model.getModel()->nv);
-
-      std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q =
-          pinocchio_robot_model.computeTauExtByThrustDerivativeQDerivatives(q);
-
-      for (int i = 0; i < pinocchio_robot_model.getModel()->nv; i++)
-      {
-        tauext_by_thrust_q_derivative_hessian.col(i) = tauext_partial_thrust_partial_q.at(i) * thrust;
-      }
+          pinocchio_robot_model.computeTauExtByThrustQDerivativeHessian(q, thrust);
 
       benchmark::DoNotOptimize(tauext_by_thrust_q_derivative_hessian);
 

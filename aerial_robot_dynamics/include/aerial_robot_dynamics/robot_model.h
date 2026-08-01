@@ -65,6 +65,7 @@ public:
   }
   Eigen::MatrixXd computeTauExtByThrustQDerivativeRnea(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
   Eigen::MatrixXd computeTauExtByThrustQDerivativeStaticTorque(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
+  Eigen::MatrixXd computeTauExtByThrustQDerivativeHessian(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
   Eigen::MatrixXd computeTauExtByThrustQDerivativeNum(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
 
   const std::string& getRobotDescription() const
