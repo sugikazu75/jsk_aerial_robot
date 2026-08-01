@@ -56,8 +56,13 @@ public:
                                   Eigen::VectorXd& thrust);
   Eigen::MatrixXd forwardDynamicsDerivatives(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
                                              const Eigen::VectorXd& tau, Eigen::VectorXd& thrust);
-  bool inverseDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
-                       Eigen::VectorXd& tau);
+  [[deprecated("Use inverseDynamicsOsqp instead.")]] bool
+  inverseDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a, Eigen::VectorXd& tau)
+  {
+    return inverseDynamicsOsqp(q, v, a, tau);
+  }
+  bool inverseDynamicsOsqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
+                           Eigen::VectorXd& tau);
   bool inverseDynamicsProxqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
                              Eigen::VectorXd& tau);
 

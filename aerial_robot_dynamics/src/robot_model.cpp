@@ -212,8 +212,8 @@ Eigen::MatrixXd PinocchioRobotModel::forwardDynamicsDerivatives(const Eigen::Vec
   return data_->Minv * tauext_partial_thrust;
 }
 
-bool PinocchioRobotModel::inverseDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
-                                          Eigen::VectorXd& tau)
+bool PinocchioRobotModel::inverseDynamicsOsqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
+                                              const Eigen::VectorXd& a, Eigen::VectorXd& tau)
 {
   auto start = std::chrono::high_resolution_clock::now();
 
