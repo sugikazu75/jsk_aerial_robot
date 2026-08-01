@@ -13,7 +13,7 @@ find_package(pinocchio REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 
-option(BUILD_BENCH "Build Benchmark Code" OFF)
+option(BUILD_BENCH "Build Benchmark Code" ON)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
