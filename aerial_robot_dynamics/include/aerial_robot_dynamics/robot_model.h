@@ -36,6 +36,7 @@ public:
   struct Config
   {
     double thrust_hessian_weight = 1.0;
+    bool verbose = true;
   };
 
   PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description, bool is_floating_base);

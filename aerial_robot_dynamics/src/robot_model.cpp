@@ -15,6 +15,8 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
   , is_floating_base_(is_floating_base)
   , config_(config)
 {
+  const bool verbose = config_.verbose;
+
   // Initialize the model and data
   model_ = std::make_shared<pinocchio::Model>();
 
@@ -46,10 +48,13 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
   // Initialize the data structure
   data_ = std::make_shared<pinocchio::Data>(*model_);
 
-  std::cout << "model nq: " << model_->nq << std::endl;
-  std::cout << "model nv: " << model_->nv << std::endl;
-  std::cout << "model njoints: " << model_->njoints << std::endl;
-  std::cout << "model nframes: " << model_->nframes << std::endl;
+  if (verbose)
+  {
+    std::cout << "model nq: " << model_->nq << std::endl;
+    std::cout << "model nv: " << model_->nv << std::endl;
+    std::cout << "model njoints: " << model_->njoints << std::endl;
+    std::cout << "model nframes: " << model_->nframes << std::endl;
+  }
 
   // initialize robot model with neutral configuration
   Eigen::VectorXd q = Eigen::VectorXd::Zero(model_->nq);
@@ -64,18 +69,26 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
   TiXmlElement* baselink_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("baselink");
   std::string baselink;
   if (!baselink_attr)
-    std::cout << "Can not get baselink attribute from urdf model" << std::endl;
+  {
+    if (verbose)
+      std::cout << "Can not get baselink attribute from urdf model" << std::endl;
+  }
   else
     baselink = std::string(baselink_attr->Attribute("name"));
-  std::cout << "Baselink name: " << baselink << std::endl;
+  if (verbose)
+    std::cout << "Baselink name: " << baselink << std::endl;
 
   // get rotor property
   TiXmlElement* m_f_rate_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("m_f_rate");
   if (!m_f_rate_attr)
-    std::cout << "Can not get m_f_rate attribute from urdf model" << std::endl;
+  {
+    if (verbose)
+      std::cout << "Can not get m_f_rate attribute from urdf model" << std::endl;
+  }
   else
     m_f_rate_attr->Attribute("value", &m_f_rate_);
-  std::cout << "m_f_rate: " << m_f_rate_ << std::endl;
+  if (verbose)
+    std::cout << "m_f_rate: " << m_f_rate_ << std::endl;
 
   // get joint torque limits
   joint_torque_limits_.resize(model_->nv);
@@ -107,7 +120,8 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
       }
     }
   }
-  std::cout << "Joint torque limits: " << joint_torque_limits_.transpose() << std::endl;
+  if (verbose)
+    std::cout << "Joint torque limits: " << joint_torque_limits_.transpose() << std::endl;
 
   // get rotor number
   rotor_num_ = 0;
@@ -122,7 +136,8 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
       rotor_num_++;
     }
   }
-  std::cout << "Rotor number: " << rotor_num_ << std::endl;
+  if (verbose)
+    std::cout << "Rotor number: " << rotor_num_ << std::endl;
   std::sort(rotor_names_.begin(), rotor_names_.end());  // alphabetical order
 
   // rotor offset from parent joint
@@ -137,7 +152,8 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
     pinocchio::SE3 w_M_joint = data_->oMi[rotor_parent_joint_index];
     pinocchio::SE3 joint_M_rotor = w_M_joint.inverse() * w_M_rotor;
     joint_M_rotors_.push_back(joint_M_rotor);
-    std::cout << rotor_frame_name << " offset: \n" << joint_M_rotor << std::endl;
+    if (verbose)
+      std::cout << rotor_frame_name << " offset: \n" << joint_M_rotor << std::endl;
   }
 
   // Get thrust limits and rotor direction
@@ -155,7 +171,8 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
           double max_thrust = link->parent_joint->limits->upper;
           double min_thrust = link->parent_joint->limits->lower;
           int direction = link->parent_joint->axis.z;
-          std::cout << rotor_names_.at(i) << " " << min_thrust << " " << max_thrust << " " << direction << std::endl;
+          if (verbose)
+            std::cout << rotor_names_.at(i) << " " << min_thrust << " " << max_thrust << " " << direction << std::endl;
           thrust_upper_limits_(i) = max_thrust;
           thrust_lower_limits_(i) = min_thrust;
           rotor_direction_.at(i) = direction;
@@ -163,29 +180,30 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
       }
     }
   }
-  std::cout << std::endl;
-
-  // Print joint information
-  std::vector<int> q_dims(model_->njoints);
-  int joint_index = 0;
-  std::cout << "joints:" << std::endl;
-  for (int i = 0; i < model_->njoints; i++)
+  if (verbose)
   {
-    std::string joint_type = model_->joints[i].shortname();
-    std::cout << model_->names[i] << " " << joint_type << " "
-              << model_->joints[model_->getJointId(model_->names[i])].idx_q() << std::endl;
-  }
-  std::cout << std::endl;
+    std::cout << std::endl;
 
-  // Print frame information
-  std::cout << "frames:" << std::endl;
-  for (int i = 0; i < model_->nframes; i++)
-  {
-    std::string frame_name = model_->frames[i].name;
-    std::cout << frame_name << std::endl;
-  }
+    // Print joint information
+    std::cout << "joints:" << std::endl;
+    for (int i = 0; i < model_->njoints; i++)
+    {
+      std::string joint_type = model_->joints[i].shortname();
+      std::cout << model_->names[i] << " " << joint_type << " "
+                << model_->joints[model_->getJointId(model_->names[i])].idx_q() << std::endl;
+    }
+    std::cout << std::endl;
 
-  std::cout << "hessian weight: " << config_.thrust_hessian_weight << std::endl;
+    // Print frame information
+    std::cout << "frames:" << std::endl;
+    for (int i = 0; i < model_->nframes; i++)
+    {
+      std::string frame_name = model_->frames[i].name;
+      std::cout << frame_name << std::endl;
+    }
+
+    std::cout << "hessian weight: " << config_.thrust_hessian_weight << std::endl;
+  }
 }
 
 Eigen::VectorXd PinocchioRobotModel::forwardDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
