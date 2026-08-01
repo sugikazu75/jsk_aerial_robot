@@ -9,7 +9,7 @@
 
 using namespace aerial_robot_dynamics;
 
-TEST(TauExtByThrustQDerivative, HessianMatchesRnea)
+TEST(TauExtByThrustQDerivative, ThrustGenforceDqRneaHessianComparison)
 {
   PinocchioRobotModel& robot_model = getTestRobotModel();
   const bool verbose = testVerbose();
@@ -27,7 +27,7 @@ TEST(TauExtByThrustQDerivative, HessianMatchesRnea)
     Eigen::MatrixXd tauext_by_thrust_q_derivative_hessian = Eigen::MatrixXd::Zero(nv, nv);
     Eigen::MatrixXd tauext_by_thrust_q_derivative_rnea = Eigen::MatrixXd::Zero(nv, nv);
 
-    // hessian method
+    // hessian based method. thrust_genforce_units_dq * thrust
     {
       auto start = std::chrono::high_resolution_clock::now();
       std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q =
