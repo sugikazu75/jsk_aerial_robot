@@ -14,6 +14,7 @@
 
   <depend>eigen</depend>
   <depend>osqp-eigen</depend>
+  <depend>proxsuite</depend>
   <depend>pinocchio</depend>
   <depend>roscpp</depend>
   <depend>urdf</depend>

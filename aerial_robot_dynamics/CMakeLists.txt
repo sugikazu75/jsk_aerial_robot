@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(OsqpEigen REQUIRED)
+find_package(proxsuite REQUIRED)
 find_package(urdfdom_headers REQUIRED)
 
 option(BUILD_BENCH "Build Benchmark Code" ON)
@@ -39,6 +40,7 @@ target_link_libraries(robot_model
   ${catkin_LIBRARIES}
   pinocchio::pinocchio
   OsqpEigen::OsqpEigen
+  proxsuite::proxsuite
   )
 
 install(TARGETS robot_model

@@ -15,6 +15,13 @@
 
 #include <OsqpEigen/OsqpEigen.h>
 
+// osqp/constants.h defines WARM_START as a macro, which mangles
+// proxsuite::proxqp::InitialGuessStatus::WARM_START and breaks the whole enum
+#ifdef WARM_START
+#undef WARM_START
+#endif
+#include <proxsuite/proxqp/dense/dense.hpp>
+
 #include <chrono>
 #include <urdf/model.h>
 #include <tinyxml.h>
@@ -51,6 +58,8 @@ public:
                                              const Eigen::VectorXd& tau, Eigen::VectorXd& thrust);
   bool inverseDynamics(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
                        Eigen::VectorXd& tau);
+  bool inverseDynamicsProxqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
+                             Eigen::VectorXd& tau);
 
   std::vector<pinocchio::Force> computeFExtByThrust(const Eigen::VectorXd& thrust);  // external force is expressed in
                                                                                      // the LOCAL frame
@@ -148,6 +157,9 @@ private:
   Eigen::VectorXd gradient_;
   Eigen::VectorXd lower_bound_;
   Eigen::VectorXd upper_bound_;
+
+  // ProxQP solver for Inverse Dynamics
+  std::unique_ptr<proxsuite::proxqp::dense::QP<double>> id_solver_proxqp_;
 
   // model parameters
   bool is_floating_base_ = true;

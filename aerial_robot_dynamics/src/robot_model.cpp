@@ -290,6 +290,69 @@ bool PinocchioRobotModel::inverseDynamics(const Eigen::VectorXd& q, const Eigen:
   return ok;
 }
 
+bool PinocchioRobotModel::inverseDynamicsProxqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
+                                                const Eigen::VectorXd& a, Eigen::VectorXd& tau)
+{
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Compute normal inverse dynamics
+  Eigen::VectorXd rnea_solution = pinocchio::rnea(*model_, *data_, q, v, a);
+
+  // Decision variables x = [joint torque (nv); thrust (rotor_num)].  ProxQP
+  // solves 0.5 x'Hx + g'x s.t. A x = b (equality), l <= C x <= u (inequality)
+  int n_variables = model_->nv + rotor_num_;
+  int n_eq = model_->nv;               // rnea equality constraint
+  int n_in = model_->nv + rotor_num_;  // joint torque + thrust box constraint
+
+  // cost
+  Eigen::MatrixXd H = Eigen::MatrixXd::Identity(n_variables, n_variables);
+  H.bottomRightCorner(rotor_num_, rotor_num_) *= config_.thrust_hessian_weight;
+  Eigen::VectorXd g = Eigen::VectorXd::Zero(n_variables);
+
+  // equality: joint_torque + dtauext/dthrust * thrust = rnea_solution
+  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(n_eq, n_variables);
+  A.leftCols(model_->nv).setIdentity();
+  A.rightCols(rotor_num_) = this->computeTauExtByThrustDerivative(q);
+  Eigen::VectorXd b = rnea_solution;
+
+  // inequality (box): torque/thrust limits
+  Eigen::MatrixXd C = Eigen::MatrixXd::Identity(n_in, n_variables);
+  Eigen::VectorXd l = Eigen::VectorXd::Zero(n_in);
+  Eigen::VectorXd u = Eigen::VectorXd::Zero(n_in);
+  l.head(model_->nv) = -joint_torque_limits_;
+  l.tail(rotor_num_) = thrust_lower_limits_;
+  u.head(model_->nv) = joint_torque_limits_;
+  u.tail(rotor_num_) = thrust_upper_limits_;
+
+  if (!id_solver_proxqp_)
+  {
+    id_solver_proxqp_ = std::make_unique<proxsuite::proxqp::dense::QP<double>>(n_variables, n_eq, n_in);
+    id_solver_proxqp_->settings.eps_abs = 1e-8;
+    id_solver_proxqp_->settings.eps_rel = 0.0;
+    id_solver_proxqp_->settings.max_iter = 1000;
+    id_solver_proxqp_->settings.verbose = false;
+    id_solver_proxqp_->init(H, g, A, b, C, l, u);
+  }
+  else
+  {
+    // only A and b change, so update those warm-start
+    id_solver_proxqp_->settings.initial_guess = proxsuite::proxqp::InitialGuessStatus::WARM_START_WITH_PREVIOUS_RESULT;
+    id_solver_proxqp_->update(proxsuite::nullopt, proxsuite::nullopt, A, b, proxsuite::nullopt, proxsuite::nullopt,
+                              proxsuite::nullopt);
+  }
+
+  id_solver_proxqp_->solve();
+
+  bool ok = id_solver_proxqp_->results.info.status == proxsuite::proxqp::QPSolverOutput::PROXQP_SOLVED;
+  tau = id_solver_proxqp_->results.x;
+
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+  latest_id_solve_time_ = duration.count();  // microseconds
+
+  return ok;
+}
+
 std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativeQDerivatives(const Eigen::VectorXd& q)
 {
   std::vector<Eigen::MatrixXd> tauext_partial_thrust_partial_q(model_->nv,
