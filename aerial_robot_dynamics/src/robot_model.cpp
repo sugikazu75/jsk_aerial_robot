@@ -296,34 +296,32 @@ std::vector<Eigen::MatrixXd> PinocchioRobotModel::computeTauExtByThrustDerivativ
                                                                Eigen::MatrixXd::Zero(model_->nv, rotor_num_));
 
   pinocchio::computeJointKinematicHessians(*model_, *data_, q);
-  Eigen::Tensor<double, 3> rotor_i_parent_joint_hessian(6, model_->nv, model_->nv);
+
+  Eigen::Tensor<double, 3> rotor_i_frame_hessian(6, model_->nv, model_->nv);
   for (int i = 0; i < rotor_num_; i++)
   {
-    // get rotor joint index
+    // get rotor frame index
     std::string rotor_frame_name = rotor_names_.at(i);
     pinocchio::FrameIndex rotor_frame_index = model_->getFrameId(rotor_frame_name);
-    pinocchio::JointIndex rotor_parent_joint_index = model_->frames[rotor_frame_index].parentJoint;
 
-    // get rotor joint kinematic hessian
-    rotor_i_parent_joint_hessian.setZero();
-    pinocchio::getJointKinematicHessian(*model_, *data_, rotor_parent_joint_index, pinocchio::LOCAL,
-                                        rotor_i_parent_joint_hessian);  // 6 * nv * nv
+    // get rotor frame kinematic hessian
+    rotor_i_frame_hessian.setZero();
+    pinocchio::getFrameKinematicHessian(*model_, *data_, rotor_frame_index, pinocchio::LOCAL,
+                                        rotor_i_frame_hessian);  // 6 * nv * nv
 
-    // make thrust wrench unit in parent joint frame
+    // make thrust wrench unit
     pinocchio::Force thrust_wrench_unit;
     thrust_wrench_unit.linear() = Eigen::Vector3d(0, 0, 1);
     thrust_wrench_unit.angular() = Eigen::Vector3d(0, 0, rotor_direction_.at(i) * m_f_rate_);
-    pinocchio::Force thrust_wrench_unit_parent_joint = joint_M_rotors_.at(i).act(thrust_wrench_unit);
 
     // get jacobian of rotor_i jacobian w.r.t q_j
     for (int j = 0; j < model_->nv; j++)
     {
-      const double* ptr = rotor_i_parent_joint_hessian.data() + 6 * model_->nv * j;
-      Eigen::Map<const Eigen::Matrix<double, 6, Eigen::Dynamic>> rotor_i_parent_joint_jacobian_partial_q_j(ptr, 6,
-                                                                                                           model_->nv);
+      const double* ptr = rotor_i_frame_hessian.data() + 6 * model_->nv * j;
+      Eigen::Map<const Eigen::Matrix<double, 6, Eigen::Dynamic>> rotor_i_frame_jacobian_partial_q_j(ptr, 6, model_->nv);
 
       tauext_partial_thrust_partial_q.at(j).col(i) =
-          rotor_i_parent_joint_jacobian_partial_q_j.transpose() * thrust_wrench_unit_parent_joint.toVector();
+          rotor_i_frame_jacobian_partial_q_j.transpose() * thrust_wrench_unit.toVector();
     }
   }
 
