@@ -16,6 +16,7 @@
       - tauext_partial_q_derivative_static_torque_benchmark
       - tauext_partial_q_derivative_numerical_benchmark
       - tauext_partial_q_derivative_hessian_benchmark
+      - inverse_dynamics_proxqp_benchmark
     </rosparam>
     <param name="benchmark_args" value="$(arg benchmark_args)"/>
   </node>
