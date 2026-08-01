@@ -8,6 +8,7 @@
 
   <param name="dynamics/is_floating_base" value="false"/>
   <param name="dynamics/thrust_hessian_weight" value="1.0"/>
+  <param name="dynamics/verbose" value="false"/>
 
   <node name="run_all_benchmarks" pkg="aerial_robot_dynamics" type="run_all_benchmarks.py"
         output="screen" required="true">

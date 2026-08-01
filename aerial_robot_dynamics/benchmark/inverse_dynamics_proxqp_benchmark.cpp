@@ -10,9 +10,11 @@ int main(int argc, char** argv)
 
   aerial_robot_dynamics::PinocchioRobotModelRos pinocchio_robot_model_ros(nh);
 
+  aerial_robot_dynamics::PinocchioRobotModel::Config config;
+  config.verbose = false;  // print only the benchmark output
   aerial_robot_dynamics::PinocchioRobotModel pinocchio_robot_model(
       pinocchio_robot_model_ros.getPinocchioRobotModel()->getRobotDescription(),
-      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), false);
+      pinocchio_robot_model_ros.getPinocchioRobotModel()->getPinocchioRobotDescription(), false, config);
 
   const int DATA_SIZE = 4096;
   std::vector<Eigen::VectorXd> q_vec(DATA_SIZE);
