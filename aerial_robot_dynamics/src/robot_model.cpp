@@ -384,8 +384,8 @@ Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustDerivative(const Eigen
   return tauext_partial_thrust;
 }
 
-Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivative(const Eigen::VectorXd& q,
-                                                                      const Eigen::VectorXd& thrust)
+Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivativeRnea(const Eigen::VectorXd& q,
+                                                                          const Eigen::VectorXd& thrust)
 {
   // Compute RNEA derivatives with external forces
   std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
@@ -393,6 +393,40 @@ Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivative(const Eige
                                     Eigen::VectorXd::Zero(model_->nv), fext);
 
   return -data_->dtau_dq;
+}
+
+Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivativeStaticTorque(const Eigen::VectorXd& q,
+                                                                                  const Eigen::VectorXd& thrust)
+{
+  // Compute static torque derivatives with external forces
+  std::vector<pinocchio::Force> fext = computeFExtByThrust(thrust);
+  Eigen::MatrixXd dtau_dq = Eigen::MatrixXd::Zero(model_->nv, model_->nv);
+  pinocchio::computeStaticTorqueDerivatives(*zero_gravity_model_, *data_, q, fext, dtau_dq);
+
+  return -dtau_dq;
+}
+
+Eigen::MatrixXd PinocchioRobotModel::computeTauExtByThrustQDerivativeNum(const Eigen::VectorXd& q,
+                                                                         const Eigen::VectorXd& thrust)
+{
+  Eigen::MatrixXd tauext_by_thrust_q_derivative = Eigen::MatrixXd::Zero(model_->nv, model_->nv);
+
+  double epsilon = 1e-6;
+  Eigen::VectorXd original_q = q;
+  Eigen::VectorXd original_tauext_by_thrust = this->computeTauExtByThrust(original_q, thrust);
+
+  for (int i = 0; i < model_->nv; i++)
+  {
+    Eigen::VectorXd v = Eigen::VectorXd::Zero(model_->nv);
+    v(i) = 1.0;
+
+    Eigen::VectorXd tmp_q = pinocchio::integrate(*model_, original_q, v * epsilon);
+
+    Eigen::VectorXd tauext_by_thrust_plus = this->computeTauExtByThrust(tmp_q, thrust);
+    tauext_by_thrust_q_derivative.col(i) = (tauext_by_thrust_plus - original_tauext_by_thrust) / epsilon;
+  }
+
+  return tauext_by_thrust_q_derivative;
 }
 
 std::vector<pinocchio::Force> PinocchioRobotModel::computeFExtByThrust(const Eigen::VectorXd& thrust)

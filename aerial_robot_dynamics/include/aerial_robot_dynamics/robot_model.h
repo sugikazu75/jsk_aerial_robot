@@ -58,7 +58,14 @@ public:
   std::vector<Eigen::MatrixXd> computeTauExtByThrustDerivativeQDerivativesNum(const Eigen::VectorXd& q);
   Eigen::VectorXd computeTauExtByThrust(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
   Eigen::MatrixXd computeTauExtByThrustDerivative(const Eigen::VectorXd& q);
-  Eigen::MatrixXd computeTauExtByThrustQDerivative(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
+  [[deprecated("Use computeTauExtByThrustQDerivativeRnea instead.")]] Eigen::MatrixXd
+  computeTauExtByThrustQDerivative(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust)
+  {
+    return computeTauExtByThrustQDerivativeRnea(q, thrust);
+  }
+  Eigen::MatrixXd computeTauExtByThrustQDerivativeRnea(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
+  Eigen::MatrixXd computeTauExtByThrustQDerivativeStaticTorque(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
+  Eigen::MatrixXd computeTauExtByThrustQDerivativeNum(const Eigen::VectorXd& q, const Eigen::VectorXd& thrust);
 
   const std::string& getRobotDescription() const
   {
