@@ -132,13 +132,22 @@ PinocchioRobotModel::PinocchioRobotModel(std::string robot_description, std::str
     if (frame_name.find("rotor") != std::string::npos)
     {
       rotor_names_.push_back(frame_name);
-      rotor_frame_indices_.push_back(model_->getFrameId(frame_name));
       rotor_num_++;
     }
   }
   if (verbose)
     std::cout << "Rotor number: " << rotor_num_ << std::endl;
-  std::sort(rotor_names_.begin(), rotor_names_.end());  // alphabetical order
+
+  // sort by the numeric suffix (rotor1, rotor2, ..., rotor10)
+  std::sort(rotor_names_.begin(), rotor_names_.end(), [](const std::string& a, const std::string& b) {
+    auto num = [](const std::string& s) { return std::stoi(s.substr(s.find_first_of("0123456789"))); };
+    return num(a) < num(b);
+  });
+
+  // build rotor frame indices in the same (numeric) order as rotor_names_
+  rotor_frame_indices_.clear();
+  for (const auto& rotor_name : rotor_names_)
+    rotor_frame_indices_.push_back(model_->getFrameId(rotor_name));
 
   // rotor offset from parent joint
   joint_M_rotors_.clear();
