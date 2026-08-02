@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     aerial_robot_dynamics::addNoise(thrust_vec[i], 0.1);
   }
 
-  benchmark::RegisterBenchmark("ThrustGenforceDqNumericalBenchmark", [&](benchmark::State& state) {
+  benchmark::RegisterBenchmark("ThrustGenforceDqStaticTorqueBenchmark", [&](benchmark::State& state) {
     size_t idx = 0;
 
     for (auto _ : state)
@@ -35,10 +35,10 @@ int main(int argc, char** argv)
       const auto& q = q_vec[idx & (DATA_SIZE - 1)];
       const auto& thrust = thrust_vec[idx & (DATA_SIZE - 1)];
 
-      Eigen::MatrixXd tauext_by_thrust_q_derivative_numerical =
-          pinocchio_robot_model.computeTauExtByThrustQDerivativeNum(q, thrust);
+      Eigen::MatrixXd tauext_by_thrust_q_derivative_static_torque =
+          pinocchio_robot_model.computeTauExtByThrustQDerivativeStaticTorque(q, thrust);
 
-      benchmark::DoNotOptimize(tauext_by_thrust_q_derivative_numerical);
+      benchmark::DoNotOptimize(tauext_by_thrust_q_derivative_static_torque);
 
       idx++;
     }

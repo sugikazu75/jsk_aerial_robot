@@ -73,6 +73,12 @@
     uri: https://github.com/stack-of-tasks/pinocchio.git
     version: v4.0.0
 
+# proxsuite
+- git:
+    local-name: proxsuite
+    uri: https://github.com/Simple-Robotics/proxsuite.git
+    version: 1dd3f80
+
 # crocoddyl
 - git:
     local-name: crocoddyl
