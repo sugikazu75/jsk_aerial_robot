@@ -1,6 +1,11 @@
 #include "aerial_robot_control/flight_navigation.h"
 #include "aerial_robot_control/util/joy_parser.h"
 
+// tf::pointMsgToEigen and friends. This used to arrive transitively through
+// kalman_filter/lpf_filter.h; that header dropped its eigen_conversions include
+// during the ROS2 port, so the dependency is now spelled out where it is used.
+#include <eigen_conversions/eigen_msg.h>
+
 using namespace std;
 using namespace aerial_robot_navigation;
 

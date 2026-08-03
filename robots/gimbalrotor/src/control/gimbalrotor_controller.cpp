@@ -1,5 +1,10 @@
 #include <gimbalrotor/control/gimbalrotor_controller.h>
 
+// These conversion helpers used to arrive transitively through
+// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
+// eigen_conversions includes during the ROS2 port.
+#include <tf_conversions/tf_eigen.h>
+
 using namespace std;
 
 namespace aerial_robot_control

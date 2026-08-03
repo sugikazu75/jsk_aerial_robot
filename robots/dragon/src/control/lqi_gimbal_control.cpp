@@ -1,5 +1,11 @@
 #include <dragon/control/lqi_gimbal_control.h>
 
+// These conversion helpers used to arrive transitively through
+// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
+// eigen_conversions includes during the ROS2 port.
+#include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
+
 using namespace aerial_robot_model;
 using namespace aerial_robot_control;
 

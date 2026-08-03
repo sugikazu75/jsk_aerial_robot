@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   aerial_robot_model
   aerial_robot_msgs
   dynamic_reconfigure
+  eigen_conversions
   pluginlib
   roscpp
   spinal

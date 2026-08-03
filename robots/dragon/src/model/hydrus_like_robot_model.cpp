@@ -1,5 +1,11 @@
 #include <dragon/model/hydrus_like_robot_model.h>
 
+// These conversion helpers used to arrive transitively through
+// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
+// eigen_conversions includes during the ROS2 port.
+#include <eigen_conversions/eigen_msg.h>
+#include <kdl_conversions/kdl_msg.h>
+
 using namespace Dragon;
 
 HydrusLikeRobotModel::HydrusLikeRobotModel(bool init_with_rosparam, bool verbose, double fc_t_min_thre, double fc_rp_min_thre, double epsilon, double edf_radius, double edf_max_tilt) :
