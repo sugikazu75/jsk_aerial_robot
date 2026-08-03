@@ -48,7 +48,7 @@
 #include <kalman_filter/kf_base_plugin.h>
 #include <map>
 #include <nav_msgs/Odometry.h>
-#include <pluginlib/class_loader.h>
+#include <pluginlib/class_loader.hpp>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/UInt8.h>

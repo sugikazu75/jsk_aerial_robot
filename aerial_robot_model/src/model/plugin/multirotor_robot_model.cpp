@@ -41,5 +41,5 @@ MultirotorRobotModel::MultirotorRobotModel(bool init_with_rosparam, bool verbose
 }
 
 /* plugin registration */
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(MultirotorRobotModel, aerial_robot_model::RobotModel);

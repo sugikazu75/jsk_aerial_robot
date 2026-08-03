@@ -7,5 +7,5 @@ HydrusXiFullyActuatedRobotModel::HydrusXiFullyActuatedRobotModel(bool init_with_
 }
 
 /* plugin registration */
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(HydrusXiFullyActuatedRobotModel, aerial_robot_model::RobotModel);

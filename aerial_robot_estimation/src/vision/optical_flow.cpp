@@ -234,5 +234,5 @@ namespace aerial_robot_estimation
 } //namespace aerial_robot_estimation
 
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(aerial_robot_estimation::OpticalFlow, nodelet::Nodelet)

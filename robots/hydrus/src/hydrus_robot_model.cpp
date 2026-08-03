@@ -225,5 +225,5 @@ bool HydrusRobotModel::wrenchMatrixDeterminantCheck()
 }
 
 /* plugin registration */
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(HydrusRobotModel, aerial_robot_model::RobotModel);

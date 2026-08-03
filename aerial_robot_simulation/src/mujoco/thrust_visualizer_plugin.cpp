@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
 namespace mujoco_ros
 {

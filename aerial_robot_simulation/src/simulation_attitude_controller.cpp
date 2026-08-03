@@ -39,7 +39,7 @@
 
 #include <aerial_robot_simulation/simulation_attitude_controller.h>
 #include <angles/angles.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 
 namespace flight_controllers {
 
