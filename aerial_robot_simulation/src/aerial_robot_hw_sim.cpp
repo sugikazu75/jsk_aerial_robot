@@ -55,9 +55,11 @@ namespace gazebo_ros_control
     KDL::Tree tree;
     kdl_parser::treeFromUrdfModel(*urdf_model, tree);
 
-    auto robot_model_xml = aerial_robot_model::RobotModel::getRobotModelXml("robot_description", model_nh);
-    TiXmlElement* baselink_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("baselink");
-    if(!baselink_attr)
+    tinyxml2::XMLDocument robot_model_xml;
+    aerial_robot_model::RobotModel::getRobotModelXml("robot_description", robot_model_xml, model_nh);
+    tinyxml2::XMLElement* robot_attr = robot_model_xml.FirstChildElement("robot");
+    tinyxml2::XMLElement* baselink_attr = robot_attr ? robot_attr->FirstChildElement("baselink") : nullptr;
+    if(!baselink_attr || !baselink_attr->Attribute("name"))
       {
         ROS_ERROR_STREAM_NAMED("spianl interface", "Failed to find baselink attribute from urdf model, please add '<baselink name=\"fc\" />' to your urdf file");
         return false;

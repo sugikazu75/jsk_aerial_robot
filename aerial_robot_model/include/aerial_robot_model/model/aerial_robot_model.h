@@ -53,6 +53,9 @@
 #include <sensor_msgs/JointState.h>
 #include <stdexcept>
 #include <ros/ros.h>
+// tinyxml2 rather than ROS1's TinyXML1: ROS2 dropped TinyXML1 and libtinyxml2
+// is available to both distributions, so one spelling serves both builds.
+#include <tinyxml2.h>
 #include <urdf/model.h>
 #include <vector>
 
@@ -111,7 +114,15 @@ namespace aerial_robot_model {
     template<class T> T getInertia();
     template<class T> std::vector<T> getRotorsNormalFromCog();
     template<class T> std::vector<T> getRotorsOriginFromCog();
-    static TiXmlDocument getRobotModelXml(const std::string param, ros::NodeHandle nh = ros::NodeHandle());
+    /**
+     * Parse the robot description into `doc` and report whether it was found.
+     *
+     * Fills an out-parameter rather than returning the document, because
+     * tinyxml2::XMLDocument owns its node pool and is not copyable the way
+     * TiXmlDocument was.
+     */
+    static bool getRobotModelXml(const std::string param, tinyxml2::XMLDocument& doc,
+                                 ros::NodeHandle nh = ros::NodeHandle());
 
     KDL::JntArray jointMsgToKdl(const sensor_msgs::JointState& state) const;
     sensor_msgs::JointState kdlJointToMsg(const KDL::JntArray& joint_positions) const;

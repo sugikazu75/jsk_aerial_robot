@@ -3,7 +3,6 @@
 #include <tf2_kdl/tf2_kdl.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_eigen/tf2_eigen.h>
-#include <eigen_conversions/eigen_kdl.h>
 #include <sensor_msgs/JointState.h>
 #include <map>
 #include <vector>
@@ -52,18 +51,25 @@ namespace aerial_robot_model {
                                                                    });
   }
 
+  // Written out rather than delegating to a conversion package. ROS1 offers
+  // tf::transformKDLToEigen via eigen_conversions, which ROS2 does not have;
+  // ROS2's tf2_eigen_kdl equivalent fills an Eigen::Isometry3d, not the
+  // Eigen::Affine3d this returns. Doing the six lines here keeps one spelling
+  // for both and drops a dependency.
   inline Eigen::Affine3d kdlToEigen(const KDL::Frame& in)
   {
     Eigen::Affine3d out;
-    tf::transformKDLToEigen(in, out);
+    out.translation() << in.p.x(), in.p.y(), in.p.z();
+    Eigen::Matrix3d rot;
+    for (int i = 0; i < 3; ++i)
+      for (int j = 0; j < 3; ++j) rot(i, j) = in.M(i, j);
+    out.linear() = rot;
     return out;
   }
 
   inline Eigen::Vector3d kdlToEigen(const KDL::Vector& in)
   {
-    Eigen::Vector3d out;
-    tf::vectorKDLToEigen(in, out);
-    return out;
+    return Eigen::Vector3d(in.x(), in.y(), in.z());
   }
 
   inline Eigen::Matrix3d kdlToEigen(const KDL::RotationalInertia& in)

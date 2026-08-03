@@ -3,6 +3,11 @@ project(aerial_robot_model)
 
 add_compile_options(-std=c++17)
 
+# tinyxml2 ships no CMake config package on this platform, so go through
+# pkg-config. Used instead of ROS1's TinyXML1, which ROS2 does not have.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TINYXML2 REQUIRED tinyxml2)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -66,6 +71,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  ${TINYXML2_INCLUDE_DIRS}
   include
   test
   ${Boost_INCLUDE_DIR}
@@ -81,7 +87,7 @@ add_library(aerial_robot_model
   src/model/transformable_model/kinematics.cpp
   src/model/transformable_model/stability.cpp
   src/model/transformable_model/statics.cpp)
-target_link_libraries(aerial_robot_model ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${EIGEN3_LIBRARIES})
+target_link_libraries(aerial_robot_model ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${EIGEN3_LIBRARIES} ${TINYXML2_LIBRARIES})
 
 add_library(aerial_robot_model_ros src/model/base_model/robot_model_ros.cpp)
 target_link_libraries(aerial_robot_model_ros aerial_robot_model ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${EIGEN3_LIBRARIES})

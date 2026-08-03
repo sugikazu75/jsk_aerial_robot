@@ -58,15 +58,18 @@ namespace aerial_robot_model {
         return;
       }
     /* get baselink and thrust_link from robot model */
-    auto robot_model_xml = getRobotModelXml("robot_description");
-    TiXmlElement* baselink_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("baselink");
-    if(!baselink_attr)
+    tinyxml2::XMLDocument robot_model_xml;
+    getRobotModelXml("robot_description", robot_model_xml);
+    tinyxml2::XMLElement* robot_attr = robot_model_xml.FirstChildElement("robot");
+
+    tinyxml2::XMLElement* baselink_attr = robot_attr ? robot_attr->FirstChildElement("baselink") : nullptr;
+    if(!baselink_attr || !baselink_attr->Attribute("name"))
       ROS_DEBUG("Can not get baselink attribute from urdf model");
     else
       baselink_ = std::string(baselink_attr->Attribute("name"));
 
-    TiXmlElement* thrust_link_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("thrust_link");
-    if(!thrust_link_attr)
+    tinyxml2::XMLElement* thrust_link_attr = robot_attr ? robot_attr->FirstChildElement("thrust_link") : nullptr;
+    if(!thrust_link_attr || !thrust_link_attr->Attribute("name"))
       ROS_DEBUG("Can not get thrust_link attribute from urdf model");
     else
       thrust_link_ = std::string(thrust_link_attr->Attribute("name"));
@@ -106,14 +109,16 @@ namespace aerial_robot_model {
   void RobotModel::staticsInit()
   {
     /* get baselink and thrust_link from robot model */
-    auto robot_model_xml = getRobotModelXml("robot_description");
+    tinyxml2::XMLDocument robot_model_xml;
+    getRobotModelXml("robot_description", robot_model_xml);
+    tinyxml2::XMLElement* robot_attr = robot_model_xml.FirstChildElement("robot");
 
     /* set rotor property */
-    TiXmlElement* m_f_rate_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("m_f_rate");
+    tinyxml2::XMLElement* m_f_rate_attr = robot_attr ? robot_attr->FirstChildElement("m_f_rate") : nullptr;
     if(!m_f_rate_attr)
       ROS_ERROR("Can not get m_f_rate attribute from urdf model");
     else
-      m_f_rate_attr->Attribute("value", &m_f_rate_);
+      m_f_rate_attr->QueryDoubleAttribute("value", &m_f_rate_);
 
     std::vector<urdf::LinkSharedPtr> urdf_links;
     model_.getLinks(urdf_links);
@@ -603,21 +608,24 @@ namespace aerial_robot_model {
     fc_t_min_ = fc_t_dists_.minCoeff();
   }
 
-  TiXmlDocument RobotModel::getRobotModelXml(const std::string param, ros::NodeHandle nh)
+  bool RobotModel::getRobotModelXml(const std::string param, tinyxml2::XMLDocument& xml_doc, ros::NodeHandle nh)
   {
-    std::string xml_string;
-    TiXmlDocument xml_doc;
-
     if (!nh.hasParam(param))
       {
         ROS_ERROR("Could not find parameter %s on parameter server with namespace '%s'", param.c_str(), nh.getNamespace().c_str());
-        return xml_doc;
+        return false;
       }
 
+    std::string xml_string;
     nh.getParam(param, xml_string);
-    xml_doc.Parse(xml_string.c_str());
 
-    return xml_doc;
+    if (xml_doc.Parse(xml_string.c_str()) != tinyxml2::XML_SUCCESS)
+      {
+        ROS_ERROR("Could not parse the xml in parameter %s: %s", param.c_str(), xml_doc.ErrorStr());
+        return false;
+      }
+
+    return true;
   }
 
   KDL::JntArray RobotModel::jointMsgToKdl(const sensor_msgs::JointState& state) const

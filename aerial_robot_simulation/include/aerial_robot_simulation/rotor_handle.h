@@ -51,13 +51,15 @@ namespace hardware_interface
       name_ = urdf_joint->name;
       direction_ = urdf_joint->axis.z;
 
-      auto robot_model_xml = aerial_robot_model::RobotModel::getRobotModelXml("robot_description", nh);
-      TiXmlElement* m_f_rate_attr = robot_model_xml.FirstChildElement("robot")->FirstChildElement("m_f_rate");
+      tinyxml2::XMLDocument robot_model_xml;
+      aerial_robot_model::RobotModel::getRobotModelXml("robot_description", robot_model_xml, nh);
+      tinyxml2::XMLElement* robot_attr = robot_model_xml.FirstChildElement("robot");
+      tinyxml2::XMLElement* m_f_rate_attr = robot_attr ? robot_attr->FirstChildElement("m_f_rate") : nullptr;
       if(!m_f_rate_attr)
         ROS_ERROR_STREAM_NAMED("RotorHandle", "Cannot get m_f_rate from ros nodehandle");
       else
         {
-          m_f_rate_attr->Attribute("value", &m_f_rate_);
+          m_f_rate_attr->QueryDoubleAttribute("value", &m_f_rate_);
           ROS_DEBUG_STREAM("m_f_rate: " <<  m_f_rate_);
         }
 
