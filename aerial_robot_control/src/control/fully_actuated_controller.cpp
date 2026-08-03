@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/fully_actuated_controller.h>
 
 using namespace std;
@@ -46,11 +47,11 @@ namespace aerial_robot_control
   {
   }
 
-  void FullyActuatedController::initialize(ros::NodeHandle nh,
-                                                   ros::NodeHandle nhp,
-                                                   boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                                   boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                                   boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+  void FullyActuatedController::initialize(ros_compat::NodeHandle nh,
+                                                   ros_compat::NodeHandle nhp,
+                                                   ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                                   ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                                   ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                                    double ctrl_loop_rate)
   {
     PoseLinearController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
@@ -65,11 +66,11 @@ namespace aerial_robot_control
     pid_msg_.y.total.resize(motor_num_),
     pid_msg_.z.total.resize(motor_num_),
 
-    rpy_gain_pub_ = nh_.advertise<spinal::RollPitchYawTerms>("rpy/gain", 1);
-    flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
-    torque_allocation_matrix_inv_pub_ = nh_.advertise<spinal::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
-    wrench_allocation_matrix_pub_ = nh_.advertise<aerial_robot_msgs::WrenchAllocationMatrix>("debug/wrench_allocation_matrix", 1);
-    wrench_allocation_matrix_inv_pub_ = nh_.advertise<aerial_robot_msgs::WrenchAllocationMatrix>("debug/wrench_allocation_matrix_inv", 1);
+    rpy_gain_pub_ = nh_.advertise<spinal_c::RollPitchYawTerms>("rpy/gain", 1);
+    flight_cmd_pub_ = nh_.advertise<spinal_c::FourAxisCommand>("four_axes/command", 1);
+    torque_allocation_matrix_inv_pub_ = nh_.advertise<spinal_c::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
+    wrench_allocation_matrix_pub_ = nh_.advertise<aerial_robot_msgs_c::WrenchAllocationMatrix>("debug/wrench_allocation_matrix", 1);
+    wrench_allocation_matrix_inv_pub_ = nh_.advertise<aerial_robot_msgs_c::WrenchAllocationMatrix>("debug/wrench_allocation_matrix_inv", 1);
   }
 
   void FullyActuatedController::reset()
@@ -108,7 +109,7 @@ namespace aerial_robot_control
     double residual = max_term - pid_controllers_.at(X).getLimitSum();
     if(residual > 0)
       {
-        ROS_DEBUG("the position x control exceed the limit in rotor %d, %f vs %f ", index, max_term, pid_controllers_.at(X).getLimitSum());
+        ROS_COMPAT_DEBUG("the position x control exceed the limit in rotor %d, %f vs %f ", index, max_term, pid_controllers_.at(X).getLimitSum());
         target_thrust_x_term *= (1 - residual / max_term);
       }
 
@@ -116,7 +117,7 @@ namespace aerial_robot_control
     residual = max_term - pid_controllers_.at(Y).getLimitSum();
     if(residual > 0)
       {
-        ROS_DEBUG("the position y control exceed the limit in rotor %d, %f vs %f ", index, max_term, pid_controllers_.at(Y).getLimitSum());
+        ROS_COMPAT_DEBUG("the position y control exceed the limit in rotor %d, %f vs %f ", index, max_term, pid_controllers_.at(Y).getLimitSum());
         target_thrust_y_term *= (1 - residual / max_term);
       }
 
@@ -152,10 +153,10 @@ namespace aerial_robot_control
   {
     PoseLinearController::sendCmd();
 
-    if (ros::Time::now().toSec() - wrench_allocation_matrix_pub_stamp_ > wrench_allocation_matrix_pub_interval_)
+    if (ros_compat::now().toSec() - wrench_allocation_matrix_pub_stamp_ > wrench_allocation_matrix_pub_interval_)
       {
-        wrench_allocation_matrix_pub_stamp_ = ros::Time::now().toSec();
-        aerial_robot_msgs::WrenchAllocationMatrix msg;
+        wrench_allocation_matrix_pub_stamp_ = ros_compat::now().toSec();
+        aerial_robot_msgs_c::WrenchAllocationMatrix msg;
         for (unsigned int i = 0; i < motor_num_; i++) {
           msg.f_x.push_back(q_mat_(0, i));
           msg.f_y.push_back(q_mat_(1, i));
@@ -185,7 +186,7 @@ namespace aerial_robot_control
 
   void FullyActuatedController::sendFourAxisCommand()
   {
-    spinal::FourAxisCommand flight_command_data;
+    spinal_c::FourAxisCommand flight_command_data;
     flight_command_data.angles[2] = candidate_yaw_term_;
     flight_command_data.base_thrust = target_base_thrust_;
     flight_cmd_pub_.publish(flight_command_data);
@@ -193,15 +194,15 @@ namespace aerial_robot_control
 
   void FullyActuatedController::sendTorqueAllocationMatrixInv()
   {
-    if (ros::Time::now().toSec() - torque_allocation_matrix_inv_pub_stamp_ > torque_allocation_matrix_inv_pub_interval_)
+    if (ros_compat::now().toSec() - torque_allocation_matrix_inv_pub_stamp_ > torque_allocation_matrix_inv_pub_interval_)
       {
-        torque_allocation_matrix_inv_pub_stamp_ = ros::Time::now().toSec();
+        torque_allocation_matrix_inv_pub_stamp_ = ros_compat::now().toSec();
 
-        spinal::TorqueAllocationMatrixInv torque_allocation_matrix_inv_msg;
+        spinal_c::TorqueAllocationMatrixInv torque_allocation_matrix_inv_msg;
         torque_allocation_matrix_inv_msg.rows.resize(motor_num_);
         Eigen::MatrixXd torque_allocation_matrix_inv = q_mat_inv_.rightCols(3);
         if (torque_allocation_matrix_inv.cwiseAbs().maxCoeff() > INT16_MAX * 0.001f)
-          ROS_ERROR("Torque Allocation Matrix overflow");
+          ROS_COMPAT_ERROR("Torque Allocation Matrix overflow");
         for (unsigned int i = 0; i < motor_num_; i++)
           {
             torque_allocation_matrix_inv_msg.rows.at(i).x = torque_allocation_matrix_inv(i,0) * 1000;
@@ -214,14 +215,14 @@ namespace aerial_robot_control
 
   void FullyActuatedController::rosParamInit()
   {
-    ros::NodeHandle control_nh(nh_, "controller");
+    ros_compat::NodeHandle control_nh(nh_, "controller");
     getParam<double>(control_nh, "torque_allocation_matrix_inv_pub_interval", torque_allocation_matrix_inv_pub_interval_, 0.05);
     getParam<double>(control_nh, "wrench_allocation_matrix_pub_interval", wrench_allocation_matrix_pub_interval_, 0.1);
   }
 
   void FullyActuatedController::setAttitudeGains()
   {
-    spinal::RollPitchYawTerms rpy_gain_msg; //for rosserial
+    spinal_c::RollPitchYawTerms rpy_gain_msg; //for rosserial
     /* to flight controller via rosserial scaling by 1000 */
     rpy_gain_msg.motors.resize(1);
     rpy_gain_msg.motors.at(0).roll_p = pid_controllers_.at(ROLL).getPGain() * 1000;

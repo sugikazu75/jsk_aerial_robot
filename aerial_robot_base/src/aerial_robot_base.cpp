@@ -1,9 +1,13 @@
 #include <aerial_robot_base/aerial_robot_base.h>
 
-AerialRobotBase::AerialRobotBase(ros::NodeHandle nh, ros::NodeHandle nh_private)
-  : nh_(nh), nhp_(nh_private), callback_spinner_(4), main_loop_spinner_(1, &main_loop_queue_),
-    controller_loader_("aerial_robot_control", "aerial_robot_control::ControlBase"),
-    navigator_loader_("aerial_robot_control", "aerial_robot_navigation::BaseNavigator")
+AerialRobotBase::AerialRobotBase(ros_compat::NodeHandle nh, ros_compat::NodeHandle nh_private)
+  : nh_(nh), nhp_(nh_private),
+    navigator_loader_("aerial_robot_control", "aerial_robot_navigation::BaseNavigator"),
+    controller_loader_("aerial_robot_control", "aerial_robot_control::ControlBase")
+#if AERIAL_ROBOT_ROS_VERSION == 1
+    ,
+    callback_spinner_(4), main_loop_spinner_(1, &main_loop_queue_)
+#endif
 {
 
   bool param_verbose;
@@ -13,11 +17,11 @@ AerialRobotBase::AerialRobotBase(ros::NodeHandle nh, ros::NodeHandle nh_private)
   nhp_.param ("main_rate", main_rate, 0.0);
 
   // robot model
-  robot_model_ros_ = boost::make_shared<aerial_robot_model::RobotModelRos>(nh_, nhp_);
+  robot_model_ros_ = ros_compat::makeShared<aerial_robot_model::RobotModelRos>(nh_, nhp_);
   auto robot_model = robot_model_ros_->getRobotModel();
 
   // estimator
-  estimator_ = boost::make_shared<aerial_robot_estimation::StateEstimator>();
+  estimator_ = ros_compat::makeShared<aerial_robot_estimation::StateEstimator>();
   estimator_->initialize(nh_, nhp_, robot_model);
 
   // navigation
@@ -26,17 +30,17 @@ AerialRobotBase::AerialRobotBase(ros::NodeHandle nh, ros::NodeHandle nh_private)
     {
       try
         {
-          navigator_ = navigator_loader_.createInstance(navi_plugin_name);
+          navigator_ = ros_compat::createPluginInstance(navigator_loader_, navi_plugin_name);
         }
       catch(pluginlib::PluginlibException& ex)
         {
-          ROS_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
+          ROS_COMPAT_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
         }
     }
   else
     {
-      ROS_DEBUG("use default class for flight navigation: aerial_robot_navigation::BaseNavigator");
-      navigator_ = boost::make_shared<aerial_robot_navigation::BaseNavigator>();
+      ROS_COMPAT_DEBUG("use default class for flight navigation: aerial_robot_navigation::BaseNavigator");
+      navigator_ = ros_compat::makeShared<aerial_robot_navigation::BaseNavigator>();
     }
   navigator_->initialize(nh_, nhp_, robot_model, estimator_, 1 / main_rate);
 
@@ -45,26 +49,30 @@ AerialRobotBase::AerialRobotBase(ros::NodeHandle nh, ros::NodeHandle nh_private)
     {
       std::string aerial_robot_control_name;
       nh_.param ("aerial_robot_control_name", aerial_robot_control_name, std::string("aerial_robot_control/flatness_pid"));
-      controller_ = controller_loader_.createInstance(aerial_robot_control_name);
+      controller_ = ros_compat::createPluginInstance(controller_loader_, aerial_robot_control_name);
       controller_->initialize(nh_, nhp_, robot_model, estimator_, navigator_, 1 / main_rate);
     }
   catch(pluginlib::PluginlibException& ex)
     {
-      ROS_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
+      ROS_COMPAT_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
     }
 
   if(param_verbose) cout << nhp_.getNamespace() << ": main_rate is " << main_rate << endl;
   if(main_rate <= 0)
-    ROS_ERROR_STREAM("mian rate is negative, can not run the main timer");
+    ROS_COMPAT_ERROR_STREAM("mian rate is negative, can not run the main timer");
   else
     {
       // note1: separate the thread for main control (including navigation) loop to guarantee a relatively stable loop rate
 
+#if AERIAL_ROBOT_ROS_VERSION == 1
       ros::TimerOptions ops(ros::Duration(1.0 / main_rate),
                             boost::bind(&AerialRobotBase::mainFunc, this, _1),
                             &main_loop_queue_);
       main_timer_ = nhp_.createTimer(ops);
       main_loop_spinner_.start();
+#else
+      main_timer_ = nhp_.createTimer(ros_compat::duration(1.0 / main_rate), &AerialRobotBase::mainFunc, this);
+#endif
     }
 
 
@@ -72,7 +80,9 @@ AerialRobotBase::AerialRobotBase(ros::NodeHandle nh, ros::NodeHandle nh_private)
   //  - all subscribers (joint state for robot model, sensor for state estimation, uav/nav for navigation)
   //  - statePublish timer in state estimator for publish odometry and tf
   //  - service server
+#if AERIAL_ROBOT_ROS_VERSION == 1
   callback_spinner_.start();
+#endif
 
 }
 
@@ -82,11 +92,13 @@ AerialRobotBase::~AerialRobotBase()
   // terminate called after throwing an instance of 'boost::exception_detail::clone_impl<boost::exception_detail::error_info_injector<boost::lock_error> >'
   // what():  boost: mutex lock failed in pthread_mutex_lock: Invalid argument
   main_timer_.stop();
+#if AERIAL_ROBOT_ROS_VERSION == 1
   main_loop_spinner_.stop();
   callback_spinner_.stop();
+#endif
 }
 
-void AerialRobotBase::mainFunc(const ros::TimerEvent & e)
+void AerialRobotBase::mainFunc(const ros_compat::TimerEvent & e)
 {
   navigator_->update();
   controller_->update();

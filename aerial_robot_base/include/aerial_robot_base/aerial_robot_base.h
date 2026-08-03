@@ -1,7 +1,9 @@
 #pragma once
 
-#include <ros/ros.h>
-#include <ros/callback_queue.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <ros/callback_queue.h>
+#endif
 #include <pluginlib/class_loader.hpp>
 #include <aerial_robot_control/control/base/base.h>
 #include <aerial_robot_control/flight_navigation.h>
@@ -13,26 +15,28 @@ using namespace std;
 class AerialRobotBase
 {
  public:
-  AerialRobotBase(ros::NodeHandle nh, ros::NodeHandle nh_private);
+  AerialRobotBase(ros_compat::NodeHandle nh, ros_compat::NodeHandle nh_private);
   ~AerialRobotBase();
 
-  void mainFunc(const ros::TimerEvent & e);
+  void mainFunc(const ros_compat::TimerEvent & e);
 
  private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle nhp_;
-  ros::Timer main_timer_;
+  ros_compat::NodeHandle nh_;
+  ros_compat::NodeHandle nhp_;
+  ros_compat::Timer main_timer_;
 
-  boost::shared_ptr<aerial_robot_model::RobotModelRos> robot_model_ros_;
-  boost::shared_ptr<aerial_robot_estimation::StateEstimator>  estimator_;
+  ros_compat::SharedPtr<aerial_robot_model::RobotModelRos> robot_model_ros_;
+  ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator>  estimator_;
 
   pluginlib::ClassLoader<aerial_robot_navigation::BaseNavigator> navigator_loader_;
-  boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator_;
+  ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator_;
 
   pluginlib::ClassLoader<aerial_robot_control::ControlBase> controller_loader_;
-  boost::shared_ptr<aerial_robot_control::ControlBase> controller_;
+  ros_compat::SharedPtr<aerial_robot_control::ControlBase> controller_;
 
-  ros::AsyncSpinner callback_spinner_; // Use 4 threads
-  ros::AsyncSpinner main_loop_spinner_; // Use 1 threads
-  ros::CallbackQueue main_loop_queue_;
+#if AERIAL_ROBOT_ROS_VERSION == 1
+  ros_compat::AsyncSpinner callback_spinner_; // Use 4 threads
+  ros_compat::AsyncSpinner main_loop_spinner_; // Use 1 threads
+  ros_compat::CallbackQueue main_loop_queue_;
+#endif
 };

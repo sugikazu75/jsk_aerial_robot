@@ -34,10 +34,19 @@
  *********************************************************************/
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/base/pose_linear_controller.h>
-#include <spinal/FourAxisCommand.h>
-#include <spinal/RollPitchYawTerms.h>
-#include <spinal/TorqueAllocationMatrixInv.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <spinal/FourAxisCommand.h>
+#  include <spinal/RollPitchYawTerms.h>
+#  include <spinal/TorqueAllocationMatrixInv.h>
+#else
+#  include <spinal/msg/four_axis_command.hpp>
+#  include <spinal/msg/roll_pitch_yaw_terms.hpp>
+#  include <spinal/msg/torque_allocation_matrix_inv.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
 
 using boost::algorithm::clamp;
 
@@ -49,18 +58,18 @@ namespace aerial_robot_control
     UnderActuatedController();
     virtual ~UnderActuatedController() = default;
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate) override;
 
     virtual void reset() override;
 
   protected:
-    ros::Publisher flight_cmd_pub_; //for spinal
-    ros::Publisher rpy_gain_pub_; //for spinal
-    ros::Publisher torque_allocation_matrix_inv_pub_; //for spinal
+    ros_compat::Publisher flight_cmd_pub_; //for spinal
+    ros_compat::Publisher rpy_gain_pub_; //for spinal
+    ros_compat::Publisher torque_allocation_matrix_inv_pub_; //for spinal
     double torque_allocation_matrix_inv_pub_stamp_;
 
     Eigen::MatrixXd q_mat_;

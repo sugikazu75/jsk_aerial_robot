@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/under_actuated_controller.h>
 
@@ -44,11 +45,11 @@ namespace aerial_robot_control
   {
   }
 
-  void UnderActuatedController::initialize(ros::NodeHandle nh,
-                                                   ros::NodeHandle nhp,
-                                                   boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                                   boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                                   boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+  void UnderActuatedController::initialize(ros_compat::NodeHandle nh,
+                                                   ros_compat::NodeHandle nhp,
+                                                   ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                                   ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                                   ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                                    double ctrl_loop_rate)
   {
     PoseLinearController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
@@ -63,9 +64,9 @@ namespace aerial_robot_control
     z_limit_ = pid_controllers_.at(Z).getLimitSum();
     pid_controllers_.at(Z).setLimitSum(1e6); // do not clamp the sum of PID terms for z axis
 
-    rpy_gain_pub_ = nh_.advertise<spinal::RollPitchYawTerms>("rpy/gain", 1);
-    flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
-    torque_allocation_matrix_inv_pub_ = nh_.advertise<spinal::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
+    rpy_gain_pub_ = nh_.advertise<spinal_c::RollPitchYawTerms>("rpy/gain", 1);
+    flight_cmd_pub_ = nh_.advertise<spinal_c::FourAxisCommand>("four_axes/command", 1);
+    torque_allocation_matrix_inv_pub_ = nh_.advertise<spinal_c::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
   }
 
   void UnderActuatedController::reset()
@@ -149,7 +150,7 @@ namespace aerial_robot_control
 
   void UnderActuatedController::sendFourAxisCommand()
   {
-    spinal::FourAxisCommand flight_command_data;
+    spinal_c::FourAxisCommand flight_command_data;
     flight_command_data.angles[0] = target_roll_;
     flight_command_data.angles[1] = target_pitch_;
     flight_command_data.angles[2] = candidate_yaw_term_;
@@ -159,15 +160,15 @@ namespace aerial_robot_control
 
   void UnderActuatedController::sendTorqueAllocationMatrixInv()
   {
-    if (ros::Time::now().toSec() - torque_allocation_matrix_inv_pub_stamp_ > torque_allocation_matrix_inv_pub_interval_)
+    if (ros_compat::now().toSec() - torque_allocation_matrix_inv_pub_stamp_ > torque_allocation_matrix_inv_pub_interval_)
       {
-        torque_allocation_matrix_inv_pub_stamp_ = ros::Time::now().toSec();
+        torque_allocation_matrix_inv_pub_stamp_ = ros_compat::now().toSec();
 
-        spinal::TorqueAllocationMatrixInv torque_allocation_matrix_inv_msg;
+        spinal_c::TorqueAllocationMatrixInv torque_allocation_matrix_inv_msg;
         torque_allocation_matrix_inv_msg.rows.resize(motor_num_);
         Eigen::MatrixXd torque_allocation_matrix_inv = q_mat_inv_.rightCols(3);
         if (torque_allocation_matrix_inv.cwiseAbs().maxCoeff() > INT16_MAX * 0.001f)
-          ROS_ERROR("Torque Allocation Matrix overflow");
+          ROS_COMPAT_ERROR("Torque Allocation Matrix overflow");
         for (unsigned int i = 0; i < motor_num_; i++)
           {
             torque_allocation_matrix_inv_msg.rows.at(i).x = torque_allocation_matrix_inv(i,0) * 1000;
@@ -180,14 +181,14 @@ namespace aerial_robot_control
 
   void UnderActuatedController::rosParamInit()
   {
-    ros::NodeHandle control_nh(nh_, "controller");
+    ros_compat::NodeHandle control_nh(nh_, "controller");
     getParam<bool>(control_nh, "hovering_approximate", hovering_approximate_, false);
     getParam<double>(control_nh, "torque_allocation_matrix_inv_pub_interval", torque_allocation_matrix_inv_pub_interval_, 0.05);
   }
 
   void UnderActuatedController::setAttitudeGains()
   {
-    spinal::RollPitchYawTerms rpy_gain_msg; //for rosserial
+    spinal_c::RollPitchYawTerms rpy_gain_msg; //for rosserial
     /* to flight controller via rosserial scaling by 1000 */
     rpy_gain_msg.motors.resize(1);
     rpy_gain_msg.motors.at(0).roll_p = pid_controllers_.at(ROLL).getPGain() * 1000;

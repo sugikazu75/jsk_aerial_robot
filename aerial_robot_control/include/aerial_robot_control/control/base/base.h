@@ -35,13 +35,19 @@
 
 #pragma once
 
-
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/flight_navigation.h>
 #include <aerial_robot_estimation/state_estimation.h>
 #include <aerial_robot_model/model/aerial_robot_model.h>
-#include <ros/ros.h>
-#include <spinal/PwmInfo.h>
-#include <spinal/UavInfo.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <spinal/PwmInfo.h>
+#  include <spinal/UavInfo.h>
+#else
+#  include <spinal/msg/pwm_info.hpp>
+#  include <spinal/msg/uav_info.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
 
 namespace aerial_robot_control
 {
@@ -52,17 +58,17 @@ namespace aerial_robot_control
     {}
 
     virtual ~ControlBase(){}
-    void virtual initialize(ros::NodeHandle nh,
-                            ros::NodeHandle nhp,
-                            boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                            boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                            boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void virtual initialize(ros_compat::NodeHandle nh,
+                            ros_compat::NodeHandle nhp,
+                            ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                            ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                            ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                             double ctrl_loop_du)
     {
       nh_ = nh;
       nhp_ = nhp;
-      motor_info_pub_ = nh_.advertise<spinal::PwmInfo>("motor_info", 10);
-      uav_info_pub_ = nh_.advertise<spinal::UavInfo>("uav_info", 10);
+      motor_info_pub_ = nh_.advertise<spinal_c::PwmInfo>("motor_info", 10);
+      uav_info_pub_ = nh_.advertise<spinal_c::UavInfo>("uav_info", 10);
 
       robot_model_ = robot_model;
       estimator_ = estimator;
@@ -76,10 +82,10 @@ namespace aerial_robot_control
       getParam<bool>(nhp_, "param_verbose", param_verbose_, false);
       getParam<int>(nh_, "uav_model", uav_model_, 0); //0: DRONE
 
-      ros::NodeHandle control_nh(nh_, "controller");
+      ros_compat::NodeHandle control_nh(nh_, "controller");
       getParam<bool>(control_nh, "control_verbose", control_verbose_, false);
 
-      ros::NodeHandle motor_nh(nh_, "motor_info");
+      ros_compat::NodeHandle motor_nh(nh_, "motor_info");
       getParam<double>(motor_nh, "max_pwm", max_pwm_, 0.0);
       getParam<double>(motor_nh, "min_pwm", min_pwm_, 0.0);
       getParam<double>(motor_nh, "min_thrust", min_thrust_, 0.0);
@@ -95,7 +101,7 @@ namespace aerial_robot_control
           std::stringstream ss;
           ss << i + 1;
           double val;
-          ros::NodeHandle nh(motor_nh, "ref" + ss.str());
+          ros_compat::NodeHandle nh(motor_nh, "ref" + ss.str());
           getParam<double>(nh, "voltage", val, 0);
           motor_info_[i].voltage = val;
           nh.param("max_thrust", val, 0.0);
@@ -125,7 +131,7 @@ namespace aerial_robot_control
           if (navigator_->getNaviState() == aerial_robot_navigation::TAKEOFF_STATE)
             {
               reset();
-              control_timestamp_ = ros::Time::now().toSec();
+              control_timestamp_ = ros_compat::now().toSec();
 
             }
           else return false;
@@ -138,10 +144,10 @@ namespace aerial_robot_control
     {
       /* motor related info */
       /* initialize setting */
-      if(ros::Time::now().toSec() - activate_timestamp_  > 0.1)
+      if(ros_compat::now().toSec() - activate_timestamp_  > 0.1)
         {
           /* send motor and uav info to uav, about 10Hz */
-          spinal::PwmInfo motor_info_msg;
+          spinal_c::PwmInfo motor_info_msg;
           motor_info_msg.max_pwm = max_pwm_;
           motor_info_msg.min_pwm = min_pwm_;
           motor_info_msg.min_thrust = min_thrust_;
@@ -152,12 +158,12 @@ namespace aerial_robot_control
             motor_info_msg.motor_info.push_back(motor_info_[i]);
           motor_info_pub_.publish(motor_info_msg);
 
-          spinal::UavInfo uav_info_msg;
+          spinal_c::UavInfo uav_info_msg;
           uav_info_msg.motor_num = motor_num_;
           uav_info_msg.uav_model = uav_model_;
           uav_info_pub_.publish(uav_info_msg);
 
-          activate_timestamp_ = ros::Time::now().toSec();
+          activate_timestamp_ = ros_compat::now().toSec();
 
         }
       reset();
@@ -169,14 +175,14 @@ namespace aerial_robot_control
     }
 
   protected:
-    ros::NodeHandle nh_;
-    ros::NodeHandle nhp_;
-    ros::Publisher  motor_info_pub_;
-    ros::Publisher  uav_info_pub_;
+    ros_compat::NodeHandle nh_;
+    ros_compat::NodeHandle nhp_;
+    ros_compat::Publisher  motor_info_pub_;
+    ros_compat::Publisher  uav_info_pub_;
 
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_;
-    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator_;
-    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_;
+    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator_;
+    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator_;
 
     double activate_timestamp_;
 
@@ -188,7 +194,7 @@ namespace aerial_robot_control
     double m_f_rate_;
     double max_pwm_, min_pwm_;
     double min_thrust_;
-    std::vector<spinal::MotorInfo> motor_info_;
+    std::vector<spinal_c::MotorInfo> motor_info_;
 
     double force_landing_thrust_; //pwm
     int pwm_conversion_mode_;
@@ -197,12 +203,12 @@ namespace aerial_robot_control
     bool param_verbose_;
     bool control_verbose_;
 
-    template<class T> void getParam(ros::NodeHandle nh, std::string param_name, T& param, T default_value)
+    template<class T> void getParam(ros_compat::NodeHandle nh, std::string param_name, T& param, T default_value)
     {
       nh.param<T>(param_name, param, default_value);
 
       if(param_verbose_)
-        ROS_INFO_STREAM("[" << nh.getNamespace() << "] " << param_name << ": " << param);
+        ROS_COMPAT_INFO_STREAM("[" << nh.getNamespace() << "] " << param_name << ": " << param);
     }
   };
 

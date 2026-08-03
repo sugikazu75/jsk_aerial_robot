@@ -35,15 +35,24 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/under_actuated_controller.h>
 #include <aerial_robot_control/control/utils/care.h>
-#include <aerial_robot_control/LQIConfig.h>
-#include <aerial_robot_msgs/FourAxisGain.h>
-#include <dynamic_reconfigure/server.h>
-#include <spinal/RollPitchYawTerms.h>
-#include <spinal/PMatrixPseudoInverseWithInertia.h>
-#include <ros/ros.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_control/LQIConfig.h>
+#  include <aerial_robot_msgs/FourAxisGain.h>
+#  include <dynamic_reconfigure/server.h>
+#  include <spinal/PMatrixPseudoInverseWithInertia.h>
+#  include <spinal/RollPitchYawTerms.h>
+#else
+#  include <aerial_robot_msgs/msg/four_axis_gain.hpp>
+#  include <spinal/msg/p_matrix_pseudo_inverse_with_inertia.hpp>
+#  include <spinal/msg/roll_pitch_yaw_terms.hpp>
+#endif
 #include <thread>
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
 
 namespace aerial_robot_control
 {
@@ -54,24 +63,26 @@ namespace aerial_robot_control
     UnderActuatedLQIController();
     virtual ~UnderActuatedLQIController();
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate);
 
     void activate() override;
 
   protected:
 
-    ros::Publisher flight_cmd_pub_; // for spinal
-    ros::Publisher rpy_gain_pub_; // for spinal
-    ros::Publisher four_axis_gain_pub_;
-    ros::Publisher p_matrix_pseudo_inverse_inertia_pub_;
+    ros_compat::Publisher flight_cmd_pub_; // for spinal
+    ros_compat::Publisher rpy_gain_pub_; // for spinal
+    ros_compat::Publisher four_axis_gain_pub_;
+    ros_compat::Publisher p_matrix_pseudo_inverse_inertia_pub_;
 
     bool verbose_;
-    boost::shared_ptr<dynamic_reconfigure::Server<aerial_robot_control::LQIConfig> > lqi_server_;
+#if AERIAL_ROBOT_ROS_VERSION == 1
+    ros_compat::SharedPtr<dynamic_reconfigure::Server<aerial_robot_control::LQIConfig> > lqi_server_;
     dynamic_reconfigure::Server<aerial_robot_control::LQIConfig>::CallbackType dynamic_reconf_func_lqi_;
+#endif
 
     double target_roll_, target_pitch_;
     double candidate_yaw_term_;
@@ -107,7 +118,9 @@ namespace aerial_robot_control
 
     Eigen::MatrixXd getQInv();
     virtual void allocateYawTerm();
+#if AERIAL_ROBOT_ROS_VERSION == 1
     void cfgLQICallback(aerial_robot_control::LQIConfig &config, uint32_t level); //dynamic reconfigure
+#endif
 
     void sendRotationalInertiaComp();
 

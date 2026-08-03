@@ -1,0 +1,23 @@
+<!-- ROS2 variant of flight_control_plugins.xml.
+
+     Same plugin classes as ROS1, but ROS2 pluginlib expects the library path
+     without the ROS1 lib/lib prefix. -->
+<library path="flight_control_pluginlib">
+
+  <class name="aerial_robot_control/fully_actuated_controller" type="aerial_robot_control::FullyActuatedController" base_class_type="aerial_robot_control::ControlBase">
+    <description>controller for fully actuated model (e.g., tilted hex) </description>
+  </class>
+
+  <class name="aerial_robot_control/under_actuated_controller" type="aerial_robot_control::UnderActuatedController" base_class_type="aerial_robot_control::ControlBase">
+    <description>controller for under actuated model (e.g., quad) </description>
+  </class>
+
+  <class name="aerial_robot_control/under_actuated_lqi_controller" type="aerial_robot_control::UnderActuatedLQIController" base_class_type="aerial_robot_control::ControlBase">
+    <description>controller for under actuated model (e.g., quad) with LQI controller </description>
+  </class>
+
+  <class name="aerial_robot_control/under_actuated_tilted_lqi_controller" type="aerial_robot_control::UnderActuatedTiltedLQIController" base_class_type="aerial_robot_control::ControlBase">
+    <description>controller for under actuated model (e.g., quad) with LQI Tilted controller </description>
+  </class>
+
+</library>

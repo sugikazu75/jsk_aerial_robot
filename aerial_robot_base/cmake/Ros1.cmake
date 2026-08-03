@@ -1,34 +1,20 @@
-cmake_minimum_required(VERSION 3.14)
-project(aerial_robot_base)
+add_compile_options(-std=c++17)
+add_definitions(-DAERIAL_ROBOT_ROS_VERSION=1)
 
-if(DEFINED ENV{ROS_VERSION})
-  set(ROS_VERSION $ENV{ROS_VERSION})
-else()
-  message(FATAL_ERROR "ROS_VERSION is not defined")
-endif()
-
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
-if(ROS_VERSION EQUAL 1)
-  include(Ros1)
-else()
-  include(Ros2)
-endif()
 find_package(catkin REQUIRED COMPONENTS
   aerial_robot_control
   aerial_robot_estimation
   aerial_robot_model
+  aerial_robot_ros_compat
   roscpp
   rospy)
 
 catkin_python_setup()
 
-add_compile_options(-std=c++17)
-
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model roscpp rospy
+  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model aerial_robot_ros_compat roscpp rospy
 )
 
 include_directories(
@@ -36,11 +22,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library (aerial_robot_base src/aerial_robot_base.cpp)
-target_link_libraries (aerial_robot_base ${catkin_LIBRARIES})
+add_library(aerial_robot_base src/aerial_robot_base.cpp)
+target_link_libraries(aerial_robot_base ${catkin_LIBRARIES})
 
 add_executable(aerial_robot_base_node src/aerial_robot_base_node.cpp)
-target_link_libraries (aerial_robot_base_node ${catkin_LIBRARIES} aerial_robot_base)
+target_link_libraries(aerial_robot_base_node ${catkin_LIBRARIES} aerial_robot_base)
 
 # generate symbolic link for icon images
 add_custom_target(${PROJECT_NAME}_install_icons ALL COMMAND ${PROJECT_SOURCE_DIR}/bin/icon_install.sh)

@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/under_actuated_lqi_controller.h>
 
@@ -47,11 +48,11 @@ UnderActuatedLQIController::UnderActuatedLQIController():
 }
 
 
-void UnderActuatedLQIController::initialize(ros::NodeHandle nh,
-                                     ros::NodeHandle nhp,
-                                     boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                     boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                     boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+void UnderActuatedLQIController::initialize(ros_compat::NodeHandle nh,
+                                     ros_compat::NodeHandle nhp,
+                                     ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                     ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                     ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                      double ctrl_loop_rate)
 {
   PoseLinearController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
@@ -59,16 +60,18 @@ void UnderActuatedLQIController::initialize(ros::NodeHandle nh,
   rosParamInit();
 
   //publisher
-  rpy_gain_pub_ = nh_.advertise<spinal::RollPitchYawTerms>("rpy/gain", 1);
-  flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
-  four_axis_gain_pub_ = nh_.advertise<aerial_robot_msgs::FourAxisGain>("debug/four_axes/gain", 1);
-  p_matrix_pseudo_inverse_inertia_pub_ = nh_.advertise<spinal::PMatrixPseudoInverseWithInertia>("p_matrix_pseudo_inverse_inertia", 1);
+  rpy_gain_pub_ = nh_.advertise<spinal_c::RollPitchYawTerms>("rpy/gain", 1);
+  flight_cmd_pub_ = nh_.advertise<spinal_c::FourAxisCommand>("four_axes/command", 1);
+  four_axis_gain_pub_ = nh_.advertise<aerial_robot_msgs_c::FourAxisGain>("debug/four_axes/gain", 1);
+  p_matrix_pseudo_inverse_inertia_pub_ = nh_.advertise<spinal_c::PMatrixPseudoInverseWithInertia>("p_matrix_pseudo_inverse_inertia", 1);
 
   //dynamic reconfigure server
-  ros::NodeHandle control_nh(nh_, "controller");
-  lqi_server_ = boost::make_shared<dynamic_reconfigure::Server<aerial_robot_control::LQIConfig> >(ros::NodeHandle(control_nh, "lqi"));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+  ros_compat::NodeHandle control_nh(nh_, "controller");
+  lqi_server_ = ros_compat::makeShared<dynamic_reconfigure::Server<aerial_robot_control::LQIConfig> >(ros_compat::NodeHandle(control_nh, "lqi"));
   dynamic_reconf_func_lqi_ = boost::bind(&UnderActuatedLQIController::cfgLQICallback, this, _1, _2);
   lqi_server_->setCallback(dynamic_reconf_func_lqi_);
+#endif
 
   //gains
   pitch_gains_.resize(motor_num_, Eigen::Vector3d(0,0,0));
@@ -89,7 +92,7 @@ void UnderActuatedLQIController::initialize(ros::NodeHandle nh,
 
   if (!robot_model_->isModelFixed()) realtime_update_ = true;
   if (realtime_update_) {
-    gain_generator_thread_ = std::thread(boost::bind(&UnderActuatedLQIController::gainGeneratorFunc, this));
+    gain_generator_thread_ = std::thread(&UnderActuatedLQIController::gainGeneratorFunc, this);
   }
 }
 
@@ -101,12 +104,12 @@ UnderActuatedLQIController::~UnderActuatedLQIController()
 void UnderActuatedLQIController::gainGeneratorFunc()
 {
   double rate;
-  ros::NodeHandle control_nh(nh_, "controller");
-  ros::NodeHandle lqi_nh(control_nh, "lqi");
+  ros_compat::NodeHandle control_nh(nh_, "controller");
+  ros_compat::NodeHandle lqi_nh(control_nh, "lqi");
   lqi_nh.param("gain_generate_rate", rate, 15.0);
-  ros::Rate loop_rate(rate);
+  ros_compat::Rate loop_rate(rate);
 
-  while(ros::ok())
+  while(ros_compat::ok())
     {
       if(checkRobotModel())
         {
@@ -116,7 +119,7 @@ void UnderActuatedLQIController::gainGeneratorFunc()
               publishGain();
             }
           else
-            ROS_ERROR_NAMED("LQI gain generator", "LQI gain generator: can not solve hamilton matrix");
+            ROS_COMPAT_ERROR("LQI gain generator: can not solve hamilton matrix");
         }
       else
         {
@@ -136,10 +139,10 @@ void UnderActuatedLQIController::activate()
   if(optimalGain()) {
     clampGain();
     publishGain();
-    ROS_INFO_NAMED("LQI gain generator", "LQI gain generator: send LQI gains");
+    ROS_COMPAT_INFO("LQI gain generator: send LQI gains");
   }
   else {
-    ROS_ERROR_NAMED("LQI gain generator", "LQI gain generator: can not solve hamilton matrix");
+    ROS_COMPAT_ERROR("LQI gain generator: can not solve hamilton matrix");
   }
 }
 
@@ -153,7 +156,7 @@ void UnderActuatedLQIController::sendCmd()
 
 void UnderActuatedLQIController::sendFourAxisCommand()
 {
-  spinal::FourAxisCommand flight_command_data;
+  spinal_c::FourAxisCommand flight_command_data;
   flight_command_data.angles[0] = target_roll_;
   flight_command_data.angles[1] = target_pitch_;
   flight_command_data.angles[2] = candidate_yaw_term_;
@@ -294,7 +297,7 @@ bool UnderActuatedLQIController::optimalGain()
     }
   A.block(lqi_mode_ * 2, 0, lqi_mode_, lqi_mode_ * 3) = -C;
 
-  ROS_DEBUG_STREAM_NAMED("LQI gain generator", "LQI gain generator: B: \n"  <<  B );
+  ROS_COMPAT_DEBUG_STREAM("LQI gain generator: B: \n"  <<  B );
 
   Eigen::VectorXd q_diagonals(lqi_mode_ * 3);
   if(lqi_mode_ == 3)
@@ -311,7 +314,7 @@ bool UnderActuatedLQIController::optimalGain()
   for(int i = 0; i < motor_num_; ++i) R(i,i) = r_.at(i);
 
   /* solve continuous-time algebraic Ricatti equation */
-  double t = ros::Time::now().toSec();
+  double t = ros_compat::now().toSec();
 
   if(K_.cols() != lqi_mode_ * 3)
     {
@@ -321,17 +324,17 @@ bool UnderActuatedLQIController::optimalGain()
   bool use_kleinman_method = true;
   if(K_.cols() == 0 || K_.rows() == 0)
     {
-      ROS_DEBUG_STREAM_NAMED("LQI gain generator",  "LQI gain generator: do not use kleinman method");
+      ROS_COMPAT_DEBUG_STREAM("LQI gain generator: do not use kleinman method");
       use_kleinman_method = false;
     }
   if(!control_utils::care(A, B, R, Q, K_, use_kleinman_method))
     {
-      ROS_ERROR_STREAM_NAMED("LQI gain generator",  "LQI gain generator: error in solver of continuous-time algebraic riccati equation");
+      ROS_COMPAT_ERROR_STREAM("LQI gain generator: error in solver of continuous-time algebraic riccati equation");
       return false;
     }
 
-  ROS_DEBUG_STREAM_NAMED("LQI gain generator",  "LQI gain generator: CARE: %f sec" << ros::Time::now().toSec() - t);
-  ROS_DEBUG_STREAM_NAMED("LQI gain generator",  "LQI gain generator:  K \n" <<  K_);
+  ROS_COMPAT_DEBUG_STREAM("LQI gain generator: CARE: %f sec" << ros_compat::now().toSec() - t);
+  ROS_COMPAT_DEBUG_STREAM("LQI gain generator:  K \n" <<  K_);
 
 
   for(int i = 0; i < motor_num_; ++i)
@@ -348,7 +351,7 @@ bool UnderActuatedLQIController::optimalGain()
 
 void UnderActuatedLQIController::clampGain()
 {
-  /* avoid the violation of 16int_t range because of spinal::RollPitchYawTerms */
+  /* avoid the violation of 16int_t range because of spinal_c::RollPitchYawTerms */
   double max_gain_thresh = 32.767;
   double max_roll_p_gain = 0, max_roll_d_gain = 0, max_pitch_p_gain = 0, max_pitch_d_gain = 0, max_yaw_d_gain = 0;
   for(int i = 0; i < motor_num_; ++i)
@@ -363,27 +366,27 @@ void UnderActuatedLQIController::clampGain()
   double roll_p_gain_scale = 1, roll_d_gain_scale = 1, pitch_p_gain_scale = 1, pitch_d_gain_scale = 1, yaw_d_gain_scale = 1;
   if(max_roll_p_gain > max_gain_thresh)
     {
-      ROS_WARN_STREAM_NAMED("LQI gain generator", "LQI gain generator: the max roll p gain violate the range of int16_t: " << max_roll_p_gain);
+      ROS_COMPAT_WARN_STREAM("LQI gain generator: the max roll p gain violate the range of int16_t: " << max_roll_p_gain);
       roll_p_gain_scale = max_gain_thresh / max_roll_p_gain;
     }
   if(max_roll_d_gain > max_gain_thresh)
     {
-      ROS_WARN_STREAM_NAMED("LQI gain generator", "LQI gain generator: the max roll d gain violate the range of int16_t: " << max_roll_d_gain);
+      ROS_COMPAT_WARN_STREAM("LQI gain generator: the max roll d gain violate the range of int16_t: " << max_roll_d_gain);
       roll_d_gain_scale = max_gain_thresh / max_roll_d_gain;
     }
   if(max_pitch_p_gain > max_gain_thresh)
     {
-      ROS_WARN_STREAM_NAMED("LQI gain generator", "LQI gain generator: the max pitch p gain violate the range of int16_t: " << max_pitch_p_gain);
+      ROS_COMPAT_WARN_STREAM("LQI gain generator: the max pitch p gain violate the range of int16_t: " << max_pitch_p_gain);
       pitch_p_gain_scale = max_gain_thresh / max_pitch_p_gain;
     }
   if(max_pitch_d_gain > max_gain_thresh)
     {
-      ROS_WARN_STREAM_NAMED("LQI gain generator", "LQI gain generator: the max pitch d gain violate the range of int16_t: " << max_pitch_d_gain);
+      ROS_COMPAT_WARN_STREAM("LQI gain generator: the max pitch d gain violate the range of int16_t: " << max_pitch_d_gain);
       pitch_d_gain_scale = max_gain_thresh / max_pitch_d_gain;
     }
   if(max_yaw_d_gain > max_gain_thresh)
     {
-      ROS_WARN_STREAM_NAMED("LQI gain generator", "LQI gain generator: the max yaw d gain violate the range of int16_t: " << max_yaw_d_gain);
+      ROS_COMPAT_WARN_STREAM("LQI gain generator: the max yaw d gain violate the range of int16_t: " << max_yaw_d_gain);
       yaw_d_gain_scale = max_gain_thresh / max_yaw_d_gain;
     }
 
@@ -403,7 +406,7 @@ bool UnderActuatedLQIController::checkRobotModel()
 {
   if(!robot_model_->initialized())
     {
-      ROS_DEBUG_NAMED("LQI gain generator", "LQI gain generator: robot model is not initiliazed");
+      ROS_COMPAT_DEBUG("LQI gain generator: robot model is not initiliazed");
       return false;
     }
 
@@ -413,8 +416,8 @@ bool UnderActuatedLQIController::checkRobotModel()
 
 void UnderActuatedLQIController::rosParamInit()
 {
-  ros::NodeHandle control_nh(nh_, "controller");
-  ros::NodeHandle lqi_nh(control_nh, "lqi");
+  ros_compat::NodeHandle control_nh(nh_, "controller");
+  ros_compat::NodeHandle lqi_nh(control_nh, "lqi");
   getParam<bool>(lqi_nh, "clamp_gain", clamp_gain_, true);
   getParam<bool>(lqi_nh, "realtime_update", realtime_update_, false);
   getParam<bool>(lqi_nh, "gyro_moment_compensation", gyro_moment_compensation_, false);
@@ -440,14 +443,14 @@ void UnderActuatedLQIController::rosParamInit()
 
   getParam<int>(lqi_nh, "lqi_mode", lqi_mode_, 4);
   if (lqi_mode_ != 3 && lqi_mode_ != 4) {
-    ROS_ERROR_STREAM_NAMED("LQI gain generator",  "LQI gain generator: lqi model should be 3 or 4, " << lqi_mode_ << " is not allowed.");
+    ROS_COMPAT_ERROR_STREAM("LQI gain generator: lqi model should be 3 or 4, " << lqi_mode_ << " is not allowed.");
   }
 }
 
 void UnderActuatedLQIController::publishGain()
 {
-  aerial_robot_msgs::FourAxisGain four_axis_gain_msg;
-  spinal::RollPitchYawTerms rpy_gain_msg; // to spinal
+  aerial_robot_msgs_c::FourAxisGain four_axis_gain_msg;
+  spinal_c::RollPitchYawTerms rpy_gain_msg; // to spinal
   rpy_gain_msg.motors.resize(motor_num_);
 
   for(int i = 0; i < motor_num_; ++i)
@@ -483,47 +486,48 @@ void UnderActuatedLQIController::publishGain()
   four_axis_gain_pub_.publish(four_axis_gain_msg);
 }
 
+#if AERIAL_ROBOT_ROS_VERSION == 1
 void UnderActuatedLQIController::cfgLQICallback(aerial_robot_control::LQIConfig &config, uint32_t level)
 {
-  using Levels = aerial_robot_msgs::DynamicReconfigureLevels;
+  using Levels = aerial_robot_msgs_c::DynamicReconfigureLevels;
   if(config.lqi_flag)
     {
       switch(level)
         {
         case Levels::RECONFIGURE_LQI_ROLL_PITCH_P:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the p gain weight of roll and pitch from " << lqi_roll_pitch_weight_.x() <<  " to "  << config.roll_pitch_p);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the p gain weight of roll and pitch from " << lqi_roll_pitch_weight_.x() <<  " to "  << config.roll_pitch_p);
           lqi_roll_pitch_weight_.x() = config.roll_pitch_p;
           break;
         case Levels::RECONFIGURE_LQI_ROLL_PITCH_I:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the i gain weight of roll and pitch from " << lqi_roll_pitch_weight_.y() <<  " to "  << config.roll_pitch_i);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the i gain weight of roll and pitch from " << lqi_roll_pitch_weight_.y() <<  " to "  << config.roll_pitch_i);
           lqi_roll_pitch_weight_.y() = config.roll_pitch_i;
           break;
         case Levels::RECONFIGURE_LQI_ROLL_PITCH_D:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the d gain weight of roll and pitch from " << lqi_roll_pitch_weight_.z() <<  " to "  << config.roll_pitch_d);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the d gain weight of roll and pitch from " << lqi_roll_pitch_weight_.z() <<  " to "  << config.roll_pitch_d);
           lqi_roll_pitch_weight_.z() = config.roll_pitch_d;
           break;
         case Levels::RECONFIGURE_LQI_YAW_P:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the p gain weight of yaw from " << lqi_yaw_weight_.x() <<  " to "  << config.yaw_p);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the p gain weight of yaw from " << lqi_yaw_weight_.x() <<  " to "  << config.yaw_p);
           lqi_yaw_weight_.x() = config.yaw_p;
           break;
         case Levels::RECONFIGURE_LQI_YAW_I:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the i gain weight of yaw from " << lqi_yaw_weight_.y() <<  " to "  << config.yaw_i);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the i gain weight of yaw from " << lqi_yaw_weight_.y() <<  " to "  << config.yaw_i);
           lqi_yaw_weight_.y() = config.yaw_i;
           break;
         case Levels::RECONFIGURE_LQI_YAW_D:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the d gain weight of yaw from " << lqi_yaw_weight_.z() <<  " to "  << config.yaw_d);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the d gain weight of yaw from " << lqi_yaw_weight_.z() <<  " to "  << config.yaw_d);
           lqi_yaw_weight_.z() = config.yaw_d;
           break;
         case Levels::RECONFIGURE_LQI_Z_P:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the p gain weight of z from " << lqi_z_weight_.x() <<  " to "  << config.z_p);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the p gain weight of z from " << lqi_z_weight_.x() <<  " to "  << config.z_p);
           lqi_z_weight_.x() = config.z_p;
           break;
         case Levels::RECONFIGURE_LQI_Z_I:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the i gain weight of z from " << lqi_z_weight_.y() <<  " to "  << config.z_i);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the i gain weight of z from " << lqi_z_weight_.y() <<  " to "  << config.z_i);
           lqi_z_weight_.y() = config.z_i;
           break;
         case Levels::RECONFIGURE_LQI_Z_D:
-          ROS_INFO_STREAM_NAMED("LQI gain generator", "LQI gain generator: change the d gain weight of z from " << lqi_z_weight_.z() <<  " to "  << config.z_d);
+          ROS_COMPAT_INFO_STREAM("LQI gain generator: change the d gain weight of z from " << lqi_z_weight_.z() <<  " to "  << config.z_d);
           lqi_z_weight_.z() = config.z_d;
           break;
         default :
@@ -538,12 +542,13 @@ void UnderActuatedLQIController::cfgLQICallback(aerial_robot_control::LQIConfig 
           publishGain();
         }
         else {
-          ROS_ERROR_NAMED("LQI gain generator", "LQI gain generator: can not solve hamilton matrix");
+          ROS_COMPAT_ERROR("LQI gain generator: can not solve hamilton matrix");
         }
       }
 
     }
 }
+#endif
 
 void UnderActuatedLQIController::sendRotationalInertiaComp()
 {
@@ -552,7 +557,7 @@ void UnderActuatedLQIController::sendRotationalInertiaComp()
   Eigen::MatrixXd P = robot_model_->calcWrenchMatrixOnCoG();
   Eigen::MatrixXd p_mat_pseudo_inv_ = aerial_robot_model::pseudoinverse(P.middleRows(2, lqi_mode_));
 
-  spinal::PMatrixPseudoInverseWithInertia p_pseudo_inverse_with_inertia_msg; // to spinal
+  spinal_c::PMatrixPseudoInverseWithInertia p_pseudo_inverse_with_inertia_msg; // to spinal
   p_pseudo_inverse_with_inertia_msg.pseudo_inverse.resize(motor_num_);
 
   for(int i = 0; i < motor_num_; ++i)

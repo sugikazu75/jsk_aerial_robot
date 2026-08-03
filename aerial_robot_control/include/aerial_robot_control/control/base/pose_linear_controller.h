@@ -35,15 +35,29 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/base/base.h>
 #include <aerial_robot_control/control/utils/pid.h>
-#include <aerial_robot_control/PIDConfig.h>
-#include <aerial_robot_msgs/DynamicReconfigureLevels.h>
-#include <aerial_robot_msgs/PoseControlPid.h>
 #include <angles/angles.h>
-#include <dynamic_reconfigure/server.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_control/PIDConfig.h>
+#  include <aerial_robot_msgs/DynamicReconfigureLevels.h>
+#  include <aerial_robot_msgs/PoseControlPid.h>
+#  include <dynamic_reconfigure/server.h>
+#else
+#  include <aerial_robot_msgs/msg/dynamic_reconfigure_levels.hpp>
+#  include <aerial_robot_msgs/msg/pose_control_pid.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
 
+#if AERIAL_ROBOT_ROS_VERSION == 1
 using PidControlDynamicConfig = dynamic_reconfigure::Server<aerial_robot_control::PIDConfig>;
+#else
+struct PidControlDynamicConfig
+{
+};
+#endif
 
 namespace aerial_robot_control
 {
@@ -57,22 +71,24 @@ namespace aerial_robot_control
   public:
     PoseLinearController();
     virtual ~PoseLinearController() = default;
-    void virtual initialize(ros::NodeHandle nh,
-                            ros::NodeHandle nhp,
-                            boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                            boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                            boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void virtual initialize(ros_compat::NodeHandle nh,
+                            ros_compat::NodeHandle nhp,
+                            ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                            ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                            ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                             double ctrl_loop_du) override;
 
     virtual bool update() override;
     virtual void reset() override;
 
   protected:
-    ros::Publisher pid_pub_;
+    ros_compat::Publisher pid_pub_;
 
     std::vector<PID> pid_controllers_;
-    std::vector<boost::shared_ptr<PidControlDynamicConfig> > pid_reconf_servers_;
-    aerial_robot_msgs::PoseControlPid pid_msg_;
+#if AERIAL_ROBOT_ROS_VERSION == 1
+    std::vector<ros_compat::SharedPtr<PidControlDynamicConfig> > pid_reconf_servers_;
+#endif
+    aerial_robot_msgs_c::PoseControlPid pid_msg_;
 
     bool need_yaw_d_control_;
     bool start_rp_integration_;
@@ -92,7 +108,9 @@ namespace aerial_robot_control
     virtual void sendCmd();
 
 
+#if AERIAL_ROBOT_ROS_VERSION == 1
     void cfgPidCallback(aerial_robot_control::PIDConfig &config, uint32_t level, std::vector<int> controller_indices);
+#endif
   };
 
 };

@@ -136,6 +136,10 @@ inline void spinOnce()
 {
   ::ros::spinOnce();
 }
+inline void waitForShutdown()
+{
+  ::ros::waitForShutdown();
+}
 inline void shutdown()
 {
   ::ros::shutdown();

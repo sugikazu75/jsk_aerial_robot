@@ -2,16 +2,14 @@
 
 int main (int argc, char **argv)
 {
-  ros::init (argc, argv, "aeria_robot_base");
-  ros::NodeHandle nh;
-  ros::NodeHandle nh_private("~");
+  ros_compat::NodeHandle nh = ros_compat::initNode(argc, argv, "aeria_robot_base");
+  ros_compat::NodeHandle nh_private = ros_compat::privateNodeHandle(nh);
   AerialRobotBase*  aerialRobotBaseNode = new AerialRobotBase(nh, nh_private);
-  ros::waitForShutdown();
+  ros_compat::waitForShutdown();
 
   delete aerialRobotBaseNode;
   return 0;
 }
-
 
 
 

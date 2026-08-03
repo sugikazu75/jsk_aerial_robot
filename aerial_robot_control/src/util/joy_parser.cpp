@@ -1,8 +1,8 @@
 #include "aerial_robot_control/util/joy_parser.h"
 
-const sensor_msgs::Joy joyParse(const sensor_msgs::Joy& joy_msg)
+const sensor_msgs_c::Joy joyParse(const sensor_msgs_c::Joy& joy_msg)
 {
-  sensor_msgs::Joy joy_cmd;
+  sensor_msgs_c::Joy joy_cmd;
 
   int a_size = joy_msg.axes.size();
   int b_size = joy_msg.buttons.size();

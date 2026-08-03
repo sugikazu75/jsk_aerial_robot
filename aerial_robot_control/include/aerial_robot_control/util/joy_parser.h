@@ -36,7 +36,13 @@
 
 #pragma once
 
-#include <sensor_msgs/Joy.h>
+#include <aerial_robot_ros_compat/message.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <sensor_msgs/Joy.h>
+#else
+#  include <sensor_msgs/msg/joy.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
 
 /* general joystick bottons/axes layout */
 const int JOY_BUTTON_SIZE              = 17;
@@ -163,5 +169,4 @@ const int ROG1_AXIS_BUTTON_CROSS_LEFT_RIGHT = 6; // left = +1, right= -1
 const int ROG1_AXIS_BUTTON_CROSS_UP_DOWN    = 7; // up = +1, down= -1
 
 
-const sensor_msgs::Joy joyParse(const sensor_msgs::Joy& ps4_joy_msg);
-
+const sensor_msgs_c::Joy joyParse(const sensor_msgs_c::Joy& ps4_joy_msg);

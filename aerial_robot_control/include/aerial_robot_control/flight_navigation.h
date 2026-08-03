@@ -1,23 +1,47 @@
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
-#include <aerial_robot_estimation/sensor/gps.h>
 #include <aerial_robot_estimation/state_estimation.h>
-#include <aerial_robot_msgs/FlightNav.h>
 #include <angles/angles.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <ros/ros.h>
-#include <sensor_msgs/Joy.h>
-#include <spinal/FlightConfigCmd.h>
-#include <std_msgs/Empty.h>
-#include <std_msgs/Float32.h>
-#include <std_msgs/Int8.h>
-#include <std_msgs/UInt8.h>
-#include <nav_msgs/Path.h>
-#include <visualization_msgs/MarkerArray.h>
 #include <aerial_robot_control/trajectory/trajectory_reference/polynomial_trajectory.hpp>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_msgs/FlightNav.h>
+#  include <geographic_msgs/GeoPoint.h>
+#  include <geometry_msgs/PoseStamped.h>
+#  include <geometry_msgs/Vector3Stamped.h>
+#  include <nav_msgs/Path.h>
+#  include <sensor_msgs/Joy.h>
+#  include <spinal/FlightConfigCmd.h>
+#  include <std_msgs/Empty.h>
+#  include <std_msgs/Float32.h>
+#  include <std_msgs/Int8.h>
+#  include <std_msgs/UInt8.h>
+#  include <visualization_msgs/MarkerArray.h>
+#else
+#  include <aerial_robot_msgs/msg/flight_nav.hpp>
+#  include <geographic_msgs/msg/geo_point.hpp>
+#  include <geometry_msgs/msg/pose_stamped.hpp>
+#  include <geometry_msgs/msg/vector3_stamped.hpp>
+#  include <nav_msgs/msg/path.hpp>
+#  include <sensor_msgs/msg/joy.hpp>
+#  include <spinal/msg/flight_config_cmd.hpp>
+#  include <std_msgs/msg/empty.hpp>
+#  include <std_msgs/msg/float32.hpp>
+#  include <std_msgs/msg/int8.hpp>
+#  include <std_msgs/msg/u_int8.hpp>
+#  include <visualization_msgs/msg/marker_array.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(geographic_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(nav_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
+AERIAL_ROBOT_MSG_NAMESPACE(std_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(visualization_msgs);
 
 namespace aerial_robot_navigation
 {
@@ -54,13 +78,13 @@ namespace aerial_robot_navigation
 
     virtual ~BaseNavigator() = default;
 
-    virtual void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                            boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                            boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    virtual void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                            ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                            ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                             double loop_du);
     virtual void update();
 
-    ros::Publisher& getFlightConfigPublisher() { return flight_config_pub_; }
+    ros_compat::Publisher& getFlightConfigPublisher() { return flight_config_pub_; }
 
     inline uint8_t getNaviState(){  return navi_state_;}
     inline void setNaviState(const uint8_t  state){ navi_state_ = state;}
@@ -134,7 +158,7 @@ namespace aerial_robot_navigation
     uint8_t getEstimateMode(){ return estimate_mode_;}
     void setEstimateMode(uint8_t estimate_mode){ estimate_mode_ = estimate_mode;}
 
-    void generateNewTrajectory(std::vector<geometry_msgs::PoseStamped> path);
+    void generateNewTrajectory(std::vector<geometry_msgs_c::PoseStamped> path);
 
     static constexpr uint8_t POS_CONTROL_COMMAND = 0;
     static constexpr uint8_t VEL_CONTROL_COMMAND = 1;
@@ -230,35 +254,35 @@ namespace aerial_robot_navigation
     static constexpr int PS4_AXIS_GYRO_YAW                = 12;
     static constexpr int PS4_AXIS_GYRO_PITCH              = 13;
 
-    static const sensor_msgs::Joy ps4joyToPs3joyConvert(const sensor_msgs::Joy& ps4_joy_msg);
+    static const sensor_msgs_c::Joy ps4joyToPs3joyConvert(const sensor_msgs_c::Joy& ps4_joy_msg);
 
   protected:
-    ros::NodeHandle nh_;
-    ros::NodeHandle nhp_;
+    ros_compat::NodeHandle nh_;
+    ros_compat::NodeHandle nhp_;
 
-    ros::Publisher  flight_config_pub_;
-    ros::Publisher  power_info_pub_;
-    ros::Publisher  flight_state_pub_;
-    ros::Publisher  path_pub_;
-    ros::Publisher  waypoint_pub_;
-    ros::Subscriber navi_sub_;
-    ros::Subscriber single_goal_sub_;
-    ros::Subscriber simple_move_base_goal_sub_;
-    ros::Subscriber path_sub_;
-    ros::Subscriber battery_sub_;
-    ros::Subscriber flight_status_ack_sub_;
-    ros::Subscriber takeoff_sub_;
-    ros::Subscriber land_sub_;
-    ros::Subscriber start_sub_;
-    ros::Subscriber halt_sub_;
-    ros::Subscriber force_landing_sub_;
-    ros::Subscriber ctrl_mode_sub_;
-    ros::Subscriber joy_stick_sub_;
-    ros::Subscriber flight_nav_sub_;
-    ros::Subscriber stop_teleop_sub_;
+    ros_compat::Publisher  flight_config_pub_;
+    ros_compat::Publisher  power_info_pub_;
+    ros_compat::Publisher  flight_state_pub_;
+    ros_compat::Publisher  path_pub_;
+    ros_compat::Publisher  waypoint_pub_;
+    ros_compat::Subscriber navi_sub_;
+    ros_compat::Subscriber single_goal_sub_;
+    ros_compat::Subscriber simple_move_base_goal_sub_;
+    ros_compat::Subscriber path_sub_;
+    ros_compat::Subscriber battery_sub_;
+    ros_compat::Subscriber flight_status_ack_sub_;
+    ros_compat::Subscriber takeoff_sub_;
+    ros_compat::Subscriber land_sub_;
+    ros_compat::Subscriber start_sub_;
+    ros_compat::Subscriber halt_sub_;
+    ros_compat::Subscriber force_landing_sub_;
+    ros_compat::Subscriber ctrl_mode_sub_;
+    ros_compat::Subscriber joy_stick_sub_;
+    ros_compat::Subscriber flight_nav_sub_;
+    ros_compat::Subscriber stop_teleop_sub_;
 
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_;
-    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_;
+    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator_;
 
     bool param_verbose_;
 
@@ -274,7 +298,7 @@ namespace aerial_robot_navigation
     bool  force_att_control_flag_;
     bool trajectory_mode_;
     bool lock_teleop_;
-    ros::Time force_landing_start_time_;
+    ros_compat::Time force_landing_start_time_;
 
     double takeoff_xy_pos_tolerance_;
     double takeoff_z_pos_tolerance_;
@@ -308,7 +332,7 @@ namespace aerial_robot_navigation
 
     /* gps waypint */
     bool gps_waypoint_;
-    geographic_msgs::GeoPoint target_wp_;
+    geographic_msgs_c::GeoPoint target_wp_;
     double gps_waypoint_time_;
     double gps_waypoint_check_du_;
     double gps_waypoint_threshold_;
@@ -352,12 +376,12 @@ namespace aerial_robot_navigation
     double hovering_current_;
 
     virtual void rosParamInit();
-    void simpleMoveBaseGoalCallback(const geometry_msgs::PoseStampedConstPtr & msg);
-    void singleGoalCallback(const geometry_msgs::PoseStampedConstPtr & msg);
-    void pathCallback(const nav_msgs::PathConstPtr & msg);
-    virtual void naviCallback(const aerial_robot_msgs::FlightNavConstPtr & msg);
-    virtual void joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg);
-    void batteryCheckCallback(const std_msgs::Float32ConstPtr &msg);
+    void simpleMoveBaseGoalCallback(const ros_compat::ConstPtr<geometry_msgs_c::PoseStamped>& msg);
+    void singleGoalCallback(const ros_compat::ConstPtr<geometry_msgs_c::PoseStamped>& msg);
+    void pathCallback(const ros_compat::ConstPtr<nav_msgs_c::Path>& msg);
+    virtual void naviCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::FlightNav>& msg);
+    virtual void joyStickControl(const ros_compat::ConstPtr<sensor_msgs_c::Joy>& joy_msg);
+    void batteryCheckCallback(const ros_compat::ConstPtr<std_msgs_c::Float32>&msg);
 
     virtual void halt() {}
     virtual void reset()
@@ -380,21 +404,21 @@ namespace aerial_robot_navigation
       double pos_xy_error_dist = std::sqrt(pos_x_error * pos_x_error + pos_y_error * pos_y_error);
       if(pos_xy_error_dist > takeoff_xy_pos_tolerance_)
         {
-          ROS_ERROR_STREAM("initial xy error distance: " << pos_xy_error_dist << " is larger than threshold " << takeoff_xy_pos_tolerance_ << ". switch back to ARM_OFF_STATE");
+          ROS_COMPAT_ERROR_STREAM("initial xy error distance: " << pos_xy_error_dist << " is larger than threshold " << takeoff_xy_pos_tolerance_ << ". switch back to ARM_OFF_STATE");
           setNaviState(STOP_STATE);
         }
 
       /* check difference in height between arming and takeoff */
       if(fabs(init_height_ - estimator_->getPos(Frame::COG, estimate_mode_).z()) > takeoff_z_pos_tolerance_)
         {
-          ROS_ERROR_STREAM("difference between init height and current height: " << fabs(init_height_ - estimator_->getPos(Frame::COG, estimate_mode_).z()) << " is larger than threshold " << takeoff_z_pos_tolerance_ << ". switch back to ARM_OFF_STATE");
+          ROS_COMPAT_ERROR_STREAM("difference between init height and current height: " << fabs(init_height_ - estimator_->getPos(Frame::COG, estimate_mode_).z()) << " is larger than threshold " << takeoff_z_pos_tolerance_ << ". switch back to ARM_OFF_STATE");
           setNaviState(STOP_STATE);
         }
 
       if(getNaviState() == ARM_ON_STATE)
         {
           setNaviState(TAKEOFF_STATE);
-          ROS_INFO("Takeoff state");
+          ROS_COMPAT_INFO("Takeoff state");
         }
     }
 
@@ -404,7 +428,7 @@ namespace aerial_robot_navigation
       /* check whether there is the fusion for the altitude */
       if(!estimator_->getStateStatus(State::Z_BASE, estimate_mode_))
         {
-          ROS_ERROR("Flight Navigation: No correct sensor fusion for z(altitude), can not fly");
+          ROS_COMPAT_ERROR("Flight Navigation: No correct sensor fusion for z(altitude), can not fly");
           return;
         }
 
@@ -412,13 +436,13 @@ namespace aerial_robot_navigation
         {
           if(handler->getStatus() == Status::ACTIVE)
             {
-              ros::NodeHandle nh(nh_, "navigation");
+              ros_compat::NodeHandle nh(nh_, "navigation");
               nh.param("outdoor_takeoff_height", takeoff_height_, 1.2);
               nh.param("outdoor_hover_convergent_duration", hover_convergent_duration_, 0.5);
               nh.param("outdoor_xy_convergent_thresh", xy_convergent_thresh_, 0.6);
               nh.param("outdoor_z_convergent_thresh", z_convergent_thresh_, 0.05);
 
-              ROS_WARN_STREAM("update the navigation parameters for outdoor flight, takeoff height: " << takeoff_height_ << "; outdoor_hover_convergent_duration: " << hover_convergent_duration_ << "; outdoor_xy_convergent_thresh: " << xy_convergent_thresh_ << "; outdoor_z_convergent_thresh: " << z_convergent_thresh_);
+              ROS_COMPAT_WARN_STREAM("update the navigation parameters for outdoor flight, takeoff height: " << takeoff_height_ << "; outdoor_hover_convergent_duration: " << hover_convergent_duration_ << "; outdoor_xy_convergent_thresh: " << xy_convergent_thresh_ << "; outdoor_z_convergent_thresh: " << z_convergent_thresh_);
 
               break;
             }
@@ -433,10 +457,10 @@ namespace aerial_robot_navigation
       setInitHeight(estimator_->getPos(Frame::COG, estimate_mode_).z());
       setTargetYawFromCurrentState();
 
-      ROS_INFO_STREAM("init height for takeoff: " << init_height_ << ", target height: " << getTargetPos().z());
-      ROS_INFO_STREAM("target xy pos: " << "[" << getTargetPos().x() << ", " << getTargetPos().y() << "]");
+      ROS_COMPAT_INFO_STREAM("init height for takeoff: " << init_height_ << ", target height: " << getTargetPos().z());
+      ROS_COMPAT_INFO_STREAM("target xy pos: " << "[" << getTargetPos().x() << ", " << getTargetPos().y() << "]");
 
-      ROS_INFO("Start state");
+      ROS_COMPAT_INFO("Start state");
     }
 
     virtual void updateLandCommand();
@@ -453,69 +477,69 @@ namespace aerial_robot_navigation
       return frameConversion(origin_val, tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(yaw)));
     }
 
-    void flightStatusAckCallback(const std_msgs::UInt8ConstPtr& ack_msg)
+    void flightStatusAckCallback(const ros_compat::ConstPtr<std_msgs_c::UInt8>& ack_msg)
     {
-      if(ack_msg->data == spinal::FlightConfigCmd::ARM_OFF_CMD)
+      if(ack_msg->data == spinal_c::FlightConfigCmd::ARM_OFF_CMD)
         {//  arming off
-          ROS_INFO("STOP RES From AERIAL ROBOT");
+          ROS_COMPAT_INFO("STOP RES From AERIAL ROBOT");
           setNaviState(ARM_OFF_STATE);
         }
 
-      if(ack_msg->data == spinal::FlightConfigCmd::ARM_ON_CMD)
+      if(ack_msg->data == spinal_c::FlightConfigCmd::ARM_ON_CMD)
         {//  arming on
-          ROS_INFO("START RES From AERIAL ROBOT");
+          ROS_COMPAT_INFO("START RES From AERIAL ROBOT");
           setNaviState(ARM_ON_STATE);
         }
 
-      if(ack_msg->data == spinal::FlightConfigCmd::FORCE_LANDING_CMD)
+      if(ack_msg->data == spinal_c::FlightConfigCmd::FORCE_LANDING_CMD)
         {//  get the first force landing message from spinal
-          ROS_INFO("FORCE LANDING MSG From AERIAL ROBOT");
+          ROS_COMPAT_INFO("FORCE LANDING MSG From AERIAL ROBOT");
 
           force_landing_flag_ = true;
         }
     }
 
-    void takeoffCallback(const std_msgs::EmptyConstPtr & msg)
+    void takeoffCallback(const ros_compat::ConstPtr<std_msgs_c::Empty>& msg)
     {
       startTakeoff();
     }
 
-    void startCallback(const std_msgs::EmptyConstPtr & msg)
+    void startCallback(const ros_compat::ConstPtr<std_msgs_c::Empty>& msg)
     {
       motorArming();
     }
 
-    void landCallback(const std_msgs::EmptyConstPtr & msg)
+    void landCallback(const ros_compat::ConstPtr<std_msgs_c::Empty>& msg)
     {
       if(force_att_control_flag_) return;
 
       if(!teleop_flag_) return;
 
       setNaviState(LAND_STATE);
-      ROS_INFO("Land state");
+      ROS_COMPAT_INFO("Land state");
     }
 
-    void haltCallback(const std_msgs::EmptyConstPtr & msg)
+    void haltCallback(const ros_compat::ConstPtr<std_msgs_c::Empty>& msg)
     {
       if(!teleop_flag_) return;
 
       force_landing_flag_ = true;
       setNaviState(STOP_STATE);
 
-      ROS_INFO("Halt state");
+      ROS_COMPAT_INFO("Halt state");
     }
 
-    void forceLandingCallback(const std_msgs::EmptyConstPtr & msg)
+    void forceLandingCallback(const ros_compat::ConstPtr<std_msgs_c::Empty>& msg)
     {
-      spinal::FlightConfigCmd flight_config_cmd;
-      flight_config_cmd.cmd = spinal::FlightConfigCmd::FORCE_LANDING_CMD;
+      spinal_c::FlightConfigCmd flight_config_cmd;
+      flight_config_cmd.cmd = spinal_c::FlightConfigCmd::FORCE_LANDING_CMD;
       flight_config_pub_.publish(flight_config_cmd);
       force_landing_flag_ = true;
 
-      ROS_INFO("Force Landing state");
+      ROS_COMPAT_INFO("Force Landing state");
     }
 
-    void xyControlModeCallback(const std_msgs::Int8ConstPtr & msg)
+    void xyControlModeCallback(const ros_compat::ConstPtr<std_msgs_c::Int8>& msg)
     {
       if(getNaviState() > START_STATE)
         {
@@ -525,33 +549,33 @@ namespace aerial_robot_navigation
               setTargetZeroVel();
               setTargetZeroAcc();
               xy_control_mode_ = POS_CONTROL_MODE;
-              ROS_INFO("x/y position control mode");
+              ROS_COMPAT_INFO("x/y position control mode");
             }
           if(msg->data == 1)
             {
               setTargetZeroVel();
               setTargetZeroAcc();
               xy_control_mode_ = VEL_CONTROL_MODE;
-              ROS_INFO("x/y velocity control mode");
+              ROS_COMPAT_INFO("x/y velocity control mode");
             }
           if(msg->data == 2)
             {
               xy_control_mode_ = ACC_CONTROL_MODE;
-              ROS_INFO("x/y acceleration control mode");
+              ROS_COMPAT_INFO("x/y acceleration control mode");
             }
         }
     }
 
-    void stopTeleopCallback(const std_msgs::UInt8ConstPtr & stop_msg)
+    void stopTeleopCallback(const ros_compat::ConstPtr<std_msgs_c::UInt8>& stop_msg)
     {
       if(stop_msg->data == 1)
         {
-          ROS_WARN("stop teleop control");
+          ROS_COMPAT_WARN("stop teleop control");
           teleop_flag_ = false;
         }
       else if(stop_msg->data == 0)
         {
-          ROS_WARN("start teleop control");
+          ROS_COMPAT_WARN("start teleop control");
           teleop_flag_ = true;
         }
     }
@@ -593,12 +617,12 @@ namespace aerial_robot_navigation
       setTargetOmegaZ(0);
     }
 
-    template<class T> void getParam(ros::NodeHandle nh, std::string param_name, T& param, T default_value)
+    template<class T> void getParam(ros_compat::NodeHandle nh, std::string param_name, T& param, T default_value)
     {
       nh.param<T>(param_name, param, default_value);
 
       if(param_verbose_)
-        ROS_INFO_STREAM("[" << nh.getNamespace() << "] " << param_name << ": " << param);
+        ROS_COMPAT_INFO_STREAM("[" << nh.getNamespace() << "] " << param_name << ": " << param);
     }
   };
 };

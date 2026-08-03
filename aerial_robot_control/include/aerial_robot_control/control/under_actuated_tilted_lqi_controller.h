@@ -35,8 +35,15 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/under_actuated_lqi_controller.h>
-#include <spinal/DesireCoord.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <spinal/DesireCoord.h>
+#else
+#  include <spinal/msg/desire_coord.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
 
 namespace aerial_robot_control
 {
@@ -46,15 +53,15 @@ namespace aerial_robot_control
     UnderActuatedTiltedLQIController() {}
     virtual ~UnderActuatedTiltedLQIController() = default;
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate);
 
   protected:
 
-    ros::Publisher desired_baselink_rot_pub_;
+    ros_compat::Publisher desired_baselink_rot_pub_;
 
     double trans_constraint_weight_;
     double att_control_weight_;

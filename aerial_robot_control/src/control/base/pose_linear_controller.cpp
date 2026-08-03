@@ -33,7 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/base/pose_linear_controller.h>
 
@@ -42,7 +42,9 @@ namespace aerial_robot_control
   PoseLinearController::PoseLinearController():
     ControlBase(),
     pid_controllers_(0),
+#if AERIAL_ROBOT_ROS_VERSION == 1
     pid_reconf_servers_(0),
+#endif
     pos_(0,0,0), target_pos_(0,0,0),
     vel_(0,0,0), target_vel_(0,0,0),
     rpy_(0,0,0), target_rpy_(0,0,0),
@@ -76,32 +78,32 @@ namespace aerial_robot_control
     pid_msg_.yaw.d_term.resize(1);
   }
 
-  void PoseLinearController::initialize(ros::NodeHandle nh,
-                               ros::NodeHandle nhp,
-                               boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                               boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                               boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+  void PoseLinearController::initialize(ros_compat::NodeHandle nh,
+                               ros_compat::NodeHandle nhp,
+                               ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                               ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                               ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                double ctrl_loop_rate)
   {
     ControlBase::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
 
-    ros::NodeHandle control_nh(nh_, "controller");
+    ros_compat::NodeHandle control_nh(nh_, "controller");
 
-    ros::NodeHandle xy_nh(control_nh, "xy");
-    ros::NodeHandle x_nh(control_nh, "x");
-    ros::NodeHandle y_nh(control_nh, "y");
-    ros::NodeHandle z_nh(control_nh, "z");
+    ros_compat::NodeHandle xy_nh(control_nh, "xy");
+    ros_compat::NodeHandle x_nh(control_nh, "x");
+    ros_compat::NodeHandle y_nh(control_nh, "y");
+    ros_compat::NodeHandle z_nh(control_nh, "z");
 
-    ros::NodeHandle roll_pitch_nh(control_nh, "roll_pitch");
-    ros::NodeHandle roll_nh(control_nh, "roll");
-    ros::NodeHandle pitch_nh(control_nh, "pitch");
-    ros::NodeHandle yaw_nh(control_nh, "yaw");
+    ros_compat::NodeHandle roll_pitch_nh(control_nh, "roll_pitch");
+    ros_compat::NodeHandle roll_nh(control_nh, "roll");
+    ros_compat::NodeHandle pitch_nh(control_nh, "pitch");
+    ros_compat::NodeHandle yaw_nh(control_nh, "yaw");
 
     double limit_sum, limit_p, limit_i, limit_d;
     double limit_err_p, limit_err_i, limit_err_d;
     double p_gain, i_gain, d_gain;
 
-    auto loadParam = [&, this](ros::NodeHandle nh)
+    auto loadParam = [&, this](ros_compat::NodeHandle nh)
       {
         getParam<double>(nh, "limit_sum", limit_sum, 1.0e6);
         getParam<double>(nh, "limit_p", limit_p, 1.0e6);
@@ -124,20 +126,26 @@ namespace aerial_robot_control
         pid_controllers_.push_back(PID("y", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
 
         std::vector<int> indices = {X, Y};
-        pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(xy_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+        pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(xy_nh));
         pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, indices));
+#endif
       }
     else
       {
         loadParam(x_nh);
         pid_controllers_.push_back(PID("x", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
-        pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(x_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+        pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(x_nh));
         pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, std::vector<int>(1, X)));
+#endif
 
         loadParam(y_nh);
         pid_controllers_.push_back(PID("y", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
-        pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(y_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+        pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(y_nh));
         pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, std::vector<int>(1, Y)));
+#endif
       }
 
     /* z */
@@ -145,8 +153,10 @@ namespace aerial_robot_control
     if(force_landing_descending_rate_ >= 0) force_landing_descending_rate_ = -0.1;
     loadParam(z_nh);
     pid_controllers_.push_back(PID("z", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
-    pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(z_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+    pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(z_nh));
     pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, std::vector<int>(1, Z)));
+#endif
 
     /* roll pitch */
     getParam<double>(roll_pitch_nh, "start_integration_height", start_rp_integration_height_, 0.01);
@@ -156,31 +166,39 @@ namespace aerial_robot_control
         pid_controllers_.push_back(PID("roll", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
         pid_controllers_.push_back(PID("pitch", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
         std::vector<int> indices = {ROLL, PITCH};
-        pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(roll_pitch_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+        pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(roll_pitch_nh));
         pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, indices));
+#endif
       }
     else
       {
         loadParam(roll_nh);
         pid_controllers_.push_back(PID("roll", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
-        pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(roll_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+        pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(roll_nh));
         pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, std::vector<int>(1, ROLL)));
+#endif
 
         loadParam(pitch_nh);
         pid_controllers_.push_back(PID("pitch", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
-        pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(pitch_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+        pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(pitch_nh));
         pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, std::vector<int>(1, PITCH)));
+#endif
       }
 
     /* yaw */
     loadParam(yaw_nh);
     getParam<bool>(yaw_nh, "need_d_control", need_yaw_d_control_, false);
     pid_controllers_.push_back(PID("yaw", p_gain, i_gain, d_gain, limit_sum, limit_p, limit_i, limit_d, limit_err_p, limit_err_i, limit_err_d));
-    pid_reconf_servers_.push_back(boost::make_shared<PidControlDynamicConfig>(yaw_nh));
+#if AERIAL_ROBOT_ROS_VERSION == 1
+    pid_reconf_servers_.push_back(ros_compat::makeShared<PidControlDynamicConfig>(yaw_nh));
     pid_reconf_servers_.back()->setCallback(boost::bind(&PoseLinearController::cfgPidCallback, this, _1, _2, std::vector<int>(1, YAW)));
+#endif
 
 
-    pid_pub_ = nh_.advertise<aerial_robot_msgs::PoseControlPid>("debug/pose/pid", 10);
+    pid_pub_ = nh_.advertise<aerial_robot_msgs_c::PoseControlPid>("debug/pose/pid", 10);
   }
 
   void PoseLinearController::reset()
@@ -230,7 +248,7 @@ namespace aerial_robot_control
     target_ang_acc_ = navigator_->getTargetAngAcc();
 
     // time diff
-    double du = ros::Time::now().toSec() - control_timestamp_;
+    double du = ros_compat::now().toSec() - control_timestamp_;
 
     // x & y
     switch(navigator_->getXyControlMode())
@@ -288,10 +306,10 @@ namespace aerial_robot_control
         if(pos_.z() - navigator_->getInitHeight () > start_rp_integration_height_)
           {
             start_rp_integration_ = true;
-            spinal::FlightConfigCmd flight_config_cmd;
-            flight_config_cmd.cmd = spinal::FlightConfigCmd::INTEGRATION_CONTROL_ON_CMD;
+            spinal_c::FlightConfigCmd flight_config_cmd;
+            flight_config_cmd.cmd = spinal_c::FlightConfigCmd::INTEGRATION_CONTROL_ON_CMD;
             navigator_->getFlightConfigPublisher().publish(flight_config_cmd);
-            ROS_WARN_ONCE("start roll/pitch I control");
+            ROS_COMPAT_WARN_ONCE("start roll/pitch I control");
           }
         du_rp = 0;
       }
@@ -308,10 +326,10 @@ namespace aerial_robot_control
     pid_controllers_.at(YAW).update(err_yaw, du, err_omega_z, target_ang_acc_.z());
 
     // update
-    control_timestamp_ = ros::Time::now().toSec();
+    control_timestamp_ = ros_compat::now().toSec();
 
     /* ros pub */
-    pid_msg_.header.stamp.fromSec(estimator_->getImuLatestTimeStamp());
+    ros_compat::stampFromSec(pid_msg_.header.stamp, estimator_->getImuLatestTimeStamp());
     pid_msg_.x.total.at(0) = pid_controllers_.at(X).result();
     pid_msg_.x.p_term.at(0) = pid_controllers_.at(X).getPTerm();
     pid_msg_.x.i_term.at(0) = pid_controllers_.at(X).getITerm();
@@ -357,9 +375,10 @@ namespace aerial_robot_control
     pid_pub_.publish(pid_msg_);
   }
 
+#if AERIAL_ROBOT_ROS_VERSION == 1
   void PoseLinearController::cfgPidCallback(aerial_robot_control::PIDConfig &config, uint32_t level, std::vector<int> controller_indices)
   {
-    using Levels = aerial_robot_msgs::DynamicReconfigureLevels;
+    using Levels = aerial_robot_msgs_c::DynamicReconfigureLevels;
     if(config.pid_control_flag)
       {
         switch(level)
@@ -368,21 +387,21 @@ namespace aerial_robot_control
             for(const auto& index: controller_indices)
               {
                 pid_controllers_.at(index).setPGain(config.p_gain);
-                ROS_INFO_STREAM("change p gain for controller '" << pid_controllers_.at(index).getName() << "'");
+                ROS_COMPAT_INFO_STREAM("change p gain for controller '" << pid_controllers_.at(index).getName() << "'");
               }
             break;
           case Levels::RECONFIGURE_I_GAIN:
             for(const auto& index: controller_indices)
               {
                 pid_controllers_.at(index).setIGain(config.i_gain);
-                ROS_INFO_STREAM("change i gain for controller '" << pid_controllers_.at(index).getName() << "'");
+                ROS_COMPAT_INFO_STREAM("change i gain for controller '" << pid_controllers_.at(index).getName() << "'");
               }
             break;
           case Levels::RECONFIGURE_D_GAIN:
             for(const auto& index: controller_indices)
               {
                 pid_controllers_.at(index).setDGain(config.d_gain);
-                ROS_INFO_STREAM("change d gain for controller '" << pid_controllers_.at(index).getName() << "'");
+                ROS_COMPAT_INFO_STREAM("change d gain for controller '" << pid_controllers_.at(index).getName() << "'");
               }
             break;
           default :
@@ -390,4 +409,5 @@ namespace aerial_robot_control
           }
       }
   }
+#endif
 };

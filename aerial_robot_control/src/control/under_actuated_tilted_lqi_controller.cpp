@@ -33,21 +33,22 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/under_actuated_tilted_lqi_controller.h>
 
 using namespace aerial_robot_control;
 
-void UnderActuatedTiltedLQIController::initialize(ros::NodeHandle nh,
-                                           ros::NodeHandle nhp,
-                                           boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                           boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                           boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+void UnderActuatedTiltedLQIController::initialize(ros_compat::NodeHandle nh,
+                                           ros_compat::NodeHandle nhp,
+                                           ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                           ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                           ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                            double ctrl_loop_rate)
 {
   UnderActuatedLQIController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
 
-  desired_baselink_rot_pub_ = nh_.advertise<spinal::DesireCoord>("desire_coordinate", 1);
+  desired_baselink_rot_pub_ = nh_.advertise<spinal_c::DesireCoord>("desire_coordinate", 1);
 
   pid_msg_.z.p_term.resize(1);
   pid_msg_.z.i_term.resize(1);
@@ -118,7 +119,7 @@ bool UnderActuatedTiltedLQIController::optimalGain()
     }
   A.block(6, 0, 3, 9) = -C;
 
-  ROS_DEBUG_STREAM_NAMED("LQI gain generator", "LQI gain generator: B: \n"  <<  B );
+  ROS_COMPAT_DEBUG_STREAM("LQI gain generator: B: \n"  <<  B );
 
   Eigen::VectorXd q_diagonals(9);
   q_diagonals << lqi_roll_pitch_weight_(0), lqi_roll_pitch_weight_(2), lqi_roll_pitch_weight_(0), lqi_roll_pitch_weight_(2), lqi_yaw_weight_(0), lqi_yaw_weight_(2), lqi_roll_pitch_weight_(1), lqi_roll_pitch_weight_(1), lqi_yaw_weight_(1);
@@ -129,17 +130,17 @@ bool UnderActuatedTiltedLQIController::optimalGain()
   Eigen::MatrixXd R_input = Eigen::MatrixXd::Identity(motor_num_, motor_num_);
   Eigen::MatrixXd R = R_trans * trans_constraint_weight_ + R_input * att_control_weight_;
 
-  double t = ros::Time::now().toSec();
+  double t = ros_compat::now().toSec();
   bool use_kleinman_method = true;
   if(K_.cols() == 0 || K_.rows() == 0) use_kleinman_method = false;
   if(!control_utils::care(A, B, R, Q, K_, use_kleinman_method))
     {
-      ROS_ERROR_STREAM("error in solver of continuous-time algebraic riccati equation");
+      ROS_COMPAT_ERROR_STREAM("error in solver of continuous-time algebraic riccati equation");
       return false;
     }
 
-  ROS_DEBUG_STREAM_NAMED("LQI gain generator",  "LQI gain generator: CARE: %f sec" << ros::Time::now().toSec() - t);
-  ROS_DEBUG_STREAM_NAMED("LQI gain generator",  "LQI gain generator:  K \n" <<  K_);
+  ROS_COMPAT_DEBUG_STREAM("LQI gain generator: CARE: %f sec" << ros_compat::now().toSec() - t);
+  ROS_COMPAT_DEBUG_STREAM("LQI gain generator:  K \n" <<  K_);
 
   for(int i = 0; i < motor_num_; ++i)
     {
@@ -158,7 +159,7 @@ void UnderActuatedTiltedLQIController::publishGain()
   double roll,pitch, yaw;
   robot_model_->getCogDesireOrientation<KDL::Rotation>().GetRPY(roll, pitch, yaw);
 
-  spinal::DesireCoord coord_msg;
+  spinal_c::DesireCoord coord_msg;
   coord_msg.roll = roll;
   coord_msg.pitch = pitch;
   desired_baselink_rot_pub_.publish(coord_msg);
@@ -168,8 +169,8 @@ void UnderActuatedTiltedLQIController::rosParamInit()
 {
   UnderActuatedLQIController::rosParamInit();
 
-  ros::NodeHandle control_nh(nh_, "controller");
-  ros::NodeHandle lqi_nh(control_nh, "lqi");
+  ros_compat::NodeHandle control_nh(nh_, "controller");
+  ros_compat::NodeHandle lqi_nh(control_nh, "lqi");
 
   getParam<double>(lqi_nh, "trans_constraint_weight", trans_constraint_weight_, 1.0);
   getParam<double>(lqi_nh, "att_control_weight", att_control_weight_, 1.0);

@@ -665,6 +665,10 @@ inline void spinOnce()
   if (detail::globalNode())
     rclcpp::spin_some(detail::globalNode());
 }
+inline void waitForShutdown()
+{
+  spin();
+}
 
 /**
  * Current ROS time.
