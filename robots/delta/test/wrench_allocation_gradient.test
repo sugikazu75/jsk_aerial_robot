@@ -1,0 +1,20 @@
+<launch>
+  <arg name="type" default="tri"/>
+  <arg name="version" default="20240722"/>
+  <arg name="robot_ns" default="delta"/>
+  <arg name="config_dir" default="$(find delta)/config"/>
+
+  <group ns="$(arg robot_ns)">
+    <param name="robot_description" command="$(find xacro)/xacro '$(find delta)/robots/$(arg type)/$(arg version)/delta.urdf.xacro'" />
+    <rosparam file="$(arg config_dir)/$(arg type)/$(arg version)/DeltaControl.yaml" command="load" />
+  </group>
+
+  <!-- test codes -->
+  <test test-name="wrench_allocation_gradient_test" pkg="delta" type="delta_wrench_allocation_gradient_test"
+        ns="$(arg robot_ns)" time-limit="60">
+    <param name="delta" value="0.000001"/>
+    <param name="gradient_diff_thre" value="0.0001"/>
+    <param name="sample_num" value="20"/>
+  </test>
+
+</launch>

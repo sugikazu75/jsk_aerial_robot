@@ -55,6 +55,10 @@ public:
   {
     return target_acc_cog_;
   }
+  void setTargetAccCog(const Eigen::VectorXd& target_acc_cog)
+  {
+    target_acc_cog_ = target_acc_cog;
+  }
   const int getNLOptResult()
   {
     return nlopt_result_;
