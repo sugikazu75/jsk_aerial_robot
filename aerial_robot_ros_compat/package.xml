@@ -21,6 +21,12 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>tf2</depend>
+
+  <!-- tf1 is used only by the test that checks the replacements against it -->
+  <build_depend condition="$ROS_VERSION == 1">eigen_conversions</build_depend>
+  <build_depend condition="$ROS_VERSION == 1">tf</build_depend>
+  <build_depend condition="$ROS_VERSION == 1">tf_conversions</build_depend>
 
   <export>
     <build_type condition="$ROS_VERSION == 1">catkin</build_type>
