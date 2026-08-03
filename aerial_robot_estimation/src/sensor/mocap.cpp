@@ -160,7 +160,7 @@ namespace sensor_plugin
 
       if(!first_flag)
         {
-          float delta_t = msg->header.stamp.toSec() - previous_time.toSec();
+          float delta_t = ros_compat::stampToSec(msg->header.stamp) - previous_time.toSec();
           raw_vel_ = (raw_pos_ - prev_raw_pos_) / delta_t;
 
           /* TODO: not working

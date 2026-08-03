@@ -73,6 +73,7 @@ namespace sensor_plugin
                                   string sensor_name, int index)
   {
     SensorBase::initialize(nh, robot_model, estimator, sensor_name, index);
+    static_broadcaster_ = ros_compat::makeBroadcaster<tf2_ros::StaticTransformBroadcaster>(nh_);
     rosParamInit();
 
     /* ros subscriber: vo */
@@ -136,7 +137,7 @@ namespace sensor_plugin
     ros_compat::poseMsgToTf(vo_msg->pose.pose, raw_sensor_tf); // motion update
 
     /* temporal update */
-    curr_timestamp_ = vo_msg->header.stamp.toSec() + delay_;
+    curr_timestamp_ = ros_compat::stampToSec(vo_msg->header.stamp) + delay_;
     reference_timestamp_ = curr_timestamp_;
 
     /* throttle message */
@@ -271,7 +272,7 @@ namespace sensor_plugin
         static_transformStamped.header.frame_id = "world";
         static_transformStamped.child_frame_id = vo_msg->header.frame_id;
         ros_compat::transformTfToMsg(world_offset_tf_, static_transformStamped.transform);
-        static_broadcaster_.sendTransform(static_transformStamped);
+        static_broadcaster_->sendTransform(static_transformStamped);
 
         tf2::Vector3 init_pos = w_b_f.getOrigin();
 
@@ -386,7 +387,7 @@ namespace sensor_plugin
           {
             if(!estimator_->findRotOmega(reference_timestamp_, mode, baselink_r, baselink_omega, false))
               {
-                //ROS_COMPAT_INFO("raw msg timestamp: %f", vo_msg->header.stamp.toSec());
+                //ROS_COMPAT_INFO("raw msg timestamp: %f", ros_compat::stampToSec(vo_msg->header.stamp));
                 reference_timestamp_ = estimator_->getImuLatestTimeStamp(); //special process for realsense t265
               }
           }
@@ -425,7 +426,7 @@ namespace sensor_plugin
     estimateProcess();
 
     /* publish */
-    vo_state_.header.stamp.fromSec(curr_timestamp_);
+    ros_compat::stampFromSec(vo_state_.header.stamp, curr_timestamp_);
     for(int axis = 0; axis < 3; axis++)
       vo_state_.states[axis].state[0].x = baselink_tf_.getOrigin()[axis]; //raw
     vo_state_.states[0].state[0].y = raw_global_vel_.x();
@@ -707,9 +708,9 @@ namespace sensor_plugin
     std::string srv_name;
     getParam<std::string>("reset_srv_name", srv_name, string("reset"));
 
-    ros_compat::ServiceClient client = nh_.serviceClient<std_srvs_s::Empty>(srv_name);
+    auto client = ros_compat::serviceClient<std_srvs_s::Empty>(nh_, srv_name);
 
-    if(!client.exists ())
+    if(!client.exists())
       {
         ROS_COMPAT_WARN("rosservice %s does not exist", srv_name.c_str());
         setStatus(Status::INVALID);
@@ -717,8 +718,9 @@ namespace sensor_plugin
       }
 
     /* waiting for the completement of reset is allowed because of the multi-thread spin */
-    std_srvs_s::Empty srv;
-    if (client.call(srv))
+    std_srvs_s::Empty::Request req;
+    std_srvs_s::Empty::Response res;
+    if (client.call(req, res))
       {
         fusion_mode_ = ONLY_VEL_MODE;
         setStatus(Status::RESET);

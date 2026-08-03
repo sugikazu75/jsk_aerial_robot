@@ -130,7 +130,8 @@ namespace sensor_plugin
     double reference_timestamp_;
     aerial_robot_msgs_c::States vo_state_;
 
-    tf2_ros::StaticTransformBroadcaster static_broadcaster_; // publish the transfrom between the work and vo frame
+    // publish the transform between the world and vo frame
+    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
 
     void rosParamInit();
     void servoControl(const ros_compat::TimerEvent & e);
