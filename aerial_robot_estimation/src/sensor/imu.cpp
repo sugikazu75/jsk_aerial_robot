@@ -40,7 +40,7 @@
 namespace
 {
   int bias_calib = 0;
-  ros::Time prev_time;
+  ros_compat::Time prev_time;
 }
 
 using namespace aerial_robot_estimation;
@@ -74,9 +74,9 @@ namespace sensor_plugin
     raw_rot_.setIdentity();
   }
 
-  void Imu::initialize(ros::NodeHandle nh,
-                       boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                       boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+  void Imu::initialize(ros_compat::NodeHandle nh,
+                       ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                       ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                        string sensor_name, int index)
   {
     SensorBase::initialize(nh, robot_model, estimator, sensor_name, index);
@@ -84,12 +84,12 @@ namespace sensor_plugin
 
     std::string topic_name;
     getParam<std::string>("imu_topic_name", topic_name, string("imu"));
-    imu_sub_ = nh_.subscribe<spinal::Imu>(topic_name, 10, &Imu::ImuCallback, this);
-    imu_pub_ = indexed_nhp_.advertise<sensor_msgs::Imu>(string("ros_converted"), 1);
-    acc_pub_ = indexed_nhp_.advertise<aerial_robot_msgs::Acc>("acc_only", 2);
+    imu_sub_ = nh_.subscribe<spinal_c::Imu>(topic_name, 10, &Imu::ImuCallback, this);
+    imu_pub_ = indexed_nhp_.advertise<sensor_msgs_c::Imu>(string("ros_converted"), 1);
+    acc_pub_ = indexed_nhp_.advertise<aerial_robot_msgs_c::Acc>("acc_only", 2);
   }
 
-  void Imu::ImuCallback(const spinal::ImuConstPtr& imu_msg)
+  void Imu::ImuCallback(const ros_compat::ConstPtr<spinal_c::Imu>& imu_msg)
   {
     imu_stamp_ = imu_msg->stamp;
 
@@ -97,7 +97,7 @@ namespace sensor_plugin
       {
         if(std::isnan(imu_msg->acc[i]) || std::isnan(imu_msg->gyro[i]) || std::isnan(imu_msg->mag[i]))
           {
-            ROS_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in IMU sensors !");
+            ROS_COMPAT_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in IMU sensors !");
             return;
           }
 
@@ -109,7 +109,7 @@ namespace sensor_plugin
     if(std::isnan(imu_msg->quaternion[0]) || std::isnan(imu_msg->quaternion[1]) ||
        std::isnan(imu_msg->quaternion[2]) || std::isnan(imu_msg->quaternion[3]))
       {
-        ROS_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in Quaternion!");
+        ROS_COMPAT_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in Quaternion!");
         return;
       }
 
@@ -125,7 +125,7 @@ namespace sensor_plugin
   {
     if(imu_stamp_.toSec() <= prev_time.toSec())
       {
-        ROS_WARN("IMU: bad timestamp. curr time stamp: %f, prev time stamp: %f",
+        ROS_COMPAT_WARN("IMU: bad timestamp. curr time stamp: %f, prev time stamp: %f",
                  imu_stamp_.toSec(), prev_time.toSec());
         return;
       }
@@ -198,7 +198,7 @@ namespace sensor_plugin
         if(bias_calib == 100) // warm up for callback to be stable subscribe
           {
             calib_count_ = calib_time_ / sensor_dt_;
-            ROS_WARN("calib count is %d", calib_count_);
+            ROS_COMPAT_WARN("calib count is %d", calib_count_);
 
             setStatus(Status::INIT); // start init
           }
@@ -214,7 +214,7 @@ namespace sensor_plugin
 
             tf2::Matrix3x3 rot_inv = rots.at(EGOMOTION_ESTIMATE).inverse();
             tf2::Vector3 acc_bias_b = rot_inv * acc_bias_w_.at(EGOMOTION_ESTIMATE);
-            ROS_INFO("acc bias w.r.t body frame: [%f, %f, %f], dt: %f[sec]", acc_bias_b.x(), acc_bias_b.y(), acc_bias_b.z(), sensor_dt_);
+            ROS_COMPAT_INFO("acc bias w.r.t body frame: [%f, %f, %f], dt: %f[sec]", acc_bias_b.x(), acc_bias_b.y(), acc_bias_b.z(), sensor_dt_);
 
             estimator_->setQueueSize(1/sensor_dt_);
 
@@ -228,7 +228,7 @@ namespace sensor_plugin
                 for(auto& fuser : estimator_->getFuser(mode))
                   {
                     string plugin_name = fuser.first;
-                    boost::shared_ptr<kf_plugin::KalmanFilter> kf = fuser.second;
+                    ros_compat::SharedPtr<kf_plugin::KalmanFilter> kf = fuser.second;
                     int id = kf->getId();
 
                     bool start_predict = false;
@@ -291,7 +291,7 @@ namespace sensor_plugin
                 for(auto& fuser : estimator_->getFuser(mode))
                   {
                     string plugin_name = fuser.first;
-                    boost::shared_ptr<kf_plugin::KalmanFilter> kf = fuser.second;
+                    ros_compat::SharedPtr<kf_plugin::KalmanFilter> kf = fuser.second;
                     int id = kf->getId();
                     vector<double> params = {sensor_dt_};
 
@@ -409,7 +409,7 @@ namespace sensor_plugin
 
   void Imu::publishAccData()
   {
-    aerial_robot_msgs::Acc acc_data;
+    aerial_robot_msgs_c::Acc acc_data;
     acc_data.header.stamp = imu_stamp_;
 
     ros_compat::vector3TfToMsg(acc_b_, acc_data.acc_body_frame);
@@ -421,7 +421,7 @@ namespace sensor_plugin
 
   void Imu::publishRosImuData()
   {
-    sensor_msgs::Imu imu_data;
+    sensor_msgs_c::Imu imu_data;
     imu_data.header.stamp = imu_stamp_;
     imu_data.header.frame_id = ros_compat::resolveFrame(estimator_->getTFPrefix(), robot_model_->getBaselinkName());
     tf2::Quaternion q;

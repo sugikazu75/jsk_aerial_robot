@@ -67,9 +67,9 @@ namespace sensor_plugin
     vo_state_.states[2].state.resize(2);
   }
 
-  void VisualOdometry::initialize(ros::NodeHandle nh,
-                                  boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                  boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+  void VisualOdometry::initialize(ros_compat::NodeHandle nh,
+                                  ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                  ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                                   string sensor_name, int index)
   {
     SensorBase::initialize(nh, robot_model, estimator, sensor_name, index);
@@ -88,23 +88,23 @@ namespace sensor_plugin
       {
         /* ros publisher: servo motor */
         getParam<std::string>("vo_servo_topic_name", topic_name, string("vo_servo_target_pwm"));
-        vo_servo_pub_ = nh_.advertise<sensor_msgs::JointState>(topic_name, 1);
+        vo_servo_pub_ = nh_.advertise<sensor_msgs_c::JointState>(topic_name, 1);
 
         getParam<std::string>("vo_servo_debug_topic_name", topic_name, string("vo_servo_debug"));
         vo_servo_debug_sub_ = nh_.subscribe(topic_name, 1, &VisualOdometry::servoDebugCallback, this);
 
-        servo_control_timer_ = indexed_nhp_.createTimer(ros::Duration(servo_control_rate_), &VisualOdometry::servoControl,this); // 10 Hz
+        servo_control_timer_ = indexed_nhp_.createTimer(ros_compat::duration(servo_control_rate_), &VisualOdometry::servoControl,this); // 10 Hz
       }
 
     prev_timestamp_ = 0;
   }
 
-  void VisualOdometry::voCallback(const nav_msgs::Odometry::ConstPtr & vo_msg)
+  void VisualOdometry::voCallback(const ros_compat::ConstPtr<nav_msgs_c::Odometry> & vo_msg)
   {
     /* only do egmotion estimate mode */
     if(!getFuserActivate(EGOMOTION_ESTIMATE))
       {
-        ROS_WARN_THROTTLE(1,"Visual Odometry: no egmotion estimate mode");
+        ROS_COMPAT_WARN_THROTTLE(1,"Visual Odometry: no egmotion estimate mode");
         return;
       }
 
@@ -112,7 +112,7 @@ namespace sensor_plugin
     if(!updateBaseLink2SensorTransform()) return;
 
     /* servo init condition */
-    if(variable_sensor_tf_flag_ && ros::Time::now().toSec() - init_servo_st < 1.0 && init_servo_st > 0)
+    if(variable_sensor_tf_flag_ && ros_compat::now().toSec() - init_servo_st < 1.0 && init_servo_st > 0)
       return;
 
     /* check whether is force att control mode */
@@ -127,7 +127,7 @@ namespace sensor_plugin
        std::isnan(vo_msg->twist.twist.linear.y) ||
        std::isnan(vo_msg->twist.twist.linear.z))
       {
-        ROS_ERROR("VIO sensor [%s] publishes NaN value!", vo_sub_.getTopic().c_str());
+        ROS_COMPAT_ERROR("VIO sensor [%s] publishes NaN value!", vo_sub_.getTopic().c_str());
         reset();
         return;
       }
@@ -163,7 +163,7 @@ namespace sensor_plugin
 
         if(!alt_initialized && estimator_->getAltHandlers().size() > 0)
           {
-            ROS_WARN_THROTTLE(1, "vo: no altimeter is initialized, wait");
+            ROS_COMPAT_WARN_THROTTLE(1, "vo: no altimeter is initialized, wait");
             z_vel_mode_ = true;
             return;
           }
@@ -180,7 +180,7 @@ namespace sensor_plugin
 
         if(!imu_initialized)
           {
-            ROS_WARN_THROTTLE(1, "vo: no imu is initialized, wait");
+            ROS_COMPAT_WARN_THROTTLE(1, "vo: no imu is initialized, wait");
             return;
           }
 
@@ -203,7 +203,7 @@ namespace sensor_plugin
 
         setStatus(Status::INIT);
 
-        ROS_INFO_STREAM(indexed_nhp_.getNamespace()  << ": start kalman filter");
+        ROS_COMPAT_INFO_STREAM(indexed_nhp_.getNamespace()  << ": start kalman filter");
         /* chose pos / vel estimation mode, according to the view of the camera */
         /* TODO: should consider the illustration or feature dense of the image view */
 
@@ -266,7 +266,7 @@ namespace sensor_plugin
         world_offset_tf_ = w_b_f * vo_b_f.inverse();
 
         /* publish the offset tf if necessary */
-        geometry_msgs::TransformStamped static_transformStamped;
+        geometry_msgs_c::TransformStamped static_transformStamped;
         static_transformStamped.header.stamp = vo_msg->header.stamp;
         static_transformStamped.header.frame_id = "world";
         static_transformStamped.child_frame_id = vo_msg->header.frame_id;
@@ -278,7 +278,7 @@ namespace sensor_plugin
         for(auto& fuser : estimator_->getFuser(EGOMOTION_ESTIMATE))
           {
             string plugin_name = fuser.first;
-            boost::shared_ptr<kf_plugin::KalmanFilter> kf = fuser.second;
+            ros_compat::SharedPtr<kf_plugin::KalmanFilter> kf = fuser.second;
             int id = kf->getId();
 
             if(plugin_name == "kalman_filter/kf_pos_vel_acc")
@@ -346,7 +346,7 @@ namespace sensor_plugin
       }
 
     /* RESET   */
-    if(getStatus() == Status::RESET && ros::Time::now().toSec() - reset_stamp_ > reset_duration_)
+    if(getStatus() == Status::RESET && ros_compat::now().toSec() - reset_stamp_ > reset_duration_)
     {
       prev_sensor_tf = raw_sensor_tf;
       setStatus(Status::ACTIVE);
@@ -386,7 +386,7 @@ namespace sensor_plugin
           {
             if(!estimator_->findRotOmega(reference_timestamp_, mode, baselink_r, baselink_omega, false))
               {
-                //ROS_INFO("raw msg timestamp: %f", vo_msg->header.stamp.toSec());
+                //ROS_COMPAT_INFO("raw msg timestamp: %f", vo_msg->header.stamp.toSec());
                 reference_timestamp_ = estimator_->getImuLatestTimeStamp(); //special process for realsense t265
               }
           }
@@ -406,10 +406,10 @@ namespace sensor_plugin
     if(debug_verbose_)
       {
         double y, p, r;  tf2::Matrix3x3(raw_q).getRPY(r, p, y);
-        ROS_INFO("vo raw pos: [%f, %f, %f], raw rot: [%f, %f, %f]",
+        ROS_COMPAT_INFO("vo raw pos: [%f, %f, %f], raw rot: [%f, %f, %f]",
                  raw_pos.x(), raw_pos.y(), raw_pos.z(), r, p, y);
         tf2::Vector3 mocap_pos = estimator_->getPos(Frame::BASELINK, aerial_robot_estimation::GROUND_TRUTH);
-        ROS_INFO("mocap pos: [%f, %f, %f], vo pos: [%f, %f, %f]",
+        ROS_COMPAT_INFO("mocap pos: [%f, %f, %f], vo pos: [%f, %f, %f]",
                  mocap_pos.x(), mocap_pos.y(), mocap_pos.z(),
                  baselink_tf_.getOrigin().x(), baselink_tf_.getOrigin().y(),
                  baselink_tf_.getOrigin().z());
@@ -418,10 +418,10 @@ namespace sensor_plugin
         double mocap_r, mocap_p, mocap_y;
         tf2::Matrix3x3 base_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::GROUND_TRUTH);
         base_rot.getRPY(mocap_r, mocap_p, mocap_y);
-        ROS_INFO("mocap yaw: %f, vo rot: [%f, %f, %f]", mocap_y, r, p, y);
+        ROS_COMPAT_INFO("mocap yaw: %f, vo rot: [%f, %f, %f]", mocap_y, r, p, y);
       }
 
-    double start_time = ros::Time::now().toSec();
+    double start_time = ros_compat::now().toSec();
     estimateProcess();
 
     /* publish */
@@ -436,7 +436,7 @@ namespace sensor_plugin
 
     /* update */
     prev_sensor_tf = raw_sensor_tf;
-    //ROS_INFO("vo time diff: %f", curr_timestamp_ - prev_timestamp_);
+    //ROS_COMPAT_INFO("vo time diff: %f", curr_timestamp_ - prev_timestamp_);
     prev_timestamp_ =  curr_timestamp_; // vo_msg->header.stamp;
 
     updateHealthStamp();
@@ -460,7 +460,7 @@ namespace sensor_plugin
           {
             if (estimator_->hasRefinedYawEstimate(EGOMOTION_ESTIMATE))
               {
-                ROS_WARN_STREAM(indexed_nhp_.getNamespace() <<": refined yaw estimate becomes false");
+                ROS_COMPAT_WARN_STREAM(indexed_nhp_.getNamespace() <<": refined yaw estimate becomes false");
                 estimator_->SetRefinedYawEstimate(EGOMOTION_ESTIMATE, false);
               }
 
@@ -472,7 +472,7 @@ namespace sensor_plugin
         // YAW (wx_b) update
         if (!estimator_->hasRefinedYawEstimate(EGOMOTION_ESTIMATE))
           {
-            ROS_INFO_STREAM(indexed_nhp_.getNamespace() <<": refined yaw estimate becomes true");
+            ROS_COMPAT_INFO_STREAM(indexed_nhp_.getNamespace() <<": refined yaw estimate becomes true");
             estimator_->SetRefinedYawEstimate(EGOMOTION_ESTIMATE, true);
           }
 
@@ -491,7 +491,7 @@ namespace sensor_plugin
     for(auto& fuser : estimator_->getFuser(EGOMOTION_ESTIMATE))
       {
         string plugin_name = fuser.first;
-        boost::shared_ptr<kf_plugin::KalmanFilter> kf = fuser.second;
+        ros_compat::SharedPtr<kf_plugin::KalmanFilter> kf = fuser.second;
 
         if(!kf->getFilteringFlag()) continue;
 
@@ -589,7 +589,7 @@ namespace sensor_plugin
                 }
               else
                 {
-                  ROS_WARN("wrong fusion model %d", fusion_mode_);
+                  ROS_COMPAT_WARN("wrong fusion model %d", fusion_mode_);
                 }
               }
           }
@@ -615,7 +615,7 @@ namespace sensor_plugin
                   }
                 else
                   {
-                    ROS_WARN("POS_VEL_MODE for xy_roll_pitch_bias is not supported");
+                    ROS_COMPAT_WARN("POS_VEL_MODE for xy_roll_pitch_bias is not supported");
                   }
 
                 kf->correction(meas, measure_sigma, time_sync_?(timestamp):-1, params);
@@ -653,7 +653,7 @@ namespace sensor_plugin
     servo_angle_ = servo_init_angle_;
   }
 
-  void VisualOdometry::servoControl(const ros::TimerEvent & e)
+  void VisualOdometry::servoControl(const ros_compat::TimerEvent & e)
   {
     assert(variable_sensor_tf_flag_);
 
@@ -686,15 +686,15 @@ namespace sensor_plugin
       }
 
     /* init */
-    if(init_servo_st == 0) init_servo_st = ros::Time::now().toSec();
-    if (ros::Time::now().toSec() - init_servo_st < 1.0) // 1 [sec]
+    if(init_servo_st == 0) init_servo_st = ros_compat::now().toSec();
+    if (ros_compat::now().toSec() - init_servo_st < 1.0) // 1 [sec]
       {
         send_pub_ = true;
       }
 
     if(send_pub_)
       {
-        sensor_msgs::JointState msg;
+        sensor_msgs_c::JointState msg;
         msg.name.push_back(joint_name_);
         msg.position.push_back(servo_angle_);
         vo_servo_pub_.publish(msg);
@@ -707,28 +707,28 @@ namespace sensor_plugin
     std::string srv_name;
     getParam<std::string>("reset_srv_name", srv_name, string("reset"));
 
-    ros::ServiceClient client = nh_.serviceClient<std_srvs::Empty>(srv_name);
+    ros_compat::ServiceClient client = nh_.serviceClient<std_srvs_s::Empty>(srv_name);
 
     if(!client.exists ())
       {
-        ROS_WARN("rosservice %s does not exist", srv_name.c_str());
+        ROS_COMPAT_WARN("rosservice %s does not exist", srv_name.c_str());
         setStatus(Status::INVALID);
         return false;
       }
 
     /* waiting for the completement of reset is allowed because of the multi-thread spin */
-    std_srvs::Empty srv;
+    std_srvs_s::Empty srv;
     if (client.call(srv))
       {
         fusion_mode_ = ONLY_VEL_MODE;
         setStatus(Status::RESET);
-        reset_stamp_ = ros::Time::now().toSec();
-        ROS_INFO("Reset VIO sensor %s", sensor_name_.c_str());
+        reset_stamp_ = ros_compat::now().toSec();
+        ROS_COMPAT_INFO("Reset VIO sensor %s", sensor_name_.c_str());
         return true;
       }
     else
       {
-        ROS_ERROR("Failed to call service %s", srv_name.c_str());
+        ROS_COMPAT_ERROR("Failed to call service %s", srv_name.c_str());
         setStatus(Status::INVALID);
         return false;
       }

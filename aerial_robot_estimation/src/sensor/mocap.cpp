@@ -36,10 +36,20 @@
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
 #include <aerial_robot_estimation/sensor/imu.h>
-#include <geometry_msgs/PoseStamped.h>
 #include <kalman_filter/kf_pos_vel_acc_plugin.h>
-#include <nav_msgs/Odometry.h>
-#include <std_msgs/Float32.h>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/PoseStamped.h>
+#  include <nav_msgs/Odometry.h>
+#  include <std_msgs/Float32.h>
+#else
+#  include <geometry_msgs/msg/pose_stamped.hpp>
+#  include <nav_msgs/msg/odometry.hpp>
+#  include <std_msgs/msg/float32.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(nav_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(std_msgs);
 
 using namespace Eigen;
 using namespace std;
@@ -49,7 +59,7 @@ namespace
 {
   bool first_flag = true;
   bool ground_truth_first_flag = true;
-  ros::Time previous_time;
+  ros_compat::Time previous_time;
 };
 
 namespace sensor_plugin
@@ -57,9 +67,9 @@ namespace sensor_plugin
   class Mocap : public sensor_plugin::SensorBase
   {
   public:
-    void initialize(ros::NodeHandle nh,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    void initialize(ros_compat::NodeHandle nh,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                     string sensor_name, int index)
     {
       SensorBase::initialize(nh, robot_model, estimator, sensor_name, index);
@@ -72,17 +82,17 @@ namespace sensor_plugin
 
       std::string topic_name;
       getParam<std::string>("mocap_sub_name", topic_name, std::string("pose"));
-      ros::TransportHints hint = ros::TransportHints();
+      ros_compat::TransportHints hint = ros_compat::TransportHints();
       bool mocap_udp;
       getParam<bool>("mocap_udp", mocap_udp, false);
       if (mocap_udp) {
-	hint = ros::TransportHints().udp();
-	ROS_INFO("use UDP for mocap subscribe");
+	hint = ros_compat::TransportHints().udp();
+	ROS_COMPAT_INFO("use UDP for mocap subscribe");
       }
 
       mocap_sub_ = nh_.subscribe(topic_name, 1, &Mocap::poseCallback, this, hint); // buffer size 1: only need the latest value.
       nhp_.param("ground_truth_sub_name", topic_name, std::string("ground_truth"));
-      ground_truth_sub_ = nh_.subscribe(topic_name, 1, &Mocap::groundTruthCallback, this, ros::TransportHints().tcpNoDelay());
+      ground_truth_sub_ = nh_.subscribe(topic_name, 1, &Mocap::groundTruthCallback, this, ros_compat::TransportHints().tcpNoDelay());
     }
 
     ~Mocap() {}
@@ -117,7 +127,7 @@ namespace sensor_plugin
 
   private:
     /* ros */
-    ros::Subscriber mocap_sub_, ground_truth_sub_;
+    ros_compat::Subscriber mocap_sub_, ground_truth_sub_;
 
     /* ros param */
     double sample_freq_;
@@ -139,9 +149,9 @@ namespace sensor_plugin
     bool receive_groundtruth_odom_;
 
     /* ros msg */
-    aerial_robot_msgs::States ground_truth_pose_;
+    aerial_robot_msgs_c::States ground_truth_pose_;
 
-    void poseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
+    void poseCallback(const ros_compat::ConstPtr<geometry_msgs_c::PoseStamped> & msg)
     {
       ros_compat::pointMsgToTf(msg->pose.position, raw_pos_);
 
@@ -258,7 +268,7 @@ namespace sensor_plugin
       setGroundTruthPosVel(pos, vel, rot, omega);
     }
 
-    void groundTruthCallback(const nav_msgs::OdometryConstPtr & msg)
+    void groundTruthCallback(const ros_compat::ConstPtr<nav_msgs_c::Odometry> & msg)
     {
       tf2::Vector3 pos, vel;
       ros_compat::pointMsgToTf(msg->pose.pose.position, pos);
@@ -325,7 +335,7 @@ namespace sensor_plugin
           for(auto& fuser : estimator_->getFuser(aerial_robot_estimation::EXPERIMENT_ESTIMATE))
             {
               string plugin_name = fuser.first;
-              boost::shared_ptr<kf_plugin::KalmanFilter> kf = fuser.second;
+              ros_compat::SharedPtr<kf_plugin::KalmanFilter> kf = fuser.second;
               int id = kf->getId();
 
               /* x, y, z */
@@ -349,7 +359,7 @@ namespace sensor_plugin
         }
     }
 
-    void estimateProcess(ros::Time stamp)
+    void estimateProcess(ros_compat::Time stamp)
     {
       if(sensor_status_ == Status::INVALID) return;
 
@@ -359,7 +369,7 @@ namespace sensor_plugin
       for(auto& fuser : estimator_->getFuser(aerial_robot_estimation::EXPERIMENT_ESTIMATE))
         {
           string plugin_name = fuser.first;
-          boost::shared_ptr<kf_plugin::KalmanFilter> kf = fuser.second;
+          ros_compat::SharedPtr<kf_plugin::KalmanFilter> kf = fuser.second;
           int id = kf->getId();
 
           /* x_w, y_w, z_w */

@@ -36,26 +36,42 @@
 #pragma once
 
 #include <aerial_robot_model/model/aerial_robot_model.h>
-#include <aerial_robot_msgs/States.h>
 #include <array>
 #include <assert.h>
-#include <boost/enable_shared_from_this.hpp>
 #include <deque>
 #include <fnmatch.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <geographic_msgs/GeoPoint.h>
 #include <iostream>
 #include <kalman_filter/kf_base_plugin.h>
 #include <map>
-#include <nav_msgs/Odometry.h>
 #include <pluginlib/class_loader.hpp>
-#include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
-#include <std_msgs/UInt8.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <utility>
 #include <vector>
+#include <mutex>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_msgs/States.h>
+#  include <geographic_msgs/GeoPoint.h>
+#  include <geometry_msgs/TransformStamped.h>
+#  include <nav_msgs/Odometry.h>
+#  include <sensor_msgs/JointState.h>
+#  include <std_msgs/UInt8.h>
+#else
+#  include <aerial_robot_msgs/msg/states.hpp>
+#  include <geographic_msgs/msg/geo_point.hpp>
+#  include <geometry_msgs/msg/transform_stamped.hpp>
+#  include <nav_msgs/msg/odometry.hpp>
+#  include <sensor_msgs/msg/joint_state.hpp>
+#  include <std_msgs/msg/u_int8.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(geographic_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(nav_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(std_msgs);
 
 using namespace std;
 
@@ -65,7 +81,7 @@ using namespace std;
 using StateWithStatus = std::pair<int, tf2::Vector3>;
 /* egomotion, experiment, ground truth */
 using AxisState = std::array<StateWithStatus, 3>;
-using SensorFuser = std::vector< std::pair<std::string, boost::shared_ptr<kf_plugin::KalmanFilter> > >;
+using SensorFuser = std::vector< std::pair<std::string, ros_compat::SharedPtr<kf_plugin::KalmanFilter> > >;
 
 namespace Frame
 {
@@ -130,7 +146,7 @@ namespace aerial_robot_estimation
 
   static constexpr float G = 9.797;
 
-  class StateEstimator: public boost::enable_shared_from_this<StateEstimator>
+  class StateEstimator: public ros_compat::EnableSharedFromThis<StateEstimator>
   {
 
   public:
@@ -140,11 +156,11 @@ namespace aerial_robot_estimation
     {
     }
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nh_private, boost::shared_ptr<aerial_robot_model::RobotModel> robot_model);
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nh_private, ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model);
 
     int getStateStatus(uint8_t axis, uint8_t estimate_mode)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
       if(axis < State::TOTAL_NUM)
         return state_[axis][estimate_mode].first;
       else if(axis == State::Base::Rot)
@@ -157,7 +173,7 @@ namespace aerial_robot_estimation
 
     void setStateStatus(uint8_t axis, uint8_t estimate_mode, bool status)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       int* incre_status;
       if(axis < State::TOTAL_NUM)
@@ -174,19 +190,19 @@ namespace aerial_robot_estimation
         {
           if(*incre_status > 0) (*incre_status) --;
           else
-            ROS_WARN("wrong status update for axis: %d, estimate mode: %d", axis, estimate_mode);
+            ROS_COMPAT_WARN("wrong status update for axis: %d, estimate mode: %d", axis, estimate_mode);
         }
     }
 
     AxisState getState( uint8_t axis)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
       return state_[axis];
     }
 
     tf2::Vector3 getState( uint8_t axis,  uint8_t estimate_mode)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       assert(estimate_mode == EGOMOTION_ESTIMATE || estimate_mode == EXPERIMENT_ESTIMATE || estimate_mode == GROUND_TRUTH);
 
@@ -194,7 +210,7 @@ namespace aerial_robot_estimation
     }
     void setState( uint8_t axis,  int estimate_mode,  tf2::Vector3 state)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       assert(estimate_mode == EGOMOTION_ESTIMATE || estimate_mode == EXPERIMENT_ESTIMATE || estimate_mode == GROUND_TRUTH);
 
@@ -203,7 +219,7 @@ namespace aerial_robot_estimation
 
     void setState(uint8_t axis, int estimate_mode, uint8_t state_mode, float value)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       assert(estimate_mode == EGOMOTION_ESTIMATE || estimate_mode == EXPERIMENT_ESTIMATE || estimate_mode == GROUND_TRUTH);
 
@@ -212,21 +228,21 @@ namespace aerial_robot_estimation
 
     tf2::Vector3 getPos(int frame, int estimate_mode)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
       return tf2::Vector3((state_[State::X_COG + frame * 3][estimate_mode].second)[0],
                          (state_[State::Y_COG + frame * 3][estimate_mode].second)[0],
                          (state_[State::Z_COG + frame * 3][estimate_mode].second)[0]);
     }
     void setPos(int frame, int estimate_mode, tf2::Vector3 pos)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
       for(int i = 0; i < 3; i ++ )
         (state_[i + frame * 3][estimate_mode].second)[0] = pos[i];
     }
 
     tf2::Vector3 getVel(int frame, int estimate_mode)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
       return tf2::Vector3((state_[State::X_COG + frame * 3][estimate_mode].second)[1],
                          (state_[State::Y_COG + frame * 3][estimate_mode].second)[1],
                          (state_[State::Z_COG + frame * 3][estimate_mode].second)[1]);
@@ -234,14 +250,14 @@ namespace aerial_robot_estimation
 
     void setVel(int frame, int estimate_mode, tf2::Vector3 vel)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
       for(int i = 0; i < 3; i ++ )
         (state_[i + frame * 3][estimate_mode].second)[1] = vel[i];
     }
 
     tf2::Matrix3x3 getOrientation(int frame, int estimate_mode)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       if(frame == Frame::COG)
         return cog_rots_.at(estimate_mode);
@@ -253,7 +269,7 @@ namespace aerial_robot_estimation
 
     void setOrientation(int frame, int estimate_mode, tf2::Matrix3x3 rot)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       if(frame == Frame::COG)
         cog_rots_.at(estimate_mode) = rot;
@@ -275,7 +291,7 @@ namespace aerial_robot_estimation
 
     tf2::Vector3 getAngularVel(int frame, int estimate_mode)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       if(frame == Frame::COG)
         return cog_omegas_.at(estimate_mode);
@@ -287,7 +303,7 @@ namespace aerial_robot_estimation
 
     void setAngularVel(int frame, int estimate_mode, tf2::Vector3 omega)
     {
-      boost::lock_guard<boost::mutex> lock(state_mutex_);
+      std::lock_guard<std::mutex> lock(state_mutex_);
 
       if(frame == Frame::COG)
         cog_omegas_.at(estimate_mode) = omega;
@@ -298,7 +314,7 @@ namespace aerial_robot_estimation
     inline void setQueueSize(const int& qu_size) {qu_size_ = qu_size;}
     void updateQueue(const double timestamp, const tf2::Matrix3x3 r_ee, const tf2::Matrix3x3 r_ex, const tf2::Vector3 omega)
     {
-      boost::lock_guard<boost::mutex> lock(queue_mutex_);
+      std::lock_guard<std::mutex> lock(queue_mutex_);
       timestamp_qu_.push_back(timestamp);
       rot_ee_qu_.push_back(r_ee);
       rot_ex_qu_.push_back(r_ex);
@@ -315,25 +331,25 @@ namespace aerial_robot_estimation
 
     bool findRotOmega(const double timestamp, const int mode, tf2::Matrix3x3& r, tf2::Vector3& omega, bool verbose = true)
     {
-      boost::lock_guard<boost::mutex> lock(queue_mutex_);
+      std::lock_guard<std::mutex> lock(queue_mutex_);
 
       if(timestamp_qu_.size() == 0)
         {
-          ROS_WARN_COND(verbose, "estimation: no valid queue for timestamp to find proper r and omega");
+          ROS_COMPAT_WARN_COND(verbose, "estimation: no valid queue for timestamp to find proper r and omega");
 
           return false;
         }
 
       if(timestamp < timestamp_qu_.front())
         {
-          ROS_WARN_COND(verbose, "estimation: sensor timestamp %f is earlier than the oldest timestamp %f in queue",
+          ROS_COMPAT_WARN_COND(verbose, "estimation: sensor timestamp %f is earlier than the oldest timestamp %f in queue",
                         timestamp, timestamp_qu_.front());
           return false;
         }
 
       if(timestamp > timestamp_qu_.back())
         {
-          ROS_WARN_COND(verbose, "estimation: sensor timestamp %f is later than the latest timestamp %f in queue",
+          ROS_COMPAT_WARN_COND(verbose, "estimation: sensor timestamp %f is later than the latest timestamp %f in queue",
                         timestamp, timestamp_qu_.back());
 
           return false;
@@ -353,7 +369,7 @@ namespace aerial_robot_estimation
                   else
                     candidate_index = std::distance(timestamp_qu_.begin(), it-1);
 
-                  //ROS_INFO("find timestamp sensor vs imu: [%f, %f], candidate: %d", timestamp, timestamp_qu_.at(candidate_index), candidate_index);
+                  //ROS_COMPAT_INFO("find timestamp sensor vs imu: [%f, %f], candidate: %d", timestamp, timestamp_qu_.at(candidate_index), candidate_index);
                   break;
                 }
             }
@@ -370,7 +386,7 @@ namespace aerial_robot_estimation
                   else
                     candidate_index = timestamp_qu_.size() - 1 - std::distance(timestamp_qu_.rbegin(), it-1);
 
-                  //ROS_INFO("reverse find timestamp sensor vs imu: [%f, %f], %d", timestamp, timestamp_qu_.at(candidate_index) , candidate_index);
+                  //ROS_COMPAT_INFO("reverse find timestamp sensor vs imu: [%f, %f], %d", timestamp, timestamp_qu_.at(candidate_index) , candidate_index);
                   break;
                 }
             }
@@ -386,7 +402,7 @@ namespace aerial_robot_estimation
           r = rot_ex_qu_.at(candidate_index);
           break;
         default:
-          ROS_ERROR("estimation search state with timestamp: wrong mode %d", mode);
+          ROS_COMPAT_ERROR("estimation search state with timestamp: wrong mode %d", mode);
           return false;
         }
 
@@ -395,7 +411,7 @@ namespace aerial_robot_estimation
 
     inline const double getImuLatestTimeStamp()
     {
-      boost::lock_guard<boost::mutex> lock(queue_mutex_);
+      std::lock_guard<std::mutex> lock(queue_mutex_);
       return timestamp_qu_.back();
     }
 
@@ -413,8 +429,8 @@ namespace aerial_robot_estimation
     inline void setForceAttControlFlag (bool flag) {force_att_control_flag_ = flag; }
     inline bool getForceAttControlFlag () {return force_att_control_flag_;}
     /* latitude & longitude value for GPS based navigation */
-    inline void setCurrGpsPoint(const geographic_msgs::GeoPoint point) {curr_wgs84_poiont_ = point;}
-    inline const geographic_msgs::GeoPoint& getCurrGpsPoint() const {return curr_wgs84_poiont_;}
+    inline void setCurrGpsPoint(const geographic_msgs_c::GeoPoint point) {curr_wgs84_poiont_ = point;}
+    inline const geographic_msgs_c::GeoPoint& getCurrGpsPoint() const {return curr_wgs84_poiont_;}
     inline const bool hasGroundTruthOdom() const {return has_groundtruth_odom_; }
     inline void receiveGroundTruthOdom(bool flag) {has_groundtruth_odom_ = flag; }
     inline const bool hasRefinedYawEstimate(int i) const {return has_refined_yaw_estimate_.at(i); }
@@ -442,43 +458,43 @@ namespace aerial_robot_estimation
     inline uint8_t getUnhealthLevel() { return unhealth_level_; }
     std::string getTFPrefix() {return tf_prefix_;}
 
-    const vector<boost::shared_ptr<sensor_plugin::SensorBase> >& getImuHandlers() const { return imu_handlers_;}
-    const vector<boost::shared_ptr<sensor_plugin::SensorBase> >& getAltHandlers() const { return alt_handlers_;}
-    const vector<boost::shared_ptr<sensor_plugin::SensorBase> >& getVoHandlers() const { return vo_handlers_;}
-    const vector<boost::shared_ptr<sensor_plugin::SensorBase> >& getGpsHandlers() const { return gps_handlers_;}
-    const vector<boost::shared_ptr<sensor_plugin::SensorBase> >& getPlaneDetectionHandlers() const { return plane_detection_handlers_;}
+    const vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> >& getImuHandlers() const { return imu_handlers_;}
+    const vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> >& getAltHandlers() const { return alt_handlers_;}
+    const vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> >& getVoHandlers() const { return vo_handlers_;}
+    const vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> >& getGpsHandlers() const { return gps_handlers_;}
+    const vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> >& getPlaneDetectionHandlers() const { return plane_detection_handlers_;}
 
-    const boost::shared_ptr<sensor_plugin::SensorBase> getImuHandler(int i) const { return imu_handlers_.at(i);}
-    const boost::shared_ptr<sensor_plugin::SensorBase> getAltHandlers(int i) const { return alt_handlers_.at(i);}
-    const boost::shared_ptr<sensor_plugin::SensorBase> getVoHandlers(int i) const { return vo_handlers_.at(i);}
-    const boost::shared_ptr<sensor_plugin::SensorBase> getGpsHandlers(int i) const { return gps_handlers_.at(i);}
-    const boost::shared_ptr<sensor_plugin::SensorBase> getPlaneDetectionHandlers(int i) const { return plane_detection_handlers_.at(i);}
+    const ros_compat::SharedPtr<sensor_plugin::SensorBase> getImuHandler(int i) const { return imu_handlers_.at(i);}
+    const ros_compat::SharedPtr<sensor_plugin::SensorBase> getAltHandlers(int i) const { return alt_handlers_.at(i);}
+    const ros_compat::SharedPtr<sensor_plugin::SensorBase> getVoHandlers(int i) const { return vo_handlers_.at(i);}
+    const ros_compat::SharedPtr<sensor_plugin::SensorBase> getGpsHandlers(int i) const { return gps_handlers_.at(i);}
+    const ros_compat::SharedPtr<sensor_plugin::SensorBase> getPlaneDetectionHandlers(int i) const { return plane_detection_handlers_.at(i);}
 
   protected:
 
-    ros::NodeHandle nh_;
-    ros::NodeHandle nhp_;
-    ros::Publisher full_state_pub_, baselink_odom_pub_, cog_odom_pub_;
-    tf2_ros::TransformBroadcaster br_;
-    ros::Timer state_pub_timer_;
+    ros_compat::NodeHandle nh_;
+    ros_compat::NodeHandle nhp_;
+    ros_compat::Publisher full_state_pub_, baselink_odom_pub_, cog_odom_pub_;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> br_;
+    ros_compat::Timer state_pub_timer_;
 
-    vector< boost::shared_ptr<sensor_plugin::SensorBase> > sensors_;
-    boost::shared_ptr< pluginlib::ClassLoader<sensor_plugin::SensorBase> > sensor_plugin_ptr_;
-    vector<boost::shared_ptr<sensor_plugin::SensorBase> > imu_handlers_;
-    vector<boost::shared_ptr<sensor_plugin::SensorBase> > alt_handlers_;
-    vector<boost::shared_ptr<sensor_plugin::SensorBase> > vo_handlers_;
-    vector<boost::shared_ptr<sensor_plugin::SensorBase> > gps_handlers_;
-    vector<boost::shared_ptr<sensor_plugin::SensorBase> > plane_detection_handlers_;
+    vector< ros_compat::SharedPtr<sensor_plugin::SensorBase> > sensors_;
+    ros_compat::SharedPtr< pluginlib::ClassLoader<sensor_plugin::SensorBase> > sensor_plugin_ptr_;
+    vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> > imu_handlers_;
+    vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> > alt_handlers_;
+    vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> > vo_handlers_;
+    vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> > gps_handlers_;
+    vector<ros_compat::SharedPtr<sensor_plugin::SensorBase> > plane_detection_handlers_;
 
     /* mutex */
-    boost::mutex state_mutex_;
-    boost::mutex queue_mutex_;
+    std::mutex state_mutex_;
+    std::mutex queue_mutex_;
     /* ros param */
     bool param_verbose_;
     int estimate_mode_; /* main estimte mode */
 
     /* robot model (kinematics)  */
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_;
     std::string tf_prefix_;
 
     /* 6: x_w, y_w, z_w, x_b, y_b */
@@ -499,7 +515,7 @@ namespace aerial_robot_estimation
     deque<tf2::Vector3> omega_qu_;
 
     /* sensor fusion */
-    boost::shared_ptr< pluginlib::ClassLoader<kf_plugin::KalmanFilter> > sensor_fusion_loader_ptr_;
+    ros_compat::SharedPtr< pluginlib::ClassLoader<kf_plugin::KalmanFilter> > sensor_fusion_loader_ptr_;
     bool sensor_fusion_flag_;
     std::array<SensorFuser, 2> fuser_; //0: egomotion; 1: experiment
 
@@ -512,9 +528,9 @@ namespace aerial_robot_estimation
     bool force_att_control_flag_;
 
     /* latitude & longitude point */
-    geographic_msgs::GeoPoint curr_wgs84_poiont_;
+    geographic_msgs_c::GeoPoint curr_wgs84_poiont_;
 
-    void statePublish(const ros::TimerEvent & e);
+    void statePublish(const ros_compat::TimerEvent & e);
     void rosParamInit();
   };
 };

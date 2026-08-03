@@ -68,12 +68,12 @@ namespace sensor_plugin
       ~Gps() {}
       Gps();
 
-      static tf2::Vector3 wgs84ToNedLocalFrame(geographic_msgs::GeoPoint base_pos, geographic_msgs::GeoPoint target_pos);
-      static geographic_msgs::GeoPoint NedLocalFrameToWgs84(tf2::Vector3 diff_pos, geographic_msgs::GeoPoint base_pos);
+      static tf2::Vector3 wgs84ToNedLocalFrame(geographic_msgs_c::GeoPoint base_pos, geographic_msgs_c::GeoPoint target_pos);
+      static geographic_msgs_c::GeoPoint NedLocalFrameToWgs84(tf2::Vector3 diff_pos, geographic_msgs_c::GeoPoint base_pos);
 
       const bool isRtk() const {return is_rtk_gps_;}
-      const geographic_msgs::GeoPoint getBasePoint() const { return base_wgs84_point_;}
-      const geographic_msgs::GeoPoint getCurrentPoint() const { return curr_wgs84_point_;}
+      const geographic_msgs_c::GeoPoint getBasePoint() const { return base_wgs84_point_;}
+      const geographic_msgs_c::GeoPoint getCurrentPoint() const { return curr_wgs84_point_;}
 
     private:
       /* ros */
@@ -94,7 +94,7 @@ namespace sensor_plugin
 
       aerial_robot_msgs::States gps_state_;
 
-      geographic_msgs::GeoPoint base_wgs84_point_, curr_wgs84_point_;
+      geographic_msgs_c::GeoPoint base_wgs84_point_, curr_wgs84_point_;
 
       tf2::Vector3 pos_, raw_pos_, prev_raw_pos_;
       tf2::Vector3 vel_, raw_vel_;

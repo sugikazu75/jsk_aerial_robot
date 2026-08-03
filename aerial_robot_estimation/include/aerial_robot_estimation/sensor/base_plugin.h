@@ -36,16 +36,26 @@
 #pragma once
 
 #include <aerial_robot_estimation/state_estimation.h>
-#include <aerial_robot_msgs/States.h>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <iostream>
 #include <kalman_filter/lpf_filter.h>
 #include <kalman_filter/kf_base_plugin.h>
-#include <ros/ros.h>
-#include <std_srvs/Empty.h>
-#include <std_srvs/SetBool.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_ros_compat/tf_compat.h>
+#include <mutex>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_msgs/States.h>
+#  include <std_srvs/Empty.h>
+#  include <std_srvs/SetBool.h>
+#else
+#  include <aerial_robot_msgs/msg/states.hpp>
+#  include <std_srvs/srv/empty.hpp>
+#  include <std_srvs/srv/set_bool.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_SRV_NAMESPACE(std_srvs);
 
 using namespace Eigen;
 using namespace std;
@@ -66,30 +76,32 @@ namespace sensor_plugin
       sensor_status_ = Status::INACTIVE;
     }
 
-    virtual void initialize(ros::NodeHandle nh,
-                            boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                            boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    virtual void initialize(ros_compat::NodeHandle nh,
+                            ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                            ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                             string sensor_name, int index)
     {
       estimator_ = estimator;
       robot_model_ = robot_model;
 
       nh_ = nh;
-      nhp_ = ros::NodeHandle(nh_, sensor_name);
-      indexed_nhp_ = ros::NodeHandle(nh_, sensor_name + std::to_string(index));
+      nhp_ = ros_compat::NodeHandle(nh_, sensor_name);
+      indexed_nhp_ = ros_compat::NodeHandle(nh_, sensor_name + std::to_string(index));
 
       health_.resize(1, false);
-      health_stamp_.resize(1, ros::Time::now().toSec());
+      health_stamp_.resize(1, ros_compat::now().toSec());
 
       sensor_name_ = sensor_name.substr(sensor_name.rfind("/") + 1);
-      state_pub_ = nh_.advertise<aerial_robot_msgs::States>("kf/" + sensor_name_ + std::to_string(index) + "/data", 10);
-      set_status_service_ = indexed_nhp_.advertiseService("estimate_flag", &SensorBase::setStatusCb, this);
-      reset_service_ = indexed_nhp_.advertiseService("reset", &SensorBase::resetCb, this);
+      state_pub_ = nh_.advertise<aerial_robot_msgs_c::States>("kf/" + sensor_name_ + std::to_string(index) + "/data", 10);
+      set_status_service_ = ros_compat::advertiseService<std_srvs_s::SetBool>(
+        indexed_nhp_, "estimate_flag", &SensorBase::setStatusCb, this);
+      reset_service_ = ros_compat::advertiseService<std_srvs_s::Empty>(
+        indexed_nhp_, "reset", &SensorBase::resetCb, this);
 
-      ROS_INFO_STREAM("load sensor plugin: " << sensor_name_ + std::to_string(index));
+      ROS_COMPAT_INFO_STREAM("load sensor plugin: " << sensor_name_ + std::to_string(index));
 
       if (!nhp_.getParam ("estimate_mode", estimate_mode_) && !indexed_nhp_.getParam ("estimate_mode", estimate_mode_))
-        ROS_ERROR_STREAM(indexed_nhp_.getNamespace() << ", can not get param about estimate mode");
+        ROS_COMPAT_ERROR_STREAM(indexed_nhp_.getNamespace() << ", can not get param about estimate mode");
 
       /* general parameters for the same sensor type */
       getParam<bool>("param_verbose", param_verbose_, false);
@@ -103,7 +115,7 @@ namespace sensor_plugin
       getParam<bool>("time_sync", time_sync_, false);
       getParam<double>("delay", delay_, 0.0);
 
-      health_check_timer_ = indexed_nhp_.createTimer(ros::Duration(1.0 / health_check_rate_), &SensorBase::healthCheck,this);
+      health_check_timer_ = indexed_nhp_.createTimer(ros_compat::duration(1.0 / health_check_rate_), &SensorBase::healthCheck,this);
     }
 
     virtual ~SensorBase(){}
@@ -111,13 +123,13 @@ namespace sensor_plugin
     inline const std::string& getSensorName() const {return sensor_name_;}
     const int getStatus()
     {
-      boost::lock_guard<boost::mutex> lock(status_mutex_);
+      std::lock_guard<std::mutex> lock(status_mutex_);
       return sensor_status_;
     }
 
     void setStatus(const int status)
     {
-      boost::lock_guard<boost::mutex> lock(status_mutex_);
+      std::lock_guard<std::mutex> lock(status_mutex_);
       prev_status_ = sensor_status_;
       sensor_status_ = status;
     }
@@ -132,25 +144,25 @@ namespace sensor_plugin
       if(sensor_status_ == Status::INVALID && flag)
         {
           sensor_status_ = Status::INACTIVE;
-          ROS_INFO_STREAM(indexed_nhp_.getNamespace() << ", set to inactive");
+          ROS_COMPAT_INFO_STREAM(indexed_nhp_.getNamespace() << ", set to inactive");
         }
       if(!flag)
         {
           sensor_status_ = Status::INVALID;
-          ROS_INFO_STREAM(indexed_nhp_.getNamespace() << ", set to invalid");
+          ROS_COMPAT_INFO_STREAM(indexed_nhp_.getNamespace() << ", set to invalid");
         }
     }
 
   protected:
 
-    ros::NodeHandle nh_, nhp_;
-    ros::NodeHandle indexed_nhp_; //node handle for indexed sensor handler (e.g. imu1, imu2)
-    ros::Publisher state_pub_;
-    ros::Timer  health_check_timer_;
-    ros::ServiceServer set_status_service_;
-    ros::ServiceServer reset_service_;
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_;
-    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator_;
+    ros_compat::NodeHandle nh_, nhp_;
+    ros_compat::NodeHandle indexed_nhp_; //node handle for indexed sensor handler (e.g. imu1, imu2)
+    ros_compat::Publisher state_pub_;
+    ros_compat::Timer  health_check_timer_;
+    ros_compat::ServiceServer set_status_service_;
+    ros_compat::ServiceServer reset_service_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_;
+    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator_;
     int estimate_mode_;
 
     //bool simulation_;
@@ -178,8 +190,8 @@ namespace sensor_plugin
     /* status */
     int sensor_status_;
     int prev_status_;
-    boost::mutex status_mutex_;
-    boost::mutex health_check_mutex_;
+    std::mutex status_mutex_;
+    std::mutex health_check_mutex_;
 
     /* health check */
     double reset_stamp_;
@@ -199,16 +211,16 @@ namespace sensor_plugin
     virtual void estimateProcess(){};
 
     /* check whether we get sensor data */
-    void healthCheck(const ros::TimerEvent & e)
+    void healthCheck(const ros_compat::TimerEvent & e)
     {
-      boost::lock_guard<boost::mutex> lock(health_check_mutex_);
+      std::lock_guard<std::mutex> lock(health_check_mutex_);
 
       /* this will call only once, no recovery */
       for(int i = 0; i < health_.size(); i++)
         {
-          if(ros::Time::now().toSec() - health_stamp_.at(i) > health_timeout_ && health_.at(i)) //  && !simulation_
+          if(ros_compat::now().toSec() - health_stamp_.at(i) > health_timeout_ && health_.at(i)) //  && !simulation_
             {
-              ROS_ERROR("[%s, chan%d]: can not get fresh sensor data for %f[sec]", indexed_nhp_.getNamespace().c_str(), i, ros::Time::now().toSec() - health_stamp_.at(i));
+              ROS_COMPAT_ERROR("[%s, chan%d]: can not get fresh sensor data for %f[sec]", indexed_nhp_.getNamespace().c_str(), i, ros_compat::now().toSec() - health_stamp_.at(i));
               /* TODO: the solution to unhealth should be more clever */
               estimator_->setUnhealthLevel(unhealth_level_);
 
@@ -217,14 +229,14 @@ namespace sensor_plugin
         }
     }
 
-    bool resetCb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res)
+    bool resetCb(std_srvs_s::Empty::Request  &req, std_srvs_s::Empty::Response &res)
     {
-      ROS_INFO("reset sensor plugin %s from rosservice server", sensor_name_.c_str());
+      ROS_COMPAT_INFO("reset sensor plugin %s from rosservice server", sensor_name_.c_str());
       reset();
       return true;
     }
 
-    bool setStatusCb(std_srvs::SetBool::Request  &req, std_srvs::SetBool::Response &res)
+    bool setStatusCb(std_srvs_s::SetBool::Request  &req, std_srvs_s::SetBool::Response &res)
     {
       changeStatus(req.data);
 
@@ -236,19 +248,19 @@ namespace sensor_plugin
       assert(chan_num > 0);
 
       health_.resize(chan_num, false);
-      health_stamp_.resize(chan_num, ros::Time::now().toSec());
+      health_stamp_.resize(chan_num, ros_compat::now().toSec());
     }
 
     void updateHealthStamp(uint8_t chan = 0)
     {
-      boost::lock_guard<boost::mutex> lock(health_check_mutex_);
+      std::lock_guard<std::mutex> lock(health_check_mutex_);
 
       if(!health_[chan])
         {
           health_[chan] = true;
-          ROS_WARN("%s: get sensor data, du: %f", indexed_nhp_.getNamespace().c_str(), ros::Time::now().toSec() - health_stamp_[chan]);
+          ROS_COMPAT_WARN("%s: get sensor data, du: %f", indexed_nhp_.getNamespace().c_str(), ros_compat::now().toSec() - health_stamp_[chan]);
         }
-      health_stamp_[chan] = ros::Time::now().toSec();
+      health_stamp_[chan] = ros_compat::now().toSec();
     }
 
     inline const tf2::Transform& getBaseLink2SensorTransform() const { return sensor_tf_; }
@@ -266,15 +278,15 @@ namespace sensor_plugin
 
       if(segments_tf.empty())
         {
-          if(get_sensor_tf_) ROS_ERROR("the segment tf is empty after init phase");
+          if(get_sensor_tf_) ROS_COMPAT_ERROR("the segment tf is empty after init phase");
 
-          ROS_DEBUG_STREAM("segment tf is empty");
+          ROS_COMPAT_DEBUG_STREAM("segment tf is empty");
           return false;
         }
 
       if(segments_tf.find(sensor_frame_) == segments_tf.end())
         {
-          ROS_ERROR_THROTTLE(0.5, "can not find %s in kinematics model", sensor_frame_.c_str());
+          ROS_COMPAT_ERROR_THROTTLE(0.5, "can not find %s in kinematics model", sensor_frame_.c_str());
           return false;
         }
 
@@ -284,12 +296,12 @@ namespace sensor_plugin
         }
       catch (...)
         {
-          ROS_ERROR("Bug: can not find %s in spite of segments_tf.find is true", sensor_frame_.c_str());
+          ROS_COMPAT_ERROR("Bug: can not find %s in spite of segments_tf.find is true", sensor_frame_.c_str());
         }
 
       double y, p, r; sensor_tf_.getBasis().getRPY(r, p, y);
       if(!variable_sensor_tf_flag_)
-        ROS_INFO("%s: get tf from %s to %s, [%f, %f, %f], [%f, %f, %f]",
+        ROS_COMPAT_INFO("%s: get tf from %s to %s, [%f, %f, %f], [%f, %f, %f]",
                  indexed_nhp_.getNamespace().c_str(),
                  robot_model_->getBaselinkName().c_str(), sensor_frame_.c_str(),
                  sensor_tf_.getOrigin().x(), sensor_tf_.getOrigin().y(),
@@ -305,7 +317,7 @@ namespace sensor_plugin
       if(indexed_nhp_.hasParam(param_name)) indexed_nhp_.getParam(param_name, param);
 
       if(param_verbose_)
-        ROS_INFO_STREAM("[" << indexed_nhp_.getNamespace() << "] " << param_name << ": " << param);
+        ROS_COMPAT_INFO_STREAM("[" << indexed_nhp_.getNamespace() << "] " << param_name << ": " << param);
     }
   };
 

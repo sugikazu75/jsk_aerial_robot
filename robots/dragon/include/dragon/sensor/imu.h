@@ -37,6 +37,7 @@
 
 #include <aerial_robot_estimation/sensor/imu.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <mutex>
 
 using namespace Eigen;
 using namespace std;
@@ -54,25 +55,25 @@ namespace sensor_plugin
 
     void setFilteredOmegaCog(const tf2::Vector3 filtered_omega_cog)
     {
-      boost::lock_guard<boost::mutex> lock(omega_mutex_);
+      std::lock_guard<std::mutex> lock(omega_mutex_);
       filtered_omega_cog_ = filtered_omega_cog;
     }
 
     void setFilteredVelCog(const tf2::Vector3 filtered_vel_cog)
     {
-      boost::lock_guard<boost::mutex> lock(vel_mutex_);
+      std::lock_guard<std::mutex> lock(vel_mutex_);
       filtered_vel_cog_ = filtered_vel_cog;
     }
 
     const tf2::Vector3 getFilteredOmegaCog()
     {
-      boost::lock_guard<boost::mutex> lock(omega_mutex_);
+      std::lock_guard<std::mutex> lock(omega_mutex_);
       return filtered_omega_cog_;
     }
 
     const tf2::Vector3 getFilteredVelCog()
     {
-      boost::lock_guard<boost::mutex> lock(vel_mutex_);
+      std::lock_guard<std::mutex> lock(vel_mutex_);
       return filtered_vel_cog_;
     }
 
@@ -81,8 +82,8 @@ namespace sensor_plugin
     void ImuCallback(const spinal::ImuConstPtr& imu_msg) override;
 
     // work around to obtain filter states
-    boost::mutex omega_mutex_;
-    boost::mutex vel_mutex_;
+    std::mutex omega_mutex_;
+    std::mutex vel_mutex_;
     tf2::Vector3 filtered_vel_cog_;
     tf2::Vector3 filtered_omega_cog_;
     IirFilter lpf_omega_; // for gyro

@@ -78,23 +78,25 @@ StateEstimator::StateEstimator()
   unhealth_level_ = 0;
 }
 
-void StateEstimator::initialize(ros::NodeHandle nh, ros::NodeHandle nh_private, boost::shared_ptr<aerial_robot_model::RobotModel> robot_model)
+void StateEstimator::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nh_private, ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model)
 {
   nh_ = nh;
   nhp_ = nh_private;
   robot_model_ =robot_model;
 
+  br_ = ros_compat::makeBroadcaster<tf2_ros::TransformBroadcaster>(nh_);
+
   rosParamInit();
 
-  baselink_odom_pub_ = nh_.advertise<nav_msgs::Odometry>("uav/baselink/odom", 1);
-  cog_odom_pub_ = nh_.advertise<nav_msgs::Odometry>("uav/cog/odom", 1);
-  full_state_pub_ = nh_.advertise<aerial_robot_msgs::States>("uav/full_state", 1);
+  baselink_odom_pub_ = nh_.advertise<nav_msgs_c::Odometry>("uav/baselink/odom", 1);
+  cog_odom_pub_ = nh_.advertise<nav_msgs_c::Odometry>("uav/cog/odom", 1);
+  full_state_pub_ = nh_.advertise<aerial_robot_msgs_c::States>("uav/full_state", 1);
 
   nhp_.param("tf_prefix", tf_prefix_, std::string(""));
 
   double rate;
   nhp_.param("state_pub_rate", rate, 100.0);
-  state_pub_timer_ = nh_.createTimer(ros::Duration(1.0 / rate), &StateEstimator::statePublish, this);
+  state_pub_timer_ = nh_.createTimer(ros_compat::duration(1.0 / rate), &StateEstimator::statePublish, this);
 }
 
 
@@ -126,17 +128,17 @@ void StateEstimator::setOrientationWzB(int frame, int estimate_mode, tf2::Vector
   setOrientation(frame, estimate_mode, rot);
 }
 
-void StateEstimator::statePublish(const ros::TimerEvent & e)
+void StateEstimator::statePublish(const ros_compat::TimerEvent & e)
 {
-  static ros::Time prev_pub_stamp = ros::Time(0);
+  static ros_compat::Time prev_pub_stamp = ros_compat::Time(0);
 
-  ros::Time imu_stamp = boost::dynamic_pointer_cast<sensor_plugin::Imu>(imu_handlers_.at(0))->getStamp();
-  aerial_robot_msgs::States full_state;
+  ros_compat::Time imu_stamp = ros_compat::dynamicPointerCast<sensor_plugin::Imu>(imu_handlers_.at(0))->getStamp();
+  aerial_robot_msgs_c::States full_state;
   full_state.header.stamp = imu_stamp;
 
   for(int axis = 0; axis < 6; axis++)
     {
-      aerial_robot_msgs::State r_state;
+      aerial_robot_msgs_c::State r_state;
       AxisState state = getState(axis);
 
       switch(axis)
@@ -170,7 +172,7 @@ void StateEstimator::statePublish(const ros::TimerEvent & e)
     }
   full_state_pub_.publish(full_state);
 
-  nav_msgs::Odometry odom_state;
+  nav_msgs_c::Odometry odom_state;
   odom_state.header.stamp = imu_stamp;
   odom_state.header.frame_id = std::string("/world");
 
@@ -203,12 +205,12 @@ void StateEstimator::statePublish(const ros::TimerEvent & e)
       // Built field by field rather than through tf::StampedTransform, which
       // ROS2 has no equivalent of - tf2 carries the stamp and frame names on
       // the message itself rather than on the transform type.
-      geometry_msgs::TransformStamped transformStamped;
+      geometry_msgs_c::TransformStamped transformStamped;
       ros_compat::transformTfToMsg(world2baselink_tf * root2baselink_tf.inverse(), transformStamped.transform);
       transformStamped.header.stamp = imu_stamp;
       transformStamped.header.frame_id = "world";
       transformStamped.child_frame_id = ros_compat::resolveFrame(tf_prefix_, std::string("root"));
-      br_.sendTransform(transformStamped);
+      br_->sendTransform(transformStamped);
     }
 
   /* COG */
@@ -236,26 +238,26 @@ void StateEstimator::rosParamInit()
       return true;
     else if (cmp != FNM_NOMATCH) {
       // never see that, i think that it is fatal error.
-      ROS_FATAL("Plugin list check error! fnmatch('%s', '%s', FNM_CASEFOLD) -> %d",
+      ROS_COMPAT_FATAL("Plugin list check error! fnmatch('%s', '%s', FNM_CASEFOLD) -> %d",
                 pl.c_str(), pl_candidate.c_str(), cmp);
-      ros::shutdown();
+      ros_compat::shutdown();
     }
     return false;
   };
 
   nhp_.param ("param_verbose", param_verbose_, true);
 
-  ros::NodeHandle nh = ros::NodeHandle(nh_, "estimation");
+  ros_compat::NodeHandle nh = ros_compat::NodeHandle(nh_, "estimation");
   nh.param ("mode", estimate_mode_, 0); //EGOMOTION_ESTIMATE: 0
-  ROS_WARN("mode is %s", (estimate_mode_ == EGOMOTION_ESTIMATE)?string("EGOMOTION_ESTIMATE").c_str():((estimate_mode_ == EXPERIMENT_ESTIMATE)?string("EXPERIMENT_ESTIMATE").c_str():((estimate_mode_ == GROUND_TRUTH)?string("GROUND_TRUTH").c_str():string("WRONG_MODE").c_str())));
+  ROS_COMPAT_WARN("mode is %s", (estimate_mode_ == EGOMOTION_ESTIMATE)?string("EGOMOTION_ESTIMATE").c_str():((estimate_mode_ == EXPERIMENT_ESTIMATE)?string("EXPERIMENT_ESTIMATE").c_str():((estimate_mode_ == GROUND_TRUTH)?string("GROUND_TRUTH").c_str():string("WRONG_MODE").c_str())));
 
-  sensor_fusion_loader_ptr_ = boost::shared_ptr< pluginlib::ClassLoader<kf_plugin::KalmanFilter> >(new pluginlib::ClassLoader<kf_plugin::KalmanFilter>("kalman_filter", "kf_plugin::KalmanFilter"));
+  sensor_fusion_loader_ptr_ = ros_compat::SharedPtr< pluginlib::ClassLoader<kf_plugin::KalmanFilter> >(new pluginlib::ClassLoader<kf_plugin::KalmanFilter>("kalman_filter", "kf_plugin::KalmanFilter"));
 
   /* kalman filter egomotion plugin initialization for 0: egomotion, 1: experiment */
   for (int i = 0; i < 2; i++)
     {
       /* kalman filter egomotion plugin list */
-      ros::V_string pl_list{};
+      std::vector<std::string> pl_list{};
       string prefix;
       if(i == EGOMOTION_ESTIMATE) prefix = string("egomotion");
       else if(i == EXPERIMENT_ESTIMATE) prefix = string("experiment");
@@ -275,12 +277,12 @@ void StateEstimator::rosParamInit()
               string fuser_name;
 
               if (!nh.getParam ("fuser_" + prefix + "_id" + fuser_no.str(), fuser_id))
-                ROS_ERROR("%s, no param in fuser %s id", prefix.c_str(), fuser_no.str().c_str());
+                ROS_COMPAT_ERROR("%s, no param in fuser %s id", prefix.c_str(), fuser_no.str().c_str());
 
               if (!nh.getParam ("fuser_" + prefix + "_name" + fuser_no.str(), fuser_name))
-                ROS_ERROR("%s, no param in fuser %s name", prefix.c_str(), fuser_no.str().c_str());
+                ROS_COMPAT_ERROR("%s, no param in fuser %s name", prefix.c_str(), fuser_no.str().c_str());
 
-              boost::shared_ptr<kf_plugin::KalmanFilter> plugin_ptr = sensor_fusion_loader_ptr_->createInstance(name);
+              ros_compat::SharedPtr<kf_plugin::KalmanFilter> plugin_ptr = ros_compat::createPluginInstance(*sensor_fusion_loader_ptr_, name);
               plugin_ptr->initialize(fuser_name, fuser_id);
               fuser_[i].push_back(make_pair(name, plugin_ptr));
               break;
@@ -288,9 +290,9 @@ void StateEstimator::rosParamInit()
         }
     }
 
-  sensor_plugin_ptr_ =  boost::shared_ptr< pluginlib::ClassLoader<sensor_plugin::SensorBase> >( new pluginlib::ClassLoader<sensor_plugin::SensorBase>("aerial_robot_estimation", "sensor_plugin::SensorBase"));
+  sensor_plugin_ptr_ =  ros_compat::SharedPtr< pluginlib::ClassLoader<sensor_plugin::SensorBase> >( new pluginlib::ClassLoader<sensor_plugin::SensorBase>("aerial_robot_estimation", "sensor_plugin::SensorBase"));
 
-  ros::V_string sensor_list{};
+  std::vector<std::string> sensor_list{};
   nh.getParam("sensor_list", sensor_list);
 
   vector<int> sensor_index(0);
@@ -301,7 +303,7 @@ void StateEstimator::rosParamInit()
         {
           if(!pattern_match(sensor_plugin_name, name)) continue;
 
-          sensors_.push_back(sensor_plugin_ptr_->createInstance(name));
+          sensors_.push_back(ros_compat::createPluginInstance(*sensor_plugin_ptr_, name));
           sensor_index.push_back(1);
 
           if(name.find("imu") != std::string::npos)

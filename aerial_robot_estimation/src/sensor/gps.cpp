@@ -460,7 +460,7 @@ namespace sensor_plugin
     AlvinXY: Lat/Long to X/Y (NED)
     Converts Lat/Lon (WGS84) to Alvin XYs using a Mercator projection.
   */
-  tf2::Vector3 Gps::wgs84ToNedLocalFrame(geographic_msgs::GeoPoint base_point, geographic_msgs::GeoPoint target_point)
+  tf2::Vector3 Gps::wgs84ToNedLocalFrame(geographic_msgs_c::GeoPoint base_point, geographic_msgs_c::GeoPoint target_point)
   {
 
     return tf2::Vector3((target_point.latitude - base_point.latitude) * mDegLat(base_point.latitude), (target_point.longitude - base_point.longitude) * mDegLon(base_point.latitude), 0);
@@ -471,9 +471,9 @@ namespace sensor_plugin
     X/Y (NED) to Lat/Lon
     Converts Alvin XYs to Lat/Lon (WGS84) using a Mercator projection.
   */
-  geographic_msgs::GeoPoint Gps::NedLocalFrameToWgs84(tf2::Vector3 diff_pos, geographic_msgs::GeoPoint base_point)
+  geographic_msgs_c::GeoPoint Gps::NedLocalFrameToWgs84(tf2::Vector3 diff_pos, geographic_msgs_c::GeoPoint base_point)
   {
-    geographic_msgs::GeoPoint target_point;
+    geographic_msgs_c::GeoPoint target_point;
 
     target_point.longitude = diff_pos.y() / mDegLon(base_point.latitude) + base_point.longitude;
     target_point.latitude = diff_pos.x() / mDegLat(base_point.latitude) + base_point.latitude;

@@ -36,14 +36,29 @@
 #pragma once
 
 #include <aerial_robot_estimation/sensor/base_plugin.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <geometry_msgs/TransformStamped.h>
 #include <kalman_filter/kf_pos_vel_acc_plugin.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/JointState.h>
-#include <spinal/ServoControlCmd.h>
-#include <std_msgs/Empty.h>
 #include <tf2_ros/static_transform_broadcaster.h>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/Vector3Stamped.h>
+#  include <geometry_msgs/TransformStamped.h>
+#  include <nav_msgs/Odometry.h>
+#  include <sensor_msgs/JointState.h>
+#  include <spinal/ServoControlCmd.h>
+#  include <std_msgs/Empty.h>
+#else
+#  include <geometry_msgs/msg/vector3_stamped.hpp>
+#  include <geometry_msgs/msg/transform_stamped.hpp>
+#  include <nav_msgs/msg/odometry.hpp>
+#  include <sensor_msgs/msg/joint_state.hpp>
+#  include <spinal/msg/servo_control_cmd.hpp>
+#  include <std_msgs/msg/empty.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(nav_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
+AERIAL_ROBOT_MSG_NAMESPACE(std_msgs);
 
 
 namespace sensor_plugin
@@ -57,9 +72,9 @@ namespace sensor_plugin
     VisualOdometry();
     ~VisualOdometry(){}
 
-    void initialize(ros::NodeHandle nh,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    void initialize(ros_compat::NodeHandle nh,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                     string sensor_name, int index) override;
 
     inline const bool odomPosMode()
@@ -74,10 +89,10 @@ namespace sensor_plugin
 
   private:
     /* ros */
-    ros::Subscriber vo_sub_;
-    ros::Publisher vo_servo_pub_;
-    ros::Subscriber vo_servo_debug_sub_;
-    ros::Timer  servo_control_timer_;
+    ros_compat::Subscriber vo_sub_;
+    ros_compat::Publisher vo_servo_pub_;
+    ros_compat::Subscriber vo_servo_debug_sub_;
+    ros_compat::Timer  servo_control_timer_;
 
     /* ros param */
     double throttle_rate_;
@@ -113,16 +128,16 @@ namespace sensor_plugin
     tf2::Vector3 raw_global_vel_;
 
     double reference_timestamp_;
-    aerial_robot_msgs::States vo_state_;
+    aerial_robot_msgs_c::States vo_state_;
 
     tf2_ros::StaticTransformBroadcaster static_broadcaster_; // publish the transfrom between the work and vo frame
 
     void rosParamInit();
-    void servoControl(const ros::TimerEvent & e);
+    void servoControl(const ros_compat::TimerEvent & e);
     void estimateProcess();
-    void voCallback(const nav_msgs::Odometry::ConstPtr & vo_msg);
+    void voCallback(const ros_compat::ConstPtr<nav_msgs_c::Odometry> & vo_msg);
 
-    void servoDebugCallback(const std_msgs::Empty::ConstPtr & msg)
+    void servoDebugCallback(const ros_compat::ConstPtr<std_msgs_c::Empty> & msg)
     {
       servo_auto_change_flag_ = true;
     }

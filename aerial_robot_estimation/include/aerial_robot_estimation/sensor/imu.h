@@ -35,11 +35,23 @@
 
 #pragma once
 
-#include <aerial_robot_msgs/Acc.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
-#include <geometry_msgs/Vector3.h>
-#include <sensor_msgs/Imu.h>
-#include <spinal/Imu.h>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_msgs/Acc.h>
+#  include <geometry_msgs/Vector3.h>
+#  include <sensor_msgs/Imu.h>
+#  include <spinal/Imu.h>
+#else
+#  include <aerial_robot_msgs/msg/acc.hpp>
+#  include <geometry_msgs/msg/vector3.hpp>
+#  include <sensor_msgs/msg/imu.hpp>
+#  include <spinal/msg/imu.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
 
 
 using namespace Eigen;
@@ -50,20 +62,20 @@ namespace sensor_plugin
   class Imu :public sensor_plugin::SensorBase
   {
   public:
-    virtual void initialize(ros::NodeHandle nh,
-                            boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                            boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    virtual void initialize(ros_compat::NodeHandle nh,
+                            ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                            ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                             string sensor_name, int index) override;
 
     ~Imu() {}
     Imu();
 
-    inline ros::Time getStamp(){return imu_stamp_;}
+    inline ros_compat::Time getStamp(){return imu_stamp_;}
 
   protected:
-    ros::Publisher  acc_pub_;
-    ros::Publisher  imu_pub_;
-    ros::Subscriber imu_sub_;
+    ros_compat::Publisher  acc_pub_;
+    ros_compat::Publisher  imu_pub_;
+    ros_compat::Subscriber imu_sub_;
 
     /* rosparam */
     string imu_topic_name_;
@@ -88,13 +100,13 @@ namespace sensor_plugin
     tf2::Vector3 acc_bias_b_; /* the acceleration bias in baselink frame, only use z axis  */
     std::array<tf2::Vector3, 2> acc_bias_w_; /* the acceleration bias in world frame for estimate_mode and expriment_mode*/
 
-    aerial_robot_msgs::States state_; /* for debug */
+    aerial_robot_msgs_c::States state_; /* for debug */
 
     double calib_time_;
 
-    ros::Time imu_stamp_;
+    ros_compat::Time imu_stamp_;
 
-    virtual void ImuCallback(const spinal::ImuConstPtr& imu_msg);
+    virtual void ImuCallback(const ros_compat::ConstPtr<spinal_c::Imu>& imu_msg);
     virtual void estimateProcess();
     void publishAccData();
     void publishRosImuData();
