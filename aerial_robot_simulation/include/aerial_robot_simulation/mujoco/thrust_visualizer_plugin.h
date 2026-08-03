@@ -4,7 +4,13 @@
 #include <string>
 #include <vector>
 
+#include <mujoco_ros/ros_version.hpp>
+
+#if MJR_ROS_VERSION == ROS_1
 #include <mujoco_ros/ros_one/plugin_utils.hpp>
+#else
+#include <mujoco_ros/ros_two/plugin_utils.hpp>
+#endif
 
 namespace mujoco_ros
 {
@@ -35,11 +41,18 @@ private:
   int findSiteForActuator(const mjModel* model, int actuator_id, const std::string& fallback_site_name) const;
   void appendArrow(const mjModel* model, mjData* data, mjvScene* scene, const ArrowSource& arrow) const;
 
+#if MJR_ROS_VERSION == ROS_1
   static bool readDoubleParam(const XmlRpc::XmlRpcValue& config, const std::string& name, double& value);
   static bool readBoolParam(const XmlRpc::XmlRpcValue& config, const std::string& name, bool& value);
   static std::vector<std::string> readStringArrayParam(const XmlRpc::XmlRpcValue& config, const std::string& name);
   static bool readRgbaParam(const XmlRpc::XmlRpcValue& config, const std::string& name, std::array<float, 4>& value);
   static double xmlRpcNumberToDouble(const XmlRpc::XmlRpcValue& value, double default_value);
+#else
+  bool readDoubleParam(const std::string& name, double& value) const;
+  bool readBoolParam(const std::string& name, bool& value) const;
+  std::vector<std::string> readStringArrayParam(const std::string& name) const;
+  bool readRgbaParam(const std::string& name, std::array<float, 4>& value) const;
+#endif
 
   std::vector<ArrowSource> arrows_;
   std::vector<std::string> actuator_names_;

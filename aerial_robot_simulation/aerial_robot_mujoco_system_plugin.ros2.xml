@@ -1,0 +1,8 @@
+<library path="aerial_robot_mujoco_system">
+  <class
+    name="aerial_robot_simulation/AerialRobotMujocoSystem"
+    type="aerial_robot_simulation::AerialRobotMujocoSystem"
+    base_class_type="mujoco_ros::control::MujocoRosSystemInterface">
+    <description>ROS2 MuJoCo system interface for aerial robot rotor thrust actuators.</description>
+  </class>
+</library>

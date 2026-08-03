@@ -3,10 +3,19 @@
 #include <algorithm>
 #include <cmath>
 
+#if MJR_ROS_VERSION == ROS_1
+#include <pluginlib/class_list_macros.h>
+#else
 #include <pluginlib/class_list_macros.hpp>
+#endif
 
 namespace mujoco_ros
 {
+
+namespace
+{
+constexpr char kLogName[] = "thrust_visualizer";
+}
 
 bool ThrustVisualizerPlugin::Load(const mjModel* model, mjData* /*data*/)
 {
@@ -20,12 +29,21 @@ bool ThrustVisualizerPlugin::Load(const mjModel* model, mjData* /*data*/)
   const bool success = actuator_names_.empty() ? buildAutomaticArrowSources(model) : buildConfiguredArrowSources(model);
   if (!success || arrows_.empty())
   {
+#if MJR_ROS_VERSION == ROS_1
     ROS_ERROR_NAMED("thrust_visualizer", "No actuator-site pairs were found for thrust visualization.");
+#else
+    RCLCPP_ERROR(get_node()->get_logger(), "No actuator-site pairs were found for thrust visualization.");
+#endif
     return false;
   }
 
+#if MJR_ROS_VERSION == ROS_1
   ROS_INFO_STREAM_NAMED("thrust_visualizer", "Loaded thrust visualizer with " << arrows_.size() << " arrow(s), scale="
                                                                               << scale_ << ", width=" << width_ << ".");
+#else
+  RCLCPP_INFO_STREAM(get_node()->get_logger(), "Loaded thrust visualizer with " << arrows_.size() << " arrow(s), scale="
+                                                                                 << scale_ << ", width=" << width_ << ".");
+#endif
   return true;
 }
 
@@ -64,6 +82,7 @@ void ThrustVisualizerPlugin::applyVisualDefaults(const mjModel* model)
 
 bool ThrustVisualizerPlugin::configureFromParams()
 {
+#if MJR_ROS_VERSION == ROS_1
   readDoubleParam(rosparam_config_, "scale", scale_);
   readDoubleParam(rosparam_config_, "width", width_);
   readDoubleParam(rosparam_config_, "min_force", min_force_);
@@ -75,22 +94,48 @@ bool ThrustVisualizerPlugin::configureFromParams()
 
   actuator_names_ = readStringArrayParam(rosparam_config_, "actuator_names");
   site_names_ = readStringArrayParam(rosparam_config_, "site_names");
+#else
+  readDoubleParam("scale", scale_);
+  readDoubleParam("width", width_);
+  readDoubleParam("min_force", min_force_);
+  readDoubleParam("max_length", max_length_);
+  readBoolParam("use_abs_force", use_abs_force_);
+  readBoolParam("direction_from_gear", direction_from_gear_);
+  readBoolParam("include_all_site_actuators", include_all_site_actuators_);
+  readRgbaParam("rgba", rgba_);
+
+  actuator_names_ = readStringArrayParam("actuator_names");
+  site_names_ = readStringArrayParam("site_names");
+#endif
 
   if (!site_names_.empty() && site_names_.size() != actuator_names_.size())
   {
+#if MJR_ROS_VERSION == ROS_1
     ROS_ERROR_NAMED("thrust_visualizer", "`site_names` must be omitted or have the same length as `actuator_names`.");
+#else
+    RCLCPP_ERROR(get_node()->get_logger(),
+                 "`site_names` must be omitted or have the same length as `actuator_names`.");
+#endif
     return false;
   }
 
   if (scale_ <= 0.0)
   {
+#if MJR_ROS_VERSION == ROS_1
     ROS_ERROR_NAMED("thrust_visualizer", "`scale` must be positive.");
+#else
+    RCLCPP_ERROR(get_node()->get_logger(), "`scale` must be positive.");
+#endif
     return false;
   }
 
   if (width_ <= 0.0)
   {
+#if MJR_ROS_VERSION == ROS_1
     ROS_ERROR_NAMED("thrust_visualizer", "`width` must be positive.");
+#else
+    RCLCPP_ERROR(get_node()->get_logger(), "`width` must be positive.");
+#endif
     return false;
   }
 
@@ -110,7 +155,11 @@ bool ThrustVisualizerPlugin::buildConfiguredArrowSources(const mjModel* model)
     const int actuator_id = mj_name2id(const_cast<mjModel*>(model), mjOBJ_ACTUATOR, actuator_name.c_str());
     if (actuator_id < 0)
     {
+#if MJR_ROS_VERSION == ROS_1
       ROS_ERROR_STREAM_NAMED("thrust_visualizer", "Actuator `" << actuator_name << "` was not found.");
+#else
+      RCLCPP_ERROR_STREAM(get_node()->get_logger(), "Actuator `" << actuator_name << "` was not found.");
+#endif
       success = false;
       continue;
     }
@@ -118,7 +167,11 @@ bool ThrustVisualizerPlugin::buildConfiguredArrowSources(const mjModel* model)
     const int site_id = findSiteForActuator(model, actuator_id, site_name);
     if (site_id < 0)
     {
+#if MJR_ROS_VERSION == ROS_1
       ROS_ERROR_STREAM_NAMED("thrust_visualizer", "No site was found for actuator `" << actuator_name << "`.");
+#else
+      RCLCPP_ERROR_STREAM(get_node()->get_logger(), "No site was found for actuator `" << actuator_name << "`.");
+#endif
       success = false;
       continue;
     }
@@ -134,7 +187,12 @@ bool ThrustVisualizerPlugin::buildAutomaticArrowSources(const mjModel* model)
 {
   if (!include_all_site_actuators_)
   {
+#if MJR_ROS_VERSION == ROS_1
     ROS_ERROR_NAMED("thrust_visualizer", "`actuator_names` is empty and `include_all_site_actuators` is false.");
+#else
+    RCLCPP_ERROR(get_node()->get_logger(),
+                 "`actuator_names` is empty and `include_all_site_actuators` is false.");
+#endif
     return false;
   }
 
@@ -225,6 +283,7 @@ void ThrustVisualizerPlugin::appendArrow(const mjModel* model, mjData* data, mjv
   mjv_connector(geom, mjGEOM_ARROW, static_cast<mjtNum>(width_), site_pos, tip);
 }
 
+#if MJR_ROS_VERSION == ROS_1
 bool ThrustVisualizerPlugin::readDoubleParam(const XmlRpc::XmlRpcValue& config, const std::string& name, double& value)
 {
   if (!config.hasMember(name))
@@ -259,7 +318,7 @@ std::vector<std::string> ThrustVisualizerPlugin::readStringArrayParam(const XmlR
   const XmlRpc::XmlRpcValue& xml_values = config[name];
   if (xml_values.getType() != XmlRpc::XmlRpcValue::TypeArray)
   {
-    ROS_WARN_STREAM_NAMED("thrust_visualizer", "`" << name << "` must be a string array. Ignoring it.");
+    ROS_WARN_STREAM_NAMED(kLogName, "`" << name << "` must be a string array. Ignoring it.");
     return values;
   }
 
@@ -267,7 +326,7 @@ std::vector<std::string> ThrustVisualizerPlugin::readStringArrayParam(const XmlR
   {
     if (xml_values[i].getType() != XmlRpc::XmlRpcValue::TypeString)
     {
-      ROS_WARN_STREAM_NAMED("thrust_visualizer", "`" << name << "` contains a non-string value. Ignoring it.");
+      ROS_WARN_STREAM_NAMED(kLogName, "`" << name << "` contains a non-string value. Ignoring it.");
       values.clear();
       return values;
     }
@@ -288,7 +347,7 @@ bool ThrustVisualizerPlugin::readRgbaParam(const XmlRpc::XmlRpcValue& config, co
   const XmlRpc::XmlRpcValue& rgba = config[name];
   if (rgba.getType() != XmlRpc::XmlRpcValue::TypeArray || rgba.size() != 4)
   {
-    ROS_WARN_STREAM_NAMED("thrust_visualizer", "`" << name << "` must be an array with 4 numbers. Ignoring it.");
+    ROS_WARN_STREAM_NAMED(kLogName, "`" << name << "` must be an array with 4 numbers. Ignoring it.");
     return false;
   }
 
@@ -312,6 +371,109 @@ double ThrustVisualizerPlugin::xmlRpcNumberToDouble(const XmlRpc::XmlRpcValue& v
   }
   return default_value;
 }
+#else
+bool ThrustVisualizerPlugin::readDoubleParam(const std::string& name, double& value) const
+{
+  if (!get_node()->has_parameter(name))
+  {
+    return false;
+  }
+
+  const auto parameter = get_node()->get_parameter(name);
+  switch (parameter.get_type())
+  {
+    case rclcpp::ParameterType::PARAMETER_DOUBLE:
+      value = parameter.as_double();
+      return true;
+    case rclcpp::ParameterType::PARAMETER_INTEGER:
+      value = static_cast<double>(parameter.as_int());
+      return true;
+    default:
+      RCLCPP_WARN_STREAM(get_node()->get_logger(), "`" << name << "` must be numeric. Ignoring it.");
+      return false;
+  }
+}
+
+bool ThrustVisualizerPlugin::readBoolParam(const std::string& name, bool& value) const
+{
+  if (!get_node()->has_parameter(name))
+  {
+    return false;
+  }
+
+  const auto parameter = get_node()->get_parameter(name);
+  if (parameter.get_type() != rclcpp::ParameterType::PARAMETER_BOOL)
+  {
+    RCLCPP_WARN_STREAM(get_node()->get_logger(), "`" << name << "` must be boolean. Ignoring it.");
+    return false;
+  }
+
+  value = parameter.as_bool();
+  return true;
+}
+
+std::vector<std::string> ThrustVisualizerPlugin::readStringArrayParam(const std::string& name) const
+{
+  std::vector<std::string> values;
+  if (!get_node()->has_parameter(name))
+  {
+    return values;
+  }
+
+  const auto parameter = get_node()->get_parameter(name);
+  if (parameter.get_type() != rclcpp::ParameterType::PARAMETER_STRING_ARRAY)
+  {
+    RCLCPP_WARN_STREAM(get_node()->get_logger(), "`" << name << "` must be a string array. Ignoring it.");
+    return values;
+  }
+
+  return parameter.as_string_array();
+}
+
+bool ThrustVisualizerPlugin::readRgbaParam(const std::string& name, std::array<float, 4>& value) const
+{
+  if (!get_node()->has_parameter(name))
+  {
+    return false;
+  }
+
+  const auto parameter = get_node()->get_parameter(name);
+  if (parameter.get_type() == rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY)
+  {
+    const auto rgba = parameter.as_double_array();
+    if (rgba.size() != 4)
+    {
+      RCLCPP_WARN_STREAM(get_node()->get_logger(), "`" << name << "` must have 4 numbers. Ignoring it.");
+      return false;
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+      value[i] = static_cast<float>(rgba[i]);
+    }
+    return true;
+  }
+
+  if (parameter.get_type() == rclcpp::ParameterType::PARAMETER_INTEGER_ARRAY)
+  {
+    const auto rgba = parameter.as_integer_array();
+    if (rgba.size() != 4)
+    {
+      RCLCPP_WARN_STREAM(get_node()->get_logger(), "`" << name << "` must have 4 numbers. Ignoring it.");
+      return false;
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+      value[i] = static_cast<float>(rgba[i]);
+    }
+    return true;
+  }
+
+  RCLCPP_WARN_STREAM(get_node()->get_logger(), "`" << name << "` must be a numeric array. Ignoring it.");
+  return false;
+}
+#endif
 
 }  // namespace mujoco_ros
 
