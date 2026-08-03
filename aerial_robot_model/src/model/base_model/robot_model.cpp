@@ -1,3 +1,4 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_model/model/aerial_robot_model.h>
 
 namespace aerial_robot_model {

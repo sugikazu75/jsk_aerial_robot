@@ -34,6 +34,7 @@
  *********************************************************************/
 
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/base/pose_linear_controller.h>
 
 namespace aerial_robot_control
@@ -215,16 +216,16 @@ namespace aerial_robot_control
     target_acc_ = navigator_->getTargetAcc();
 
     // rpy_ = estimator_->getEuler(Frame::COG, estimate_mode_);
-    tf::Quaternion cog2baselink_rot;
-    tf::quaternionKDLToTF(robot_model_->getCogDesireOrientation<KDL::Rotation>(), cog2baselink_rot);
-    tf::Matrix3x3 cog_rot = estimator_->getOrientation(Frame::BASELINK, estimate_mode_) * tf::Matrix3x3(cog2baselink_rot).inverse();
+    tf2::Quaternion cog2baselink_rot;
+    ros_compat::quaternionKdlToTf(robot_model_->getCogDesireOrientation<KDL::Rotation>(), cog2baselink_rot);
+    tf2::Matrix3x3 cog_rot = estimator_->getOrientation(Frame::BASELINK, estimate_mode_) * tf2::Matrix3x3(cog2baselink_rot).inverse();
     double r, p, y; cog_rot.getRPY(r, p, y);
     rpy_.setValue(r, p, y);
 
     omega_ = estimator_->getAngularVel(Frame::COG, estimate_mode_);
     target_rpy_ = navigator_->getTargetRPY();
-    tf::Matrix3x3 target_rot; target_rot.setRPY(target_rpy_.x(), target_rpy_.y(), target_rpy_.z());
-    tf::Vector3 target_omega = navigator_->getTargetOmega(); // w.r.t. target cog frame
+    tf2::Matrix3x3 target_rot; target_rot.setRPY(target_rpy_.x(), target_rpy_.y(), target_rpy_.z());
+    tf2::Vector3 target_omega = navigator_->getTargetOmega(); // w.r.t. target cog frame
     target_omega_ = cog_rot.inverse() * target_rot * target_omega; // w.r.t. current cog frame
     target_ang_acc_ = navigator_->getTargetAngAcc();
 

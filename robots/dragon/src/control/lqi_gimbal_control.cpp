@@ -1,10 +1,6 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/control/lqi_gimbal_control.h>
 
-// These conversion helpers used to arrive transitively through
-// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
-// eigen_conversions includes during the ROS2 port.
-#include <tf_conversions/tf_eigen.h>
-#include <eigen_conversions/eigen_msg.h>
 
 using namespace aerial_robot_model;
 using namespace aerial_robot_control;
@@ -138,10 +134,10 @@ void DragonLQIGimbalController::gimbalControl()
     }
 
   Eigen::VectorXd f_xy;
-  tf::Vector3 target_linear_acc_w(pid_controllers_.at(X).result(),
+  tf2::Vector3 target_linear_acc_w(pid_controllers_.at(X).result(),
                                   pid_controllers_.at(Y).result(),
                                   pid_controllers_.at(Z).result());
-  tf::Vector3 target_linear_acc_cog = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_linear_acc_w;
+  tf2::Vector3 target_linear_acc_cog = (tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(rpy_.z()))).inverse() * target_linear_acc_w;
 
   double target_ang_acc_x = pid_controllers_.at(ROLL).result();
   double target_ang_acc_y = pid_controllers_.at(PITCH).result();
@@ -255,16 +251,16 @@ void DragonLQIGimbalController::gimbalControl()
   for(int i = 0; i < motor_num_; i++)
     {
       /* vectoring force */
-      tf::Vector3 f_i(f_xy(2 * i) + wrench_comp_thrust(3 * i), f_xy(2 * i + 1) + wrench_comp_thrust(3 * i + 1),
+      tf2::Vector3 f_i(f_xy(2 * i) + wrench_comp_thrust(3 * i), f_xy(2 * i + 1) + wrench_comp_thrust(3 * i + 1),
                       z_control_terms.at(i) + lqi_att_terms_.at(i) + wrench_comp_thrust(3 * i + 2));
 
       /* extra vectoring part */
-      tf::Vector3 f_ex(0,0,0);
-      if (extra_vectoring_forces_.size() == motor_num_) tf::vectorEigenToTF(extra_vectoring_forces_.at(i), f_ex);
+      tf2::Vector3 f_ex(0,0,0);
+      if (extra_vectoring_forces_.size() == motor_num_) ros_compat::vectorEigenToTf(extra_vectoring_forces_.at(i), f_ex);
       f_i += f_ex;
 
       /* calculate ||f||, but omit pitch and roll term, which will be added in spinal */
-      target_base_thrust_.at(i) = (f_i - tf::Vector3(0, 0, lqi_att_terms_.at(i))).length();
+      target_base_thrust_.at(i) = (f_i - tf2::Vector3(0, 0, lqi_att_terms_.at(i))).length();
       if(control_verbose_)
         ROS_INFO("[gimbal control]: rotor%d, target_thrust vs target_z: [%f vs %f]", i+1, target_base_thrust_.at(i), z_control_terms.at(i));
 
@@ -275,8 +271,8 @@ void DragonLQIGimbalController::gimbalControl()
       std::vector<KDL::Rotation> links_frame_from_cog = dragon_robot_model_->getLinksRotationFromCog<KDL::Rotation>();
 
       /* [S_pitch, -S_roll * C_pitch, C_roll * C_roll]^T = R.transpose * f_i / |f_i| */
-      tf::Quaternion q;  tf::quaternionKDLToTF(links_frame_from_cog.at(i), q);
-      tf::Vector3 r_f_i = tf::Matrix3x3(q).transpose() * f_i;
+      tf2::Quaternion q;  ros_compat::quaternionKdlToTf(links_frame_from_cog.at(i), q);
+      tf2::Vector3 r_f_i = tf2::Matrix3x3(q).transpose() * f_i;
       if(control_verbose_) ROS_INFO("gimbal%d r f: [%f, %f, %f]", i + 1, r_f_i.x(), r_f_i.y(), r_f_i.z());
 
       double gimbal_i_roll = atan2(-r_f_i[1], r_f_i[2]);
@@ -337,7 +333,7 @@ void DragonLQIGimbalController::extraVectoringForceCallback(const aerial_robot_m
     {
       extra_vectoring_forces_.resize(motor_num_, Eigen::Vector3d::Zero());
       for (int i = 0; i < motor_num_; i++)
-        tf::vectorMsgToEigen(msg->forces.at(i), extra_vectoring_forces_.at(i));
+        ros_compat::vectorMsgToEigen(msg->forces.at(i), extra_vectoring_forces_.at(i));
     }
 }
 

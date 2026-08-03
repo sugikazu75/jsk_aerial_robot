@@ -45,7 +45,6 @@
 #include <spinal/RollPitchYawTerm.h>
 #include <spinal/TorqueAllocationMatrixInv.h>
 #include <std_msgs/String.h>
-#include <tf_conversions/tf_eigen.h>
 #include <dragon/sensor/imu.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <nlopt.hpp>

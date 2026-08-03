@@ -1,9 +1,6 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <gimbalrotor/control/gimbalrotor_controller.h>
 
-// These conversion helpers used to arrive transitively through
-// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
-// eigen_conversions includes during the ROS2 port.
-#include <tf_conversions/tf_eigen.h>
 
 using namespace std;
 
@@ -72,11 +69,11 @@ bool GimbalrotorController::update()
 void GimbalrotorController::controlCore()
 {
   PoseLinearController::controlCore();
-  tf::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::COG, estimate_mode_);
-  tf::Vector3 target_acc_w(pid_controllers_.at(X).result(), pid_controllers_.at(Y).result(),
+  tf2::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::COG, estimate_mode_);
+  tf2::Vector3 target_acc_w(pid_controllers_.at(X).result(), pid_controllers_.at(Y).result(),
                            pid_controllers_.at(Z).result());
-  tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
-  tf::Vector3 target_acc_cog = uav_rot.inverse() * target_acc_w;
+  tf2::Vector3 target_acc_dash = (tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
+  tf2::Vector3 target_acc_cog = uav_rot.inverse() * target_acc_w;
   Eigen::VectorXd target_wrench_acc_cog = Eigen::VectorXd::Zero(6);
 
   if (underactuate_)
@@ -89,7 +86,7 @@ void GimbalrotorController::controlCore()
   double target_ang_acc_z = pid_controllers_.at(YAW).result();
   Eigen::Matrix3d inertia = gimbalrotor_robot_model_->getInertia<Eigen::Matrix3d>();
   Eigen::Vector3d omega;
-  tf::vectorTFToEigen(omega_, omega);
+  ros_compat::vectorTfToEigen(omega_, omega);
   Eigen::Vector3d gyro = omega.cross(inertia * omega);
 
   if (gimbal_calc_in_fc_)
@@ -146,10 +143,10 @@ void GimbalrotorController::controlCore()
   std::vector<Eigen::MatrixXd> masked_rot;
   for (int i = 0; i < motor_num_; i++)
   {
-    tf::Quaternion r;
-    tf::quaternionKDLToTF(thrust_coords_rot.at(i), r);
+    tf2::Quaternion r;
+    ros_compat::quaternionKdlToTf(thrust_coords_rot.at(i), r);
     Eigen::Matrix3d conv_cog_from_thrust;
-    tf::matrixTFToEigen(tf::Matrix3x3(r), conv_cog_from_thrust);
+    ros_compat::matrixTfToEigen(tf2::Matrix3x3(r), conv_cog_from_thrust);
     if (gimbal_dof_ == 1)
     {
       Eigen::MatrixXd mask(3, 2);

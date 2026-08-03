@@ -1,5 +1,6 @@
 #pragma once
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
 #include <aerial_robot_estimation/sensor/gps.h>
 #include <aerial_robot_estimation/state_estimation.h>
@@ -75,27 +76,27 @@ namespace aerial_robot_navigation
     inline bool getForceLandingFlag() {return force_landing_flag_;}
     inline double getForceLandingStartTime() {return force_landing_start_time_.toSec();}
 
-    inline tf::Vector3 getTargetPos() {return target_pos_;}
-    inline tf::Vector3 getTargetVel() {return target_vel_;}
-    inline tf::Vector3 getTargetAcc() {return target_acc_;}
-    inline tf::Vector3 getTargetRPY() {return target_rpy_;}
-    inline tf::Vector3 getTargetOmega() {return target_omega_;}
-    inline tf::Vector3 getTargetAngAcc() {return target_ang_acc_;}
+    inline tf2::Vector3 getTargetPos() {return target_pos_;}
+    inline tf2::Vector3 getTargetVel() {return target_vel_;}
+    inline tf2::Vector3 getTargetAcc() {return target_acc_;}
+    inline tf2::Vector3 getTargetRPY() {return target_rpy_;}
+    inline tf2::Vector3 getTargetOmega() {return target_omega_;}
+    inline tf2::Vector3 getTargetAngAcc() {return target_ang_acc_;}
 
-    inline void setTargetPos(tf::Vector3 pos) { target_pos_ = pos; }
-    inline void setTargetPos(double x, double y, double z) { setTargetPos(tf::Vector3(x, y, z)); }
-    inline void addTargetPos(tf::Vector3 diff_pos) { target_pos_ += diff_pos; }
-    inline void addTargetPos(double x, double y, double z) { addTargetPos(tf::Vector3(x, y, z)); }
-    inline void setTargetVel(tf::Vector3 vel) { target_vel_ = vel; }
-    inline void setTargetVel(double x, double y, double z) { setTargetVel(tf::Vector3(x, y, z)); }
+    inline void setTargetPos(tf2::Vector3 pos) { target_pos_ = pos; }
+    inline void setTargetPos(double x, double y, double z) { setTargetPos(tf2::Vector3(x, y, z)); }
+    inline void addTargetPos(tf2::Vector3 diff_pos) { target_pos_ += diff_pos; }
+    inline void addTargetPos(double x, double y, double z) { addTargetPos(tf2::Vector3(x, y, z)); }
+    inline void setTargetVel(tf2::Vector3 vel) { target_vel_ = vel; }
+    inline void setTargetVel(double x, double y, double z) { setTargetVel(tf2::Vector3(x, y, z)); }
     inline void setTargetZeroVel() { setTargetVel(0,0,0); }
-    inline void setTargetAcc(tf::Vector3 vel) { target_acc_ = vel; }
-    inline void setTargetAcc(double x, double y, double z) { setTargetAcc(tf::Vector3(x, y, z)); }
-    inline void setTargetZeroAcc() { setTargetAcc(tf::Vector3(0,0,0)); }
+    inline void setTargetAcc(tf2::Vector3 vel) { target_acc_ = vel; }
+    inline void setTargetAcc(double x, double y, double z) { setTargetAcc(tf2::Vector3(x, y, z)); }
+    inline void setTargetZeroAcc() { setTargetAcc(tf2::Vector3(0,0,0)); }
 
     inline void setTargetRoll(float value) { target_rpy_.setX(value); }
-    inline void setTargetOmega(tf::Vector3 omega) { target_omega_ = omega; }
-    inline void setTargetOmega(double x, double y, double z) { setTargetOmega(tf::Vector3(x, y, z)); }
+    inline void setTargetOmega(tf2::Vector3 omega) { target_omega_ = omega; }
+    inline void setTargetOmega(double x, double y, double z) { setTargetOmega(tf2::Vector3(x, y, z)); }
     inline void setTargetZeroOmega() { setTargetOmega(0,0,0); }
     inline void setTargetOmegaX(float value) { target_omega_.setX(value); }
     inline void setTargetPitch(float value) { target_rpy_.setY(value); }
@@ -103,10 +104,10 @@ namespace aerial_robot_navigation
     inline void setTargetYaw(float value) { target_rpy_.setZ(value); }
     inline void addTargetYaw(float value) { setTargetYaw(angles::normalize_angle(target_rpy_.z() + value)); }
     inline void setTargetOmegaZ(float value) { target_omega_.setZ(value); }
-    inline void setTargetRPY(tf::Vector3 value) { target_rpy_ = value; }
-    inline void setTargetAngAcc(tf::Vector3 acc) { target_ang_acc_ = acc; }
-    inline void setTargetAngAcc(double x, double y, double z) { setTargetAngAcc(tf::Vector3(x, y, z)); }
-    inline void setTargetZeroAngAcc() { setTargetAngAcc(tf::Vector3(0,0,0)); }
+    inline void setTargetRPY(tf2::Vector3 value) { target_rpy_ = value; }
+    inline void setTargetAngAcc(tf2::Vector3 acc) { target_ang_acc_ = acc; }
+    inline void setTargetAngAcc(double x, double y, double z) { setTargetAngAcc(tf2::Vector3(x, y, z)); }
+    inline void setTargetZeroAngAcc() { setTargetAngAcc(tf2::Vector3(0,0,0)); }
     inline void setTargetAngAccX(double value) { target_ang_acc_.setX(value); }
     inline void setTargetAngAccY(double value) { target_ang_acc_.setY(value); }
     inline void setTargetAngAccZ(double value) { target_ang_acc_.setZ(value); }
@@ -120,7 +121,7 @@ namespace aerial_robot_navigation
     inline void setTargetPosZ( float value){  target_pos_.setZ(value);}
     inline void setTargetVelZ( float value){  target_vel_.setZ(value);}
     inline void setTargetAccZ( float value){  target_acc_.setZ(value);}
-    inline void addTargetPosZ( float value){  target_pos_ += tf::Vector3(0, 0, value);}
+    inline void addTargetPosZ( float value){  target_pos_ += tf2::Vector3(0, 0, value);}
 
     inline void setTeleopFlag(bool teleop_flag) { teleop_flag_ = teleop_flag; }
     inline bool getTeleopFlag() { return teleop_flag_; }
@@ -291,8 +292,8 @@ namespace aerial_robot_navigation
     double land_vel_convergent_thresh_;
 
     /* target value */
-    tf::Vector3 target_pos_, target_vel_, target_acc_;
-    tf::Vector3 target_rpy_, target_omega_, target_ang_acc_;
+    tf2::Vector3 target_pos_, target_vel_, target_acc_;
+    tf2::Vector3 target_rpy_, target_omega_, target_ang_acc_;
 
     double takeoff_height_;
     double init_height_;
@@ -442,14 +443,14 @@ namespace aerial_robot_navigation
 
     void updatePoseFromTrajectory();
 
-    tf::Vector3 frameConversion(tf::Vector3 origin_val,  tf::Matrix3x3 r)
+    tf2::Vector3 frameConversion(tf2::Vector3 origin_val,  tf2::Matrix3x3 r)
     {
       return r * origin_val;
     }
 
-    tf::Vector3 frameConversion(tf::Vector3 origin_val, float yaw)
+    tf2::Vector3 frameConversion(tf2::Vector3 origin_val, float yaw)
     {
-      return frameConversion(origin_val, tf::Matrix3x3(tf::createQuaternionFromYaw(yaw)));
+      return frameConversion(origin_val, tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(yaw)));
     }
 
     void flightStatusAckCallback(const std_msgs::UInt8ConstPtr& ack_msg)
@@ -558,7 +559,7 @@ namespace aerial_robot_navigation
     void setTargetXyFromCurrentState()
     {
       setXyControlMode(POS_CONTROL_MODE);
-      tf::Vector3 pos_cog = estimator_->getPos(Frame::COG, estimate_mode_);
+      tf2::Vector3 pos_cog = estimator_->getPos(Frame::COG, estimate_mode_);
       setTargetPosX(pos_cog.x());
       setTargetPosY(pos_cog.y());
 
@@ -573,7 +574,7 @@ namespace aerial_robot_navigation
 
     void setTargetZFromCurrentState()
     {
-      tf::Vector3 pos_cog = estimator_->getPos(Frame::COG, estimate_mode_);
+      tf2::Vector3 pos_cog = estimator_->getPos(Frame::COG, estimate_mode_);
       setTargetPosZ(pos_cog.z());
 
       // set the velocty to zero

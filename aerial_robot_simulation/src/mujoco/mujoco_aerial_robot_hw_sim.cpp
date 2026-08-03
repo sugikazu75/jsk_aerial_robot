@@ -80,15 +80,15 @@ void AerialRobotHWSim::ReadSim(ros::Time time, ros::Duration period)
   int fc_id = mj_name2id(m_ptr_, mjtObj_::mjOBJ_SITE, "fc");
   mjtNum* site_xpos = d_ptr_->site_xpos;
   mjtNum* site_xmat = d_ptr_->site_xmat;
-  tf::Matrix3x3 fc_rot_mat =
-      tf::Matrix3x3(site_xmat[9 * fc_id + 0], site_xmat[9 * fc_id + 1], site_xmat[9 * fc_id + 2],
+  tf2::Matrix3x3 fc_rot_mat =
+      tf2::Matrix3x3(site_xmat[9 * fc_id + 0], site_xmat[9 * fc_id + 1], site_xmat[9 * fc_id + 2],
                     site_xmat[9 * fc_id + 3], site_xmat[9 * fc_id + 4], site_xmat[9 * fc_id + 5],
                     site_xmat[9 * fc_id + 6], site_xmat[9 * fc_id + 7], site_xmat[9 * fc_id + 8]);
-  tf::Quaternion fc_quat;
+  tf2::Quaternion fc_quat;
   fc_rot_mat.getRotation(fc_quat);
 
   /* get the imu sensor data in mujoco, and set it as the input for spinal interface */
-  tf::Vector3 acc, gyro, mag;
+  tf2::Vector3 acc, gyro, mag;
   for (int i = 0; i < m_ptr_->nsensor; i++)
   {
     if (std::string(mj_id2name(m_ptr_, mjtObj_::mjOBJ_SENSOR, i)) == "acc")
@@ -142,10 +142,10 @@ void AerialRobotHWSim::ReadSim(ros::Time time, ros::Duration period)
     pose_msg.pose.position.y = site_xpos[3 * fc_id + 1] + gazebo::gaussianKernel(mocap_pos_noise_);
     pose_msg.pose.position.z = site_xpos[3 * fc_id + 2] + gazebo::gaussianKernel(mocap_pos_noise_);
 
-    tf::Quaternion q_delta;
+    tf2::Quaternion q_delta;
     q_delta.setRPY(gazebo::gaussianKernel(mocap_rot_noise_), gazebo::gaussianKernel(mocap_rot_noise_),
                    gazebo::gaussianKernel(mocap_rot_noise_));
-    tf::Quaternion q_noise = fc_quat * q_delta;
+    tf2::Quaternion q_noise = fc_quat * q_delta;
     pose_msg.pose.orientation.x = q_noise.x();
     pose_msg.pose.orientation.y = q_noise.y();
     pose_msg.pose.orientation.z = q_noise.z();

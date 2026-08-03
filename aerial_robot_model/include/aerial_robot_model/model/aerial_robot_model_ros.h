@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_model/model/aerial_robot_model.h>
 #include <pluginlib/class_loader.hpp>
 #if AERIAL_ROBOT_ROS_VERSION == 1

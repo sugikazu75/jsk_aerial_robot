@@ -68,8 +68,8 @@ namespace sensor_plugin
       ~Gps() {}
       Gps();
 
-      static tf::Vector3 wgs84ToNedLocalFrame(geographic_msgs::GeoPoint base_pos, geographic_msgs::GeoPoint target_pos);
-      static geographic_msgs::GeoPoint NedLocalFrameToWgs84(tf::Vector3 diff_pos, geographic_msgs::GeoPoint base_pos);
+      static tf2::Vector3 wgs84ToNedLocalFrame(geographic_msgs::GeoPoint base_pos, geographic_msgs::GeoPoint target_pos);
+      static geographic_msgs::GeoPoint NedLocalFrameToWgs84(tf2::Vector3 diff_pos, geographic_msgs::GeoPoint base_pos);
 
       const bool isRtk() const {return is_rtk_gps_;}
       const geographic_msgs::GeoPoint getBasePoint() const { return base_wgs84_point_;}
@@ -96,9 +96,9 @@ namespace sensor_plugin
 
       geographic_msgs::GeoPoint base_wgs84_point_, curr_wgs84_point_;
 
-      tf::Vector3 pos_, raw_pos_, prev_raw_pos_;
-      tf::Vector3 vel_, raw_vel_;
-      tf::Vector3 pos_offset_;
+      tf2::Vector3 pos_, raw_pos_, prev_raw_pos_;
+      tf2::Vector3 vel_, raw_vel_;
+      tf2::Vector3 pos_offset_;
 
       void gpsCallback(const spinal::Gps::ConstPtr & gps_msg);
       void gpsFullCallback(const spinal::GpsFull::ConstPtr & gps_full_msg);

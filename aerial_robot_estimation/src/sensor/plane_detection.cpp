@@ -206,18 +206,18 @@ namespace sensor_plugin
 
   bool PlaneDetection::findValidPlane(const jsk_recognition_msgs::ModelCoefficientsArray& msg)
   {
-    tf::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE);
+    tf2::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE);
     double uav_z = estimator_->getPos(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE).z();
     bool valid_plane_found = false;
     double max_distance = -1e6;
 
     for (const auto& coeff : msg.coefficients) {
-      tf::Vector3 norm_vec(coeff.values[0], coeff.values[1], coeff.values[2]);
-      tf::Vector3 norm_vec_in_world_frame = uav_rot * (sensor_tf_.getBasis() * norm_vec) * -1;
+      tf2::Vector3 norm_vec(coeff.values[0], coeff.values[1], coeff.values[2]);
+      tf2::Vector3 norm_vec_in_world_frame = uav_rot * (sensor_tf_.getBasis() * norm_vec) * -1;
       double distance = std::abs((uav_rot * (sensor_tf_ * (norm_vec * -coeff.values[3]))).z()) + height_offset_;
 
       // if this is the ground plane, the norm vector should be [0, 0, 1]
-      double angle = norm_vec_in_world_frame.angle(tf::Vector3(0, 0, 1));
+      double angle = norm_vec_in_world_frame.angle(tf2::Vector3(0, 0, 1));
       if (std::abs(angle) < eps_angle_ &&
           std::abs(uav_z - distance) < distance_diff_thresh_ &&
           min_height_ < distance &&
@@ -240,9 +240,9 @@ namespace sensor_plugin
 
   bool PlaneDetection::isCameraAngleValid()
   {
-    tf::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE);
-    tf::Matrix3x3 sensor_tf_in_world_frame = uav_rot * sensor_tf_.getBasis();
-    double camera_angle = sensor_tf_in_world_frame.getColumn(2).angle(tf::Vector3(0, 0, -1));
+    tf2::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE);
+    tf2::Matrix3x3 sensor_tf_in_world_frame = uav_rot * sensor_tf_.getBasis();
+    double camera_angle = sensor_tf_in_world_frame.getColumn(2).angle(tf2::Vector3(0, 0, -1));
     return camera_angle < max_camera_angle_;
   }
 

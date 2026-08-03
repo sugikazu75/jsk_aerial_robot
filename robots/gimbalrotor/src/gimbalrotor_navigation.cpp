@@ -1,5 +1,6 @@
 // -*- mode: c++ -*-
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <gimbalrotor/gimbalrotor_navigation.h>
 
 using namespace aerial_robot_model;
@@ -42,13 +43,13 @@ void GimbalrotorNavigator::reset()
   curr_target_baselink_rot_.setRPY(0, 0, 0);
   final_target_baselink_rot_.setRPY(0, 0, 0);
   KDL::Rotation rot;
-  tf::quaternionTFToKDL(curr_target_baselink_rot_, rot);
+  ros_compat::quaternionTfToKdl(curr_target_baselink_rot_, rot);
   robot_model_->setCogDesireOrientation(rot);
 }
 
 void GimbalrotorNavigator::targetBaselinkRotCallback(const geometry_msgs::QuaternionStampedConstPtr& msg)
 {
-  tf::quaternionMsgToTF(msg->quaternion, final_target_baselink_rot_);
+  ros_compat::quaternionMsgToTf(msg->quaternion, final_target_baselink_rot_);
   target_omega_.setValue(0, 0, 0);  // for sure to reset the target angular velocity
 
   // special process
@@ -81,26 +82,26 @@ void GimbalrotorNavigator::baselinkRotationProcess()
 
   if (ros::Time::now().toSec() - prev_rotation_stamp_ > baselink_rot_pub_interval_)
   {
-    tf::Quaternion delta_q = curr_target_baselink_rot_.inverse() * final_target_baselink_rot_;
+    tf2::Quaternion delta_q = curr_target_baselink_rot_.inverse() * final_target_baselink_rot_;
     double angle = delta_q.getAngle();
     if (angle > M_PI)
       angle -= 2 * M_PI;
 
     if (fabs(angle) > baselink_rot_change_thresh_)
     {
-      curr_target_baselink_rot_ *= tf::Quaternion(delta_q.getAxis(), fabs(angle) / angle * baselink_rot_change_thresh_);
+      curr_target_baselink_rot_ *= tf2::Quaternion(delta_q.getAxis(), fabs(angle) / angle * baselink_rot_change_thresh_);
     }
     else
       curr_target_baselink_rot_ = final_target_baselink_rot_;
 
     KDL::Rotation rot;
-    tf::quaternionTFToKDL(curr_target_baselink_rot_, rot);
+    ros_compat::quaternionTfToKdl(curr_target_baselink_rot_, rot);
     robot_model_->setCogDesireOrientation(rot);
 
     // send to spinal
     spinal::DesireCoord msg;
     double r, p, y;
-    tf::Matrix3x3(curr_target_baselink_rot_).getRPY(r, p, y);
+    tf2::Matrix3x3(curr_target_baselink_rot_).getRPY(r, p, y);
     msg.roll = r;
     msg.pitch = p;
     msg.yaw = y;

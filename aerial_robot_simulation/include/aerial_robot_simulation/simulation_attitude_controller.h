@@ -48,7 +48,7 @@
 #include <ros/node_handle.h>
 #include <spinal/DesireCoord.h>
 #include <std_msgs/Float64.h>
-#include <tf/LinearMath/Transform.h>
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <urdf/model.h>
 
 namespace flight_controllers

@@ -1,10 +1,6 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/control/full_vectoring_control.h>
 
-// These conversion helpers used to arrive transitively through
-// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
-// eigen_conversions includes during the ROS2 port.
-#include <tf_conversions/tf_eigen.h>
-#include <eigen_conversions/eigen_msg.h>
 
 using namespace aerial_robot_model;
 using namespace aerial_robot_control;
@@ -830,7 +826,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
           force_arrow.pose.position.x = overlap_positions_.at(i).x();
           force_arrow.pose.position.y = overlap_positions_.at(i).y();
           force_arrow.pose.position.z = overlap_positions_.at(i).z() - 0.02;
-          force_arrow.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, -M_PI/2, 0);
+          force_arrow.pose.orientation = ros_compat::createQuaternionMsgFromRollPitchYaw(0, -M_PI/2, 0);
           force_arrow.scale.x = rotor_interfere_force_(i) / 10.0;
           force_arrow.scale.y = 0.02;
           force_arrow.scale.z = 0.02;
@@ -870,21 +866,21 @@ void DragonFullVectoringController::controlCore()
 
   PoseLinearController::controlCore();
 
-  tf::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::COG, estimate_mode_);
-  tf::Vector3 target_lin_acc_w(pid_controllers_.at(X).result(),
+  tf2::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::COG, estimate_mode_);
+  tf2::Vector3 target_lin_acc_w(pid_controllers_.at(X).result(),
                                pid_controllers_.at(Y).result(),
                                pid_controllers_.at(Z).result());
-  tf::Vector3 target_lin_acc = uav_rot.inverse() * target_lin_acc_w;
+  tf2::Vector3 target_lin_acc = uav_rot.inverse() * target_lin_acc_w;
   Eigen::VectorXd target_acc = Eigen::VectorXd::Zero(6);
   target_acc.head(3) = Eigen::Vector3d(target_lin_acc.x(), target_lin_acc.y(), target_lin_acc.z());
 
-  tf::Vector3 target_ang_acc(pid_controllers_.at(ROLL).result(),
+  tf2::Vector3 target_ang_acc(pid_controllers_.at(ROLL).result(),
                              pid_controllers_.at(PITCH).result(),
                              pid_controllers_.at(YAW).result());
   target_acc.tail(3) = Eigen::Vector3d(target_ang_acc.x(), target_ang_acc.y(), target_ang_acc.z());
 
   /* separate PI and D control term */
-  tf::Vector3 target_lin_acc_w_low_freq(pid_controllers_.at(X).getPTerm() + pid_controllers_.at(X).getITerm(),
+  tf2::Vector3 target_lin_acc_w_low_freq(pid_controllers_.at(X).getPTerm() + pid_controllers_.at(X).getITerm(),
                                         pid_controllers_.at(Y).getPTerm() + pid_controllers_.at(Y).getITerm(),
                                         pid_controllers_.at(Z).getPTerm() + pid_controllers_.at(Z).getITerm());
   // include d control term if non-zero target velocity
@@ -894,15 +890,15 @@ void DragonFullVectoringController::controlCore()
         target_lin_acc_w_low_freq[i] = pid_controllers_.at(X + i).result();
     }
 
-  tf::Vector3 target_lin_acc_w_high_freq(pid_controllers_.at(X).getDTerm(),
+  tf2::Vector3 target_lin_acc_w_high_freq(pid_controllers_.at(X).getDTerm(),
                                          pid_controllers_.at(Y).getDTerm(),
                                          pid_controllers_.at(Z).getDTerm());
-  tf::Vector3 residual = target_lin_acc_w_low_freq + target_lin_acc_w_high_freq - target_lin_acc_w;
+  tf2::Vector3 residual = target_lin_acc_w_low_freq + target_lin_acc_w_high_freq - target_lin_acc_w;
   target_lin_acc_w_high_freq -= residual;
-  tf::Vector3 target_lin_acc_low_freq = uav_rot.inverse() * target_lin_acc_w_low_freq;
-  tf::Vector3 target_lin_acc_high_freq = uav_rot.inverse() * target_lin_acc_w_high_freq;
+  tf2::Vector3 target_lin_acc_low_freq = uav_rot.inverse() * target_lin_acc_w_low_freq;
+  tf2::Vector3 target_lin_acc_high_freq = uav_rot.inverse() * target_lin_acc_w_high_freq;
 
-  tf::Vector3 target_ang_acc_low_freq(pid_controllers_.at(ROLL).getPTerm() + pid_controllers_.at(ROLL).getITerm(),
+  tf2::Vector3 target_ang_acc_low_freq(pid_controllers_.at(ROLL).getPTerm() + pid_controllers_.at(ROLL).getITerm(),
                                       pid_controllers_.at(PITCH).getPTerm() + pid_controllers_.at(PITCH).getITerm(),
                                       pid_controllers_.at(YAW).getPTerm() + pid_controllers_.at(YAW).getITerm());
   // include d control term if non-zero target velocity
@@ -912,7 +908,7 @@ void DragonFullVectoringController::controlCore()
         target_ang_acc_low_freq[i] = pid_controllers_.at(ROLL + i).result();
     }
 
-  tf::Vector3 target_ang_acc_high_freq(pid_controllers_.at(ROLL).getDTerm(),
+  tf2::Vector3 target_ang_acc_high_freq(pid_controllers_.at(ROLL).getDTerm(),
                                        pid_controllers_.at(PITCH).getDTerm(),
                                        pid_controllers_.at(YAW).getDTerm());
   residual = target_ang_acc_low_freq + target_ang_acc_high_freq - target_ang_acc;
@@ -1020,7 +1016,7 @@ void DragonFullVectoringController::controlCore()
   // external wrench compensation
   Eigen::MatrixXd rot_inv = Eigen::MatrixXd::Zero(6, 6);
   Eigen::Matrix3d uav_rot_inv;
-  tf::matrixTFToEigen(uav_rot.inverse(), uav_rot_inv);
+  ros_compat::matrixTfToEigen(uav_rot.inverse(), uav_rot_inv);
   rot_inv.topLeftCorner(3,3) = uav_rot_inv;
   rot_inv.bottomRightCorner(3,3) = uav_rot_inv;
   std::map<std::string, Dragon::ExternalWrench> external_wrench_map = dragon_robot_model_->getExternalWrenchMap();
@@ -1409,10 +1405,10 @@ void DragonFullVectoringController::externalWrenchEstimate()
 
   Eigen::Vector3d vel_w, omega_cog; // workaround: use the filtered value
   auto imu_handler = boost::dynamic_pointer_cast<sensor_plugin::DragonImu>(estimator_->getImuHandler(0));
-  tf::vectorTFToEigen(imu_handler->getFilteredVelCog(), vel_w);
-  tf::vectorTFToEigen(imu_handler->getFilteredOmegaCog(), omega_cog);
+  ros_compat::vectorTfToEigen(imu_handler->getFilteredVelCog(), vel_w);
+  ros_compat::vectorTfToEigen(imu_handler->getFilteredOmegaCog(), omega_cog);
   Eigen::Matrix3d cog_rot;
-  tf::matrixTFToEigen(estimator_->getOrientation(Frame::COG, estimate_mode_), cog_rot);
+  ros_compat::matrixTfToEigen(estimator_->getOrientation(Frame::COG, estimate_mode_), cog_rot);
 
   Eigen::Matrix3d inertia = robot_model_->getInertia<Eigen::Matrix3d>();
   double mass = robot_model_->getMass();
@@ -1980,7 +1976,7 @@ void DragonFullVectoringController::extraVectoringForceCallback(const aerial_rob
     {
       extra_vectoring_forces_.resize(motor_num_, Eigen::Vector3d::Zero());
       for (int i = 0; i < motor_num_; i++)
-        tf::vectorMsgToEigen(msg->forces.at(i), extra_vectoring_forces_.at(i));
+        ros_compat::vectorMsgToEigen(msg->forces.at(i), extra_vectoring_forces_.at(i));
     }
 }
 

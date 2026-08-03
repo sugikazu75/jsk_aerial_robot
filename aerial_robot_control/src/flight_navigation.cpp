@@ -1,10 +1,7 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include "aerial_robot_control/flight_navigation.h"
 #include "aerial_robot_control/util/joy_parser.h"
 
-// tf::pointMsgToEigen and friends. This used to arrive transitively through
-// kalman_filter/lpf_filter.h; that header dropped its eigen_conversions include
-// during the ROS2 port, so the dependency is now spelled out where it is used.
-#include <eigen_conversions/eigen_msg.h>
 
 using namespace std;
 using namespace aerial_robot_navigation;
@@ -244,9 +241,9 @@ void BaseNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr & ms
     {
     case aerial_robot_msgs::FlightNav::POS_MODE:
       {
-        tf::Vector3 target_cog_pos(msg->target_pos_x, msg->target_pos_y, 0);
+        tf2::Vector3 target_cog_pos(msg->target_pos_x, msg->target_pos_y, 0);
 
-        tf::Vector3 target_delta = getTargetPos() - target_cog_pos;
+        tf2::Vector3 target_delta = getTargetPos() - target_cog_pos;
         target_delta.setZ(0);
 
         if(target_delta.length() > vel_nav_threshold_)
@@ -284,7 +281,7 @@ void BaseNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr & ms
           case LOCAL_FRAME:
             {
               double yaw_angle = estimator_->getEuler(Frame::COG, estimate_mode_).z();
-              tf::Vector3 target_vel = frameConversion(tf::Vector3(msg->target_vel_x, msg->target_vel_y, 0), yaw_angle);
+              tf2::Vector3 target_vel = frameConversion(tf2::Vector3(msg->target_vel_x, msg->target_vel_y, 0), yaw_angle);
               setTargetVelX(target_vel.x());
               setTargetVelY(target_vel.y());
               break;
@@ -326,7 +323,7 @@ void BaseNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr & ms
           case LOCAL_FRAME:
             {
               double yaw_angle = estimator_->getEuler(Frame::COG, estimate_mode_).z();
-              tf::Vector3 target_acc = frameConversion(tf::Vector3(msg->target_acc_x, msg->target_acc_y, 0), yaw_angle);
+              tf2::Vector3 target_acc = frameConversion(tf2::Vector3(msg->target_acc_x, msg->target_acc_y, 0), yaw_angle);
               setTargetAccX(target_acc.x());
               setTargetAccY(target_acc.y());
               break;
@@ -507,7 +504,7 @@ void BaseNavigator::joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg)
 
   /* mode oriented state */
   control_frame_ = WORLD_FRAME;
-  tf::Matrix3x3 local_frame_rot;
+  tf2::Matrix3x3 local_frame_rot;
   if(joy_cmd.buttons[JOY_BUTTON_REAR_LEFT_2])
     {
       control_frame_ = LOCAL_FRAME;
@@ -521,12 +518,12 @@ void BaseNavigator::joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg)
           return;
         }
 
-      tf::Transform teleop_local_frame_tf;
+      tf2::Transform teleop_local_frame_tf;
       std::string baselink = robot_model_->getBaselinkName();
-      tf::transformKDLToTF(segments_tf.at(baselink).Inverse() * segments_tf.at(teleop_local_frame_), teleop_local_frame_tf);
+      ros_compat::transformKdlToTf(segments_tf.at(baselink).Inverse() * segments_tf.at(teleop_local_frame_), teleop_local_frame_tf);
 
       double yaw_angle = estimator_->getEuler(Frame::COG, estimate_mode_).z();
-      local_frame_rot = tf::Matrix3x3(tf::createQuaternionFromYaw(yaw_angle)) * teleop_local_frame_tf.getBasis();
+      local_frame_rot = tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(yaw_angle)) * teleop_local_frame_tf.getBasis();
     }
 
 
@@ -543,7 +540,7 @@ void BaseNavigator::joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg)
 
         if(control_frame_ == LOCAL_FRAME)
           {
-            tf::Vector3 target_vel = frameConversion(getTargetVel(), local_frame_rot);
+            tf2::Vector3 target_vel = frameConversion(getTargetVel(), local_frame_rot);
             setTargetVelX(target_vel.x());
             setTargetVelY(target_vel.y());
           }
@@ -557,7 +554,7 @@ void BaseNavigator::joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg)
 
         if(control_frame_ == LOCAL_FRAME)
           {
-            tf::Vector3 target_vel = frameConversion(getTargetVel(), local_frame_rot);
+            tf2::Vector3 target_vel = frameConversion(getTargetVel(), local_frame_rot);
             setTargetVelX(target_vel.x());
             setTargetVelY(target_vel.y());
           }
@@ -573,7 +570,7 @@ void BaseNavigator::joyStickControl(const sensor_msgs::JoyConstPtr & joy_msg)
 
         if(control_frame_ == LOCAL_FRAME)
           {
-            tf::Vector3 target_acc = frameConversion(getTargetAcc(), local_frame_rot);
+            tf2::Vector3 target_acc = frameConversion(getTargetAcc(), local_frame_rot);
             setTargetAccX(target_acc.x());
             setTargetAccY(target_acc.y());
           }
@@ -678,9 +675,9 @@ void BaseNavigator::update()
       addTargetYaw(getTargetOmega().z() * loop_du_);
     }
 
-  tf::Vector3 curr_pos = estimator_->getPos(Frame::COG, estimate_mode_);
-  tf::Vector3 curr_vel = estimator_->getVel(Frame::COG, estimate_mode_);
-  tf::Vector3 delta = target_pos_ - curr_pos;
+  tf2::Vector3 curr_pos = estimator_->getPos(Frame::COG, estimate_mode_);
+  tf2::Vector3 curr_vel = estimator_->getVel(Frame::COG, estimate_mode_);
+  tf2::Vector3 delta = target_pos_ - curr_pos;
 
   /* check the hard landing in force_landing model */
   if(force_landing_flag_)
@@ -775,8 +772,8 @@ void BaseNavigator::update()
             if(ros::Time::now().toSec() - gps_waypoint_time_ > gps_waypoint_check_du_)
               {
                 auto base_wp = estimator_->getCurrGpsPoint();
-                tf::Matrix3x3 convert_frame; convert_frame.setRPY(M_PI, 0, 0); // NED -> XYZ
-                tf::Vector3 gps_waypoint_delta =  convert_frame * sensor_plugin::Gps::wgs84ToNedLocalFrame(base_wp, target_wp_);
+                tf2::Matrix3x3 convert_frame; convert_frame.setRPY(M_PI, 0, 0); // NED -> XYZ
+                tf2::Vector3 gps_waypoint_delta =  convert_frame * sensor_plugin::Gps::wgs84ToNedLocalFrame(base_wp, target_wp_);
 
 
                 if(gps_waypoint_delta.length() < gps_waypoint_threshold_)
@@ -791,7 +788,7 @@ void BaseNavigator::update()
                   }
 
                 //ROS_INFO("gps_waypoint_delta: %f, %f", gps_waypoint_delta.x(), gps_waypoint_delta.y());
-                tf::Vector3 target_cog_pos = estimator_->getPos(Frame::COG, estimate_mode_) + gps_waypoint_delta;
+                tf2::Vector3 target_cog_pos = estimator_->getPos(Frame::COG, estimate_mode_) + gps_waypoint_delta;
                 setTargetPosX(target_cog_pos.x());
                 setTargetPosY(target_cog_pos.y());
 
@@ -806,7 +803,7 @@ void BaseNavigator::update()
             /* vel nav */
             if(delta.length() > vel_nav_threshold_)
               {
-                tf::Vector3 nav_vel = delta * vel_nav_gain_;
+                tf2::Vector3 nav_vel = delta * vel_nav_gain_;
 
                 double speed = nav_vel.length();
                 if(speed  > nav_vel_limit_) nav_vel *= (nav_vel_limit_ / speed);
@@ -819,8 +816,8 @@ void BaseNavigator::update()
                 if(gps_waypoint_)
                   {
                     auto base_wp = estimator_->getCurrGpsPoint();
-                    tf::Matrix3x3 convert_frame; convert_frame.setRPY(M_PI, 0, 0); // NED -> XYZ
-                    tf::Vector3 gps_waypoint_delta =  convert_frame * sensor_plugin::Gps::wgs84ToNedLocalFrame(base_wp, target_wp_);
+                    tf2::Matrix3x3 convert_frame; convert_frame.setRPY(M_PI, 0, 0); // NED -> XYZ
+                    tf2::Vector3 gps_waypoint_delta =  convert_frame * sensor_plugin::Gps::wgs84ToNedLocalFrame(base_wp, target_wp_);
 
                     ROS_WARN("back to pos nav control for GPS way point, gps waypoint delta: %f, %f", gps_waypoint_delta.x(), gps_waypoint_delta.y());
                     gps_waypoint_  = false;
@@ -880,7 +877,7 @@ bool BaseNavigator::isInflightState()
 void BaseNavigator::updateLandCommand()
 {
   // update pos and vel for z
-  tf::Vector3 curr_pos = estimator_->getPos(Frame::COG, estimate_mode_);
+  tf2::Vector3 curr_pos = estimator_->getPos(Frame::COG, estimate_mode_);
 
   addTargetPosZ(land_descend_vel_ * loop_du_);
   setTargetVelZ(land_descend_vel_);
@@ -904,9 +901,9 @@ void BaseNavigator::generateNewTrajectory(std::vector<geometry_msgs::PoseStamped
 
   agi::QuadState start_state;
   start_state.setZero();
-  tf::Vector3 current_pos = estimator_->getPos(Frame::COG, estimate_mode_);
+  tf2::Vector3 current_pos = estimator_->getPos(Frame::COG, estimate_mode_);
   start_state.p = agi::Vector<3>(current_pos.x(), current_pos.y(), current_pos.z());
-  tf::Vector3 current_vel = estimator_->getVel(Frame::COG, estimate_mode_);
+  tf2::Vector3 current_vel = estimator_->getVel(Frame::COG, estimate_mode_);
   start_state.v = agi::Vector<3>(current_vel.x(), current_vel.y(), current_vel.z());
 
   double yaw_angle = estimator_->getEuler(Frame::COG, estimate_mode_).z();
@@ -922,10 +919,10 @@ void BaseNavigator::generateNewTrajectory(std::vector<geometry_msgs::PoseStamped
       agi::QuadState state;
       state.setZero();
       Eigen::Vector3d p;
-      tf::pointMsgToEigen(pose.pose.position, p);
+      ros_compat::pointMsgToEigen(pose.pose.position, p);
       state.p = p;
       agi::Quaternion q;
-      tf::quaternionMsgToEigen(pose.pose.orientation, q);
+      ros_compat::quaternionMsgToEigen(pose.pose.orientation, q);
       if (std::fabs(1 - q.squaredNorm())  < 1e-6)
         {
           state.q(q);
@@ -985,8 +982,8 @@ void BaseNavigator::generateNewTrajectory(std::vector<geometry_msgs::PoseStamped
 
     agi::QuadState state = traj_generator_ptr_->getState(start_state.t + t);
 
-    tf::pointEigenToMsg(state.p, pose_stamp.pose.position);
-    tf::quaternionEigenToMsg(state.q(), pose_stamp.pose.orientation);
+    ros_compat::pointEigenToMsg(state.p, pose_stamp.pose.position);
+    ros_compat::quaternionEigenToMsg(state.q(), pose_stamp.pose.orientation);
     msg.poses.push_back(pose_stamp);
   }
   path_pub_.publish(msg);
@@ -1079,9 +1076,9 @@ void BaseNavigator::updatePoseFromTrajectory()
 
   // find the target pose at t from trajectory
   agi::QuadState target_state = traj_generator_ptr_->getState(t);
-  setTargetPos(tf::Vector3(target_state.p(0), target_state.p(1), target_state.p(2)));
-  setTargetVel(tf::Vector3(target_state.v(0), target_state.v(1), target_state.v(2)));
-  setTargetAcc(tf::Vector3(target_state.a(0), target_state.a(1), target_state.a(2)));
+  setTargetPos(tf2::Vector3(target_state.p(0), target_state.p(1), target_state.p(2)));
+  setTargetVel(tf2::Vector3(target_state.v(0), target_state.v(1), target_state.v(2)));
+  setTargetAcc(tf2::Vector3(target_state.a(0), target_state.a(1), target_state.a(2)));
 
   double target_yaw = target_state.getYaw();
   double target_omega_z = target_state.w(2);
@@ -1090,7 +1087,7 @@ void BaseNavigator::updatePoseFromTrajectory()
   setTargetOmegaZ(target_omega_z);
   setTargetAngAccZ(target_ang_acc_z);
 
-  tf::Vector3 curr_pos = estimator_->getPos(Frame::COG, estimate_mode_);
+  tf2::Vector3 curr_pos = estimator_->getPos(Frame::COG, estimate_mode_);
   double yaw_angle = estimator_->getEuler(Frame::COG, estimate_mode_).z();
   ROS_INFO_THROTTLE(0.5, "[Nav] trajectory mode, target pos&yaw: [%f, %f, %f, %f], curr pos&yaw: [%f, %f, %f, %f]", \
                     target_state.p(0), target_state.p(1), target_state.p(2), target_yaw, \

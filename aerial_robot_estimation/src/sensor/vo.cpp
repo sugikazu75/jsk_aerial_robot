@@ -34,6 +34,7 @@
  *********************************************************************/
 
 /* base class */
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/vo.h>
 
 using namespace aerial_robot_estimation;
@@ -43,9 +44,9 @@ namespace
   double init_servo_st = 0;
   double max_du = 0;
 
-  tf::Transform prev_sensor_tf;
-  tf::Vector3 baselink_omega;
-  tf::Matrix3x3 baselink_r;
+  tf2::Transform prev_sensor_tf;
+  tf2::Vector3 baselink_omega;
+  tf2::Matrix3x3 baselink_r;
 }
 
 namespace sensor_plugin
@@ -131,8 +132,8 @@ namespace sensor_plugin
         return;
       }
 
-    tf::Transform raw_sensor_tf;
-    tf::poseMsgToTF(vo_msg->pose.pose, raw_sensor_tf); // motion update
+    tf2::Transform raw_sensor_tf;
+    ros_compat::poseMsgToTf(vo_msg->pose.pose, raw_sensor_tf); // motion update
 
     /* temporal update */
     curr_timestamp_ = vo_msg->header.stamp.toSec() + delay_;
@@ -187,13 +188,13 @@ namespace sensor_plugin
         if(vio_mode_)
           {
             /* get the true rotation (i.e. attitude) from the sensor in vio mode */
-            tf::Quaternion q;
-            tf::quaternionMsgToTF(vo_msg->pose.pose.orientation, q);
+            tf2::Quaternion q;
+            ros_compat::quaternionMsgToTf(vo_msg->pose.pose.orientation, q);
             sensor_view_rot.setRotation(q);
           }
 
         /* can not start fusion from this sensor if the sensor is downward and the height is too low */
-        double downward_rate = (sensor_view_rot * tf::Vector3(1,0,0)).z();
+        double downward_rate = (sensor_view_rot * tf2::Vector3(1,0,0)).z();
         if(downward_rate < -0.8 &&
            estimator_->getState(State::Z_BASE, EGOMOTION_ESTIMATE)[0] < downwards_vo_min_height_)
           {
@@ -238,11 +239,11 @@ namespace sensor_plugin
           }
 
         /** step1: ^{w}H_{b} **/
-        tf::Transform w_b_f;
-        tf::Matrix3x3 base_rot = estimator_->getOrientation(Frame::BASELINK, EGOMOTION_ESTIMATE);
+        tf2::Transform w_b_f;
+        tf2::Matrix3x3 base_rot = estimator_->getOrientation(Frame::BASELINK, EGOMOTION_ESTIMATE);
         w_b_f.setBasis(base_rot);
 
-        tf::Vector3 baselink_pos = estimator_->getPos(Frame::BASELINK, EGOMOTION_ESTIMATE);
+        tf2::Vector3 baselink_pos = estimator_->getPos(Frame::BASELINK, EGOMOTION_ESTIMATE);
         if(estimator_->getStateStatus(State::X_BASE, EGOMOTION_ESTIMATE))
           w_b_f.getOrigin().setX(baselink_pos.x());
         if(estimator_->getStateStatus(State::Y_BASE, EGOMOTION_ESTIMATE))
@@ -259,7 +260,7 @@ namespace sensor_plugin
           }
 
         /** step2: ^{vo}H_{b} **/
-        tf::Transform vo_b_f = raw_sensor_tf * sensor_tf_.inverse(); // ^{vo}H_{b}
+        tf2::Transform vo_b_f = raw_sensor_tf * sensor_tf_.inverse(); // ^{vo}H_{b}
 
         /** step3: ^{w}H_{vo} = ^{w}H_{b} * ^{b}H_{vo} **/
         world_offset_tf_ = w_b_f * vo_b_f.inverse();
@@ -269,10 +270,10 @@ namespace sensor_plugin
         static_transformStamped.header.stamp = vo_msg->header.stamp;
         static_transformStamped.header.frame_id = "world";
         static_transformStamped.child_frame_id = vo_msg->header.frame_id;
-        tf::transformTFToMsg(world_offset_tf_, static_transformStamped.transform);
+        ros_compat::transformTfToMsg(world_offset_tf_, static_transformStamped.transform);
         static_broadcaster_.sendTransform(static_transformStamped);
 
-        tf::Vector3 init_pos = w_b_f.getOrigin();
+        tf2::Vector3 init_pos = w_b_f.getOrigin();
 
         for(auto& fuser : estimator_->getFuser(EGOMOTION_ESTIMATE))
           {
@@ -355,14 +356,14 @@ namespace sensor_plugin
 
     baselink_tf_ = world_offset_tf_ * raw_sensor_tf * sensor_tf_.inverse();
 
-    tf::Vector3 raw_pos;
-    tf::pointMsgToTF(vo_msg->pose.pose.position, raw_pos);
-    tf::Quaternion raw_q;
-    tf::quaternionMsgToTF(vo_msg->pose.pose.orientation, raw_q);
+    tf2::Vector3 raw_pos;
+    ros_compat::pointMsgToTf(vo_msg->pose.pose.position, raw_pos);
+    tf2::Quaternion raw_q;
+    ros_compat::quaternionMsgToTf(vo_msg->pose.pose.orientation, raw_q);
 
     // velocity:
-    tf::Vector3 raw_vel;
-    tf::vector3MsgToTF(vo_msg->twist.twist.linear, raw_vel);
+    tf2::Vector3 raw_vel;
+    ros_compat::vector3MsgToTf(vo_msg->twist.twist.linear, raw_vel);
     /* get the latest orientation and omega */
     baselink_r = estimator_->getOrientation(Frame::BASELINK, EGOMOTION_ESTIMATE);
     baselink_omega = estimator_->getAngularVel(Frame::BASELINK, EGOMOTION_ESTIMATE);
@@ -372,10 +373,10 @@ namespace sensor_plugin
         // TODO: what is the following previous tricky code?
         int mode = EGOMOTION_ESTIMATE;
 
-        if (raw_vel == tf::Vector3(0.0,0.0,0.0))
+        if (raw_vel == tf2::Vector3(0.0,0.0,0.0))
           {
             /* the odometry message does not contain velocity information, we have to calulcate by ourselves. */
-            tf::Transform delta_tf = prev_sensor_tf.inverse() * raw_sensor_tf;
+            tf2::Transform delta_tf = prev_sensor_tf.inverse() * raw_sensor_tf;
             raw_vel = delta_tf.getOrigin() / (curr_timestamp_ - prev_timestamp_);
 
             reference_timestamp_ = (curr_timestamp_ + prev_timestamp_) / 2;
@@ -404,10 +405,10 @@ namespace sensor_plugin
 
     if(debug_verbose_)
       {
-        double y, p, r;  tf::Matrix3x3(raw_q).getRPY(r, p, y);
+        double y, p, r;  tf2::Matrix3x3(raw_q).getRPY(r, p, y);
         ROS_INFO("vo raw pos: [%f, %f, %f], raw rot: [%f, %f, %f]",
                  raw_pos.x(), raw_pos.y(), raw_pos.z(), r, p, y);
-        tf::Vector3 mocap_pos = estimator_->getPos(Frame::BASELINK, aerial_robot_estimation::GROUND_TRUTH);
+        tf2::Vector3 mocap_pos = estimator_->getPos(Frame::BASELINK, aerial_robot_estimation::GROUND_TRUTH);
         ROS_INFO("mocap pos: [%f, %f, %f], vo pos: [%f, %f, %f]",
                  mocap_pos.x(), mocap_pos.y(), mocap_pos.z(),
                  baselink_tf_.getOrigin().x(), baselink_tf_.getOrigin().y(),
@@ -415,7 +416,7 @@ namespace sensor_plugin
         baselink_tf_.getBasis().getRPY(r, p, y);
 
         double mocap_r, mocap_p, mocap_y;
-        tf::Matrix3x3 base_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::GROUND_TRUTH);
+        tf2::Matrix3x3 base_rot = estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::GROUND_TRUTH);
         base_rot.getRPY(mocap_r, mocap_p, mocap_y);
         ROS_INFO("mocap yaw: %f, vo rot: [%f, %f, %f]", mocap_y, r, p, y);
       }
@@ -446,12 +447,12 @@ namespace sensor_plugin
     if(getStatus() == Status::INVALID || getStatus() == Status::RESET) return;
 
     /* downward check */
-    tf::Matrix3x3 sensor_view_rot;
+    tf2::Matrix3x3 sensor_view_rot;
     if(vio_mode_)
       sensor_view_rot = baselink_tf_.getBasis() * sensor_tf_.getBasis();
     else sensor_view_rot = baselink_r * sensor_tf_.getBasis();
 
-    if((sensor_view_rot * tf::Vector3(1,0,0)).z() < -0.8)
+    if((sensor_view_rot * tf2::Vector3(1,0,0)).z() < -0.8)
       {
         double height = estimator_->getState(State::Z_BASE, EGOMOTION_ESTIMATE)[0];
 
@@ -478,10 +479,10 @@ namespace sensor_plugin
 
         // EGOMOTION_ESTIMATE mode
         // only update the wx_b vector (the vector only related to yaw)
-        tf::Vector3 wx_b = baselink_tf_.getBasis().getRow(0);
-        tf::Transform c2b_tf;
-        tf::transformKDLToTF(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
-        tf::Vector3 wx_c = c2b_tf.getBasis() * wx_b;
+        tf2::Vector3 wx_b = baselink_tf_.getBasis().getRow(0);
+        tf2::Transform c2b_tf;
+        ros_compat::transformKdlToTf(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
+        tf2::Vector3 wx_c = c2b_tf.getBasis() * wx_b;
         estimator_->setOrientationWxB(Frame::BASELINK, EGOMOTION_ESTIMATE, wx_b);
         estimator_->setOrientationWxB(Frame::COG, EGOMOTION_ESTIMATE, wx_c);
       }

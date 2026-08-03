@@ -162,6 +162,24 @@ int main()
         for (int j = 0; j < 3; ++j)
           d = std::max(d, std::fabs(r2(i, j) - r1(i, j)));
       check("quaternionTFToKDL", d, 1e-15);
+
+      geometry_msgs::Quaternion mq;
+      ros_compat::quaternionTfToMsg(q2, mq);
+      KDL::Rotation kr2, kr1;
+      ros_compat::quaternionMsgToKdl(mq, kr2);
+      tf::quaternionMsgToKDL(mq, kr1);
+      d = 0;
+      for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j) d = std::max(d, std::fabs(kr2(i, j) - kr1(i, j)));
+      check("quaternionMsgToKDL", d, 1e-15);
+
+      geometry_msgs::Point mpt;
+      mpt.x = vx; mpt.y = vy; mpt.z = vz;
+      KDL::Vector kv2, kv1;
+      ros_compat::pointMsgToKdl(mpt, kv2);
+      tf::pointMsgToKDL(mpt, kv1);
+      check("pointMsgToKDL", std::max({ std::fabs(kv2.x() - kv1.x()), std::fabs(kv2.y() - kv1.y()),
+                                        std::fabs(kv2.z() - kv1.z()) }));
     }
 
     // Eigen conversions

@@ -54,7 +54,8 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/Range.h>
-#include <tf/transform_broadcaster.h>
+#include <aerial_robot_ros_compat/tf_compat.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 
 namespace aerial_robot_estimation
@@ -107,13 +108,13 @@ namespace aerial_robot_estimation
     bool use_sonar_;
     double camera_f_, camera_cx_, camera_cy_;
     double sonar_, sonar_vel_, sonar_offset_;
-    tf::Vector3 ang_vel_;
+    tf2::Vector3 ang_vel_;
     cv::Mat prev_gray_img_;
     std::vector<cv::Point2f> points_[2];
     int max_count_;
     ros::Time prev_stamp_;
     ros::Time sonar_prev_stamp_;
-    tf::Matrix3x3 camera_rotation_mat_, camera_rotation_mat_inv_;
+    tf2::Matrix3x3 camera_rotation_mat_, camera_rotation_mat_inv_;
     double camera_roll_, camera_pitch_, camera_yaw_;
     double image_crop_scale_;
     int image_cut_pixel_;

@@ -36,8 +36,8 @@ namespace hardware_interface
 
     int motor_num_;
     std::vector<double> force_;
-    tf::Matrix3x3 baselink_rot_;
-    tf::Vector3 baselink_angular_;
+    tf2::Matrix3x3 baselink_rot_;
+    tf2::Vector3 baselink_angular_;
     StateEstimate spinal_state_estimator_;
   };
 }

@@ -84,7 +84,7 @@ namespace aerial_robot_navigation
     /* target baselink rotation */
     double prev_rotation_stamp_;
     std::vector<double> target_gimbal_angles_;
-    tf::Quaternion curr_target_baselink_rot_, final_target_baselink_rot_;
+    tf2::Quaternion curr_target_baselink_rot_, final_target_baselink_rot_;
     bool eq_cog_world_;
 
     /* landing process */

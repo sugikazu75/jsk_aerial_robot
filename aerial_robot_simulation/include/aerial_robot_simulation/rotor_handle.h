@@ -35,7 +35,7 @@
 
 #include <ros/ros.h>
 #include <urdf_model/joint.h>
-#include <tf/LinearMath/Vector3.h>
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_simulation/noise_model.h>
 
 namespace hardware_interface
@@ -99,9 +99,9 @@ namespace hardware_interface
         }
     }
 
-    inline tf::Vector3 getTorque()   const
+    inline tf2::Vector3 getTorque()   const
     {
-      return tf::Vector3(gazebo::gaussianKernel(dual_rotor_moment_noise_), 0, getForce() * direction_ * m_f_rate_);
+      return tf2::Vector3(gazebo::gaussianKernel(dual_rotor_moment_noise_), 0, getForce() * direction_ * m_f_rate_);
     }
     inline void setCommand(double command); //no implement here
 

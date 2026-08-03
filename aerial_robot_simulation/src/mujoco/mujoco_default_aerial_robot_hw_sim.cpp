@@ -1,3 +1,4 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_simulation/mujoco/mujoco_default_aerial_robot_hw_sim.h>
 
 namespace mujoco_ros::control
@@ -120,13 +121,13 @@ void DefaultAerialRobotHWSim::WriteSim(ros::Time time, ros::Duration period)
 void DefaultAerialRobotHWSim::publishOdometry(ros::Time time)
 {
   nav_msgs::Odometry odom_msg;
-  tf::Vector3 v_global(d_ptr_->qvel[0], d_ptr_->qvel[1], d_ptr_->qvel[2]);
-  tf::Quaternion q(d_ptr_->qpos[4], d_ptr_->qpos[5], d_ptr_->qpos[6], d_ptr_->qpos[3]);
-  tf::Vector3 v_local = tf::quatRotate(q.inverse(), v_global);
+  tf2::Vector3 v_global(d_ptr_->qvel[0], d_ptr_->qvel[1], d_ptr_->qvel[2]);
+  tf2::Quaternion q(d_ptr_->qpos[4], d_ptr_->qpos[5], d_ptr_->qpos[6], d_ptr_->qpos[3]);
+  tf2::Vector3 v_local = tf2::quatRotate(q.inverse(), v_global);
 
   odom_msg.header.stamp = time;
   odom_msg.header.frame_id = "world";
-  odom_msg.child_frame_id = tf::resolve(robot_ns_, mj_id2name(m_ptr_, mjtObj_::mjOBJ_BODY, 1));
+  odom_msg.child_frame_id = ros_compat::resolveFrame(robot_ns_, mj_id2name(m_ptr_, mjtObj_::mjOBJ_BODY, 1));
   odom_msg.pose.pose.position.x = d_ptr_->qpos[0];
   odom_msg.pose.pose.position.y = d_ptr_->qpos[1];
   odom_msg.pose.pose.position.z = d_ptr_->qpos[2];
@@ -148,7 +149,7 @@ void DefaultAerialRobotHWSim::publishTF(ros::Time time)
   geometry_msgs::TransformStamped root_pose_transform;
   root_pose_transform.header.stamp = time;
   root_pose_transform.header.frame_id = "world";
-  root_pose_transform.child_frame_id = tf::resolve(robot_ns_, root_link_name_);
+  root_pose_transform.child_frame_id = ros_compat::resolveFrame(robot_ns_, root_link_name_);
   root_pose_transform.transform.translation.x = d_ptr_->qpos[0];
   root_pose_transform.transform.translation.y = d_ptr_->qpos[1];
   root_pose_transform.transform.translation.z = d_ptr_->qpos[2];

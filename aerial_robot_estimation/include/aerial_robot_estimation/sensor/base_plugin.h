@@ -45,8 +45,7 @@
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
 #include <std_srvs/SetBool.h>
-#include <tf/LinearMath/Transform.h>
-#include <tf_conversions/tf_kdl.h>
+#include <aerial_robot_ros_compat/tf_compat.h>
 
 using namespace Eigen;
 using namespace std;
@@ -174,7 +173,7 @@ namespace sensor_plugin
     vector<int> experiment_indices_; // the fuser_experiment indices
 
     /* the transformation between sensor frame and baselink frame */
-    tf::Transform sensor_tf_;
+    tf2::Transform sensor_tf_;
 
     /* status */
     int sensor_status_;
@@ -252,7 +251,7 @@ namespace sensor_plugin
       health_stamp_[chan] = ros::Time::now().toSec();
     }
 
-    inline const tf::Transform& getBaseLink2SensorTransform() const { return sensor_tf_; }
+    inline const tf2::Transform& getBaseLink2SensorTransform() const { return sensor_tf_; }
 
     bool updateBaseLink2SensorTransform()
     {
@@ -281,7 +280,7 @@ namespace sensor_plugin
 
       try
         {
-          tf::transformKDLToTF(segments_tf.at(robot_model_->getBaselinkName()).Inverse() * segments_tf.at(sensor_frame_), sensor_tf_);
+          ros_compat::transformKdlToTf(segments_tf.at(robot_model_->getBaselinkName()).Inverse() * segments_tf.at(sensor_frame_), sensor_tf_);
         }
       catch (...)
         {

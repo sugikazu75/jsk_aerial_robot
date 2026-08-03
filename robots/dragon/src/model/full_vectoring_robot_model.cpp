@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/model/full_vectoring_robot_model.h>
 #include <sstream>
 
@@ -499,10 +500,10 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
       /* robust: deal with the vibration of the link orientation from joint angles and cog attitude, not update the gimbal roll lock angles so often */
       for(int i = 0; i < getRotorNum(); i++)
         {
-          tf::Quaternion delta_q, prev_q;
-          tf::quaternionKDLToTF(prev_links_rotation_from_cog_.at(i).Inverse() * links_rotation_from_cog.at(i), delta_q);
-          tf::quaternionKDLToTF(prev_links_rotation_from_cog_.at(i), prev_q);
-          tf::Vector3 rotation_axis = tf::Matrix3x3(prev_q) * delta_q.getAxis();
+          tf2::Quaternion delta_q, prev_q;
+          ros_compat::quaternionKdlToTf(prev_links_rotation_from_cog_.at(i).Inverse() * links_rotation_from_cog.at(i), delta_q);
+          ros_compat::quaternionKdlToTf(prev_links_rotation_from_cog_.at(i), prev_q);
+          tf2::Vector3 rotation_axis = tf2::Matrix3x3(prev_q) * delta_q.getAxis();
           if(fabs(delta_q.getAngle()) > link_att_change_threshold_)
             {
               ROS_INFO_STREAM_NAMED("robot_model", "link " << i + 1 << ": the orientation is change more than threshold: " << delta_q.getAngle()
@@ -543,8 +544,8 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
               bool fix_configuration = true;
               for(int i = 0; i < getRotorNum(); ++i)
                 {
-                  tf::Quaternion delta_q;
-                  tf::quaternionKDLToTF(last_links_rotation_from_cog_.at(i).Inverse() * links_rotation_from_cog.at(i), delta_q);
+                  tf2::Quaternion delta_q;
+                  ros_compat::quaternionKdlToTf(last_links_rotation_from_cog_.at(i).Inverse() * links_rotation_from_cog.at(i), delta_q);
                   double delta = delta_q.getAngle();
                   if(delta > M_PI) delta -= 2* M_PI;
 

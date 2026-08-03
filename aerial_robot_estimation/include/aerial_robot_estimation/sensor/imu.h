@@ -77,16 +77,16 @@ namespace sensor_plugin
     double sensor_dt_;
 
     /* imu */
-    tf::Vector3 omega_; /* the omega both of body frame */
-    tf::Vector3 mag_; /* the magnetometer of body frame */
-    tf::Vector3 acc_b_; /* the acceleration in baselink frame */
-    tf::Matrix3x3 raw_rot_; /* the raw rotation matrix from IMU */
+    tf2::Vector3 omega_; /* the omega both of body frame */
+    tf2::Vector3 mag_; /* the magnetometer of body frame */
+    tf2::Vector3 acc_b_; /* the acceleration in baselink frame */
+    tf2::Matrix3x3 raw_rot_; /* the raw rotation matrix from IMU */
     /* acc */
-    std::array<tf::Vector3, 2> acc_w_; /* the acceleration in world frame, for estimate_mode and expriment_mode */
-    std::array<tf::Vector3, 2> acc_non_bias_w_; /* the acceleration without bias in world frame for estimate_mode and expriment_mode */
+    std::array<tf2::Vector3, 2> acc_w_; /* the acceleration in world frame, for estimate_mode and expriment_mode */
+    std::array<tf2::Vector3, 2> acc_non_bias_w_; /* the acceleration without bias in world frame for estimate_mode and expriment_mode */
     /* acc bias */
-    tf::Vector3 acc_bias_b_; /* the acceleration bias in baselink frame, only use z axis  */
-    std::array<tf::Vector3, 2> acc_bias_w_; /* the acceleration bias in world frame for estimate_mode and expriment_mode*/
+    tf2::Vector3 acc_bias_b_; /* the acceleration bias in baselink frame, only use z axis  */
+    std::array<tf2::Vector3, 2> acc_bias_w_; /* the acceleration bias in world frame for estimate_mode and expriment_mode*/
 
     aerial_robot_msgs::States state_; /* for debug */
 

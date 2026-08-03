@@ -1,9 +1,6 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/model/hydrus_like_robot_model.h>
 
-// These conversion helpers used to arrive transitively through
-// kalman_filter/lpf_filter.h, which dropped its tf_conversions /
-// eigen_conversions includes during the ROS2 port.
-#include <eigen_conversions/eigen_msg.h>
 #include <kdl_conversions/kdl_msg.h>
 
 using namespace Dragon;
@@ -359,9 +356,9 @@ bool HydrusLikeRobotModel::addExternalStaticWrench(const std::string wrench_name
 bool HydrusLikeRobotModel::addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const geometry_msgs::Point offset, const geometry_msgs::Wrench wrench)
 {
   KDL::Vector offset_kdl;
-  tf::pointMsgToKDL(offset, offset_kdl);
+  ros_compat::pointMsgToKdl(offset, offset_kdl);
   Eigen::Matrix<double, 6, 1> wrench_eigen;
-  tf::wrenchMsgToEigen(wrench, wrench_eigen);
+  ros_compat::wrenchMsgToEigen(wrench, wrench_eigen);
 
   return addExternalStaticWrench(wrench_name, reference_frame, offset_kdl, wrench_eigen);
 }

@@ -1,10 +1,10 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <ros/ros.h>
 #include <aerial_robot_msgs/States.h>
 #include <nav_msgs/Path.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Vector3Stamped.h>
-#include <eigen_conversions/eigen_msg.h>
 #include <aerial_robot_control/trajectory/trajectory_reference/polynomial_trajectory.hpp>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -63,8 +63,8 @@ int main (int argc, char **argv)
 
     agi::QuadState state = test_ptr->getState(t);
 
-    tf::pointEigenToMsg(state.p, pose_stamp.pose.position);
-    tf::quaternionEigenToMsg(state.q(), pose_stamp.pose.orientation);
+    ros_compat::pointEigenToMsg(state.p, pose_stamp.pose.position);
+    ros_compat::quaternionEigenToMsg(state.q(), pose_stamp.pose.orientation);
     msg.poses.push_back(pose_stamp);
 
     // ROS_INFO_STREAM("position: " << state.p.transpose());
@@ -75,14 +75,14 @@ int main (int argc, char **argv)
     geometry_msgs::TwistStamped twist_stamp;
     twist_stamp.header.stamp = pose_stamp.header.stamp;
     twist_stamp.header.frame_id = pose_stamp.header.frame_id;
-    tf::vectorEigenToMsg(state.v, twist_stamp.twist.linear);
-    tf::vectorEigenToMsg(state.w, twist_stamp.twist.angular);
+    ros_compat::vectorEigenToMsg(state.v, twist_stamp.twist.linear);
+    ros_compat::vectorEigenToMsg(state.w, twist_stamp.twist.angular);
     twist_pub.publish(twist_stamp);
 
     geometry_msgs::Vector3Stamped acc_stamp;
     acc_stamp.header.stamp = pose_stamp.header.stamp;
     acc_stamp.header.frame_id = pose_stamp.header.frame_id;
-    tf::vectorEigenToMsg(state.a, acc_stamp.vector);
+    ros_compat::vectorEigenToMsg(state.a, acc_stamp.vector);
     acc_pub.publish(acc_stamp);
   }
 

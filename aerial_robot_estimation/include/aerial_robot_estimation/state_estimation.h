@@ -52,8 +52,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/UInt8.h>
-#include <tf/tf.h>
-#include <tf/transform_datatypes.h>
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <utility>
 #include <vector>
@@ -61,9 +60,9 @@
 using namespace std;
 
 /* bool: status(activate or not)
-   tf::Vector3:  [x, dx, ddx]
+   tf2::Vector3:  [x, dx, ddx]
 */
-using StateWithStatus = std::pair<int, tf::Vector3>;
+using StateWithStatus = std::pair<int, tf2::Vector3>;
 /* egomotion, experiment, ground truth */
 using AxisState = std::array<StateWithStatus, 3>;
 using SensorFuser = std::vector< std::pair<std::string, boost::shared_ptr<kf_plugin::KalmanFilter> > >;
@@ -185,7 +184,7 @@ namespace aerial_robot_estimation
       return state_[axis];
     }
 
-    tf::Vector3 getState( uint8_t axis,  uint8_t estimate_mode)
+    tf2::Vector3 getState( uint8_t axis,  uint8_t estimate_mode)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
 
@@ -193,7 +192,7 @@ namespace aerial_robot_estimation
 
       return state_[axis][estimate_mode].second;
     }
-    void setState( uint8_t axis,  int estimate_mode,  tf::Vector3 state)
+    void setState( uint8_t axis,  int estimate_mode,  tf2::Vector3 state)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
 
@@ -211,36 +210,36 @@ namespace aerial_robot_estimation
       (state_[axis][estimate_mode].second)[state_mode] = value;
     }
 
-    tf::Vector3 getPos(int frame, int estimate_mode)
+    tf2::Vector3 getPos(int frame, int estimate_mode)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
-      return tf::Vector3((state_[State::X_COG + frame * 3][estimate_mode].second)[0],
+      return tf2::Vector3((state_[State::X_COG + frame * 3][estimate_mode].second)[0],
                          (state_[State::Y_COG + frame * 3][estimate_mode].second)[0],
                          (state_[State::Z_COG + frame * 3][estimate_mode].second)[0]);
     }
-    void setPos(int frame, int estimate_mode, tf::Vector3 pos)
+    void setPos(int frame, int estimate_mode, tf2::Vector3 pos)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
       for(int i = 0; i < 3; i ++ )
         (state_[i + frame * 3][estimate_mode].second)[0] = pos[i];
     }
 
-    tf::Vector3 getVel(int frame, int estimate_mode)
+    tf2::Vector3 getVel(int frame, int estimate_mode)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
-      return tf::Vector3((state_[State::X_COG + frame * 3][estimate_mode].second)[1],
+      return tf2::Vector3((state_[State::X_COG + frame * 3][estimate_mode].second)[1],
                          (state_[State::Y_COG + frame * 3][estimate_mode].second)[1],
                          (state_[State::Z_COG + frame * 3][estimate_mode].second)[1]);
     }
 
-    void setVel(int frame, int estimate_mode, tf::Vector3 vel)
+    void setVel(int frame, int estimate_mode, tf2::Vector3 vel)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
       for(int i = 0; i < 3; i ++ )
         (state_[i + frame * 3][estimate_mode].second)[1] = vel[i];
     }
 
-    tf::Matrix3x3 getOrientation(int frame, int estimate_mode)
+    tf2::Matrix3x3 getOrientation(int frame, int estimate_mode)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
 
@@ -249,10 +248,10 @@ namespace aerial_robot_estimation
       else if(frame == Frame::BASELINK)
         return base_rots_.at(estimate_mode);
 
-      return tf::Matrix3x3::getIdentity();
+      return tf2::Matrix3x3::getIdentity();
     }
 
-    void setOrientation(int frame, int estimate_mode, tf::Matrix3x3 rot)
+    void setOrientation(int frame, int estimate_mode, tf2::Matrix3x3 rot)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
 
@@ -262,19 +261,19 @@ namespace aerial_robot_estimation
         base_rots_.at(estimate_mode) = rot;
     }
 
-    void setOrientationWxB(int frame, int estimate_mode, tf::Vector3 v);
-    void setOrientationWzB(int frame, int estimate_mode, tf::Vector3 v);
+    void setOrientationWxB(int frame, int estimate_mode, tf2::Vector3 v);
+    void setOrientationWzB(int frame, int estimate_mode, tf2::Vector3 v);
 
-    tf::Vector3 getEuler(int frame, int estimate_mode)
+    tf2::Vector3 getEuler(int frame, int estimate_mode)
     {
-      tf::Matrix3x3 rot = getOrientation(frame, estimate_mode);
-      tfScalar r = 0, p = 0, y = 0;
+      tf2::Matrix3x3 rot = getOrientation(frame, estimate_mode);
+      tf2Scalar r = 0, p = 0, y = 0;
       rot.getRPY(r, p, y);
 
-      return tf::Vector3(r, p, y);
+      return tf2::Vector3(r, p, y);
     }
 
-    tf::Vector3 getAngularVel(int frame, int estimate_mode)
+    tf2::Vector3 getAngularVel(int frame, int estimate_mode)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
 
@@ -283,10 +282,10 @@ namespace aerial_robot_estimation
       else if(frame == Frame::BASELINK)
         return base_omegas_.at(estimate_mode);
 
-      return tf::Vector3(0,0,0);
+      return tf2::Vector3(0,0,0);
     }
 
-    void setAngularVel(int frame, int estimate_mode, tf::Vector3 omega)
+    void setAngularVel(int frame, int estimate_mode, tf2::Vector3 omega)
     {
       boost::lock_guard<boost::mutex> lock(state_mutex_);
 
@@ -297,7 +296,7 @@ namespace aerial_robot_estimation
     }
 
     inline void setQueueSize(const int& qu_size) {qu_size_ = qu_size;}
-    void updateQueue(const double timestamp, const tf::Matrix3x3 r_ee, const tf::Matrix3x3 r_ex, const tf::Vector3 omega)
+    void updateQueue(const double timestamp, const tf2::Matrix3x3 r_ee, const tf2::Matrix3x3 r_ex, const tf2::Vector3 omega)
     {
       boost::lock_guard<boost::mutex> lock(queue_mutex_);
       timestamp_qu_.push_back(timestamp);
@@ -314,7 +313,7 @@ namespace aerial_robot_estimation
         }
     }
 
-    bool findRotOmega(const double timestamp, const int mode, tf::Matrix3x3& r, tf::Vector3& omega, bool verbose = true)
+    bool findRotOmega(const double timestamp, const int mode, tf2::Matrix3x3& r, tf2::Vector3& omega, bool verbose = true)
     {
       boost::lock_guard<boost::mutex> lock(queue_mutex_);
 
@@ -485,8 +484,8 @@ namespace aerial_robot_estimation
     /* 6: x_w, y_w, z_w, x_b, y_b */
     /* TODO: check to vector3 */
     std::array<AxisState, 6> state_;
-    std::array<tf::Matrix3x3, 3> base_rots_, cog_rots_; // TODO: should abolish the different between orientation of baselink and that of CoG
-    std::array<tf::Vector3, 3> base_omegas_, cog_omegas_; // TODO: should abolish the different between orientation of baselink and that of CoG
+    std::array<tf2::Matrix3x3, 3> base_rots_, cog_rots_; // TODO: should abolish the different between orientation of baselink and that of CoG
+    std::array<tf2::Vector3, 3> base_omegas_, cog_omegas_; // TODO: should abolish the different between orientation of baselink and that of CoG
     std::array<int, 3> base_rot_status_, cog_rot_status_;
 
     bool has_groundtruth_odom_; // whether receive entire groundthtruth odometry (e.g., for simulation mode)
@@ -496,8 +495,8 @@ namespace aerial_robot_estimation
     /* for calculate the sensor to baselink with the consideration of time delay */
     int qu_size_;
     deque<double> timestamp_qu_;
-    deque<tf::Matrix3x3> rot_ee_qu_, rot_ex_qu_;
-    deque<tf::Vector3> omega_qu_;
+    deque<tf2::Matrix3x3> rot_ee_qu_, rot_ex_qu_;
+    deque<tf2::Vector3> omega_qu_;
 
     /* sensor fusion */
     boost::shared_ptr< pluginlib::ClassLoader<kf_plugin::KalmanFilter> > sensor_fusion_loader_ptr_;

@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/under_actuated_tilted_lqi_controller.h>
 
 using namespace aerial_robot_control;
@@ -59,11 +60,11 @@ void UnderActuatedTiltedLQIController::controlCore()
 {
   PoseLinearController::controlCore();
 
-  tf::Vector3 target_acc_w(pid_controllers_.at(X).result(),
+  tf2::Vector3 target_acc_w(pid_controllers_.at(X).result(),
                            pid_controllers_.at(Y).result(),
                            pid_controllers_.at(Z).result());
 
-  tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
+  tf2::Vector3 target_acc_dash = (tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
 
   target_pitch_ = atan2(target_acc_dash.x(), target_acc_dash.z());
   target_roll_ = atan2(-target_acc_dash.y(), sqrt(target_acc_dash.x() * target_acc_dash.x() + target_acc_dash.z() * target_acc_dash.z()));

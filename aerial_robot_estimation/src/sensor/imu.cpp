@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/imu.h>
 #include <aerial_robot_estimation/sensor/vo.h>
 
@@ -63,12 +64,12 @@ namespace sensor_plugin
     state_.states[2].id = "z";
     state_.states[2].state.resize(2);
 
-    acc_w_.at(0) = tf::Vector3(0, 0, 0);
-    acc_w_.at(1) = tf::Vector3(0, 0, 0);
-    acc_non_bias_w_.at(0) = tf::Vector3(0, 0, 0);
-    acc_non_bias_w_.at(1) = tf::Vector3(0, 0, 0);
-    acc_bias_w_.at(0) = tf::Vector3(0, 0, 0);
-    acc_bias_w_.at(1) = tf::Vector3(0, 0, 0);
+    acc_w_.at(0) = tf2::Vector3(0, 0, 0);
+    acc_w_.at(1) = tf2::Vector3(0, 0, 0);
+    acc_non_bias_w_.at(0) = tf2::Vector3(0, 0, 0);
+    acc_non_bias_w_.at(1) = tf2::Vector3(0, 0, 0);
+    acc_bias_w_.at(0) = tf2::Vector3(0, 0, 0);
+    acc_bias_w_.at(1) = tf2::Vector3(0, 0, 0);
 
     raw_rot_.setIdentity();
   }
@@ -112,9 +113,9 @@ namespace sensor_plugin
         return;
       }
 
-    tf::Quaternion raw_q(imu_msg->quaternion[0], imu_msg->quaternion[1],
+    tf2::Quaternion raw_q(imu_msg->quaternion[0], imu_msg->quaternion[1],
                          imu_msg->quaternion[2], imu_msg->quaternion[3]);
-    raw_rot_ = tf::Matrix3x3(raw_q);
+    raw_rot_ = tf2::Matrix3x3(raw_q);
 
     estimateProcess();
     updateHealthStamp();
@@ -132,18 +133,18 @@ namespace sensor_plugin
     /* set the time internal */
     sensor_dt_ = imu_stamp_.toSec() - prev_time.toSec();
 
-    tf::Transform cog2baselink_tf;
-    tf::transformKDLToTF(robot_model_->getCog2Baselink<KDL::Frame>(), cog2baselink_tf);
+    tf2::Transform cog2baselink_tf;
+    ros_compat::transformKdlToTf(robot_model_->getCog2Baselink<KDL::Frame>(), cog2baselink_tf);
 
-    tf::Vector3 wx_b = raw_rot_.getRow(0);
-    tf::Vector3 wy_b = raw_rot_.getRow(1);
-    tf::Vector3 wz_b = raw_rot_.getRow(2);
+    tf2::Vector3 wx_b = raw_rot_.getRow(0);
+    tf2::Vector3 wy_b = raw_rot_.getRow(1);
+    tf2::Vector3 wz_b = raw_rot_.getRow(2);
 
-    tf::Vector3 wz_c = cog2baselink_tf.getBasis() * wz_b;
-    tf::Vector3 omega_c = cog2baselink_tf.getBasis() * omega_;
+    tf2::Vector3 wz_c = cog2baselink_tf.getBasis() * wz_b;
+    tf2::Vector3 omega_c = cog2baselink_tf.getBasis() * omega_;
 
     // 1. mode for EGOMOTION_ESTIMATE and EXPERIMENT_ESTIMATE
-    std::map<int, tf::Matrix3x3> rots;
+    std::map<int, tf2::Matrix3x3> rots;
     for (int i = 0; i < 2; i++)
       {
         // check if there is a refined (better) yaw estimation handler (e.g. VO, RTK-GPS)
@@ -156,7 +157,7 @@ namespace sensor_plugin
         else
           {
             estimator_->setOrientation(Frame::BASELINK, i, raw_rot_);
-            tf::Matrix3x3 rot_c = raw_rot_ * cog2baselink_tf.getBasis().transpose();
+            tf2::Matrix3x3 rot_c = raw_rot_ * cog2baselink_tf.getBasis().transpose();
             estimator_->setOrientation(Frame::COG, i, rot_c);
           }
 
@@ -167,7 +168,7 @@ namespace sensor_plugin
         // re-obtain the rotation and store to a map for later usage
         rots[i] = estimator_->getOrientation(Frame::BASELINK, i);
 
-        acc_w_.at(i) = rots.at(i) * acc_b_ - tf::Vector3(0, 0, aerial_robot_estimation::G);
+        acc_w_.at(i) = rots.at(i) * acc_b_ - tf2::Vector3(0, 0, aerial_robot_estimation::G);
         acc_non_bias_w_.at(i) = acc_w_.at(i) - acc_bias_w_.at(i);
       }
 
@@ -211,8 +212,8 @@ namespace sensor_plugin
             for (int i = 0; i < 2; i++)
               acc_bias_w_.at(i) /= calib_count_;
 
-            tf::Matrix3x3 rot_inv = rots.at(EGOMOTION_ESTIMATE).inverse();
-            tf::Vector3 acc_bias_b = rot_inv * acc_bias_w_.at(EGOMOTION_ESTIMATE);
+            tf2::Matrix3x3 rot_inv = rots.at(EGOMOTION_ESTIMATE).inverse();
+            tf2::Vector3 acc_bias_b = rot_inv * acc_bias_w_.at(EGOMOTION_ESTIMATE);
             ROS_INFO("acc bias w.r.t body frame: [%f, %f, %f], dt: %f[sec]", acc_bias_b.x(), acc_bias_b.y(), acc_bias_b.z(), sensor_dt_);
 
             estimator_->setQueueSize(1/sensor_dt_);
@@ -331,8 +332,8 @@ namespace sensor_plugin
 
                     if(plugin_name == "aerial_robot_base/kf_xy_roll_pitch_bias")
                       {
-                        tf::Matrix3x3 rot = rots.at(mode);
-                        tf::Vector3 acc_bias_b = rot.inverse() * acc_bias_w_.at(mode);
+                        tf2::Matrix3x3 rot = rots.at(mode);
+                        tf2::Vector3 acc_bias_b = rot.inverse() * acc_bias_w_.at(mode);
 
                         double r, p, y; rot.getRPY(r, p, y);
                         if(id & (1 << State::X_BASE) && (id & (1 << State::Y_BASE)))
@@ -389,8 +390,8 @@ namespace sensor_plugin
         state_.header.stamp = imu_stamp_;
         for (int i = 0; i < 2; i++)
           {
-            tf::Vector3 pos = estimator_->getPos(Frame::BASELINK, i);
-            tf::Vector3 vel = estimator_->getVel(Frame::BASELINK, i);
+            tf2::Vector3 pos = estimator_->getPos(Frame::BASELINK, i);
+            tf2::Vector3 vel = estimator_->getVel(Frame::BASELINK, i);
             state_.states[0].state[i].x = pos.x();
             state_.states[1].state[i].x = pos.y();
             state_.states[2].state[i].x = pos.z();
@@ -411,9 +412,9 @@ namespace sensor_plugin
     aerial_robot_msgs::Acc acc_data;
     acc_data.header.stamp = imu_stamp_;
 
-    tf::vector3TFToMsg(acc_b_, acc_data.acc_body_frame);
-    tf::vector3TFToMsg(acc_w_.at(0), acc_data.acc_world_frame);
-    tf::vector3TFToMsg(acc_non_bias_w_.at(0), acc_data.acc_non_bias_world_frame);
+    ros_compat::vector3TfToMsg(acc_b_, acc_data.acc_body_frame);
+    ros_compat::vector3TfToMsg(acc_w_.at(0), acc_data.acc_world_frame);
+    ros_compat::vector3TfToMsg(acc_non_bias_w_.at(0), acc_data.acc_non_bias_world_frame);
 
     acc_pub_.publish(acc_data);
   }
@@ -422,12 +423,12 @@ namespace sensor_plugin
   {
     sensor_msgs::Imu imu_data;
     imu_data.header.stamp = imu_stamp_;
-    imu_data.header.frame_id = tf::resolve(estimator_->getTFPrefix(), robot_model_->getBaselinkName());
-    tf::Quaternion q;
+    imu_data.header.frame_id = ros_compat::resolveFrame(estimator_->getTFPrefix(), robot_model_->getBaselinkName());
+    tf2::Quaternion q;
     raw_rot_.getRotation(q);
-    tf::quaternionTFToMsg(q, imu_data.orientation);
-    tf::vector3TFToMsg(omega_, imu_data.angular_velocity);
-    tf::vector3TFToMsg(acc_b_, imu_data.linear_acceleration);
+    ros_compat::quaternionTfToMsg(q, imu_data.orientation);
+    ros_compat::vector3TfToMsg(omega_, imu_data.angular_velocity);
+    ros_compat::vector3TfToMsg(acc_b_, imu_data.linear_acceleration);
     imu_pub_.publish(imu_data);
   }
 

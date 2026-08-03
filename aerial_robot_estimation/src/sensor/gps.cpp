@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/gps.h>
 #include <aerial_robot_estimation/sensor/vo.h>
 
@@ -166,7 +167,7 @@ namespace sensor_plugin
     curr_wgs84_point_ = geodesy::toMsg(gps_msg->location[0], gps_msg->location[1]);
     if(!has_rtk_gps || is_rtk_gps_) estimator_->setCurrGpsPoint(curr_wgs84_point_);
 
-    raw_vel_ = tf::Vector3(gps_msg->velocity[0], -gps_msg->velocity[1], 0); // NED frame -> XYZ frame
+    raw_vel_ = tf2::Vector3(gps_msg->velocity[0], -gps_msg->velocity[1], 0); // NED frame -> XYZ frame
 
     /* to get the correction rotation and omega of baselink with the consideration of time delay */
     bool imu_initialized = false;
@@ -211,15 +212,15 @@ namespace sensor_plugin
     if(is_rtk_gps_) return; // do not do esimation
 
     /* get the position and velocity  w.r.t. the local frame (the origin is the initial takeoff place) */
-    tf::Matrix3x3 r; r.setIdentity();
-    tf::Vector3 omega(0,0,0);
+    tf2::Matrix3x3 r; r.setIdentity();
+    tf2::Vector3 omega(0,0,0);
     int mode = aerial_robot_estimation::EGOMOTION_ESTIMATE;
     if(!estimator_->findRotOmega(curr_timestamp, mode, r, omega) && estimator_->getFlyingFlag())
       ROS_WARN_STREAM("gps: the omega is not updated from findRotOmega");
 
     raw_vel_ += r * (- omega.cross(sensor_tf_.getOrigin())); //offset from gps to baselink
 
-    tf::Matrix3x3 convert_frame; convert_frame.setRPY(M_PI, 0, 0); // NED -> XYZ
+    tf2::Matrix3x3 convert_frame; convert_frame.setRPY(M_PI, 0, 0); // NED -> XYZ
     raw_pos_ = convert_frame * Gps::wgs84ToNedLocalFrame(base_wgs84_point_, curr_wgs84_point_) - r * sensor_tf_.getOrigin();
 
     /* update timestamp for estimation */
@@ -309,14 +310,14 @@ namespace sensor_plugin
     pos_noise_sigma_ = cov[0];
 
     /* get the position */
-    tf::Matrix3x3 r; r.setIdentity();
-    tf::Vector3 omega(0,0,0);
+    tf2::Matrix3x3 r; r.setIdentity();
+    tf2::Vector3 omega(0,0,0);
     int mode = aerial_robot_estimation::EGOMOTION_ESTIMATE;
     if(!estimator_->findRotOmega(curr_timestamp_, mode, r, omega) && estimator_->getFlyingFlag())
       ROS_WARN_STREAM("gps: the omega is not updated from findRotOmega");
 
-    tf::Vector3 raw_pos;
-    tf::pointMsgToTF(rtk_gps_msg->pose.pose.position, raw_pos);
+    tf2::Vector3 raw_pos;
+    ros_compat::pointMsgToTf(rtk_gps_msg->pose.pose.position, raw_pos);
 
     raw_pos_ = raw_pos  - r * sensor_tf_.getOrigin();
 
@@ -459,10 +460,10 @@ namespace sensor_plugin
     AlvinXY: Lat/Long to X/Y (NED)
     Converts Lat/Lon (WGS84) to Alvin XYs using a Mercator projection.
   */
-  tf::Vector3 Gps::wgs84ToNedLocalFrame(geographic_msgs::GeoPoint base_point, geographic_msgs::GeoPoint target_point)
+  tf2::Vector3 Gps::wgs84ToNedLocalFrame(geographic_msgs::GeoPoint base_point, geographic_msgs::GeoPoint target_point)
   {
 
-    return tf::Vector3((target_point.latitude - base_point.latitude) * mDegLat(base_point.latitude), (target_point.longitude - base_point.longitude) * mDegLon(base_point.latitude), 0);
+    return tf2::Vector3((target_point.latitude - base_point.latitude) * mDegLat(base_point.latitude), (target_point.longitude - base_point.longitude) * mDegLon(base_point.latitude), 0);
   }
 
 
@@ -470,7 +471,7 @@ namespace sensor_plugin
     X/Y (NED) to Lat/Lon
     Converts Alvin XYs to Lat/Lon (WGS84) using a Mercator projection.
   */
-  geographic_msgs::GeoPoint Gps::NedLocalFrameToWgs84(tf::Vector3 diff_pos, geographic_msgs::GeoPoint base_point)
+  geographic_msgs::GeoPoint Gps::NedLocalFrameToWgs84(tf2::Vector3 diff_pos, geographic_msgs::GeoPoint base_point)
   {
     geographic_msgs::GeoPoint target_point;
 

@@ -1,3 +1,4 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/dragon_navigation.h>
 
 using namespace aerial_robot_model;
@@ -45,7 +46,7 @@ void DragonNavigator::update()
 
 void DragonNavigator::targetBaselinkRotCallback(const geometry_msgs::QuaternionStampedConstPtr & msg)
 {
-  tf::quaternionMsgToTF(msg->quaternion, final_target_baselink_rot_);
+  ros_compat::quaternionMsgToTf(msg->quaternion, final_target_baselink_rot_);
   target_omega_.setValue(0,0,0); // for sure to reset the target angular velocity
 
   // special process
@@ -73,28 +74,28 @@ void DragonNavigator::targetRotationMotionCallback(const nav_msgs::OdometryConst
       return;
     }
 
-  tf::Quaternion q;
-  tf::quaternionMsgToTF(msg->pose.pose.orientation, q);
+  tf2::Quaternion q;
+  ros_compat::quaternionMsgToTf(msg->pose.pose.orientation, q);
 
-  tf::Vector3 w;
-  tf::vector3MsgToTF(msg->twist.twist.angular, w);
+  tf2::Vector3 w;
+  ros_compat::vector3MsgToTf(msg->twist.twist.angular, w);
 
   // special process for current special definition of tranformation between CoG and Baselink
   if(frame == std::string("baselink"))
     {
       // and directly send to aerial model
       KDL::Rotation rot;
-      tf::quaternionMsgToKDL(msg->pose.pose.orientation, rot);
+      ros_compat::quaternionMsgToKdl(msg->pose.pose.orientation, rot);
 
       double qx,qy,qz,qw;
       rot.GetQuaternion(qx,qy,qz,qw);
       robot_model_->setCogDesireOrientation(rot);
-      tf::quaternionMsgToTF(msg->pose.pose.orientation, curr_target_baselink_rot_);
+      ros_compat::quaternionMsgToTf(msg->pose.pose.orientation, curr_target_baselink_rot_);
       final_target_baselink_rot_ = curr_target_baselink_rot_;
 
       // convert to target CoG frame from Baselink frame
       eq_cog_world_ = true;
-      setTargetOmega(tf::Matrix3x3(q) * w);
+      setTargetOmega(tf2::Matrix3x3(q) * w);
 
       // send to spinal
       spinal::DesireCoord msg;
@@ -109,8 +110,8 @@ void DragonNavigator::targetRotationMotionCallback(const nav_msgs::OdometryConst
     { // CoG frame
 
       // This should be the standard process to receive desired rotation motion (orientation + angular velocity)
-      double r,p,y; tf::Matrix3x3(q).getRPY(r, p, y);
-      setTargetRPY(tf::Vector3(r, p, y));
+      double r,p,y; tf2::Matrix3x3(q).getRPY(r, p, y);
+      setTargetRPY(tf2::Vector3(r, p, y));
       setTargetOmega(w);
     }
 }
@@ -131,25 +132,25 @@ void DragonNavigator::baselinkRotationProcess()
 
   if(ros::Time::now().toSec() - prev_rotation_stamp_ > baselink_rot_pub_interval_)
     {
-      tf::Quaternion delta_q = curr_target_baselink_rot_.inverse() * final_target_baselink_rot_;
+      tf2::Quaternion delta_q = curr_target_baselink_rot_.inverse() * final_target_baselink_rot_;
       double angle = delta_q.getAngle();
       if (angle > M_PI) angle -= 2 * M_PI;
 
       if(fabs(angle) > baselink_rot_change_thresh_)
         {
-          curr_target_baselink_rot_ *= tf::Quaternion(delta_q.getAxis(), fabs(angle) / angle * baselink_rot_change_thresh_);
+          curr_target_baselink_rot_ *= tf2::Quaternion(delta_q.getAxis(), fabs(angle) / angle * baselink_rot_change_thresh_);
         }
       else
         curr_target_baselink_rot_ = final_target_baselink_rot_;
 
       KDL::Rotation rot;
-      tf::quaternionTFToKDL(curr_target_baselink_rot_, rot);
+      ros_compat::quaternionTfToKdl(curr_target_baselink_rot_, rot);
       robot_model_->setCogDesireOrientation(rot);
 
       // send to spinal
       spinal::DesireCoord msg;
       double r,p,y;
-      tf::Matrix3x3(curr_target_baselink_rot_).getRPY(r, p, y);
+      tf2::Matrix3x3(curr_target_baselink_rot_).getRPY(r, p, y);
       msg.roll = r;
       msg.pitch = p;
       msg.yaw = y;
@@ -187,7 +188,7 @@ void DragonNavigator::landingProcess()
             {
               final_target_baselink_rot_.setRPY(0, 0, 0);
 
-              tf::Vector3 base_euler = estimator_->getEuler(Frame::BASELINK, estimate_mode_);
+              tf2::Vector3 base_euler = estimator_->getEuler(Frame::BASELINK, estimate_mode_);
 
               if(fabs(fabs(base_euler.y()) - M_PI/2) > 0.2)
                 {
@@ -198,7 +199,7 @@ void DragonNavigator::landingProcess()
                 { // singularity of XYZ Euler
 
                   double r,p,y;
-                  tf::Matrix3x3(curr_target_baselink_rot_).getRPY(r,p,y);
+                  tf2::Matrix3x3(curr_target_baselink_rot_).getRPY(r,p,y);
                   if(fabs(fabs(p) - M_PI/2) > 0.2)
                     curr_target_baselink_rot_.setRPY(0, base_euler.y(), 0); // case2
 
@@ -207,7 +208,7 @@ void DragonNavigator::landingProcess()
             }
           else
             {
-              tf::Quaternion base_rot;
+              tf2::Quaternion base_rot;
               estimator_->getOrientation(Frame::BASELINK, estimate_mode_).getRotation(base_rot);
 
               double delta_angle = (curr_target_baselink_rot_.inverse() * base_rot).getAngle();
@@ -218,7 +219,7 @@ void DragonNavigator::landingProcess()
                 }
 
 
-              tf::Vector3 cross_v =  tf::Vector3(0,0,1).cross(tf::Matrix3x3(curr_target_baselink_rot_.inverse()) * tf::Vector3(0,0,1));
+              tf2::Vector3 cross_v =  tf2::Vector3(0,0,1).cross(tf2::Matrix3x3(curr_target_baselink_rot_.inverse()) * tf2::Vector3(0,0,1));
               if(cross_v.length() < 0.001) // sine of delta_angle to world z frame
                 {
                   final_target_baselink_rot_ = curr_target_baselink_rot_;
@@ -226,11 +227,11 @@ void DragonNavigator::landingProcess()
               else
                 {
                   // IMPORTANT: to avoid NaN because of asin(angle) when angle > 1, thus use tfAsin which has clamping process before do asin
-                  tf::Quaternion delta_q(cross_v, tfAsin(cross_v.length()));
+                  tf2::Quaternion delta_q(cross_v, tfAsin(cross_v.length()));
                   final_target_baselink_rot_ = curr_target_baselink_rot_ * delta_q;
                   // Note: normalize quaterinon just in case that curr_target_baselink_rot is not a perfect quaternion (e.g., manual rostopic pub)
                   double r,p,y;
-                  tf::Matrix3x3(final_target_baselink_rot_).getRPY(r,p,y);
+                  tf2::Matrix3x3(final_target_baselink_rot_).getRPY(r,p,y);
                   final_target_baselink_rot_.setRPY(0, 0, y);
                   ROS_DEBUG("refine final_target_baselink_rot_: [%f, %f, %f, %f]", final_target_baselink_rot_.x(), final_target_baselink_rot_.y(),
                             final_target_baselink_rot_.z(), final_target_baselink_rot_.w());
@@ -273,7 +274,7 @@ void DragonNavigator::landingProcess()
         }
 
       double r,p,y;
-      tf::Matrix3x3(curr_target_baselink_rot_).getRPY(r,p,y);
+      tf2::Matrix3x3(curr_target_baselink_rot_).getRPY(r,p,y);
       if(fabs(r) > 0.01 || fabs(p) > 0.01) already_level = false;
 
       if(already_level)
@@ -342,7 +343,7 @@ void DragonNavigator::reset()
   curr_target_baselink_rot_.setRPY(0, 0, 0);
   final_target_baselink_rot_.setRPY(0, 0, 0);
   KDL::Rotation rot;
-  tf::quaternionTFToKDL(curr_target_baselink_rot_, rot);
+  ros_compat::quaternionTfToKdl(curr_target_baselink_rot_, rot);
   robot_model_->setCogDesireOrientation(rot);
 }
 

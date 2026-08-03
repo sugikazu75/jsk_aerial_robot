@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_control/control/under_actuated_controller.h>
 
 namespace aerial_robot_control
@@ -92,11 +93,11 @@ namespace aerial_robot_control
     q_mat_inv_ = aerial_robot_model::pseudoinverse(q_mat_);
 
 
-    tf::Vector3 target_acc_w(pid_controllers_.at(X).result(),
+    tf2::Vector3 target_acc_w(pid_controllers_.at(X).result(),
                              pid_controllers_.at(Y).result(),
                              pid_controllers_.at(Z).result());
 
-    tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
+    tf2::Vector3 target_acc_dash = (tf2::Matrix3x3(ros_compat::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
 
     Eigen::VectorXd target_thrust_z_term;
     if(hovering_approximate_)

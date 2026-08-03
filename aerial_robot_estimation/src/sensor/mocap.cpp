@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
 #include <aerial_robot_estimation/sensor/imu.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -129,11 +130,11 @@ namespace sensor_plugin
     IirFilter lpf_vel_; /* x, y, z */
     IirFilter lpf_angular_; /* yaw angular velocity */
 
-    tf::Vector3 raw_pos_, raw_vel_;
-    tf::Vector3 pos_, vel_;
+    tf2::Vector3 raw_pos_, raw_vel_;
+    tf2::Vector3 pos_, vel_;
 
-    tf::Vector3 prev_raw_pos_, prev_raw_vel_;
-    tf::Quaternion prev_raw_q_;
+    tf2::Vector3 prev_raw_pos_, prev_raw_vel_;
+    tf2::Quaternion prev_raw_q_;
 
     bool receive_groundtruth_odom_;
 
@@ -142,10 +143,10 @@ namespace sensor_plugin
 
     void poseCallback(const geometry_msgs::PoseStampedConstPtr & msg)
     {
-      tf::pointMsgToTF(msg->pose.position, raw_pos_);
+      ros_compat::pointMsgToTf(msg->pose.position, raw_pos_);
 
-      tf::Quaternion q;
-      tf::quaternionMsgToTF(msg->pose.orientation, q);
+      tf2::Quaternion q;
+      ros_compat::quaternionMsgToTf(msg->pose.orientation, q);
 
       if(!first_flag)
         {
@@ -153,29 +154,29 @@ namespace sensor_plugin
           raw_vel_ = (raw_pos_ - prev_raw_pos_) / delta_t;
 
           /* TODO: not working
-          tf::Quaternion q_delta = prev_raw_q_.inverse() * q;
-          tf::Vector3 raw_omega = q_delta.getAxis() * q_delta.getAngle() / delta_t;
+          tf2::Quaternion q_delta = prev_raw_q_.inverse() * q;
+          tf2::Vector3 raw_omega = q_delta.getAxis() * q_delta.getAngle() / delta_t;
           */
 
-          tf::Matrix3x3 r_delta(prev_raw_q_.inverse() * q);
+          tf2::Matrix3x3 r_delta(prev_raw_q_.inverse() * q);
           double r, p, y;
           r_delta.getRPY(r, p, y);
-          tf::Vector3 raw_omega(r/delta_t, p/delta_t, y/delta_t);
+          tf2::Vector3 raw_omega(r/delta_t, p/delta_t, y/delta_t);
 
           /* lpf */
           pos_ = lpf_pos_.filterFunction(raw_pos_);
           vel_ = lpf_vel_.filterFunction(raw_vel_);
-          tf::Vector3 omega = lpf_angular_.filterFunction(raw_omega);
+          tf2::Vector3 omega = lpf_angular_.filterFunction(raw_omega);
 
-          tf::Matrix3x3 rot(q);
-          tf::Transform c2b_tf;
-          tf::transformKDLToTF(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
-          tf::Matrix3x3 rot_c = rot * c2b_tf.getBasis().inverse();
+          tf2::Matrix3x3 rot(q);
+          tf2::Transform c2b_tf;
+          ros_compat::transformKdlToTf(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
+          tf2::Matrix3x3 rot_c = rot * c2b_tf.getBasis().inverse();
 
           // EXPERIMENT_ESTIMATE mode
           // only update the wx_b vector (the vector only related to yaw)
-          tf::Vector3 wx_b = rot.getRow(0);
-          tf::Vector3 wx_c = c2b_tf.getBasis() * wx_b;
+          tf2::Vector3 wx_b = rot.getRow(0);
+          tf2::Vector3 wx_c = c2b_tf.getBasis() * wx_b;
           estimator_->setOrientationWxB(Frame::BASELINK, EXPERIMENT_ESTIMATE, wx_b);
           estimator_->setOrientationWxB(Frame::COG, EXPERIMENT_ESTIMATE, wx_c);
 
@@ -231,44 +232,44 @@ namespace sensor_plugin
       updateHealthStamp();
     }
 
-    void setGroundTruthPosVel(tf::Vector3 pos, tf::Vector3 vel, tf::Matrix3x3 rot, tf::Vector3 omega)
+    void setGroundTruthPosVel(tf2::Vector3 pos, tf2::Vector3 vel, tf2::Matrix3x3 rot, tf2::Vector3 omega)
     {
       /* base link */
       estimator_->setPos(Frame::BASELINK, GROUND_TRUTH, pos);
       estimator_->setVel(Frame::BASELINK, GROUND_TRUTH, vel);
 
-      tf::Transform c2b_tf;
-      tf::transformKDLToTF(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
-      tf::Vector3 b2c_pos = c2b_tf.inverse().getOrigin();
+      tf2::Transform c2b_tf;
+      ros_compat::transformKdlToTf(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
+      tf2::Vector3 b2c_pos = c2b_tf.inverse().getOrigin();
 
       /* pos_cog = pos_baselink + R * pos_base2cog */
-      tf::Vector3 pos_c = pos + rot * b2c_pos;
+      tf2::Vector3 pos_c = pos + rot * b2c_pos;
       estimator_->setPos(Frame::COG, GROUND_TRUTH, pos_c);
       /* vel_cog = vel_baselink + R * (w x pos_base2cog) */
-      tf::Vector3 vel_c = vel +  rot * (omega.cross(b2c_pos));
+      tf2::Vector3 vel_c = vel +  rot * (omega.cross(b2c_pos));
       estimator_->setVel(Frame::COG, GROUND_TRUTH, vel_c);
     }
 
-    void setGroundTruthPosVel(tf::Vector3 pos, tf::Vector3 vel)
+    void setGroundTruthPosVel(tf2::Vector3 pos, tf2::Vector3 vel)
     {
-      tf::Matrix3x3 rot = estimator_->getOrientation(Frame::BASELINK, GROUND_TRUTH);
-      tf::Vector3 omega = estimator_->getAngularVel(Frame::BASELINK, GROUND_TRUTH);
+      tf2::Matrix3x3 rot = estimator_->getOrientation(Frame::BASELINK, GROUND_TRUTH);
+      tf2::Vector3 omega = estimator_->getAngularVel(Frame::BASELINK, GROUND_TRUTH);
 
       setGroundTruthPosVel(pos, vel, rot, omega);
     }
 
     void groundTruthCallback(const nav_msgs::OdometryConstPtr & msg)
     {
-      tf::Vector3 pos, vel;
-      tf::pointMsgToTF(msg->pose.pose.position, pos);
-      tf::vector3MsgToTF(msg->twist.twist.linear, vel);
+      tf2::Vector3 pos, vel;
+      ros_compat::pointMsgToTf(msg->pose.pose.position, pos);
+      ros_compat::vector3MsgToTf(msg->twist.twist.linear, vel);
 
-      tf::Quaternion q;
-      tf::quaternionMsgToTF(msg->pose.pose.orientation, q);
-      tf::Matrix3x3 rot(q);
+      tf2::Quaternion q;
+      ros_compat::quaternionMsgToTf(msg->pose.pose.orientation, q);
+      tf2::Matrix3x3 rot(q);
 
-      tf::Vector3 omega;
-      tf::vector3MsgToTF(msg->twist.twist.angular, omega);
+      tf2::Vector3 omega;
+      ros_compat::vector3MsgToTf(msg->twist.twist.angular, omega);
       omega = lpf_angular_.filterFunction(omega);
 
       if(ground_truth_first_flag)
@@ -286,10 +287,10 @@ namespace sensor_plugin
       estimator_->setAngularVel(Frame::BASELINK, GROUND_TRUTH, omega);
 
       /* cog */
-      tf::Transform c2b_tf;
-      tf::transformKDLToTF(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
-      tf::Matrix3x3 rot_c = rot * c2b_tf.getBasis().inverse();
-      tf::Vector3 omega_c = c2b_tf.getBasis() * omega;
+      tf2::Transform c2b_tf;
+      ros_compat::transformKdlToTf(robot_model_->getCog2Baselink<KDL::Frame>(), c2b_tf);
+      tf2::Matrix3x3 rot_c = rot * c2b_tf.getBasis().inverse();
+      tf2::Vector3 omega_c = c2b_tf.getBasis() * omega;
       estimator_->setOrientation(Frame::COG, GROUND_TRUTH, rot_c);
       estimator_->setAngularVel(Frame::COG, GROUND_TRUTH, omega_c);
 
@@ -306,7 +307,7 @@ namespace sensor_plugin
       getParam<double>("cutoff_vel_freq", cutoff_vel_freq_, 20.0);
     }
 
-    void init(tf::Vector3 init_pos)
+    void init(tf2::Vector3 init_pos)
     {
       /* set ground truth */
       estimator_->setStateStatus(State::X_BASE, GROUND_TRUTH, true);

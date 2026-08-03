@@ -3,7 +3,7 @@
 #include <aerial_robot_simulation/rotor_interface.h>
 #include <mujoco_ros_control/default_robot_hw_sim.hpp>
 #include <nav_msgs/Odometry.h>
-#include <tf/tf.h>
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 

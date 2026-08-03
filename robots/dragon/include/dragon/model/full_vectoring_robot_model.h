@@ -40,7 +40,6 @@
 #include <numeric>
 #include <ros/console.h>
 #include <sstream>
-#include <tf_conversions/tf_kdl.h>
 
 namespace Dragon
 {

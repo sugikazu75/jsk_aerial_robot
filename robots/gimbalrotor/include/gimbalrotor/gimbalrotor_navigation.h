@@ -37,7 +37,7 @@ private:
 
   /* target baselink rotation */
   double prev_rotation_stamp_;
-  tf::Quaternion curr_target_baselink_rot_, final_target_baselink_rot_;
+  tf2::Quaternion curr_target_baselink_rot_, final_target_baselink_rot_;
   bool eq_cog_world_;
 
   /* rosparam */

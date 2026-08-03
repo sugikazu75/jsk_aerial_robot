@@ -1,3 +1,4 @@
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/vision/optical_flow.h>
 
 namespace {
@@ -80,7 +81,7 @@ namespace aerial_robot_estimation
       image_stamp_update_ = true;
       return;
     }
-    tf::Vector3 ang_vel = camera_rotation_mat_inv_ * ang_vel_;
+    tf2::Vector3 ang_vel = camera_rotation_mat_inv_ * ang_vel_;
     cv::Mat src_img = cv_bridge::toCvCopy(msg, msg->encoding)->image;
 
     if (image_crop_scale_ != 1.0) {
@@ -147,7 +148,7 @@ namespace aerial_robot_estimation
     if (!points[0].empty())
       cv::calcOpticalFlowPyrLK(prev_gray_img_, gray_img, points[0], points[1], status, err, winSize, 3, termcrit, 0, 0.001);
 #endif
-    tf::Vector3 camera_vel;
+    tf2::Vector3 camera_vel;
     double camera_x_vel = 0.0, camera_y_vel = 0.0;
     size_t valid_point = 0;
     for(size_t i = 0; i < points[0].size(); i++) {
@@ -200,17 +201,17 @@ namespace aerial_robot_estimation
 
   void OpticalFlow::imuCallback(const sensor_msgs::ImuConstPtr& msg)
   {
-    tf::vector3MsgToTF(msg->angular_velocity, ang_vel_);
+    ros_compat::vector3MsgToTf(msg->angular_velocity, ang_vel_);
     imu_update_ = true;
   }
 
   void OpticalFlow::odometryCallback(const nav_msgs::OdometryConstPtr& msg)
   {
-    tf::Quaternion uav_q(msg->pose.pose.orientation.x,
+    tf2::Quaternion uav_q(msg->pose.pose.orientation.x,
 			 msg->pose.pose.orientation.y,
 			 msg->pose.pose.orientation.z,
 			 msg->pose.pose.orientation.w);
-    tf::Matrix3x3 uav_rotation_mat_(uav_q);
+    tf2::Matrix3x3 uav_rotation_mat_(uav_q);
     double r, p, y;
     uav_rotation_mat_.getRPY(r, p, y);
 

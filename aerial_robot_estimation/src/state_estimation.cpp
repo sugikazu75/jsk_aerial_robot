@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <aerial_robot_estimation/sensor/base_plugin.h>
 #include <aerial_robot_estimation/sensor/imu.h>
 #include <aerial_robot_estimation/state_estimation.h>
@@ -59,7 +60,7 @@ StateEstimator::StateEstimator()
       for(int j = 0; j < 3; j++)
         {
           state_[i][j].first = 0;
-          state_[i][j].second = tf::Vector3(0, 0, 0);
+          state_[i][j].second = tf2::Vector3(0, 0, 0);
         }
     }
 
@@ -97,13 +98,13 @@ void StateEstimator::initialize(ros::NodeHandle nh, ros::NodeHandle nh_private, 
 }
 
 
-void StateEstimator::setOrientationWxB(int frame, int estimate_mode, tf::Vector3 v)
+void StateEstimator::setOrientationWxB(int frame, int estimate_mode, tf2::Vector3 v)
 {
-  tf::Vector3 wx_b = v.normalize();
+  tf2::Vector3 wx_b = v.normalize();
 
-  tf::Matrix3x3 rot = getOrientation(frame, estimate_mode);
-  tf::Vector3 wz_b = rot.getRow(2);
-  tf::Vector3 wy_b = wz_b.cross(wx_b);
+  tf2::Matrix3x3 rot = getOrientation(frame, estimate_mode);
+  tf2::Vector3 wz_b = rot.getRow(2);
+  tf2::Vector3 wy_b = wz_b.cross(wx_b);
   wy_b.normalize();
 
   rot[0] = wx_b; rot[1] = wy_b; rot[2] = wz_b;
@@ -111,13 +112,13 @@ void StateEstimator::setOrientationWxB(int frame, int estimate_mode, tf::Vector3
   setOrientation(frame, estimate_mode, rot);
 }
 
-void StateEstimator::setOrientationWzB(int frame, int estimate_mode, tf::Vector3 v)
+void StateEstimator::setOrientationWzB(int frame, int estimate_mode, tf2::Vector3 v)
 {
-  tf::Vector3 wz_b = v.normalize();
+  tf2::Vector3 wz_b = v.normalize();
 
-  tf::Matrix3x3 rot = getOrientation(frame, estimate_mode);
-  tf::Vector3 wx_b = rot.getRow(0);
-  tf::Vector3 wy_b = wz_b.cross(wx_b);
+  tf2::Matrix3x3 rot = getOrientation(frame, estimate_mode);
+  tf2::Vector3 wx_b = rot.getRow(0);
+  tf2::Vector3 wy_b = wz_b.cross(wx_b);
   wy_b.normalize();
 
   rot[0] = wx_b; rot[1] = wy_b; rot[2] = wz_b;
@@ -163,7 +164,7 @@ void StateEstimator::statePublish(const ros::TimerEvent & e)
         }
       r_state.state.resize(3);
       for(int mode = 0; mode < 3; mode++)
-        tf::vector3TFToMsg(state[mode].second, r_state.state[mode]);
+        ros_compat::vector3TfToMsg(state[mode].second, r_state.state[mode]);
 
       full_state.states.push_back(r_state);
     }
@@ -175,35 +176,38 @@ void StateEstimator::statePublish(const ros::TimerEvent & e)
 
   /* Baselink */
   /* Rotation */
-  tf::Quaternion q; getOrientation(Frame::BASELINK, estimate_mode_).getRotation(q);
+  tf2::Quaternion q; getOrientation(Frame::BASELINK, estimate_mode_).getRotation(q);
   q.normalize();
-  tf::quaternionTFToMsg(q, odom_state.pose.pose.orientation);
-  tf::vector3TFToMsg(getAngularVel(Frame::BASELINK, estimate_mode_), odom_state.twist.twist.angular);
+  ros_compat::quaternionTfToMsg(q, odom_state.pose.pose.orientation);
+  ros_compat::vector3TfToMsg(getAngularVel(Frame::BASELINK, estimate_mode_), odom_state.twist.twist.angular);
 
   /* Translation */
-  odom_state.child_frame_id = tf::resolve(tf_prefix_, robot_model_->getBaselinkName());
-  tf::pointTFToMsg(getPos(Frame::BASELINK, estimate_mode_), odom_state.pose.pose.position);
-  tf::vector3TFToMsg(getVel(Frame::BASELINK, estimate_mode_), odom_state.twist.twist.linear);
+  odom_state.child_frame_id = ros_compat::resolveFrame(tf_prefix_, robot_model_->getBaselinkName());
+  ros_compat::pointTfToMsg(getPos(Frame::BASELINK, estimate_mode_), odom_state.pose.pose.position);
+  ros_compat::vector3TfToMsg(getVel(Frame::BASELINK, estimate_mode_), odom_state.twist.twist.linear);
   baselink_odom_pub_.publish(odom_state);
 
   /* TF broadcast from world frame */
   /* avoid the redundant timestamp which induces annoying loggings from TF server */
   if (imu_stamp != prev_pub_stamp)
     {
-      tf::Transform root2baselink_tf;
+      tf2::Transform root2baselink_tf;
       const auto segments_tf = robot_model_->getSegmentsTf();
       if(segments_tf.size() > 0) // kinemtiacs is initialized
-        tf::transformKDLToTF(segments_tf.at(robot_model_->getBaselinkName()), root2baselink_tf);
+        ros_compat::transformKdlToTf(segments_tf.at(robot_model_->getBaselinkName()), root2baselink_tf);
       else
         root2baselink_tf.setIdentity(); // not initialized
 
-      tf::Transform world2baselink_tf;
-      tf::poseMsgToTF(odom_state.pose.pose, world2baselink_tf);
+      tf2::Transform world2baselink_tf;
+      ros_compat::poseMsgToTf(odom_state.pose.pose, world2baselink_tf);
+      // Built field by field rather than through tf::StampedTransform, which
+      // ROS2 has no equivalent of - tf2 carries the stamp and frame names on
+      // the message itself rather than on the transform type.
       geometry_msgs::TransformStamped transformStamped;
-      tf::transformStampedTFToMsg(tf::StampedTransform(world2baselink_tf * root2baselink_tf.inverse(),
-                                                       imu_stamp, "world",
-                                                       tf::resolve(tf_prefix_, std::string("root"))),
-                                  transformStamped);
+      ros_compat::transformTfToMsg(world2baselink_tf * root2baselink_tf.inverse(), transformStamped.transform);
+      transformStamped.header.stamp = imu_stamp;
+      transformStamped.header.frame_id = "world";
+      transformStamped.child_frame_id = ros_compat::resolveFrame(tf_prefix_, std::string("root"));
       br_.sendTransform(transformStamped);
     }
 
@@ -211,12 +215,12 @@ void StateEstimator::statePublish(const ros::TimerEvent & e)
   /* Rotation */
   getOrientation(Frame::COG, estimate_mode_).getRotation(q);
   q.normalize();
-  tf::quaternionTFToMsg(q, odom_state.pose.pose.orientation);
-  tf::vector3TFToMsg(getAngularVel(Frame::COG, estimate_mode_), odom_state.twist.twist.angular);
+  ros_compat::quaternionTfToMsg(q, odom_state.pose.pose.orientation);
+  ros_compat::vector3TfToMsg(getAngularVel(Frame::COG, estimate_mode_), odom_state.twist.twist.angular);
   /* Translation */
-  odom_state.child_frame_id = tf::resolve(tf_prefix_, std::string("cog"));
-  tf::pointTFToMsg(getPos(Frame::COG, estimate_mode_), odom_state.pose.pose.position);
-  tf::vector3TFToMsg(getVel(Frame::COG, estimate_mode_), odom_state.twist.twist.linear);
+  odom_state.child_frame_id = ros_compat::resolveFrame(tf_prefix_, std::string("cog"));
+  ros_compat::pointTfToMsg(getPos(Frame::COG, estimate_mode_), odom_state.pose.pose.position);
+  ros_compat::vector3TfToMsg(getVel(Frame::COG, estimate_mode_), odom_state.twist.twist.linear);
   cog_odom_pub_.publish(odom_state);
 
   prev_pub_stamp = imu_stamp;

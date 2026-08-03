@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/sensor/imu.h>
 
 namespace
@@ -64,7 +65,7 @@ namespace sensor_plugin
   void DragonImu::ImuCallback(const spinal::ImuConstPtr& imu_msg)
   {
     imu_stamp_ = imu_msg->stamp;
-    tf::Vector3 filtered_omega;
+    tf2::Vector3 filtered_omega;
 
     for(int i = 0; i < 3; i++)
       {
@@ -86,9 +87,9 @@ namespace sensor_plugin
         return;
       }
 
-    tf::Quaternion raw_q(imu_msg->quaternion[0], imu_msg->quaternion[1],
+    tf2::Quaternion raw_q(imu_msg->quaternion[0], imu_msg->quaternion[1],
                          imu_msg->quaternion[2], imu_msg->quaternion[3]);
-    raw_rot_ = tf::Matrix3x3(raw_q);
+    raw_rot_ = tf2::Matrix3x3(raw_q);
 
 
     if(first_flag)
@@ -99,7 +100,7 @@ namespace sensor_plugin
     filtered_omega = lpf_omega_.filterFunction(omega_);
     geometry_msgs::Vector3Stamped omega_msg;
     omega_msg.header.stamp = imu_msg->stamp;
-    tf::vector3TFToMsg(filtered_omega, omega_msg.vector);
+    ros_compat::vector3TfToMsg(filtered_omega, omega_msg.vector);
     omega_filter_pub_.publish(omega_msg);
 
     // workaround: use raw roll&pitch omega (not filtered in spinal) for both angular and linear CoG velocity estimation, yaw is still filtered
@@ -107,8 +108,8 @@ namespace sensor_plugin
     omega_.setZ(filtered_omega.z());
 
     // get filtered angular and linear velocity of CoG
-    tf::Transform cog2baselink_tf;
-    tf::transformKDLToTF(robot_model_->getCog2Baselink<KDL::Frame>(), cog2baselink_tf);
+    tf2::Transform cog2baselink_tf;
+    ros_compat::transformKdlToTf(robot_model_->getCog2Baselink<KDL::Frame>(), cog2baselink_tf);
     int estimate_mode = estimator_->getEstimateMode();
     setFilteredOmegaCog(cog2baselink_tf.getBasis() * filtered_omega);
     setFilteredVelCog(estimator_->getVel(Frame::BASELINK, estimate_mode)

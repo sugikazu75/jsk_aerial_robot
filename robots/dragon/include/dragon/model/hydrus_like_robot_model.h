@@ -36,7 +36,6 @@
 #pragma once
 
 #include <hydrus/hydrus_robot_model.h>
-#include <eigen_conversions/eigen_msg.h>
 #include <kdl_conversions/kdl_msg.h>
 
 namespace Dragon

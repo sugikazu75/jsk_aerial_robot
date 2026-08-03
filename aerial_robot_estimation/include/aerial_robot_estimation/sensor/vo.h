@@ -70,7 +70,7 @@ namespace sensor_plugin
 
     bool reset();
 
-    const tf::Transform& getRawBaselinkTF() const { return baselink_tf_; }
+    const tf2::Transform& getRawBaselinkTF() const { return baselink_tf_; }
 
   private:
     /* ros */
@@ -108,9 +108,9 @@ namespace sensor_plugin
     double servo_min_angle_, servo_max_angle_;
     int servo_index_;
 
-    tf::Transform world_offset_tf_; // ^{w}H_{w_vo}: transform from true world frame to the vo/vio world frame
-    tf::Transform baselink_tf_; // ^{w}H_{b}: transform from true world frame to the baselink frame, but is estimated by vo/vio
-    tf::Vector3 raw_global_vel_;
+    tf2::Transform world_offset_tf_; // ^{w}H_{w_vo}: transform from true world frame to the vo/vio world frame
+    tf2::Transform baselink_tf_; // ^{w}H_{b}: transform from true world frame to the baselink frame, but is estimated by vo/vio
+    tf2::Vector3 raw_global_vel_;
 
     double reference_timestamp_;
     aerial_robot_msgs::States vo_state_;

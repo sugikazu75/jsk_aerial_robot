@@ -165,6 +165,18 @@ inline void quaternionTfToKdl(const tf2::Quaternion& in, KDL::Rotation& out)
   out = KDL::Rotation::Quaternion(in.x(), in.y(), in.z(), in.w());
 }
 
+/** tf::quaternionMsgToKDL */
+inline void quaternionMsgToKdl(const geometry_msgs_c::Quaternion& in, KDL::Rotation& out)
+{
+  out = KDL::Rotation::Quaternion(in.x, in.y, in.z, in.w);
+}
+
+/** tf::pointMsgToKDL */
+inline void pointMsgToKdl(const geometry_msgs_c::Point& in, KDL::Vector& out)
+{
+  out = KDL::Vector(in.x, in.y, in.z);
+}
+
 // ---- Eigen -----------------------------------------------------------------
 //
 // These came from tf_conversions and eigen_conversions, neither of which exists

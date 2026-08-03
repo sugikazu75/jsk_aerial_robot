@@ -157,7 +157,7 @@ namespace sensor_plugin
 
     /* ros param */
     /* range sensor */
-    tf::Vector3 range_origin_; /* the origin of range based on cog of UAV */
+    tf2::Vector3 range_origin_; /* the origin of range based on cog of UAV */
     bool no_height_offset_;
     double range_noise_sigma_;
     int calibrate_cnt_;
@@ -223,11 +223,11 @@ namespace sensor_plugin
       float roll = (estimator_->getState(State::ROLL_BASE, aerial_robot_estimation::EGOMOTION_ESTIMATE))[0];
       float pitch = (estimator_->getState(State::PITCH_BASE, aerial_robot_estimation::EGOMOTION_ESTIMATE))[0];
       /* add the offset from the base_link to the sensor */
-      tf::Matrix3x3 tilt_r; tilt_r.setRPY(roll, pitch, 0);
+      tf2::Matrix3x3 tilt_r; tilt_r.setRPY(roll, pitch, 0);
       double raw_range_sensor_value = cos(roll) * cos(pitch) * range_msg->range - (tilt_r * sensor_tf_.getOrigin()).z();
 #endif
 
-      raw_range_sensor_value_ = -(estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE) * (sensor_tf_* tf::Vector3(0, 0, range_msg->range))).z();
+      raw_range_sensor_value_ = -(estimator_->getOrientation(Frame::BASELINK, aerial_robot_estimation::EGOMOTION_ESTIMATE) * (sensor_tf_* tf2::Vector3(0, 0, range_msg->range))).z();
 
       /* calibrate phase */
       if(calibrate_cnt > 0)
