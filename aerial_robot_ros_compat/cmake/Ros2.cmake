@@ -22,6 +22,15 @@ target_link_libraries(${PROJECT_NAME}_compile_test ${PROJECT_NAME})
 ament_target_dependencies(${PROJECT_NAME}_compile_test
   rclcpp geometry_msgs sensor_msgs std_srvs tf2)
 
+# Checks that a child NodeHandle really resolves the nested config the launch
+# files use. Run it as:
+#   param_mapping_test --ros-args --params-file <share>/test/param_mapping_test.yaml
+add_executable(${PROJECT_NAME}_param_mapping_test test/param_mapping_test.cpp)
+target_link_libraries(${PROJECT_NAME}_param_mapping_test ${PROJECT_NAME})
+ament_target_dependencies(${PROJECT_NAME}_param_mapping_test rclcpp)
+install(TARGETS ${PROJECT_NAME}_param_mapping_test DESTINATION lib/${PROJECT_NAME})
+install(FILES test/param_mapping_test.yaml DESTINATION share/${PROJECT_NAME}/test)
+
 install(DIRECTORY include/ DESTINATION include)
 install(TARGETS ${PROJECT_NAME} EXPORT export_${PROJECT_NAME})
 

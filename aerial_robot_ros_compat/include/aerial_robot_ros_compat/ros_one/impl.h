@@ -28,7 +28,8 @@ using NodeHandle = ::ros::NodeHandle;
 using Publisher = ::ros::Publisher;
 using Subscriber = ::ros::Subscriber;
 using ServiceServer = ::ros::ServiceServer;
-using ServiceClient = ::ros::ServiceClient;
+// ServiceClient is a class template below, not an alias: ROS2 has no combined
+// service type, so the client has to be parameterised on it.
 using Timer = ::ros::Timer;
 using TimerEvent = ::ros::TimerEvent;
 using Time = ::ros::Time;
@@ -71,6 +72,37 @@ auto createPluginInstance(Loader& loader, const std::string& name) -> decltype(l
  */
 template <class T>
 using EnableSharedFromThis = boost::enable_shared_from_this<T>;
+
+/**
+ * Blocking service client.
+ *
+ * Spelled with separate request and response because ROS2 has no combined
+ * service type to pass around; roscpp's own call(req, res) overload takes the
+ * same shape, so this is a thin pass-through here.
+ */
+template <class S>
+class ServiceClient
+{
+public:
+  ServiceClient() = default;
+  ServiceClient(::ros::NodeHandle nh, const std::string& name) : impl_(nh.serviceClient<S>(name)), name_(name)
+  {
+  }
+
+  bool exists(double = 0.0)
+  {
+    return impl_.exists();
+  }
+
+  bool call(typename S::Request& req, typename S::Response& res, double = 5.0)
+  {
+    return impl_.call(req, res);
+  }
+
+private:
+  ::ros::ServiceClient impl_;
+  std::string name_;
+};
 
 /** boost::dynamic_pointer_cast under ROS1, std:: under ROS2. */
 template <class T, class U>

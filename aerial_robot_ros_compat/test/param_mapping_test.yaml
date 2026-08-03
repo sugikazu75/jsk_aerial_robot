@@ -1,0 +1,10 @@
+param_probe:
+  ros__parameters:
+    uav_model: 7
+    estimation:
+      mode: 2
+      sensor_list: ["sensor_plugin/imu", "sensor_plugin/mocap"]
+    motor_info:
+      max_pwm: 0.85
+      ref1:
+        voltage: 11.1

@@ -363,10 +363,12 @@ private:
  * hang forever, and here it gives up and reports failure instead.
  */
 template <class S>
-class ServiceClientImpl
+class ServiceClient
 {
 public:
-  ServiceClientImpl(const std::string& name, std::shared_ptr<rclcpp::Node> owner) : name_(name)
+  ServiceClient() = default;
+
+  ServiceClient(std::shared_ptr<rclcpp::Node> owner, const std::string& name) : name_(name)
   {
     node_ =
         std::make_shared<rclcpp::Node>("ros_compat_service_client_" + std::to_string(reinterpret_cast<uintptr_t>(this)),
@@ -515,8 +517,10 @@ public:
                        T* obj, const TransportHints& = TransportHints())
   {
     auto cb = [obj, fp](const std::shared_ptr<const M>& msg) { (obj->*fp)(msg); };
-    return Subscriber(node_->create_subscription<M>(resolveName(topic),
-                                                    rclcpp::QoS(rclcpp::KeepLast(queue_size ? queue_size : 1)), cb));
+    const std::string resolved = resolveName(topic);
+    return Subscriber(
+        node_->create_subscription<M>(resolved, rclcpp::QoS(rclcpp::KeepLast(queue_size ? queue_size : 1)), cb),
+        resolved);
   }
 
   /** Overload for callbacks taking the message by value, as several here do. */
@@ -525,8 +529,10 @@ public:
                        const TransportHints& = TransportHints())
   {
     auto cb = [obj, fp](const ConstPtr<M>& msg) { (obj->*fp)(*msg); };
-    return Subscriber(node_->create_subscription<M>(resolveName(topic),
-                                                    rclcpp::QoS(rclcpp::KeepLast(queue_size ? queue_size : 1)), cb));
+    const std::string resolved = resolveName(topic);
+    return Subscriber(
+        node_->create_subscription<M>(resolved, rclcpp::QoS(rclcpp::KeepLast(queue_size ? queue_size : 1)), cb),
+        resolved);
   }
 
   // ---- services ------------------------------------------------------------

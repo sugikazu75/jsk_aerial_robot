@@ -174,6 +174,17 @@ void stampFromSec(Stamp& stamp, double seconds)
 #endif
 }
 
+/** Construct a blocking service client for `name` under `nh`. */
+template <class S>
+ServiceClient<S> serviceClient(const NodeHandle& nh, const std::string& name)
+{
+#if AERIAL_ROBOT_ROS_VERSION == 1
+  return ServiceClient<S>(nh, name);
+#else
+  return ServiceClient<S>(nh.node(), nh.resolveName(name));
+#endif
+}
+
 /**
  * Join a tf_prefix onto a frame name, as tf::resolve did.
  *
