@@ -12,6 +12,7 @@ pkg_check_modules(TINYXML2 REQUIRED tinyxml2)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  aerial_robot_ros_compat
   eigen_conversions
   geometry_msgs
   interactive_markers
@@ -58,7 +59,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include test
   LIBRARIES aerial_robot_model aerial_robot_model_ros numerical_jacobians robot_model_pluginlib
-  CATKIN_DEPENDS eigen_conversions geometry_msgs interactive_markers kalman_filter kdl_parser message_runtime pluginlib sensor_msgs spinal std_msgs tf tf_conversions tf2_eigen tf2_geometry_msgs tf2_kdl tf2_ros tf_conversions urdf visualization_msgs
+  CATKIN_DEPENDS aerial_robot_ros_compat eigen_conversions geometry_msgs interactive_markers kalman_filter kdl_parser message_runtime pluginlib sensor_msgs spinal std_msgs tf tf_conversions tf2_eigen tf2_geometry_msgs tf2_kdl tf2_ros tf_conversions urdf visualization_msgs
   DEPENDS orocos_kdl urdfdom_headers
 )
 

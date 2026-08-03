@@ -34,11 +34,20 @@
  *********************************************************************/
 
 /* ros */
-#include <ros/ros.h>
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <urdf/model.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/TransformStamped.h>
+#  include <sensor_msgs/JointState.h>
+#else
+#  include <geometry_msgs/msg/transform_stamped.hpp>
+#  include <sensor_msgs/msg/joint_state.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
 #include <kdl/tree.hpp>
 #include <kdl_parser/kdl_parser.hpp>
-#include <tf/tf.h>
 #include <tf2_kdl/tf2_kdl.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 
@@ -56,7 +65,7 @@ public:
 
 class RotorTfPublisher {
 public:
-  RotorTfPublisher(ros::NodeHandle nh, ros::NodeHandle nhp, const KDL::Tree& tree, const urdf::Model& model): nh_(nh), nhp_(nhp)
+  RotorTfPublisher(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp, const KDL::Tree& tree, const urdf::Model& model): nh_(nh), nhp_(nhp)
   {
     nhp_.param("rotor_joint_name", rotor_joint_name_, string("rotor"));
     nhp_.param("tf_prefix", tf_prefix_, string(""));
@@ -68,24 +77,24 @@ public:
   ~RotorTfPublisher(){}
 
 private:
-  void callbackFixedJoint(const ros::TimerEvent& e)
+  void callbackFixedJoint(const ros_compat::TimerEvent& e)
   {
-    std::vector<geometry_msgs::TransformStamped> tf_transforms;
-    geometry_msgs::TransformStamped tf_transform;
+    std::vector<geometry_msgs_c::TransformStamped> tf_transforms;
+    geometry_msgs_c::TransformStamped tf_transform;
 
     // loop over all fixed segments
     for (map<string, SegmentPair>::const_iterator seg=segments_rotor_.begin(); seg != segments_rotor_.end(); seg++) {
-      geometry_msgs::TransformStamped tf_transform = tf2::kdlToTransform(seg->second.segment.pose(0));
-      tf_transform.header.stamp = ros::Time::now();
-      tf_transform.header.frame_id = tf::resolve(tf_prefix_, seg->second.root);
-      tf_transform.child_frame_id =  tf::resolve(tf_prefix_, seg->second.tip);
+      geometry_msgs_c::TransformStamped tf_transform = tf2::kdlToTransform(seg->second.segment.pose(0));
+      tf_transform.header.stamp = ros_compat::now();
+      tf_transform.header.frame_id = ros_compat::resolveFrame(tf_prefix_, seg->second.root);
+      tf_transform.child_frame_id =  ros_compat::resolveFrame(tf_prefix_, seg->second.tip);
       tf_transforms.push_back(tf_transform);
     }
     static_tf_broadcaster_.sendTransform(tf_transforms);
   }
 
-  ros::Timer timer_;
-  ros::NodeHandle nh_, nhp_;
+  ros_compat::Timer timer_;
+  ros_compat::NodeHandle nh_, nhp_;
   string rotor_joint_name_;
   string tf_prefix_;
   tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
@@ -113,9 +122,8 @@ private:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "rotor_tf_publisher");
-  ros::NodeHandle nh;
-  ros::NodeHandle nhp("~");
+  ros_compat::NodeHandle nh = ros_compat::initNode(argc, argv, "rotor_tf_publisher");
+  ros_compat::NodeHandle nhp = ros_compat::privateNodeHandle(nh);
 
   urdf::Model model;
   if (!model.initParam("robot_description"))
@@ -123,12 +131,12 @@ int main(int argc, char** argv)
 
   KDL::Tree tree;
   if (!kdl_parser::treeFromUrdfModel(model, tree)) {
-    ROS_ERROR("Failed to extract kdl tree from xml robot description");
+    ROS_COMPAT_ERROR("Failed to extract kdl tree from xml robot description");
     return -1;
   }
 
   RotorTfPublisher rotor_tf_publisher(nh, nhp, tree, model);
-  ros::spin();
+  ros_compat::spin();
 
   return 0;
 }

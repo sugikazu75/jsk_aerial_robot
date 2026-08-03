@@ -1,9 +1,17 @@
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
 #include <tf2_kdl/tf2_kdl.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_eigen/tf2_eigen.h>
-#include <sensor_msgs/JointState.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/PointStamped.h>
+#  include <geometry_msgs/TransformStamped.h>
+#else
+#  include <geometry_msgs/msg/point_stamped.hpp>
+#  include <geometry_msgs/msg/transform_stamped.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
 #include <map>
 #include <vector>
 #include <kdl/rotationalinertia.hpp>
@@ -29,24 +37,24 @@ namespace aerial_robot_model {
     else return false;
   }
 
-  inline geometry_msgs::TransformStamped kdlToMsg(const KDL::Frame& in)
+  inline geometry_msgs_c::TransformStamped kdlToMsg(const KDL::Frame& in)
   {
     return tf2::kdlToTransform(in);
   }
 
-  inline geometry_msgs::PointStamped kdlToMsg(const KDL::Vector& in)
+  inline geometry_msgs_c::PointStamped kdlToMsg(const KDL::Vector& in)
   {
     tf2::Stamped<KDL::Vector> tmp;
     tmp.setData(in);
-    geometry_msgs::PointStamped out;
+    geometry_msgs_c::PointStamped out;
     tf2::convert(tmp, out);
     return out;
   }
 
-  inline std::vector<geometry_msgs::PointStamped> kdlToMsg(const std::vector<KDL::Vector>& in)
+  inline std::vector<geometry_msgs_c::PointStamped> kdlToMsg(const std::vector<KDL::Vector>& in)
   {
-    return convertVector<geometry_msgs::PointStamped, KDL::Vector>(in,
-                                                                   [](const KDL::Vector& in)->geometry_msgs::PointStamped {
+    return convertVector<geometry_msgs_c::PointStamped, KDL::Vector>(in,
+                                                                   [](const KDL::Vector& in)->geometry_msgs_c::PointStamped {
                                                                      return kdlToMsg(in);
                                                                    });
   }

@@ -37,12 +37,11 @@
 
 #include <aerial_robot_model/utils/kdl_utils.h>
 #include <aerial_robot_model/utils/math_utils.h>
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <cmath>
-#include <eigen_conversions/eigen_kdl.h>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <geometry_msgs/Inertia.h>
-#include <geometry_msgs/Transform.h>
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl_parser/kdl_parser.hpp>
@@ -50,14 +49,26 @@
 #include <kdl/treefksolverpos_recursive.hpp>
 #include <kdl/treejnttojacsolver.hpp>
 #include <mutex>
-#include <sensor_msgs/JointState.h>
 #include <stdexcept>
-#include <ros/ros.h>
 // tinyxml2 rather than ROS1's TinyXML1: ROS2 dropped TinyXML1 and libtinyxml2
 // is available to both distributions, so one spelling serves both builds.
 #include <tinyxml2.h>
 #include <urdf/model.h>
 #include <vector>
+
+// Message headers have to be spelled per ROS version; only the type namespace
+// can be aliased. See aerial_robot_ros_compat/message.h.
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/Inertia.h>
+#  include <geometry_msgs/Transform.h>
+#  include <sensor_msgs/JointState.h>
+#else
+#  include <geometry_msgs/msg/inertia.hpp>
+#  include <geometry_msgs/msg/transform.hpp>
+#  include <sensor_msgs/msg/joint_state.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
 
 namespace aerial_robot_model {
 
@@ -69,7 +80,7 @@ namespace aerial_robot_model {
 
     void updateRobotModel();
     void updateRobotModel(const KDL::JntArray& joint_positions);
-    void updateRobotModel(const sensor_msgs::JointState& state);
+    void updateRobotModel(const sensor_msgs_c::JointState& state);
 
     // kinematics
     const bool initialized() const { return initialized_; }
@@ -100,9 +111,9 @@ namespace aerial_robot_model {
     }
 
     template<class T> T forwardKinematics(std::string link, const KDL::JntArray& joint_positions) const;
-    template<class T> T forwardKinematics(std::string link, const sensor_msgs::JointState& state) const;
+    template<class T> T forwardKinematics(std::string link, const sensor_msgs_c::JointState& state) const;
     std::map<std::string, KDL::Frame> fullForwardKinematics(const KDL::JntArray& joint_positions) {return fullForwardKinematicsImpl(joint_positions); }
-    std::map<std::string, KDL::Frame> fullForwardKinematics(const sensor_msgs::JointState& state) {return fullForwardKinematics(jointMsgToKdl(state)); }
+    std::map<std::string, KDL::Frame> fullForwardKinematics(const sensor_msgs_c::JointState& state) {return fullForwardKinematics(jointMsgToKdl(state)); }
 
     const KDL::Tree& getTree() const { return tree_; }
     const urdf::Model& getUrdfModel() const { return model_; }
@@ -122,10 +133,10 @@ namespace aerial_robot_model {
      * TiXmlDocument was.
      */
     static bool getRobotModelXml(const std::string param, tinyxml2::XMLDocument& doc,
-                                 ros::NodeHandle nh = ros::NodeHandle());
+                                 ros_compat::NodeHandle nh = ros_compat::NodeHandle());
 
-    KDL::JntArray jointMsgToKdl(const sensor_msgs::JointState& state) const;
-    sensor_msgs::JointState kdlJointToMsg(const KDL::JntArray& joint_positions) const;
+    KDL::JntArray jointMsgToKdl(const sensor_msgs_c::JointState& state) const;
+    sensor_msgs_c::JointState kdlJointToMsg(const KDL::JntArray& joint_positions) const;
 
     void setBaselinkName(const std::string baselink) { baselink_ = baselink; }
     void setCogDesireOrientation(double roll, double pitch, double yaw)
@@ -301,7 +312,7 @@ namespace aerial_robot_model {
     return aerial_robot_model::kdlToEigen(forwardKinematicsImpl(link, joint_positions));
   }
 
-  template<> inline geometry_msgs::TransformStamped RobotModel::forwardKinematics(std::string link, const KDL::JntArray& joint_positions) const
+  template<> inline geometry_msgs_c::TransformStamped RobotModel::forwardKinematics(std::string link, const KDL::JntArray& joint_positions) const
   {
     return aerial_robot_model::kdlToMsg(forwardKinematicsImpl(link, joint_positions));
   }
@@ -316,22 +327,22 @@ namespace aerial_robot_model {
     return aerial_robot_model::kdlToTf2(forwardKinematicsImpl(link, joint_positions));
   }
 
-  template<> inline Eigen::Affine3d RobotModel::forwardKinematics(std::string link, const sensor_msgs::JointState& state) const
+  template<> inline Eigen::Affine3d RobotModel::forwardKinematics(std::string link, const sensor_msgs_c::JointState& state) const
   {
     return aerial_robot_model::kdlToEigen(forwardKinematicsImpl(link, jointMsgToKdl(state)));
   }
 
-  template<> inline geometry_msgs::TransformStamped RobotModel::forwardKinematics(std::string link, const sensor_msgs::JointState& state) const
+  template<> inline geometry_msgs_c::TransformStamped RobotModel::forwardKinematics(std::string link, const sensor_msgs_c::JointState& state) const
   {
     return aerial_robot_model::kdlToMsg(forwardKinematicsImpl(link, jointMsgToKdl(state)));
   }
 
-  template<> inline KDL::Frame RobotModel::forwardKinematics(std::string link, const sensor_msgs::JointState& state) const
+  template<> inline KDL::Frame RobotModel::forwardKinematics(std::string link, const sensor_msgs_c::JointState& state) const
   {
     return forwardKinematicsImpl(link, jointMsgToKdl(state));
   }
 
-  template<> inline tf2::Transform RobotModel::forwardKinematics(std::string link, const sensor_msgs::JointState& state) const
+  template<> inline tf2::Transform RobotModel::forwardKinematics(std::string link, const sensor_msgs_c::JointState& state) const
   {
     return aerial_robot_model::kdlToTf2(forwardKinematicsImpl(link, jointMsgToKdl(state)));
   }
@@ -347,7 +358,7 @@ namespace aerial_robot_model {
     return aerial_robot_model::kdlToEigen(RobotModel::getCog<KDL::Frame>());
   }
 
-  template<> inline geometry_msgs::TransformStamped RobotModel::getCog()
+  template<> inline geometry_msgs_c::TransformStamped RobotModel::getCog()
   {
     return aerial_robot_model::kdlToMsg(RobotModel::getCog<KDL::Frame>());
   }
@@ -368,7 +379,7 @@ namespace aerial_robot_model {
     return aerial_robot_model::kdlToEigen(RobotModel::getCog2Baselink<KDL::Frame>());
   }
 
-  template<> inline geometry_msgs::TransformStamped RobotModel::getCog2Baselink()
+  template<> inline geometry_msgs_c::TransformStamped RobotModel::getCog2Baselink()
   {
     return aerial_robot_model::kdlToMsg(RobotModel::getCog2Baselink<KDL::Frame>());
   }
@@ -411,7 +422,7 @@ namespace aerial_robot_model {
     return aerial_robot_model::kdlToEigen(RobotModel::getRotorsNormalFromCog<KDL::Vector>());
   }
 
-  template<> inline std::vector<geometry_msgs::PointStamped> RobotModel::getRotorsNormalFromCog()
+  template<> inline std::vector<geometry_msgs_c::PointStamped> RobotModel::getRotorsNormalFromCog()
   {
     return aerial_robot_model::kdlToMsg(RobotModel::getRotorsNormalFromCog<KDL::Vector>());
   }
@@ -432,7 +443,7 @@ namespace aerial_robot_model {
     return aerial_robot_model::kdlToEigen(RobotModel::getRotorsOriginFromCog<KDL::Vector>());
   }
 
-  template<> inline std::vector<geometry_msgs::PointStamped> RobotModel::getRotorsOriginFromCog()
+  template<> inline std::vector<geometry_msgs_c::PointStamped> RobotModel::getRotorsOriginFromCog()
   {
     return aerial_robot_model::kdlToMsg(RobotModel::getRotorsOriginFromCog<KDL::Vector>());
   }

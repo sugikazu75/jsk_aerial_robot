@@ -37,7 +37,7 @@ namespace aerial_robot_model {
 
   void RobotModel::getParamFromRos()
   {
-    ros::NodeHandle nh;
+    ros_compat::NodeHandle nh;
     nh.param("kinematic_verbose", verbose_, false);
     nh.param("fc_f_min_thre", fc_f_min_thre_, 0.0);
     nh.param("fc_t_min_thre", fc_t_min_thre_, 0.0);
@@ -49,12 +49,12 @@ namespace aerial_robot_model {
     /* robot model */
     if (!model_.initParam("robot_description"))
       {
-        ROS_ERROR("Failed to extract urdf model from rosparam");
+        ROS_COMPAT_ERROR("Failed to extract urdf model from rosparam");
         return;
       }
     if (!kdl_parser::treeFromUrdfModel(model_, tree_))
       {
-        ROS_ERROR("Failed to extract kdl tree from xml robot description");
+        ROS_COMPAT_ERROR("Failed to extract kdl tree from xml robot description");
         return;
       }
     /* get baselink and thrust_link from robot model */
@@ -64,19 +64,19 @@ namespace aerial_robot_model {
 
     tinyxml2::XMLElement* baselink_attr = robot_attr ? robot_attr->FirstChildElement("baselink") : nullptr;
     if(!baselink_attr || !baselink_attr->Attribute("name"))
-      ROS_DEBUG("Can not get baselink attribute from urdf model");
+      ROS_COMPAT_DEBUG("Can not get baselink attribute from urdf model");
     else
       baselink_ = std::string(baselink_attr->Attribute("name"));
 
     tinyxml2::XMLElement* thrust_link_attr = robot_attr ? robot_attr->FirstChildElement("thrust_link") : nullptr;
     if(!thrust_link_attr || !thrust_link_attr->Attribute("name"))
-      ROS_DEBUG("Can not get thrust_link attribute from urdf model");
+      ROS_COMPAT_DEBUG("Can not get thrust_link attribute from urdf model");
     else
       thrust_link_ = std::string(thrust_link_attr->Attribute("name"));
 
     if(!model_.getLink(baselink_))
       {
-        ROS_ERROR_STREAM("Can not find the link named '" << baselink_ << "' in urdf model");
+        ROS_COMPAT_ERROR_STREAM("Can not find the link named '" << baselink_ << "' in urdf model");
         return;
       }
     bool found_thrust_link = false;
@@ -89,7 +89,7 @@ namespace aerial_robot_model {
       }
     if(!found_thrust_link)
       {
-        ROS_ERROR_STREAM("Can not find the link named '" << baselink_ << "' in urdf model");
+        ROS_COMPAT_ERROR_STREAM("Can not find the link named '" << baselink_ << "' in urdf model");
         return;
       }
 
@@ -116,7 +116,7 @@ namespace aerial_robot_model {
     /* set rotor property */
     tinyxml2::XMLElement* m_f_rate_attr = robot_attr ? robot_attr->FirstChildElement("m_f_rate") : nullptr;
     if(!m_f_rate_attr)
-      ROS_ERROR("Can not get m_f_rate attribute from urdf model");
+      ROS_COMPAT_ERROR("Can not get m_f_rate attribute from urdf model");
     else
       m_f_rate_attr->QueryDoubleAttribute("value", &m_f_rate_);
 
@@ -146,7 +146,7 @@ namespace aerial_robot_model {
     const KDL::Segment current_seg = GetTreeElementSegment(tree_element);
 
     KDL::RigidBodyInertia current_seg_inertia = current_seg.getInertia();
-    if(verbose_) ROS_WARN_STREAM("segment " <<  current_seg.getName() << ", mass is: " << current_seg_inertia.getMass());
+    if(verbose_) ROS_COMPAT_WARN_STREAM("segment " <<  current_seg.getName() << ", mass is: " << current_seg_inertia.getMass());
 
     /* check whether this can be a base inertia segment (i.e. link) */
     /* 1. for the "root" parent link (i.e. link1) */
@@ -157,7 +157,7 @@ namespace aerial_robot_model {
 
         const KDL::Segment& child_seg = GetTreeElementSegment(GetTreeElementChildren(tree_element).at(0)->second);
         inertia_map_.insert(std::make_pair(child_seg.getName(), child_seg.getInertia()));
-        if(verbose_) ROS_WARN("Add root link: %s", child_seg.getName().c_str());
+        if(verbose_) ROS_COMPAT_WARN("Add root link: %s", child_seg.getName().c_str());
 
       }
     /* 2. for segment that has joint with parent segment */
@@ -173,7 +173,7 @@ namespace aerial_robot_model {
             joint_indices_.push_back(tree_element.q_nr);
             joint_parent_link_names_.push_back(GetTreeElementParent(tree_element)->first);
 
-            if(verbose_) ROS_WARN("Add new inertia base link: %s", current_seg.getName().c_str());
+            if(verbose_) ROS_COMPAT_WARN("Add new inertia base link: %s", current_seg.getName().c_str());
           }
       }
     /* special process for rotor */
@@ -183,7 +183,7 @@ namespace aerial_robot_model {
         auto urdf_joint =  model_.getJoint(current_seg.getJoint().getName());
         if(urdf_joint->type == urdf::Joint::CONTINUOUS)
           {
-            if(verbose_) ROS_WARN("joint name: %s, z axis: %f", current_seg.getJoint().getName().c_str(), urdf_joint->axis.z);
+            if(verbose_) ROS_COMPAT_WARN("joint name: %s, z axis: %f", current_seg.getJoint().getName().c_str(), urdf_joint->axis.z);
             rotor_direction_.insert(std::make_pair(std::atoi(current_seg.getJoint().getName().substr(5).c_str()), urdf_joint->axis.z));
           }
       }
@@ -196,7 +196,7 @@ namespace aerial_robot_model {
         KDL::RigidBodyInertia current_seg_inertia_old = current_seg_inertia;
         current_seg_inertia = current_seg_inertia_old + child_seg_inertia;
 
-        if(verbose_) ROS_WARN("Add new child segment %s to direct segment: %s", child_seg.getName().c_str(), current_seg.getName().c_str());
+        if(verbose_) ROS_COMPAT_WARN("Add new child segment %s to direct segment: %s", child_seg.getName().c_str(), current_seg.getName().c_str());
       }
 
     /* count the rotor */
@@ -206,7 +206,7 @@ namespace aerial_robot_model {
       {
         inertia_map_.at(current_seg.getName()) = current_seg_inertia;
 
-        if(verbose_) ROS_WARN("Total mass of base segment %s is %f", current_seg.getName().c_str(),
+        if(verbose_) ROS_COMPAT_WARN("Total mass of base segment %s is %f", current_seg.getName().c_str(),
                               inertia_map_.at(current_seg.getName()).getMass());
         current_seg_inertia = KDL::RigidBodyInertia::Zero();
       }
@@ -262,25 +262,25 @@ namespace aerial_robot_model {
       {
         if(inertia_map_.find(parent_link_name) == inertia_map_.end())
           {
-            ROS_WARN("[extra module]: fail to add new extra module %s, because its parent link (%s) does not exist", module_name.c_str(), parent_link_name.c_str());
+            ROS_COMPAT_WARN("[extra module]: fail to add new extra module %s, because its parent link (%s) does not exist", module_name.c_str(), parent_link_name.c_str());
             return false;
           }
 
         if(!aerial_robot_model::isValidRotation(transform.M))
           {
-            ROS_WARN("[extra module]: fail to add new extra module %s, because its orientation is invalid", module_name.c_str());
+            ROS_COMPAT_WARN("[extra module]: fail to add new extra module %s, because its orientation is invalid", module_name.c_str());
             return false;
           }
 
         if(inertia.getMass() <= 0)
           {
-            ROS_WARN("[extra module]: fail to add new extra module %s, becuase its mass %f is invalid", module_name.c_str(), inertia.getMass());
+            ROS_COMPAT_WARN("[extra module]: fail to add new extra module %s, becuase its mass %f is invalid", module_name.c_str(), inertia.getMass());
             return false;
           }
 
         KDL::Segment extra_module(parent_link_name, KDL::Joint(KDL::Joint::None), transform, inertia);
         extra_module_map_.insert(std::make_pair(module_name, extra_module));
-        ROS_INFO("[extra module]: succeed to add new extra module %s", module_name.c_str());
+        ROS_COMPAT_INFO("[extra module]: succeed to add new extra module %s", module_name.c_str());
 
         if (fixed_model_) {
           // update robot model instantly
@@ -291,7 +291,7 @@ namespace aerial_robot_model {
       }
     else
       {
-        ROS_WARN("[extra module]: fail to add new extra module %s, becuase it already exists", module_name.c_str());
+        ROS_COMPAT_WARN("[extra module]: fail to add new extra module %s, becuase it already exists", module_name.c_str());
         return false;
       }
   }
@@ -301,13 +301,13 @@ namespace aerial_robot_model {
     const auto it = extra_module_map_.find(module_name);
     if(it == extra_module_map_.end())
       {
-        ROS_WARN("[extra module]: fail to remove the extra module %s, because it does not exists", module_name.c_str());
+        ROS_COMPAT_WARN("[extra module]: fail to remove the extra module %s, because it does not exists", module_name.c_str());
         return false;
       }
     else
       {
         extra_module_map_.erase(module_name);
-        ROS_INFO("[extra module]: succeed to remove the extra module %s", module_name.c_str());
+        ROS_COMPAT_INFO("[extra module]: succeed to remove the extra module %s", module_name.c_str());
 
         if (fixed_model_) {
           // update robot model instantly
@@ -330,7 +330,7 @@ namespace aerial_robot_model {
     updateRobotModelImpl(joint_positions);
   }
 
-  void RobotModel::updateRobotModel(const sensor_msgs::JointState& state)
+  void RobotModel::updateRobotModel(const sensor_msgs_c::JointState& state)
   {
     updateRobotModel(jointMsgToKdl(state));
   }
@@ -365,7 +365,7 @@ namespace aerial_robot_model {
     cog.p = link_inertia.getCOG();
     setCog(cog);
     mass_ = link_inertia.getMass();
-    ROS_INFO_STREAM_ONCE("[aerial_robot_model] robot mass is " << mass_);
+    ROS_COMPAT_INFO_STREAM_ONCE("[aerial_robot_model] robot mass is " << mass_);
 
     setInertia((cog.Inverse() * link_inertia).getRotationalInertia());
     setCog2Baselink(cog.Inverse() * f_baselink);
@@ -376,7 +376,7 @@ namespace aerial_robot_model {
       {
         std::string rotor = thrust_link_ + std::to_string(i + 1);
         KDL::Frame f = seg_tf_map.at(rotor);
-        if(verbose_) ROS_WARN(" %s : [%f, %f, %f]", rotor.c_str(), f.p.x(), f.p.y(), f.p.z());
+        if(verbose_) ROS_COMPAT_WARN(" %s : [%f, %f, %f]", rotor.c_str(), f.p.x(), f.p.y(), f.p.z());
         rotors_origin_from_cog.push_back((cog.Inverse() * f).p);
         rotors_normal_from_cog.push_back((cog.Inverse() * f).M * KDL::Vector(0, 0, 1));
       }
@@ -399,7 +399,7 @@ namespace aerial_robot_model {
     KDL::TreeFkSolverPos_recursive fk_solver(tree_);
     KDL::Frame f;
     int status = fk_solver.JntToCart(joint_positions, f, link);
-    if(status < 0) ROS_ERROR("can not solve FK to link: %s", link.c_str());
+    if(status < 0) ROS_COMPAT_ERROR("can not solve FK to link: %s", link.c_str());
 
     return f;
   }
@@ -500,21 +500,21 @@ namespace aerial_robot_model {
     if(fc_f_min_ < fc_f_min_thre_)
       {
         if(verbose)
-          ROS_ERROR_STREAM("the min distance to the plane of feasible control force convex " << fc_f_min_ << " is lower than the threshold " <<  fc_f_min_thre_);
+          ROS_COMPAT_ERROR_STREAM("the min distance to the plane of feasible control force convex " << fc_f_min_ << " is lower than the threshold " <<  fc_f_min_thre_);
           return false;
       }
 
     if(fc_t_min_ < fc_t_min_thre_)
       {
         if(verbose)
-          ROS_ERROR_STREAM("the min distance to the plane of feasible control torque convex " << fc_t_min_ << " is lower than the threshold " <<  fc_t_min_thre_);
+          ROS_COMPAT_ERROR_STREAM("the min distance to the plane of feasible control torque convex " << fc_t_min_ << " is lower than the threshold " <<  fc_t_min_thre_);
         return false;
       }
 
     if(static_thrust_.maxCoeff() > thrust_max_ || static_thrust_.minCoeff() < thrust_min_)
       {
         if(verbose)
-          ROS_ERROR("Invalid static thrust, max: %f, min: %f", static_thrust_.maxCoeff(), static_thrust_.minCoeff());
+          ROS_COMPAT_ERROR("Invalid static thrust, max: %f, min: %f", static_thrust_.maxCoeff(), static_thrust_.minCoeff());
         return false;
       }
 
@@ -608,11 +608,11 @@ namespace aerial_robot_model {
     fc_t_min_ = fc_t_dists_.minCoeff();
   }
 
-  bool RobotModel::getRobotModelXml(const std::string param, tinyxml2::XMLDocument& xml_doc, ros::NodeHandle nh)
+  bool RobotModel::getRobotModelXml(const std::string param, tinyxml2::XMLDocument& xml_doc, ros_compat::NodeHandle nh)
   {
     if (!nh.hasParam(param))
       {
-        ROS_ERROR("Could not find parameter %s on parameter server with namespace '%s'", param.c_str(), nh.getNamespace().c_str());
+        ROS_COMPAT_ERROR("Could not find parameter %s on parameter server with namespace '%s'", param.c_str(), nh.getNamespace().c_str());
         return false;
       }
 
@@ -621,14 +621,14 @@ namespace aerial_robot_model {
 
     if (xml_doc.Parse(xml_string.c_str()) != tinyxml2::XML_SUCCESS)
       {
-        ROS_ERROR("Could not parse the xml in parameter %s: %s", param.c_str(), xml_doc.ErrorStr());
+        ROS_COMPAT_ERROR("Could not parse the xml in parameter %s: %s", param.c_str(), xml_doc.ErrorStr());
         return false;
       }
 
     return true;
   }
 
-  KDL::JntArray RobotModel::jointMsgToKdl(const sensor_msgs::JointState& state) const
+  KDL::JntArray RobotModel::jointMsgToKdl(const sensor_msgs_c::JointState& state) const
   {
     KDL::JntArray joint_positions(tree_.getNrOfJoints());
     for(unsigned int i = 0; i < state.position.size(); ++i)
@@ -639,9 +639,9 @@ namespace aerial_robot_model {
     return joint_positions;
   }
 
-  sensor_msgs::JointState RobotModel::kdlJointToMsg(const KDL::JntArray& joint_positions) const
+  sensor_msgs_c::JointState RobotModel::kdlJointToMsg(const KDL::JntArray& joint_positions) const
   {
-    sensor_msgs::JointState state;
+    sensor_msgs_c::JointState state;
     state.name.reserve(joint_index_map_.size());
     state.position.reserve(joint_index_map_.size());
     for(const auto& actuator : joint_index_map_)

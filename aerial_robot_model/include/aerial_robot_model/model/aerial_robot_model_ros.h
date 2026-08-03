@@ -36,10 +36,18 @@
 #pragma once
 
 #include <aerial_robot_model/model/aerial_robot_model.h>
-#include <aerial_robot_model/AddExtraModule.h>
 #include <pluginlib/class_loader.h>
-#include <spinal/DesireCoord.h>
-#include <tf/tf.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_model/AddExtraModule.h>
+#  include <spinal/DesireCoord.h>
+#else
+#  include <aerial_robot_model/srv/add_extra_module.hpp>
+#  include <spinal/msg/desire_coord.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
+// The package's own service. Its C++ namespace collides with the class
+// namespace, so the _s alias is what call sites use.
+AERIAL_ROBOT_SRV_NAMESPACE(aerial_robot_model);
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 
@@ -49,29 +57,29 @@ namespace aerial_robot_model {
   //Transformable Aerial Robot Model with ROS functions
   class RobotModelRos {
   public:
-    RobotModelRos(ros::NodeHandle nh, ros::NodeHandle nhp);
+    RobotModelRos(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp);
     virtual ~RobotModelRos() = default;
 
     //public functions
-    sensor_msgs::JointState getJointState() const { return joint_state_; }
+    sensor_msgs_c::JointState getJointState() const { return joint_state_; }
 
     const boost::shared_ptr<aerial_robot_model::RobotModel> getRobotModel() const { return robot_model_; }
 
   private:
     //private attributes
-    ros::ServiceServer add_extra_module_service_;
-    ros::Subscriber joint_state_sub_;
+    ros_compat::ServiceServer add_extra_module_service_;
+    ros_compat::Subscriber joint_state_sub_;
     tf2_ros::TransformBroadcaster br_;
     tf2_ros::StaticTransformBroadcaster static_br_;
-    sensor_msgs::JointState joint_state_;
-    ros::NodeHandle nh_;
-    ros::NodeHandle nhp_;
+    sensor_msgs_c::JointState joint_state_;
+    ros_compat::NodeHandle nh_;
+    ros_compat::NodeHandle nhp_;
     pluginlib::ClassLoader<aerial_robot_model::RobotModel> robot_model_loader_;
     boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_;
     std::string tf_prefix_;
 
     //private functions
-    void jointStateCallback(const sensor_msgs::JointStateConstPtr& state);
-    bool addExtraModuleCallback(aerial_robot_model::AddExtraModule::Request& req, aerial_robot_model::AddExtraModule::Response& res);
+    void jointStateCallback(const ros_compat::ConstPtr<sensor_msgs_c::JointState>& state);
+    bool addExtraModuleCallback(aerial_robot_model_s::AddExtraModule::Request& req, aerial_robot_model_s::AddExtraModule::Response& res);
   };
 } //namespace aerial_robot_model
