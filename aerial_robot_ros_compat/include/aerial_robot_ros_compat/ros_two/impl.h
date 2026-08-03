@@ -502,3 +502,11 @@ inline Time now()
 #define ROS_COMPAT_ERROR_THROTTLE(p, ...)                                                                              \
   RCLCPP_ERROR_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                         \
                         static_cast<int>((p) * 1000), __VA_ARGS__)
+
+#define ROS_COMPAT_INFO_ONCE(...) RCLCPP_INFO_ONCE(ROS_COMPAT_LOGGER(), __VA_ARGS__)
+#define ROS_COMPAT_WARN_ONCE(...) RCLCPP_WARN_ONCE(ROS_COMPAT_LOGGER(), __VA_ARGS__)
+#define ROS_COMPAT_ERROR_ONCE(...) RCLCPP_ERROR_ONCE(ROS_COMPAT_LOGGER(), __VA_ARGS__)
+
+#define ROS_COMPAT_INFO_STREAM_ONCE(args) RCLCPP_INFO_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
+#define ROS_COMPAT_WARN_STREAM_ONCE(args) RCLCPP_WARN_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
+#define ROS_COMPAT_ERROR_STREAM_ONCE(args) RCLCPP_ERROR_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)

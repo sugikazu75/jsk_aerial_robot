@@ -144,6 +144,30 @@ inline NodeHandle initNode(int& argc, char** argv, const std::string& name)
 #endif
 }
 
+/**
+ * Join a tf_prefix onto a frame name, as tf::resolve did.
+ *
+ * ROS2 removed tf_prefix, but the launch files still namespace each robot and
+ * pass a tf_prefix parameter, so the concept is still needed. This is pure
+ * string handling and identical on both sides.
+ *
+ * Behaviour verified against ROS1's tf::resolve:
+ *   ("",           "cog")  -> "cog"
+ *   ("quadrotor1", "cog")  -> "quadrotor1/cog"
+ *   ("quadrotor1", "/cog") -> "cog"     absolute frame ignores the prefix
+ *   ("/quadrotor1","cog")  -> "quadrotor1/cog"   leading slash stripped
+ */
+inline std::string resolveFrame(const std::string& prefix, const std::string& frame_name)
+{
+  auto strip_leading_slash = [](const std::string& s) { return (!s.empty() && s.front() == '/') ? s.substr(1) : s; };
+
+  if (!frame_name.empty() && frame_name.front() == '/')
+    return strip_leading_slash(frame_name);
+  if (prefix.empty())
+    return frame_name;
+  return strip_leading_slash(prefix) + "/" + frame_name;
+}
+
 /** The roscpp "~" handle. */
 inline NodeHandle privateNodeHandle(const NodeHandle& nh)
 {
