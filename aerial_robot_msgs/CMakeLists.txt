@@ -1,36 +1,16 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.14)
 project(aerial_robot_msgs)
 
-## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  std_msgs
-  geometry_msgs
-  message_generation
-  )
+if(DEFINED ENV{ROS_VERSION})
+  set(ROS_VERSION $ENV{ROS_VERSION})
+else()
+  message(FATAL_ERROR "ROS_VERSION is not defined")
+endif()
 
-## Declare ROS messages and services
-add_message_files(FILES
-  DynamicReconfigureLevels.msg
-  FourAxisGain.msg
-  AerialRobotStatus.msg
-  FlightNav.msg
-  PoseControlPid.msg
-  Pid.msg
-  State.msg
-  States.msg
-  Acc.msg
-  WrenchAllocationMatrix.msg
-  ApplyWrench.msg
-  ForceList.msg
-)
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-## Generate added messages and services
-generate_messages(DEPENDENCIES std_msgs geometry_msgs)
-
-## Declare a catkin package
-catkin_package(
-  CATKIN_DEPENDS std_msgs geometry_msgs message_runtime
-)
-
-
-
+if(ROS_VERSION EQUAL 1)
+  include(Ros1)
+else()
+  include(Ros2)
+endif()

@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 
 #the voltage of battery
 float32 voltage

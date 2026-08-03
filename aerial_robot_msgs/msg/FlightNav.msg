@@ -11,7 +11,7 @@ uint8 LOCAL_FRAME = 1
 uint8 BASELINK = 0
 uint8 COG = 1
 
-Header header
+std_msgs/Header header
 
 uint8 control_frame # reference frame: local or world, mainly for vel/acc nav
 uint8 target # the target link: baselink or COG
@@ -44,4 +44,3 @@ uint8 pos_z_nav_mode
 float32 target_pos_z
 float32 target_vel_z
 float32 target_pos_diff_z
-
