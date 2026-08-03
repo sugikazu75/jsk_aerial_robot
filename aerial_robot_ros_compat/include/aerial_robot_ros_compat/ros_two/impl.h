@@ -48,6 +48,30 @@ using Duration = rclcpp::Duration;
 using Time = rclcpp::Time;
 using Rate = rclcpp::Rate;
 
+/**
+ * Shared pointer flavour used across the stack's interfaces.
+ *
+ * ROS1 pluginlib hands back boost::shared_ptr and the plugin base classes take
+ * boost::shared_ptr in their initialize() signatures; ROS2 uses std::shared_ptr
+ * throughout. The two are not interchangeable, so call sites spell the pointer
+ * this way and get the right one.
+ */
+template <class T>
+using SharedPtr = std::shared_ptr<T>;
+
+template <class T, class... Args>
+SharedPtr<T> makeShared(Args&&... args)
+{
+  return std::make_shared<T>(std::forward<Args>(args)...);
+}
+
+/** ROS1 pluginlib spells this createInstance; ROS2 dropped it for createSharedInstance. */
+template <class Loader>
+auto createPluginInstance(Loader& loader, const std::string& name) -> decltype(loader.createSharedInstance(name))
+{
+  return loader.createSharedInstance(name);
+}
+
 template <class M>
 using ConstPtr = typename M::ConstSharedPtr;
 
@@ -257,7 +281,19 @@ struct TimerEvent
 class NodeHandle
 {
 public:
-  NodeHandle() = default;
+  /**
+   * Default handle onto the process-global node.
+   *
+   * roscpp's `ros::NodeHandle nh;` addresses the process's own node and, for
+   * parameters, the global parameter server. ROS2 has no global server, so the
+   * closest faithful mapping is the node registered with setGlobalNode(). Code
+   * that default-constructs a handle to read a parameter - RobotModel does this
+   * in two places - then keeps working without threading a node through every
+   * constructor.
+   */
+  NodeHandle() : node_(detail::globalNode())
+  {
+  }
 
   /** Root handle onto a node. */
   explicit NodeHandle(std::shared_ptr<rclcpp::Node> node, const std::string& ns = "") : node_(std::move(node)), ns_(ns)
@@ -306,11 +342,15 @@ public:
     return Publisher(node_->create_publisher<M>(resolveName(topic), qos));
   }
 
+  // Spelled std::shared_ptr<const M> rather than ConstPtr<M>: the latter is
+  // `typename M::ConstSharedPtr`, a non-deduced context, so M could not be
+  // deduced from the callback and every call site would have to name the
+  // message type explicitly. roscpp's own signature has the same shape.
   template <class M, class T>
-  Subscriber subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(const ConstPtr<M>&), T* obj,
-                       const TransportHints& = TransportHints())
+  Subscriber subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(const std::shared_ptr<const M>&),
+                       T* obj, const TransportHints& = TransportHints())
   {
-    auto cb = [obj, fp](const ConstPtr<M>& msg) { (obj->*fp)(msg); };
+    auto cb = [obj, fp](const std::shared_ptr<const M>& msg) { (obj->*fp)(msg); };
     return Subscriber(node_->create_subscription<M>(resolveName(topic),
                                                     rclcpp::QoS(rclcpp::KeepLast(queue_size ? queue_size : 1)), cb));
   }

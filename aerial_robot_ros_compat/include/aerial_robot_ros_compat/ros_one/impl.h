@@ -14,7 +14,11 @@
 
 #include <ros/ros.h>
 
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <string>
+#include <utility>
 
 namespace ros_compat
 {
@@ -32,6 +36,30 @@ using Rate = ::ros::Rate;
 using AsyncSpinner = ::ros::AsyncSpinner;
 using CallbackQueue = ::ros::CallbackQueue;
 using TransportHints = ::ros::TransportHints;
+
+/**
+ * Shared pointer flavour used across the stack's interfaces.
+ *
+ * ROS1 pluginlib hands back boost::shared_ptr and the plugin base classes take
+ * boost::shared_ptr in their initialize() signatures; ROS2 uses std::shared_ptr
+ * throughout. The two are not interchangeable, so call sites spell the pointer
+ * this way and get the right one.
+ */
+template <class T>
+using SharedPtr = boost::shared_ptr<T>;
+
+template <class T, class... Args>
+SharedPtr<T> makeShared(Args&&... args)
+{
+  return boost::make_shared<T>(std::forward<Args>(args)...);
+}
+
+/** ROS1 pluginlib spells this createInstance; ROS2 dropped it for createSharedInstance. */
+template <class Loader>
+auto createPluginInstance(Loader& loader, const std::string& name) -> decltype(loader.createInstance(name))
+{
+  return loader.createInstance(name);
+}
 
 /** Shared pointer to a const message, as the callbacks in this stack take it. */
 template <class M>

@@ -168,6 +168,26 @@ inline std::string resolveFrame(const std::string& prefix, const std::string& fr
   return strip_leading_slash(prefix) + "/" + frame_name;
 }
 
+/**
+ * Construct a tf2_ros broadcaster.
+ *
+ * tf2_ros exists under both versions, but ROS1's broadcasters default-construct
+ * while ROS2's need the node. Kept as a template so this header does not have to
+ * depend on tf2_ros; it is only instantiated where a broadcaster is actually
+ * declared. Returns a shared_ptr because the ROS2 types are not default
+ * constructible and so cannot be plain members initialised later.
+ */
+template <class Broadcaster>
+std::shared_ptr<Broadcaster> makeBroadcaster(const NodeHandle& nh)
+{
+#if AERIAL_ROBOT_ROS_VERSION == 1
+  (void)nh;
+  return std::make_shared<Broadcaster>();
+#else
+  return std::make_shared<Broadcaster>(nh.node());
+#endif
+}
+
 /** The roscpp "~" handle. */
 inline NodeHandle privateNodeHandle(const NodeHandle& nh)
 {
