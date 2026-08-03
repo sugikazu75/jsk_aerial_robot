@@ -36,7 +36,7 @@
 #pragma once
 
 #include <aerial_robot_model/model/aerial_robot_model.h>
-#include <pluginlib/class_loader.h>
+#include <pluginlib/class_loader.hpp>
 #if AERIAL_ROBOT_ROS_VERSION == 1
 #  include <aerial_robot_model/AddExtraModule.h>
 #  include <spinal/DesireCoord.h>
@@ -63,19 +63,19 @@ namespace aerial_robot_model {
     //public functions
     sensor_msgs_c::JointState getJointState() const { return joint_state_; }
 
-    const boost::shared_ptr<aerial_robot_model::RobotModel> getRobotModel() const { return robot_model_; }
+    const ros_compat::SharedPtr<aerial_robot_model::RobotModel> getRobotModel() const { return robot_model_; }
 
   private:
     //private attributes
     ros_compat::ServiceServer add_extra_module_service_;
     ros_compat::Subscriber joint_state_sub_;
-    tf2_ros::TransformBroadcaster br_;
-    tf2_ros::StaticTransformBroadcaster static_br_;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> br_;
+    std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_br_;
     sensor_msgs_c::JointState joint_state_;
     ros_compat::NodeHandle nh_;
     ros_compat::NodeHandle nhp_;
     pluginlib::ClassLoader<aerial_robot_model::RobotModel> robot_model_loader_;
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_;
     std::string tf_prefix_;
 
     //private functions

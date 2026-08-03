@@ -47,7 +47,7 @@ namespace aerial_robot_model {
   void RobotModel::kinematicsInit()
   {
     /* robot model */
-    if (!model_.initParam("robot_description"))
+    if (!initUrdfFromParam(model_, ros_compat::NodeHandle()))
       {
         ROS_COMPAT_ERROR("Failed to extract urdf model from rosparam");
         return;

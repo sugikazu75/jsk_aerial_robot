@@ -59,7 +59,7 @@ void RobotModel::calcLambdaJacobian()
     wrench_gravity_jacobian.bottomRows(3) -= aerial_robot_model::skew(-inertia.second.getMass() * gravity_3d) * getSecondDerivativeRoot(inertia.first, inertia.second.getCOG());
   }
 
-  ROS_DEBUG_STREAM("wrench_gravity_jacobian w.r.t. root : \n" << wrench_gravity_jacobian);
+  ROS_COMPAT_DEBUG_STREAM("wrench_gravity_jacobian w.r.t. root : \n" << wrench_gravity_jacobian);
 
   if(wrench_dof == 6) // fully-actuated
     lambda_jacobian_ = -q_pseudo_inv * wrench_gravity_jacobian; // trans, rot
@@ -101,7 +101,7 @@ void RobotModel::calcLambdaJacobian()
     }
   lambda_jacobian_ += (Eigen::MatrixXd::Identity(rotor_num, rotor_num) - q_pseudo_inv * q_mat) * q_pseudo_inv_jacobian;
 
-  ROS_DEBUG_STREAM("lambda_jacobian: \n" << lambda_jacobian_);
+  ROS_COMPAT_DEBUG_STREAM("lambda_jacobian: \n" << lambda_jacobian_);
 }
 
 void RobotModel::calcJointTorqueJacobian()

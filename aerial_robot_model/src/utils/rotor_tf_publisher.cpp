@@ -36,6 +36,7 @@
 /* ros */
 #include <aerial_robot_ros_compat/message.h>
 #include <aerial_robot_ros_compat/ros_compat.h>
+#include <aerial_robot_model/model/aerial_robot_model.h>
 #include <urdf/model.h>
 #if AERIAL_ROBOT_ROS_VERSION == 1
 #  include <geometry_msgs/TransformStamped.h>
@@ -70,8 +71,10 @@ public:
     nhp_.param("rotor_joint_name", rotor_joint_name_, string("rotor"));
     nhp_.param("tf_prefix", tf_prefix_, string(""));
 
+    static_tf_broadcaster_ = ros_compat::makeBroadcaster<tf2_ros::StaticTransformBroadcaster>(nh_);
+
     addChildren(tree.getRootSegment());
-    timer_ = nhp_.createTimer(0.1, &RotorTfPublisher::callbackFixedJoint, this, true);
+    timer_ = nhp_.createTimer(ros_compat::duration(0.1), &RotorTfPublisher::callbackFixedJoint, this, true);
   }
 
   ~RotorTfPublisher(){}
@@ -90,14 +93,14 @@ private:
       tf_transform.child_frame_id =  ros_compat::resolveFrame(tf_prefix_, seg->second.tip);
       tf_transforms.push_back(tf_transform);
     }
-    static_tf_broadcaster_.sendTransform(tf_transforms);
+    static_tf_broadcaster_->sendTransform(tf_transforms);
   }
 
   ros_compat::Timer timer_;
   ros_compat::NodeHandle nh_, nhp_;
   string rotor_joint_name_;
   string tf_prefix_;
-  tf2_ros::StaticTransformBroadcaster static_tf_broadcaster_;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
   std::map<std::string, SegmentPair> segments_rotor_;
 
   void addChildren(const KDL::SegmentMap::const_iterator segment)
@@ -126,7 +129,7 @@ int main(int argc, char** argv)
   ros_compat::NodeHandle nhp = ros_compat::privateNodeHandle(nh);
 
   urdf::Model model;
-  if (!model.initParam("robot_description"))
+  if (!aerial_robot_model::initUrdfFromParam(model, nh))
     return -1;
 
   KDL::Tree tree;

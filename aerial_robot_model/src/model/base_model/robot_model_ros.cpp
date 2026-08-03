@@ -6,6 +6,9 @@ namespace aerial_robot_model {
     nhp_(nhp),
     robot_model_loader_("aerial_robot_model", "aerial_robot_model::RobotModel")
   {
+    br_ = ros_compat::makeBroadcaster<tf2_ros::TransformBroadcaster>(nh_);
+    static_br_ = ros_compat::makeBroadcaster<tf2_ros::StaticTransformBroadcaster>(nh_);
+
     // rosparam
     nhp_.param("tf_prefix", tf_prefix_, std::string(""));
 
@@ -15,7 +18,7 @@ namespace aerial_robot_model {
       {
         try
           {
-            robot_model_ = robot_model_loader_.createInstance(plugin_name);
+            robot_model_ = ros_compat::createPluginInstance(robot_model_loader_, plugin_name);
           }
         catch(pluginlib::PluginlibException& ex)
           {
@@ -25,7 +28,7 @@ namespace aerial_robot_model {
     else
       {
         ROS_COMPAT_ERROR("can not find plugin rosparameter for robot model, use default class: aerial_robot_model::RobotModel");
-        robot_model_ = boost::make_shared<aerial_robot_model::RobotModel>();
+        robot_model_ = ros_compat::makeShared<aerial_robot_model::RobotModel>();
       }
 
     if (robot_model_->isModelFixed()) {
@@ -35,13 +38,14 @@ namespace aerial_robot_model {
       tf.header.stamp = ros_compat::now();
       tf.header.frame_id = ros_compat::resolveFrame(tf_prefix_, robot_model_->getRootFrameName());
       tf.child_frame_id = ros_compat::resolveFrame(tf_prefix_, std::string("cog"));
-      static_br_.sendTransform(tf);
+      static_br_->sendTransform(tf);
     }
     else {
       joint_state_sub_ = nh_.subscribe("joint_states", 1, &RobotModelRos::jointStateCallback, this);
     }
 
-    add_extra_module_service_ = nh_.advertiseService("add_extra_module", &RobotModelRos::addExtraModuleCallback, this);
+    add_extra_module_service_ = ros_compat::advertiseService<aerial_robot_model_s::AddExtraModule>(
+      nh_, "add_extra_module", &RobotModelRos::addExtraModuleCallback, this);
  }
 
   void RobotModelRos::jointStateCallback(const ros_compat::ConstPtr<sensor_msgs_c::JointState>& state)
@@ -53,7 +57,7 @@ namespace aerial_robot_model {
     tf.header = state->header;
     tf.header.frame_id = ros_compat::resolveFrame(tf_prefix_, robot_model_->getRootFrameName());
     tf.child_frame_id = ros_compat::resolveFrame(tf_prefix_, std::string("cog"));
-    br_.sendTransform(tf);
+    br_->sendTransform(tf);
   }
 
   bool RobotModelRos::addExtraModuleCallback(aerial_robot_model_s::AddExtraModule::Request &req, aerial_robot_model_s::AddExtraModule::Response &res)

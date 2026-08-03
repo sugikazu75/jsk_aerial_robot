@@ -61,11 +61,11 @@ UnderactuatedTiltedRobotModel::UnderactuatedTiltedRobotModel(bool init_with_rosp
 
   if(getVerbose())
   {
-    ROS_INFO_STREAM("f_norm_pitch: " << f_norm_pitch << "; f_norm_roll: " << f_norm_roll);
-    ROS_INFO_STREAM("rescaled static thrust: " << getStaticThrust().transpose());
+    ROS_COMPAT_INFO_STREAM("f_norm_pitch: " << f_norm_pitch << "; f_norm_roll: " << f_norm_roll);
+    ROS_COMPAT_INFO_STREAM("rescaled static thrust: " << getStaticThrust().transpose());
   }
 }
 
 /* plugin registration */
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(UnderactuatedTiltedRobotModel, aerial_robot_model::RobotModel);

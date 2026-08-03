@@ -72,6 +72,27 @@ AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
 
 namespace aerial_robot_model {
 
+  /**
+   * Load a urdf::Model from the robot_description parameter.
+   *
+   * urdf::Model::initParam only exists under ROS1, where it reaches into the
+   * global parameter server. ROS2 has no such server - robot_description is an
+   * ordinary parameter of some node - so there the description is fetched
+   * through the handle and handed to initString.
+   */
+  inline bool initUrdfFromParam(urdf::Model& model, const ros_compat::NodeHandle& nh,
+                                const std::string& param = "robot_description")
+  {
+#if AERIAL_ROBOT_ROS_VERSION == 1
+    (void)nh;
+    return model.initParam(param);
+#else
+    std::string xml_string;
+    if (!nh.getParam(param, xml_string) || xml_string.empty()) return false;
+    return model.initString(xml_string);
+#endif
+  }
+
   //Basic Aerial Robot Model
   class RobotModel {
   public:
