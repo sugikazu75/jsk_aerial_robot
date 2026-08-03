@@ -115,9 +115,7 @@ namespace aerial_robot_model {
 
   inline tf2::Vector3 kdlToTf2(const KDL::Vector& in)
   {
-    tf2::Stamped<tf2::Vector3> out;
-    tf2::convert(kdlToMsg(in), out);
-    return out;
+    return tf2::Vector3(in.x(), in.y(), in.z());
   }
 
   inline std::vector<tf2::Vector3> kdlToTf2(const std::vector<KDL::Vector>& in)

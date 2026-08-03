@@ -132,7 +132,7 @@ void StateEstimator::statePublish(const ros_compat::TimerEvent & e)
 {
   static ros_compat::Time prev_pub_stamp = ros_compat::Time(0);
 
-  ros_compat::Time imu_stamp = ros_compat::dynamicPointerCast<sensor_plugin::Imu>(imu_handlers_.at(0))->getStamp();
+  ros_compat::Time imu_stamp = imu_handlers_.at(0)->getStamp();
   aerial_robot_msgs_c::States full_state;
   full_state.header.stamp = imu_stamp;
 

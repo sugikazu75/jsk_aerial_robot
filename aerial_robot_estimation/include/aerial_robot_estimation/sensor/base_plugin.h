@@ -120,6 +120,11 @@ namespace sensor_plugin
 
     virtual ~SensorBase(){}
 
+    virtual ros_compat::Time getStamp()
+    {
+      return ros_compat::Time(0);
+    }
+
     inline const std::string& getSensorName() const {return sensor_name_;}
     const int getStatus()
     {

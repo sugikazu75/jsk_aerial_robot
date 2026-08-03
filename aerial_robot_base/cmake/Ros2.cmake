@@ -15,6 +15,7 @@ find_package(aerial_robot_model REQUIRED)
 find_package(aerial_robot_ros_compat REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 set(AERIAL_ROBOT_BASE_DEPS
   aerial_robot_control
@@ -23,16 +24,29 @@ set(AERIAL_ROBOT_BASE_DEPS
   aerial_robot_ros_compat
   pluginlib
   rclcpp
+  tf2_geometry_msgs
 )
 
-include_directories(include)
+include_directories(
+  include
+  # aerial_robot_control and aerial_robot_estimation export targets, but their
+  # headers are not always propagated onto consumers' compile lines.
+  ${aerial_robot_control_INCLUDE_DIRS}
+  ${aerial_robot_estimation_INCLUDE_DIRS}
+)
 
 add_library(aerial_robot_base SHARED src/aerial_robot_base.cpp)
 ament_target_dependencies(aerial_robot_base ${AERIAL_ROBOT_BASE_DEPS})
+target_link_libraries(aerial_robot_base
+  aerial_robot_estimation::sensor_pluginlib
+  tf2_geometry_msgs::tf2_geometry_msgs)
 
 add_executable(aerial_robot_base_node src/aerial_robot_base_node.cpp)
 ament_target_dependencies(aerial_robot_base_node ${AERIAL_ROBOT_BASE_DEPS})
-target_link_libraries(aerial_robot_base_node aerial_robot_base)
+target_link_libraries(aerial_robot_base_node
+  aerial_robot_base
+  aerial_robot_estimation::sensor_pluginlib
+  tf2_geometry_msgs::tf2_geometry_msgs)
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION include/${PROJECT_NAME})
