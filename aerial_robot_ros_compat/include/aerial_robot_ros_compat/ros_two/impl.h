@@ -44,8 +44,77 @@
 namespace ros_compat
 {
 
-using Duration = rclcpp::Duration;
-using Time = rclcpp::Time;
+/**
+ * rclcpp::Time and Duration with roscpp's accessors added.
+ *
+ * The stack calls .toSec() in about 140 places and .fromSec() in a further
+ * seventeen. Rewriting each of those to a free function would be a large,
+ * mechanical, and entirely reviewable-by-eye-only diff through the control and
+ * estimation loops; deriving instead keeps the call sites readable and confines
+ * the difference to here. They slice safely into the rclcpp types when handed
+ * to rclcpp APIs, and the converting constructors pick results back up.
+ */
+class Duration : public rclcpp::Duration
+{
+public:
+  using rclcpp::Duration::Duration;
+  Duration(const rclcpp::Duration& d) : rclcpp::Duration(d)
+  {
+  }
+  Duration() : rclcpp::Duration(0, 0)
+  {
+  }
+
+  double toSec() const
+  {
+    return seconds();
+  }
+  void fromSec(double s)
+  {
+    *this = Duration(rclcpp::Duration::from_seconds(s));
+  }
+
+  static Duration fromSeconds(double s)
+  {
+    return Duration(rclcpp::Duration::from_seconds(s));
+  }
+};
+
+class Time : public rclcpp::Time
+{
+public:
+  using rclcpp::Time::Time;
+  Time(const rclcpp::Time& t) : rclcpp::Time(t)
+  {
+  }
+
+  double toSec() const
+  {
+    return seconds();
+  }
+  void fromSec(double s)
+  {
+    *this = Time(static_cast<int64_t>(s * 1e9), get_clock_type());
+  }
+  bool isZero() const
+  {
+    return nanoseconds() == 0;
+  }
+
+  Duration operator-(const Time& rhs) const
+  {
+    return Duration(static_cast<const rclcpp::Time&>(*this) - static_cast<const rclcpp::Time&>(rhs));
+  }
+  Time operator+(const Duration& rhs) const
+  {
+    return Time(static_cast<const rclcpp::Time&>(*this) + static_cast<const rclcpp::Duration&>(rhs));
+  }
+  Time operator-(const Duration& rhs) const
+  {
+    return Time(static_cast<const rclcpp::Time&>(*this) - static_cast<const rclcpp::Duration&>(rhs));
+  }
+};
+
 using Rate = rclcpp::Rate;
 
 /**
@@ -72,16 +141,49 @@ auto createPluginInstance(Loader& loader, const std::string& name) -> decltype(l
   return loader.createSharedInstance(name);
 }
 
+/**
+ * Base for classes handing out a SharedPtr to themselves.
+ *
+ * Has to match whichever smart pointer SharedPtr is: shared_from_this() on a
+ * boost base returns a boost::shared_ptr, which will not convert to a
+ * std::shared_ptr.
+ */
+template <class T>
+using EnableSharedFromThis = std::enable_shared_from_this<T>;
+
+/** boost::dynamic_pointer_cast under ROS1, std:: under ROS2. */
+template <class T, class U>
+SharedPtr<T> dynamicPointerCast(const SharedPtr<U>& p)
+{
+  return std::dynamic_pointer_cast<T>(p);
+}
+
 template <class M>
 using ConstPtr = typename M::ConstSharedPtr;
 
 template <class M>
 using Ptr = typename M::SharedPtr;
 
-/** Accepted for source compatibility with roscpp; ROS2 selects QoS instead. */
+/**
+ * Accepted for source compatibility with roscpp.
+ *
+ * ROS2 expresses the same intent through QoS rather than transport selection,
+ * and these are no-ops. Note that means a subscriber asking for UDP - mocap
+ * does - silently gets the default reliable transport instead. Matching the
+ * old behaviour would mean a best-effort QoS profile, which is a decision for
+ * whoever tunes the ROS2 mocap path against real hardware.
+ */
 struct TransportHints
 {
   TransportHints& tcpNoDelay(bool = true)
+  {
+    return *this;
+  }
+  TransportHints& udp()
+  {
+    return *this;
+  }
+  TransportHints& tcp()
   {
     return *this;
   }
@@ -201,8 +303,13 @@ class Subscriber
 public:
   Subscriber() = default;
 
-  explicit Subscriber(std::shared_ptr<void> sub) : sub_(std::move(sub))
+  Subscriber(std::shared_ptr<void> sub, std::string topic) : sub_(std::move(sub)), topic_(std::move(topic))
   {
+  }
+
+  std::string getTopic() const
+  {
+    return topic_;
   }
 
   void shutdown()
@@ -216,6 +323,7 @@ public:
 
 private:
   std::shared_ptr<void> sub_;
+  std::string topic_;
 };
 
 class ServiceServer
@@ -236,6 +344,62 @@ public:
 
 private:
   std::shared_ptr<void> srv_;
+};
+
+/**
+ * Blocking service client, as roscpp's ServiceClient is.
+ *
+ * The blocking part is the problem. rclcpp has no synchronous call: spinning a
+ * node from inside one of its own callbacks deadlocks, because the executor is
+ * already inside that callback and will never reach the response. roscpp had no
+ * such restriction, and the call sites here - the visual odometry reset, for one
+ * - do exactly that.
+ *
+ * So the client gets its own node and its own executor, separate from the one
+ * running the caller. The call then blocks the calling thread without touching
+ * the executor it is running under.
+ *
+ * The timeout is what roscpp did not have: a service that never answers used to
+ * hang forever, and here it gives up and reports failure instead.
+ */
+template <class S>
+class ServiceClientImpl
+{
+public:
+  ServiceClientImpl(const std::string& name, std::shared_ptr<rclcpp::Node> owner) : name_(name)
+  {
+    node_ =
+        std::make_shared<rclcpp::Node>("ros_compat_service_client_" + std::to_string(reinterpret_cast<uintptr_t>(this)),
+                                       owner ? owner->get_namespace() : "");
+    client_ = node_->create_client<S>(name);
+    executor_.add_node(node_);
+  }
+
+  bool exists(double timeout_sec = 0.0)
+  {
+    return client_->wait_for_service(std::chrono::duration<double>(timeout_sec));
+  }
+
+  bool call(typename S::Request& req, typename S::Response& res, double timeout_sec = 5.0)
+  {
+    if (!client_->service_is_ready())
+      return false;
+    auto request = std::make_shared<typename S::Request>(req);
+    auto future = client_->async_send_request(request);
+    if (executor_.spin_until_future_complete(future, std::chrono::duration<double>(timeout_sec)) !=
+        rclcpp::FutureReturnCode::SUCCESS)
+    {
+      return false;
+    }
+    res = *future.get();
+    return true;
+  }
+
+private:
+  std::string name_;
+  std::shared_ptr<rclcpp::Node> node_;
+  typename rclcpp::Client<S>::SharedPtr client_;
+  rclcpp::executors::SingleThreadedExecutor executor_;
 };
 
 class Timer
@@ -550,3 +714,23 @@ inline Time now()
 #define ROS_COMPAT_INFO_STREAM_ONCE(args) RCLCPP_INFO_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
 #define ROS_COMPAT_WARN_STREAM_ONCE(args) RCLCPP_WARN_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
 #define ROS_COMPAT_ERROR_STREAM_ONCE(args) RCLCPP_ERROR_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
+
+// rclcpp has no _COND form; the condition is spelled out at the call site.
+#define ROS_COMPAT_INFO_COND(cond, ...)                                                                                \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (cond)                                                                                                          \
+      RCLCPP_INFO(ROS_COMPAT_LOGGER(), __VA_ARGS__);                                                                   \
+  } while (0)
+#define ROS_COMPAT_WARN_COND(cond, ...)                                                                                \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (cond)                                                                                                          \
+      RCLCPP_WARN(ROS_COMPAT_LOGGER(), __VA_ARGS__);                                                                   \
+  } while (0)
+#define ROS_COMPAT_ERROR_COND(cond, ...)                                                                               \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (cond)                                                                                                          \
+      RCLCPP_ERROR(ROS_COMPAT_LOGGER(), __VA_ARGS__);                                                                  \
+  } while (0)

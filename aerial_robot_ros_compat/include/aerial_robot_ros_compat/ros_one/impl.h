@@ -14,6 +14,7 @@
 
 #include <ros/ros.h>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -59,6 +60,23 @@ template <class Loader>
 auto createPluginInstance(Loader& loader, const std::string& name) -> decltype(loader.createInstance(name))
 {
   return loader.createInstance(name);
+}
+
+/**
+ * Base for classes handing out a SharedPtr to themselves.
+ *
+ * Has to match whichever smart pointer SharedPtr is: shared_from_this() on a
+ * boost base returns a boost::shared_ptr, which will not convert to a
+ * std::shared_ptr.
+ */
+template <class T>
+using EnableSharedFromThis = boost::enable_shared_from_this<T>;
+
+/** boost::dynamic_pointer_cast under ROS1, std:: under ROS2. */
+template <class T, class U>
+SharedPtr<T> dynamicPointerCast(const SharedPtr<U>& p)
+{
+  return boost::dynamic_pointer_cast<T>(p);
 }
 
 /** Shared pointer to a const message, as the callbacks in this stack take it. */
@@ -135,3 +153,7 @@ inline void setGlobalNode(const NodeHandle&)
 #define ROS_COMPAT_INFO_STREAM_ONCE(args) ROS_INFO_STREAM_ONCE(args)
 #define ROS_COMPAT_WARN_STREAM_ONCE(args) ROS_WARN_STREAM_ONCE(args)
 #define ROS_COMPAT_ERROR_STREAM_ONCE(args) ROS_ERROR_STREAM_ONCE(args)
+
+#define ROS_COMPAT_INFO_COND(cond, ...) ROS_INFO_COND(cond, __VA_ARGS__)
+#define ROS_COMPAT_WARN_COND(cond, ...) ROS_WARN_COND(cond, __VA_ARGS__)
+#define ROS_COMPAT_ERROR_COND(cond, ...) ROS_ERROR_COND(cond, __VA_ARGS__)

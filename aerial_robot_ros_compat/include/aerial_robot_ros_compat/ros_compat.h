@@ -145,6 +145,36 @@ inline NodeHandle initNode(int& argc, char** argv, const std::string& name)
 }
 
 /**
+ * Seconds held by a message header stamp.
+ *
+ * Under ROS1 a header stamp is a ros::Time and already has toSec(). Under ROS2
+ * it is a builtin_interfaces::msg::Time, a plain struct with no accessors, so
+ * the call sites go through these instead of reaching for .toSec()/.fromSec()
+ * on the field.
+ */
+template <class Stamp>
+double stampToSec(const Stamp& stamp)
+{
+#if AERIAL_ROBOT_ROS_VERSION == 1
+  return stamp.toSec();
+#else
+  return static_cast<double>(stamp.sec) + static_cast<double>(stamp.nanosec) * 1e-9;
+#endif
+}
+
+/** Write seconds into a message header stamp. */
+template <class Stamp>
+void stampFromSec(Stamp& stamp, double seconds)
+{
+#if AERIAL_ROBOT_ROS_VERSION == 1
+  stamp.fromSec(seconds);
+#else
+  stamp.sec = static_cast<int32_t>(seconds);
+  stamp.nanosec = static_cast<uint32_t>((seconds - static_cast<double>(stamp.sec)) * 1e9);
+#endif
+}
+
+/**
  * Join a tf_prefix onto a frame name, as tf::resolve did.
  *
  * ROS2 removed tf_prefix, but the launch files still namespace each robot and

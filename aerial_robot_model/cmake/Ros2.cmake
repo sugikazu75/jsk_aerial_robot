@@ -105,8 +105,12 @@ target_link_libraries(rotor_tf_publisher ${orocos_kdl_LIBRARIES})
 
 pluginlib_export_plugin_description_file(aerial_robot_model plugins/robot_model_plugins.xml)
 
+# Nested one level deeper than it looks: a package that also generates
+# interfaces gets include/<pkg> on its consumers' include path, because that is
+# where rosidl puts the generated headers. The hand-written headers have to sit
+# under the same root for <aerial_robot_model/model/...> to resolve.
 install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION include/${PROJECT_NAME})
+  DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME})
 
 install(TARGETS aerial_robot_model_lib aerial_robot_model_ros robot_model_pluginlib
   EXPORT export_${PROJECT_NAME}
@@ -121,7 +125,7 @@ install(DIRECTORY launch script plugins
   DESTINATION share/${PROJECT_NAME}
   USE_SOURCE_PERMISSIONS)
 
-ament_export_include_directories(include)
+ament_export_include_directories(include/${PROJECT_NAME})
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(${AERIAL_ROBOT_MODEL_DEPS} rosidl_default_runtime)
 
