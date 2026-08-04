@@ -27,10 +27,26 @@ half-converted across a commit boundary.
 | aerial_robot_estimation | yes | yes |
 | mujoco (wrapper), mujoco_ros, mujoco_ros_control | yes | yes |
 | aerial_robot_control | yes | yes |
-| aerial_robot_base, aerial_robot_simulation, robots/* | yes | not started |
+| aerial_robot_base | yes | yes |
+| aerial_robot_simulation | yes | yes |
+| robots/* | yes | not started |
 
-Order of work: base -> simulation -> mini_quadrotor. The goal for the first
+Next: mini_quadrotor's launch and config. The goal for the first
 milestone is mini_quadrotor hovering in MuJoCo under ROS2; Gazebo comes later.
+
+## A caution about "the build passes"
+
+`aerial_robot_simulation` was first delivered as a hardware component that
+implemented every `MujocoRosSystemInterface` method, registered with pluginlib,
+and built cleanly under both versions - and could not have hovered, because it
+had no estimator, no control law, and published no `ground_truth`. It was a
+correct shell around nothing.
+
+That is the shape of the risk here. A green build says the interfaces line up;
+it says nothing about whether the behaviour came across. When reviewing a
+converted package, compare it against what the ROS1 version *does* - which
+topics it publishes, which state it drives - not just against whether it
+compiles.
 
 ## Working with an agent on this
 
@@ -187,27 +203,48 @@ ros1_bridge has no humble apt package and must be built from source against both
 distributions. Not needed until a real flight controller is in the loop - the MuJoCo
 simulation does not start the serial bridge.
 
-## aerial_robot_simulation is the real remaining work
+## aerial_robot_simulation
 
-Not a port. ROS1 ros_control lets a controller be templated on the hardware interface
-type and receive an arbitrary C++ object; `MujocoAttitudeController::init` receives a
-`StateEstimate*` and the controller writes back into the hardware
-(`spinal_interface_->onGround(...)`). ROS2 ros2_control passes only **named doubles**
-between hardware and controller, so neither of those has a faithful equivalent.
+Not a port; the structure had to change. ROS1 ros_control lets a controller be
+templated on the hardware interface type and receive an arbitrary C++ object:
+`MujocoAttitudeController::init` received a `StateEstimate*`, and the controller
+wrote back into the hardware through `spinal_interface_->onGround(...)`. ROS2
+ros2_control passes only **named doubles** between hardware and controller, so
+neither direction survives.
 
-**Decision: fold the state estimator and the attitude controller into the ros2_control
-hardware component** (a `MujocoRosSystemInterface` implementation), exposing rotor
-thrusts as command interfaces. The alternative - flattening the estimator's inputs and
-outputs to named doubles and keeping a separate controller plugin - needs artificial
-interfaces to express `onGround`, which is a two-way state sharing between hardware and
-control.
+**The attitude estimator and the flight control core are therefore folded into
+the ros2_control hardware component** (`AerialRobotMujocoSystem`, with
+`AerialRobotSpinal` holding both). `onGround` then needs no interface at all.
+The alternative - flattening the estimator's inputs and outputs to named
+doubles and keeping a separate controller plugin - needs artificial interfaces
+to express what is really shared state.
 
-Both `MujocoPlugin` and `MujocoRosSystemInterface` exist on the ROS2 side; verified by
-building `mujoco_ros` and `mujoco_ros_control`.
+`read()` takes the `fc` site pose and the acc/gyro/mag sensors from MuJoCo,
+drives the estimator, and publishes `ground_truth` and `mocap/pose`.
+**Publishing `ground_truth` is not optional**: mini_quadrotor brings up with
+`sim_estimate_mode` = GROUND_TRUTH, so that topic is the only pose its estimator
+has. A hardware component that builds and loads but does not publish it will
+start cleanly and never fly.
 
-The firmware itself (`attitude_control.cpp`, `state_estimate`) does not need changing,
-but it calls roscpp directly under `-DSIMULATION`, so it needs to go through the compat
-layer's `NodeHandle`.
+`write()` steps the controller and applies its rotor forces. The command
+interfaces stay exported, but in the spinal configuration the controller is the
+authority, as it is on the board.
+
+The firmware sources are **not** rewritten. They are shared with the flight
+controller and the generated `ros_lib` headers must stay byte-identical.
+`spinal_ros2_shim.h` supplies what their `-DSIMULATION` path expects under ROS2:
+the `ros::` types backed by the compat layer, and the messages hoisted from
+`spinal::msg` back into `spinal`. That header injects into `ros::`, which is
+what the rest of this migration refuses to do - the difference is that it only
+happens under ROS2, where roscpp does not exist and there is nothing to be
+ambiguous with.
+
+`mujoco_ros_control` hands the component a `LifecycleNode`, an unrelated type to
+the `rclcpp::Node` the compat `NodeHandle` is built on. The flight controller
+gets its own node carrying the lifecycle node's name, namespace and **parameter
+overrides**, so its parameters resolve from the same config. If the compat layer
+ever needs to accept lifecycle nodes generally, that is the call site to
+generalise from.
 
 ## Environment
 
