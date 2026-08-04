@@ -15,6 +15,7 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 
 namespace aerial_robot_simulation
 {
@@ -39,15 +40,6 @@ double clampToRange(const double value, const double lower, const double upper)
 }
 
 /**
- * The namespace the robot lives in, as an absolute ROS2 namespace.
- *
- * mujoco_ros gives every plugin a node under /<mujoco server>/<plugin>, which
- * is not where the robot is. mujoco_ros_control's own `namespace` parameter is
- * the robot namespace - it is what it prefixes onto robot_description_node and
- * what it hands the controller manager - so read the same one rather than
- * inventing a second knob that could disagree with it.
- */
-/**
  * Every parameter override reaching a node, whatever route it came by.
  *
  * NodeOptions::parameter_overrides() holds only what was set programmatically
@@ -68,6 +60,78 @@ std::vector<rclcpp::Parameter> collectParameterOverrides(
   return overrides;
 }
 
+/**
+ * The `controllerN` keys under one servo group, in the order Servo.yaml lists
+ * them - which the file itself says must follow the kinematic chain.
+ *
+ * The parameters keep the ROS1 file's shape rather than being flattened by the
+ * launch, so Servo.yaml stays the single copy for both versions. rclcpp gives
+ * them back dot-joined, so the group's children are found by prefix.
+ */
+std::vector<std::string> servoControllerKeys(const ros_compat::NodeHandle& nh, const std::string& group_prefix)
+{
+  std::vector<std::string> keys;
+  const auto names = nh.node()->list_parameters({ group_prefix }, 0).names;
+  for (const auto& name : names)
+  {
+    const std::string tail = name.substr(group_prefix.size() + 1);
+    const std::string key = tail.substr(0, tail.find('.'));
+    if (key.rfind("controller", 0) != 0)
+      continue;
+    if (std::find(keys.begin(), keys.end(), key) == keys.end())
+      keys.push_back(key);
+  }
+  /* controller10 must not sort before controller2. */
+  std::sort(keys.begin(), keys.end(), [](const std::string& a, const std::string& b) {
+    const std::size_t prefix = std::string("controller").size();
+    return std::stoi(a.substr(prefix)) < std::stoi(b.substr(prefix));
+  });
+  return keys;
+}
+
+/** The servo group names: the direct children of `servo_controller`. */
+std::vector<std::string> servoGroupNames(const ros_compat::NodeHandle& nh)
+{
+  std::vector<std::string> groups;
+  const auto names = nh.node()->list_parameters({ "servo_controller" }, 0).names;
+  for (const auto& name : names)
+  {
+    const std::string tail = name.substr(std::string("servo_controller.").size());
+    const std::string group = tail.substr(0, tail.find('.'));
+    if (group.empty() || group == tail)
+      continue;  // a scalar directly under servo_controller, not a group
+    if (std::find(groups.begin(), groups.end(), group) == groups.end())
+      groups.push_back(group);
+  }
+  return groups;
+}
+
+/**
+ * A `simulation:` value for one servo, falling back to its group's.
+ *
+ * Servo.yaml puts the defaults on the group and lets a single controller
+ * override them, and servo_bridge resolves it the same way round.
+ */
+template <class T>
+bool servoSimParam(const ros_compat::NodeHandle& group_nh, const std::string& controller_key,
+                   const std::string& name, T& value)
+{
+  ros_compat::NodeHandle controller_nh(group_nh, controller_key + "/simulation");
+  if (controller_nh.getParam(name, value))
+    return true;
+  ros_compat::NodeHandle group_sim_nh(group_nh, "simulation");
+  return group_sim_nh.getParam(name, value);
+}
+
+/**
+ * The namespace the robot lives in, as an absolute ROS2 namespace.
+ *
+ * mujoco_ros gives every plugin a node under /<mujoco server>/<plugin>, which
+ * is not where the robot is. mujoco_ros_control's own `namespace` parameter is
+ * the robot namespace - it is what it prefixes onto robot_description_node and
+ * what it hands the controller manager - so read the same one rather than
+ * inventing a second knob that could disagree with it.
+ */
 std::string resolveRobotNamespace(const rclcpp_lifecycle::LifecycleNode::SharedPtr& model_nh)
 {
   std::string ns;
@@ -90,6 +154,35 @@ public:
     double upper_command = std::numeric_limits<double>::infinity();
     double command = 0.0;
     double state = 0.0;
+  };
+
+  /**
+   * One position-controlled servo joint.
+   *
+   * Under ROS1 these were not the hardware sim's business at all: servo_bridge
+   * - the interface the stack uses to reach the servos on both the real machine
+   * and in simulation - loaded an effort_controllers/JointPositionController per
+   * joint through the controller manager, and published the initial angle to it.
+   * ROS2 has no such controller in the distributions this targets, so the PID
+   * lives here, driven by the very same `simulation:` block of Servo.yaml. A
+   * real-machine servo_bridge, which converts joint commands into servo units
+   * for rosserial, is a separate job and still to do.
+   */
+  struct ServoData
+  {
+    std::string name;
+    int joint_id = -1;
+    int actuator_id = -1;
+    int qpos_adr = -1;
+    int qvel_adr = -1;
+    double p_gain = 0.0;
+    double i_gain = 0.0;
+    double d_gain = 0.0;
+    double i_clamp = 0.0;
+    double target = 0.0;
+    double error_integral = 0.0;
+    double lower_command = -std::numeric_limits<double>::infinity();
+    double upper_command = std::numeric_limits<double>::infinity();
   };
 
   ~Private()
@@ -122,6 +215,13 @@ public:
 
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr ground_truth_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr mocap_pub;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub;
+  std::vector<rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr> servo_ctrl_subs;
+
+  std::vector<ServoData> servos;
+  std::mutex servo_target_mutex;
+  double joint_state_pub_rate = 0.02;
+  double last_joint_state_time = 0.0;
 
   double mocap_pub_rate = 0.01;
   double mocap_pos_noise = 0.001;
@@ -299,6 +399,8 @@ bool AerialRobotMujocoSystem::initSim(rclcpp_lifecycle::LifecycleNode::SharedPtr
   data_->ground_truth_pub = data_->spinal_node->create_publisher<nav_msgs::msg::Odometry>("ground_truth", 1);
   data_->mocap_pub = data_->spinal_node->create_publisher<geometry_msgs::msg::PoseStamped>("mocap/pose", 1);
 
+  initServos(m);
+
   /* Nobody else spins this node. mujoco_ros_control adds its own node and the
      controller manager to the environment's executor, but it knows nothing
      about ours - and the firmware's subscriptions (four_axes/command, rpy/gain,
@@ -310,6 +412,94 @@ bool AerialRobotMujocoSystem::initSim(rclcpp_lifecycle::LifecycleNode::SharedPtr
               data_->spinal_node->get_namespace());
 
   return true;
+}
+
+void AerialRobotMujocoSystem::initServos(const mjModel* m)
+{
+  ros_compat::NodeHandle servo_nh(data_->nh, "servo_controller");
+
+  for (const auto& group : servoGroupNames(data_->nh))
+  {
+    ros_compat::NodeHandle group_nh(servo_nh, group);
+
+    for (const auto& key : servoControllerKeys(data_->nh, "servo_controller." + group))
+    {
+      ros_compat::NodeHandle controller_nh(group_nh, key);
+
+      Private::ServoData servo;
+      if (!controller_nh.getParam("name", servo.name))
+      {
+        RCLCPP_ERROR(nh_->get_logger(), "servo_controller/%s/%s has no `name`.", group.c_str(), key.c_str());
+        continue;
+      }
+
+      servo.joint_id = mj_name2id(m, mjOBJ_JOINT, servo.name.c_str());
+      servo.actuator_id = mj_name2id(m, mjOBJ_ACTUATOR, servo.name.c_str());
+      if (servo.joint_id < 0 || servo.actuator_id < 0)
+      {
+        RCLCPP_ERROR(nh_->get_logger(),
+                     "Servo `%s` needs a MuJoCo joint and an actuator of the same name; found joint %d, actuator %d.",
+                     servo.name.c_str(), servo.joint_id, servo.actuator_id);
+        continue;
+      }
+      servo.qpos_adr = m->jnt_qposadr[servo.joint_id];
+      servo.qvel_adr = m->jnt_dofadr[servo.joint_id];
+
+      servoSimParam(group_nh, key, "pid.p", servo.p_gain);
+      servoSimParam(group_nh, key, "pid.i", servo.i_gain);
+      servoSimParam(group_nh, key, "pid.d", servo.d_gain);
+      /* i_clamp_max is what the gimbal configs spell; hydrus omits it. */
+      if (!servoSimParam(group_nh, key, "pid.i_clamp_max", servo.i_clamp))
+        servo.i_clamp = std::numeric_limits<double>::infinity();
+      servoSimParam(group_nh, key, "init_value", servo.target);
+
+      if (m->actuator_ctrllimited[servo.actuator_id])
+      {
+        servo.lower_command = m->actuator_ctrlrange[2 * servo.actuator_id];
+        servo.upper_command = m->actuator_ctrlrange[2 * servo.actuator_id + 1];
+      }
+
+      RCLCPP_INFO(nh_->get_logger(), "Servo `%s`: holding %.3f rad with p=%.1f i=%.3f d=%.1f.",
+                  servo.name.c_str(), servo.target, servo.p_gain, servo.i_gain, servo.d_gain);
+      data_->servos.push_back(servo);
+    }
+
+    /* The topic servo_bridge takes joint commands on, so whatever drives the
+       robot does not have to know it is talking to a simulator. */
+    const std::string topic = group + "_ctrl";
+    data_->servo_ctrl_subs.push_back(data_->spinal_node->create_subscription<sensor_msgs::msg::JointState>(
+        topic, 1, [this](const sensor_msgs::msg::JointState::SharedPtr msg) { setServoTargets(*msg); }));
+  }
+
+  if (data_->servos.empty())
+    return;
+
+  /* The robot model tracks the configuration through this: without it a
+     transformable robot's kinematics stay at the pose it was launched in, and
+     its LQI gains are computed for a shape it is not in. Under ROS1 this came
+     from joint_state_controller. */
+  data_->joint_state_pub = data_->spinal_node->create_publisher<sensor_msgs::msg::JointState>("joint_states", 1);
+}
+
+void AerialRobotMujocoSystem::setServoTargets(const sensor_msgs::msg::JointState& msg)
+{
+  std::lock_guard<std::mutex> lock(data_->servo_target_mutex);
+  for (std::size_t i = 0; i < msg.position.size(); ++i)
+  {
+    /* By name when the message carries them, by index otherwise - which is what
+       the ROS1 servo command path allowed too. */
+    if (i < msg.name.size())
+    {
+      auto it = std::find_if(data_->servos.begin(), data_->servos.end(),
+                             [&](const Private::ServoData& s) { return s.name == msg.name[i]; });
+      if (it != data_->servos.end())
+        it->target = msg.position[i];
+    }
+    else if (i < data_->servos.size())
+    {
+      data_->servos[i].target = msg.position[i];
+    }
+  }
 }
 
 CallbackReturn AerialRobotMujocoSystem::on_init(const hardware_interface::HardwareInfo& system_info)
@@ -524,11 +714,34 @@ hardware_interface::return_type AerialRobotMujocoSystem::read(const rclcpp::Time
     data_->last_mocap_time = time.seconds();
   }
 
+  publishJointStates(time);
+
   return hardware_interface::return_type::OK;
 }
 
+void AerialRobotMujocoSystem::publishJointStates(const rclcpp::Time& time)
+{
+  if (data_->joint_state_pub == nullptr ||
+      time.seconds() - data_->last_joint_state_time < data_->joint_state_pub_rate)
+  {
+    return;
+  }
+
+  sensor_msgs::msg::JointState msg;
+  msg.header.stamp = time;
+  for (const auto& servo : data_->servos)
+  {
+    msg.name.push_back(servo.name);
+    msg.position.push_back(data_->data->qpos[servo.qpos_adr]);
+    msg.velocity.push_back(data_->data->qvel[servo.qvel_adr]);
+    msg.effort.push_back(data_->data->actuator_force[servo.actuator_id]);
+  }
+  data_->joint_state_pub->publish(msg);
+  data_->last_joint_state_time = time.seconds();
+}
+
 hardware_interface::return_type AerialRobotMujocoSystem::write(const rclcpp::Time& time,
-                                                               const rclcpp::Duration& /*period*/)
+                                                               const rclcpp::Duration& period)
 {
   if (data_ == nullptr || data_->data == nullptr)
   {
@@ -560,9 +773,40 @@ hardware_interface::return_type AerialRobotMujocoSystem::write(const rclcpp::Tim
     data_->data->ctrl[rotor.actuator_id] =
         clampToRange(rotor.command, rotor.lower_command, rotor.upper_command);
   }
+
+  updateServos(period.seconds());
+
   data_->last_update_sim_time = time;
 
   return hardware_interface::return_type::OK;
+}
+
+void AerialRobotMujocoSystem::updateServos(const double dt)
+{
+  if (data_->servos.empty())
+    return;
+
+  std::lock_guard<std::mutex> lock(data_->servo_target_mutex);
+  for (auto& servo : data_->servos)
+  {
+    const double position = data_->data->qpos[servo.qpos_adr];
+    const double velocity = data_->data->qvel[servo.qvel_adr];
+    const double error = servo.target - position;
+
+    if (dt > 0.0 && servo.i_gain != 0.0)
+    {
+      servo.error_integral =
+          clampToRange(servo.error_integral + error * dt, -servo.i_clamp, servo.i_clamp);
+    }
+
+    /* The derivative term is on the measurement, not on the error: the target
+       is a step when a new joint command arrives, and differentiating that
+       kicks the servo hard enough to disturb a hovering robot. */
+    const double effort =
+        servo.p_gain * error + servo.i_gain * servo.error_integral - servo.d_gain * velocity;
+    data_->data->ctrl[servo.actuator_id] =
+        clampToRange(effort, servo.lower_command, servo.upper_command);
+  }
 }
 
 }  // namespace aerial_robot_simulation

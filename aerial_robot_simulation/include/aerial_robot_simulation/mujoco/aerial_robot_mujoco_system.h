@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <hardware_interface/system_interface.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
 #include <mujoco_ros_control/ros_two/mujoco_ros_system_interface.hpp>
 #include <rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp>
 #include <rclcpp_lifecycle/state.hpp>
@@ -38,6 +39,17 @@ public:
                unsigned int& update_rate) override;
 
 private:
+  /**
+   * Position-controlled servo joints, driven from Servo.yaml's `simulation:`
+   * block. Folded in here for the same reason the flight controller is: ROS1
+   * gave each one an effort_controllers/JointPositionController, loaded through
+   * servo_bridge, and ROS2 has no equivalent controller to load.
+   */
+  void initServos(const mjModel* m);
+  void updateServos(double dt);
+  void setServoTargets(const sensor_msgs::msg::JointState& msg);
+  void publishJointStates(const rclcpp::Time& time);
+
   class Private;
   std::unique_ptr<Private> data_;
 };

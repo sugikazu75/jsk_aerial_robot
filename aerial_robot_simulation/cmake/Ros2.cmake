@@ -8,6 +8,7 @@ find_package(aerial_robot_ros_compat REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(spinal REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
@@ -23,6 +24,7 @@ set(AERIAL_ROBOT_SIMULATION_DEPS
   geometry_msgs
   hardware_interface
   nav_msgs
+  sensor_msgs
   spinal
   tf2
   lifecycle_msgs

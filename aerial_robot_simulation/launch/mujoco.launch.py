@@ -60,6 +60,12 @@ def render_plugin_config(context):
     control_period = float(LaunchConfiguration('control_period').perform(context))
     overrides_path = LaunchConfiguration('plugin_config_overrides').perform(context)
 
+    # An empty mapping is not valid in a ROS2 parameter file - rcl rejects the
+    # whole file with "Cannot have a value before ros__parameters" - so a robot
+    # with no servos must contribute no `servo_controller` key at all.
+    def non_empty(**entries):
+        return {key: value for key, value in entries.items() if value}
+
     control_node = '{}/mujoco_ros_control'.format(MUJOCO_SERVER_NODE)
     visualizer_node = '{}/thrust_visualizer'.format(MUJOCO_SERVER_NODE)
     controller_manager_node = '/{}/controller_manager'.format(robot_ns) if robot_ns \
@@ -76,18 +82,29 @@ def render_plugin_config(context):
             },
         },
         control_node: {
-            'ros__parameters': {
+            'ros__parameters': dict(
                 # Read back by AerialRobotMujocoSystem::initSim to decide where
                 # the simulated flight controller's node and its ground_truth /
                 # mocap topics go, as well as by mujoco_ros_control itself to
                 # find robot_state_publisher and place the controller manager.
-                'namespace': robot_ns,
-                'robot_description_node': 'robot_state_publisher',
-                'robot_description': 'robot_description',
-                # Mocap and ground-truth noise, read by the hardware component
-                # through its `simulation` child handle.
-                'simulation': load_simulation_params(context),
-            },
+                {
+                    'namespace': robot_ns,
+                    'robot_description_node': 'robot_state_publisher',
+                    'robot_description': 'robot_description',
+                },
+                **non_empty(
+                    # Mocap and ground-truth noise, read by the hardware
+                    # component through its `simulation` child handle.
+                    simulation=load_simulation_params(context),
+                    # Servo.yaml verbatim, for robots with position-controlled
+                    # joints. The hardware component holds them there, because
+                    # ROS2 has no JointPositionController for servo_bridge to
+                    # load.
+                    servo_controller=load_merged(
+                        [LaunchConfiguration('servo_config').perform(context)],
+                        subtree='servo_controller'),
+                ),
+            ),
         },
         visualizer_node: {
             'ros__parameters': {
@@ -147,6 +164,8 @@ def generate_launch_description():
         # The robot's own Simulation.yaml, stacked on this package's Mujoco.yaml
         # exactly as the two rosparam loads did under ROS1.
         DeclareLaunchArgument('simulation_config', default_value=''),
+        # The robot's Servo.yaml, for robots with servo joints.
+        DeclareLaunchArgument('servo_config', default_value=''),
         # A ROS2 parameter file merged over the generated one, for anything a
         # robot needs to say about the simulation that is not covered above.
         DeclareLaunchArgument('plugin_config_overrides', default_value=''),
