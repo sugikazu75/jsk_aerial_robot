@@ -69,6 +69,25 @@ install(FILES
   aerial_robot_mujoco_system_plugin.ros2.xml
   DESTINATION share/${PROJECT_NAME})
 
+# Mujoco.yaml is read by mujoco.launch.py, which lifts its `simulation:` block
+# onto the hardware component's node. The ros_control entries in the same file
+# are ROS1-only and ignored.
+install(DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+  USE_SOURCE_PERMISSIONS)
+
+# Only the *.launch.py files: the ROS1 .launch files here reference gazebo_ros
+# and the controller_manager spawner, neither of which exists under ROS2.
+install(FILES
+  launch/mujoco.launch.py
+  DESTINATION share/${PROJECT_NAME}/launch)
+
+# Likewise only the ros2_control description macro; spinal.gazebo.xacro emits
+# <gazebo> tags that mean nothing here.
+install(FILES
+  xacro/spinal.ros2_control.xacro
+  DESTINATION share/${PROJECT_NAME}/xacro)
+
 ament_export_include_directories(include)
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_dependencies(${AERIAL_ROBOT_SIMULATION_DEPS})
