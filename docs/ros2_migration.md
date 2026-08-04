@@ -31,8 +31,10 @@ half-converted across a commit boundary.
 | aerial_robot_simulation | yes | yes |
 | robots/mini_quadrotor | yes | yes |
 | robots/hydrus | yes | yes |
+| robots/dragon | yes | builds, no bringup yet |
+| robots/hydrus_xi | yes | builds, no bringup yet |
 | robots/gimbalrotor | yes | builds, cannot fly |
-| other robots/* | yes | not started |
+| aerial_robot_3rdparty (nlopt, osqp, osqp-eigen) | yes | yes, unchanged |
 
 **mini_quadrotor and hydrus both hover in MuJoCo under ROS2.**
 
@@ -341,16 +343,39 @@ Extra apt packages installed for humble beyond the base desktop: `ros2-control`,
 `ros2-controllers`, `camera-info-manager`, `image-transport`, `joint-state-publisher`,
 `xacro`, `py-binding-tools`, `geographic-msgs`, `geodesy`, `joy`.
 
-`nlopt` is not in apt, but it does not need to be: `aerial_robot_3rdparty` builds it
-through `ExternalProject`. Porting that package is what `hydrus_xi` and `dragon` need.
+`nlopt`, `osqp` and `osqp-eigen` come from `aerial_robot_3rdparty`, which builds them
+through `ExternalProject`. **They needed no migration at all**: they declare
+`build_type: cmake`, which colcon supports directly, and their installs put
+`NLoptConfig.cmake` and `OsqpEigenConfig.cmake` exactly where `find_package` looks.
+
+## dragon and hydrus_xi
+
+Both build under both versions. **Neither has a ROS2 bringup launch, so neither has
+been flown** - they are converted, not verified in the air. Both ship MuJoCo models
+and both are vectoring robots, so the servo support the hardware component now has is
+the piece they were waiting on.
+
+dragon is the largest robot package so far, about 4500 lines. Four things in it are
+worth knowing before the next one:
+
+- The stack uses both `<pkg>::<Type>ConstPtr` and `<pkg>::<Type>::ConstPtr`; both become
+  `ros_compat::ConstPtr<...>`.
+- `header.stamp.fromSec(x)` only works where the stamp is a `ros::Time`. Under ROS2 it
+  is a plain struct, so those go through `ros_compat::stampFromSec`.
+- A `boost::thread` stopped with `interrupt()` has no std::thread equivalent. dragon's
+  external wrench estimator now stops on an atomic flag, which also covers being
+  destroyed while ROS is still up - something `interrupt()` was quietly handling.
+- `ros::console::set_logger_level` is ROS1-only. The compat macros all log through the
+  node's own logger, so that is the one a `debug_verbose_` flag should raise.
 
 ## Known rough edges
 
-`aerial_robot_estimation` exports its targets but its own headers do not arrive on
-consumers' interface include directories, so `aerial_robot_control`'s ROS2 cmake has to
-add `${aerial_robot_estimation_INCLUDE_DIRS}` explicitly. Worth fixing in
-`aerial_robot_estimation` itself rather than repeating the workaround in every downstream
-package.
+A package whose ROS2 cmake only calls `include_directories()` exports headers its
+consumers cannot find: `ament_target_dependencies` picks a dependency's include
+directories up from its exported *targets*. Give every exported library
+`target_include_directories(... "$<BUILD_INTERFACE:...>" "$<INSTALL_INTERFACE:include>")`.
+hydrus and dragon do; `aerial_robot_estimation` and `aerial_robot_control` still do not,
+which is why their consumers add `${<pkg>_INCLUDE_DIRS}` by hand.
 
 GPS waypoint navigation is ROS1-only. `flight_navigation.cpp` guards the paths that use
 `geodesy::toMsg` and `sensor_plugin::Gps::wgs84ToNedLocalFrame`; under ROS2 the mode logs a
