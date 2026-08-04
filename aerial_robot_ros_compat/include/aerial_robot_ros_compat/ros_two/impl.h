@@ -35,9 +35,11 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <chrono>
+#include <cmath>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -83,8 +85,41 @@ public:
 class Time : public rclcpp::Time
 {
 public:
-  using rclcpp::Time::Time;
+  /**
+   * The constructors are spelled out rather than inherited with
+   * `using rclcpp::Time::Time`, for one reason: the clock source.
+   *
+   * `ros::Time` was one thing. `rclcpp::Time` carries a clock source and
+   * *throws* when two with different sources are compared or subtracted, and
+   * its own constructors default to RCL_SYSTEM_TIME - while anything that comes
+   * from a node or a message header is RCL_ROS_TIME. So a member declared
+   * `ros_compat::Time prev_;`, or initialised to `ros_compat::Time(0)`, of which
+   * this stack has several, throws the first time it meets a real stamp. The
+   * state estimator's publish throttle did exactly that, one control cycle after
+   * the robot announced it was ready for takeoff.
+   *
+   * Defaulting to RCL_ROS_TIME here is both the roscpp meaning and, under
+   * simulation, the clock /clock drives - which is what these comparisons are
+   * about. Inheriting and adding would not have worked: an inherited
+   * constructor whose trailing parameters are defaulted is a separate signature,
+   * so every added overload would have been ambiguous rather than preferred.
+   */
+  Time() : rclcpp::Time(0, 0, RCL_ROS_TIME)
+  {
+  }
   Time(const rclcpp::Time& t) : rclcpp::Time(t)
+  {
+  }
+  explicit Time(int64_t nanoseconds, rcl_clock_type_t clock_type = RCL_ROS_TIME)
+    : rclcpp::Time(nanoseconds, clock_type)
+  {
+  }
+  Time(int32_t seconds, uint32_t nanoseconds, rcl_clock_type_t clock_type = RCL_ROS_TIME)
+    : rclcpp::Time(seconds, nanoseconds, clock_type)
+  {
+  }
+  Time(const builtin_interfaces::msg::Time& time_msg, rcl_clock_type_t clock_type = RCL_ROS_TIME)
+    : rclcpp::Time(time_msg, clock_type)
   {
   }
 
@@ -230,6 +265,82 @@ inline std::string toParamName(const std::string& ns, const std::string& name)
   while (!joined.empty() && joined.front() == '.')
     joined.erase(joined.begin());
   return joined;
+}
+
+/**
+ * Read a parameter value into `out`, widening between int and double.
+ *
+ * rclcpp is strictly typed where roscpp's parameter server was not: a YAML
+ * `limit_sum: 3` becomes an integer parameter, and asking rclcpp for it as a
+ * double *throws*. The stack's config files are full of whole numbers written
+ * without a decimal point and read as doubles - FlightControl.yaml alone has
+ * eight - so without this the base node dies on startup at its first gain.
+ *
+ * roscpp widened int to double silently, and that is what the call sites were
+ * written against, so this reproduces it rather than requiring every yaml file
+ * to be retyped. Going the other way, a double is accepted for an integer
+ * parameter only when it is exactly integral; rounding a gain into an index is
+ * not something to do quietly.
+ *
+ * bool stays strict. roscpp did not treat 1 as true either, and a numeric
+ * parameter silently becoming `true` is the kind of thing that flies a robot in
+ * the wrong mode.
+ */
+template <class T>
+bool fromParameterValue(const rclcpp::ParameterValue& value, T& out)
+{
+  const rclcpp::ParameterType type = value.get_type();
+
+  if constexpr (std::is_same<T, bool>::value)
+  {
+    if (type != rclcpp::ParameterType::PARAMETER_BOOL)
+      return false;
+    out = value.get<bool>();
+    return true;
+  }
+  else if constexpr (std::is_floating_point<T>::value)
+  {
+    if (type == rclcpp::ParameterType::PARAMETER_DOUBLE)
+    {
+      out = static_cast<T>(value.get<double>());
+      return true;
+    }
+    if (type == rclcpp::ParameterType::PARAMETER_INTEGER)
+    {
+      out = static_cast<T>(value.get<int64_t>());
+      return true;
+    }
+    return false;
+  }
+  else if constexpr (std::is_integral<T>::value)
+  {
+    if (type == rclcpp::ParameterType::PARAMETER_INTEGER)
+    {
+      out = static_cast<T>(value.get<int64_t>());
+      return true;
+    }
+    if (type == rclcpp::ParameterType::PARAMETER_DOUBLE)
+    {
+      const double as_double = value.get<double>();
+      if (as_double != std::floor(as_double))
+        return false;
+      out = static_cast<T>(as_double);
+      return true;
+    }
+    return false;
+  }
+  else
+  {
+    try
+    {
+      out = value.get<T>();
+    }
+    catch (const rclcpp::ParameterTypeException&)
+    {
+      return false;
+    }
+    return true;
+  }
 }
 
 }  // namespace detail
@@ -624,7 +735,10 @@ public:
     const std::string full = detail::toParamName(ns_, name);
     if (!node_ || !node_->has_parameter(full))
       return false;
-    return node_->get_parameter(full, value);
+    // Not node_->get_parameter(full, value): that throws on a type mismatch,
+    // and whole numbers in the config files arrive as integers where the call
+    // site wants a double. See detail::fromParameterValue.
+    return detail::fromParameterValue(node_->get_parameter(full).get_parameter_value(), value);
   }
 
   template <class T>

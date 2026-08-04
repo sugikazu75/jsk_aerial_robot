@@ -8,3 +8,8 @@ param_probe:
       max_pwm: 0.85
       ref1:
         voltage: 11.1
+        # A whole number, exactly as the robot config files write them. Under
+        # ROS2 that is an integer parameter, and the call site wants a double.
+        max_thrust: 8
+    whole_number_gain: 3
+    fractional_index: 2.5

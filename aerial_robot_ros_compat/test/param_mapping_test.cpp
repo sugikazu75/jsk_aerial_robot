@@ -52,6 +52,22 @@ int main(int argc, char** argv)
   est.getParam("sensor_list", sensors);
   check("estimation/sensor_list size", (int)sensors.size(), 2);
 
+  // roscpp's parameter server was untyped and widened a whole number to a
+  // double on request; rclcpp throws instead. The config files are full of
+  // gains written without a decimal point, so the compat layer has to widen.
+  double max_thrust = -1;
+  ros_compat::getParam<double>(ref, "max_thrust", max_thrust, -1.0);
+  check("int-valued yaml read as double (grandchild)", max_thrust, 8.0);
+
+  double whole_number_gain = -1;
+  ros_compat::getParam<double>(nh, "whole_number_gain", whole_number_gain, -1.0);
+  check("int-valued yaml read as double (root)", whole_number_gain, 3.0);
+
+  // The reverse widening is allowed only when it loses nothing.
+  int fractional_index = -1;
+  check("double with a fraction refused as int",
+        nh.getParam("fractional_index", fractional_index), false);
+
   check("hasParam on a present nested key", est.hasParam("mode"), true);
   check("hasParam on an absent key", est.hasParam("not_there"), false);
 
