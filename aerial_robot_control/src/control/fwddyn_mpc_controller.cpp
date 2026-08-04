@@ -375,7 +375,7 @@ void FwddynMpcController::sendCmd()
   cmd.angles[2] = 0.0f;
   cmd.base_thrust.resize(rotor_num);
   for (int i = 0; i < rotor_num; i++)
-    cmd.base_thrust[i] = static_cast<float>(thrust(i));
+    cmd.base_thrust[i] = static_cast<float>(std::clamp(thrust(i), robot_model_->getThrustLowerLimit(), robot_model_->getThrustUpperLimit()));
 
   four_axis_command_pub_.publish(cmd);
 
