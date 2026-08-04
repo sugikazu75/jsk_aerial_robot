@@ -3,7 +3,13 @@ add_definitions(-DAERIAL_ROBOT_ROS_VERSION=2)
 
 find_package(ament_cmake REQUIRED)
 
+find_package(aerial_robot_estimation REQUIRED)
+find_package(aerial_robot_ros_compat REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(hardware_interface REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(spinal REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(mujoco_ros REQUIRED)
 find_package(mujoco_ros_control REQUIRED)
@@ -12,7 +18,13 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 
 set(AERIAL_ROBOT_SIMULATION_DEPS
+  aerial_robot_estimation
+  aerial_robot_ros_compat
+  geometry_msgs
   hardware_interface
+  nav_msgs
+  spinal
+  tf2
   lifecycle_msgs
   mujoco_ros
   mujoco_ros_control
@@ -21,15 +33,24 @@ set(AERIAL_ROBOT_SIMULATION_DEPS
   rclcpp_lifecycle
 )
 
-include_directories(include)
+include_directories(
+  include
+  # aerial_robot_estimation exports its targets but not its own header directory
+  # on their interface includes; see docs/ros2_migration.md.
+  ${aerial_robot_estimation_INCLUDE_DIRS})
 
 add_library(mujoco_thrust_visualizer SHARED
   src/mujoco/thrust_visualizer_plugin.cpp)
 ament_target_dependencies(mujoco_thrust_visualizer ${AERIAL_ROBOT_SIMULATION_DEPS})
 
+# The simulated flight controller plus the ros2_control hardware component that
+# drives it. Kept in one library: the estimator and the control core are folded
+# into the component, since ros2_control cannot pass an object to a controller.
 add_library(aerial_robot_mujoco_system SHARED
+  src/mujoco/aerial_robot_spinal.cpp
   src/mujoco/aerial_robot_mujoco_system.cpp)
 ament_target_dependencies(aerial_robot_mujoco_system ${AERIAL_ROBOT_SIMULATION_DEPS})
+target_link_libraries(aerial_robot_mujoco_system spinal::spinal_flight_controller spinal::spinal_math)
 
 pluginlib_export_plugin_description_file(mujoco_ros mujoco_visualization_plugin.ros2.xml)
 pluginlib_export_plugin_description_file(mujoco_ros_control aerial_robot_mujoco_system_plugin.ros2.xml)
