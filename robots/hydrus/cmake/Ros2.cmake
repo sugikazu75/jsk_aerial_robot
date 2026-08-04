@@ -61,6 +61,13 @@ add_library(hydrus_robot_model SHARED
   src/hydrus_tilted_robot_model.cpp)
 ament_target_dependencies(hydrus_robot_model ${HYDRUS_DEPS})
 target_link_libraries(hydrus_robot_model aerial_robot_model::aerial_robot_model_lib)
+# On the target, not just the directory: ament_target_dependencies picks up a
+# dependency's include directories from its exported *targets*, so a package
+# that only calls include_directories() exports headers a consumer cannot find.
+# dragon and hydrus_xi include <hydrus/...>.
+target_include_directories(hydrus_robot_model PUBLIC
+  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>")
 
 add_library(hydrus_controller_pluginlib SHARED
   src/hydrus_lqi_controller.cpp
@@ -69,6 +76,9 @@ ament_target_dependencies(hydrus_controller_pluginlib ${HYDRUS_DEPS})
 target_link_libraries(hydrus_controller_pluginlib
   hydrus_robot_model
   aerial_robot_control::flight_control_pluginlib)
+target_include_directories(hydrus_controller_pluginlib PUBLIC
+  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include>")
 
 pluginlib_export_plugin_description_file(aerial_robot_model plugins/robot_model_plugins.ros2.xml)
 pluginlib_export_plugin_description_file(aerial_robot_control plugins/flight_control_plugins.ros2.xml)

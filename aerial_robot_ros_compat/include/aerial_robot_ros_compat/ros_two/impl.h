@@ -80,6 +80,18 @@ public:
   {
     return Duration(rclcpp::Duration::from_seconds(s));
   }
+
+  /**
+   * roscpp's ros::Duration::sleep(), which rclcpp's Duration does not have.
+   *
+   * Sleeps on the global node's clock rather than the wall clock, so that under
+   * simulation it follows /clock the way roscpp did - a startup delay measured
+   * in wall seconds would be a different delay in sim seconds, and the planning
+   * threads that use this are timed against the simulated robot. Falls back to
+   * the wall clock before setGlobalNode(), which is the only state in which
+   * there is no clock to ask.
+   */
+  bool sleep() const;
 };
 
 class Time : public rclcpp::Time
@@ -350,6 +362,13 @@ inline Time Time::now()
   if (auto node = detail::globalNode())
     return Time(node->now());
   return Time(0, 0, RCL_ROS_TIME);
+}
+
+inline bool Duration::sleep() const
+{
+  if (auto node = detail::globalNode())
+    return node->get_clock()->sleep_for(*this);
+  return rclcpp::sleep_for(std::chrono::nanoseconds(nanoseconds()));
 }
 
 class Publisher
@@ -869,6 +888,9 @@ inline Time now()
 #define ROS_COMPAT_FATAL_STREAM(args) RCLCPP_FATAL_STREAM(ROS_COMPAT_LOGGER(), args)
 
 // roscpp throttles in seconds, rclcpp in milliseconds.
+#define ROS_COMPAT_DEBUG_THROTTLE(p, ...)                                                                              \
+  RCLCPP_DEBUG_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                         \
+                        static_cast<int>((p) * 1000), __VA_ARGS__)
 #define ROS_COMPAT_INFO_THROTTLE(p, ...)                                                                               \
   RCLCPP_INFO_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                          \
                        static_cast<int>((p) * 1000), __VA_ARGS__)
@@ -882,6 +904,19 @@ inline Time now()
 #define ROS_COMPAT_INFO_ONCE(...) RCLCPP_INFO_ONCE(ROS_COMPAT_LOGGER(), __VA_ARGS__)
 #define ROS_COMPAT_WARN_ONCE(...) RCLCPP_WARN_ONCE(ROS_COMPAT_LOGGER(), __VA_ARGS__)
 #define ROS_COMPAT_ERROR_ONCE(...) RCLCPP_ERROR_ONCE(ROS_COMPAT_LOGGER(), __VA_ARGS__)
+
+#define ROS_COMPAT_DEBUG_STREAM_THROTTLE(p, args)                                                                      \
+  RCLCPP_DEBUG_STREAM_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                  \
+                               static_cast<int>((p) * 1000), args)
+#define ROS_COMPAT_INFO_STREAM_THROTTLE(p, args)                                                                       \
+  RCLCPP_INFO_STREAM_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                   \
+                              static_cast<int>((p) * 1000), args)
+#define ROS_COMPAT_WARN_STREAM_THROTTLE(p, args)                                                                       \
+  RCLCPP_WARN_STREAM_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                   \
+                              static_cast<int>((p) * 1000), args)
+#define ROS_COMPAT_ERROR_STREAM_THROTTLE(p, args)                                                                      \
+  RCLCPP_ERROR_STREAM_THROTTLE(ROS_COMPAT_LOGGER(), *::ros_compat::detail::globalNode()->get_clock(),                  \
+                               static_cast<int>((p) * 1000), args)
 
 #define ROS_COMPAT_INFO_STREAM_ONCE(args) RCLCPP_INFO_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
 #define ROS_COMPAT_WARN_STREAM_ONCE(args) RCLCPP_WARN_STREAM_ONCE(ROS_COMPAT_LOGGER(), args)
