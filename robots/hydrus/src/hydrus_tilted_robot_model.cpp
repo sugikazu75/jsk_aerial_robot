@@ -42,8 +42,8 @@ void HydrusTiltedRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_pos
 
   if(getVerbose())
   {
-    ROS_INFO_STREAM("f_norm_pitch: " << f_norm_pitch << "; f_norm_roll: " << f_norm_roll);
-    ROS_INFO_STREAM("rescaled static thrust: " << getStaticThrust().transpose());
+    ROS_COMPAT_INFO_STREAM("f_norm_pitch: " << f_norm_pitch << "; f_norm_roll: " << f_norm_roll);
+    ROS_COMPAT_INFO_STREAM("rescaled static thrust: " << getStaticThrust().transpose());
   }
 }
 

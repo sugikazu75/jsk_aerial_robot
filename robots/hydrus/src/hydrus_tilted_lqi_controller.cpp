@@ -7,11 +7,11 @@ HydrusTiltedLQIController::HydrusTiltedLQIController():
 {
 }
 
-void HydrusTiltedLQIController::initialize(ros::NodeHandle nh,
-                                     ros::NodeHandle nhp,
-                                     boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                     boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                     boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+void HydrusTiltedLQIController::initialize(ros_compat::NodeHandle nh,
+                                     ros_compat::NodeHandle nhp,
+                                     ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                     ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                     ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                      double ctrl_loop_rate)
 {
   UnderActuatedTiltedLQIController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
@@ -21,13 +21,13 @@ bool HydrusTiltedLQIController::checkRobotModel()
 {
   if(!robot_model_->initialized())
     {
-      ROS_DEBUG_NAMED("LQI gain generator", "LQI gain generator: robot model is not initiliazed");
+      ROS_COMPAT_DEBUG("LQI gain generator: robot model is not initiliazed");
       return false;
     }
 
   if(!robot_model_->stabilityCheck(verbose_))
     {
-      ROS_ERROR_NAMED("LQI gain generator", "LQI gain generator: invalid pose, stability is invalid");
+      ROS_COMPAT_ERROR("LQI gain generator: invalid pose, stability is invalid");
 
       return false;
     }

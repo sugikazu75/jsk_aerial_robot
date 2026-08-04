@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/under_actuated_lqi_controller.h>
 #include <hydrus/hydrus_robot_model.h>
 
@@ -47,10 +48,10 @@ namespace aerial_robot_control
     HydrusLQIController();
     virtual ~HydrusLQIController() = default;
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate);
 
   protected:

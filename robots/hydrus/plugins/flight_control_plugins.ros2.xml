@@ -1,0 +1,13 @@
+<!-- ROS2 counterpart of flight_control_plugins.xml. Same classes, only the library
+     path differs: ROS1 pluginlib wants the lib/lib<name> form, while ROS2's
+     resolves <name> against the ament index and rejects directory
+     components. -->
+<library path="hydrus_controller_pluginlib">
+  <class name="aerial_robot_control/hydrus_lqi_controller" type="aerial_robot_control::HydrusLQIController" base_class_type="aerial_robot_control::ControlBase">
+    <description>LQI based controller for under-actuated hydrus</description>
+  </class>
+  <class name="aerial_robot_control/hydrus_tilted_lqi_controller" type="aerial_robot_control::HydrusTiltedLQIController" base_class_type="aerial_robot_control::ControlBase">
+    <description>LQI based controller for under-actuated tilted hydrus</description>
+  </class>
+
+</library>

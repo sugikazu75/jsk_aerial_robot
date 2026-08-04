@@ -1,0 +1,15 @@
+<!-- ROS2 counterpart of robot_model_plugins.xml. Same classes, only the library
+     path differs: ROS1 pluginlib wants the lib/lib<name> form, while ROS2's
+     resolves <name> against the ament index and rejects directory
+     components. -->
+<library path="hydrus_robot_model">
+
+  <class name="hydrus_robot_model" type="HydrusRobotModel" base_class_type="aerial_robot_model::RobotModel">
+    <description>plugin for hydrus robot model </description>
+  </class>
+
+  <class name="hydrus_tilted_robot_model" type="HydrusTiltedRobotModel" base_class_type="aerial_robot_model::RobotModel">
+    <description>plugin for hydrus tilted robot model </description>
+  </class>
+
+</library>

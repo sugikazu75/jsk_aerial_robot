@@ -40,12 +40,12 @@ void HydrusRobotModel::calcFeasibleControlRollPitchDists()
       double cross_product = (v.at(j).cross(v_i_normalized)).z();
 
       t_min_i += std::max(0.0, cross_product * thrust_max);
-      //ROS_INFO("i: %d, j: %d, cross_product: %f, t_min_ij: %f" , i, j, cross_product, std::max(0.0, cross_product * thrust_max));
+      //ROS_COMPAT_INFO("i: %d, j: %d, cross_product: %f, t_min_ij: %f" , i, j, cross_product, std::max(0.0, cross_product * thrust_max));
     }
     fc_rp_dists_(i) = t_min_i;
   }
 
-  //  ROS_INFO_STREAM("fc_rp_distsj_: " << fc_rp_distsj_.transpose());
+  //  ROS_COMPAT_INFO_STREAM("fc_rp_distsj_: " << fc_rp_distsj_.transpose());
   fc_rp_min_ = fc_rp_dists_.minCoeff();
 }
 
@@ -122,7 +122,7 @@ void HydrusRobotModel::calcStaticThrust()
 
 void HydrusRobotModel::getParamFromRos()
 {
-  ros::NodeHandle nh;
+  ros_compat::NodeHandle nh;
   nh.param("fc_rp_min_thre", fc_rp_min_thre_, 1e-6);
   nh.param("rp_position_margin_thre", rp_position_margin_thre_, 0.01);
   nh.param("wrench_mat_det_thre", wrench_mat_det_thre_, 1e-6);
@@ -142,7 +142,7 @@ bool HydrusRobotModel::rollPitchPositionMarginCheck()
     {
       average_x += rotors_origin_from_cog.at(i)(0);
       average_y += rotors_origin_from_cog.at(i)(1);
-      ROS_DEBUG("rotor%d x: %f, y: %f", i + 1, rotors_origin_from_cog.at(i)(0), rotors_origin_from_cog.at(i)(1));
+      ROS_COMPAT_DEBUG("rotor%d x: %f, y: %f", i + 1, rotors_origin_from_cog.at(i)(0), rotors_origin_from_cog.at(i)(1));
     }
   average_x /= rotor_num;
   average_y /= rotor_num;
@@ -165,7 +165,7 @@ bool HydrusRobotModel::rollPitchPositionMarginCheck()
 
   if(rp_position_margin_ < rp_position_margin_thre_)
     {
-      ROS_WARN("Invalid old control margin against threshold: %f vs %f", rp_position_margin_, rp_position_margin_thre_);
+      ROS_COMPAT_WARN("Invalid old control margin against threshold: %f vs %f", rp_position_margin_, rp_position_margin_thre_);
       return false;
     }
   return true;
@@ -177,7 +177,7 @@ bool HydrusRobotModel::stabilityCheck(bool verbose)
 
   if(fc_rp_min_ < fc_rp_min_thre_)
     { // only roll & pitch
-      if(verbose) ROS_ERROR_STREAM("fc_rp_min " << fc_rp_min_ << " is lower than the threshold " <<  fc_rp_min_thre_);
+      if(verbose) ROS_COMPAT_ERROR_STREAM("fc_rp_min " << fc_rp_min_ << " is lower than the threshold " <<  fc_rp_min_thre_);
       return false;
     }
 
@@ -185,7 +185,7 @@ bool HydrusRobotModel::stabilityCheck(bool verbose)
   rollPitchPositionMarginCheck();
   wrenchMatrixDeterminantCheck();
 
-  ROS_DEBUG_STREAM("rp_position_margin: " << rp_position_margin_ << " vs fc_t_min: " << getFeasibleControlTMin() << " vs fc_rp_min: " << fc_rp_min_);
+  ROS_COMPAT_DEBUG_STREAM("rp_position_margin: " << rp_position_margin_ << " vs fc_t_min: " << getFeasibleControlTMin() << " vs fc_rp_min: " << fc_rp_min_);
 
   return true;
 }
@@ -218,7 +218,7 @@ bool HydrusRobotModel::wrenchMatrixDeterminantCheck()
 
   if(wrench_mat_det_ < wrench_mat_det_thre_)
     {
-      ROS_WARN("Invalid wrench matrix determinant against threshold: %f vs %f", wrench_mat_det_, wrench_mat_det_thre_);
+      ROS_COMPAT_WARN("Invalid wrench matrix determinant against threshold: %f vs %f", wrench_mat_det_, wrench_mat_det_thre_);
       return false;
     }
   return true;

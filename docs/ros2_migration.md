@@ -30,10 +30,11 @@ half-converted across a commit boundary.
 | aerial_robot_base | yes | yes |
 | aerial_robot_simulation | yes | yes |
 | robots/mini_quadrotor | yes | yes |
+| robots/hydrus | yes | yes |
 | robots/gimbalrotor | yes | builds, cannot fly |
 | other robots/* | yes | not started |
 
-**The first milestone is met: mini_quadrotor hovers in MuJoCo under ROS2.**
+**mini_quadrotor and hydrus both hover in MuJoCo under ROS2.**
 
 ```
 ros2 launch mini_quadrotor bringup.launch.py rm:=false sim:=true mujoco:=true headless:=true
@@ -43,9 +44,17 @@ ros2 topic pub --once /quadrotor/teleop_command/takeoff std_msgs/msg/Empty "{}"
 
 Measured after takeoff: `uav/cog/odom` z = 0.6000 against a 0.6 m target, xy held
 to about 2 cm, attitude angles at 1e-5 rad, and the four rotors at 2.61/2.71 N -
-10.6 N in total, which is the 1.084 kg model's weight. Gazebo under ROS2 comes
-later; `mujoco:=true` is currently the only simulation backend, and the launch
-says so rather than starting something that cannot work.
+10.6 N in total, which is the 1.084 kg model's weight.
+
+hydrus is the same, with `ros2 launch hydrus bringup.launch.py real_machine:=false
+simulation:=true mujoco:=true`: it reaches its quad shape, climbs, and the
+navigator prints `Hover!!!` with z = 0.600 against 0.6 and xy within 3 cm of the
+takeoff point. Note that `ground_truth` is the **fc site** and `uav/cog/odom` is
+the **cog**; on hydrus those are tens of centimetres apart, so the two disagreeing
+is geometry, not error.
+
+Gazebo under ROS2 comes later; `mujoco:=true` is currently the only simulation
+backend, and the launch says so rather than starting something that cannot work.
 
 ## A caution about "the build passes"
 
@@ -386,7 +395,24 @@ module the compat package installs alongside its headers - the launch-side half
 of the same job. Robots import `write_parameter_file`; `mujoco.launch.py` uses
 `load_merged` with a `subtree` to lift just the `simulation:` block out.
 
-**No controller is spawned.** In the spinal configuration the flight control
+**Servo joints are held by the hardware component**, not by a controller. Under
+ROS1 `servo_bridge` - the interface the stack reaches its servos through on both
+the real machine and in simulation - loaded an
+`effort_controllers/JointPositionController` per joint through the controller
+manager and published the initial angle to it. ROS2 has no such controller to
+load, so `AerialRobotMujocoSystem` runs the PID itself, from the very same
+`simulation:` block of `Servo.yaml`, and accepts new targets on the `<group>_ctrl`
+topic servo_bridge listened to. It also publishes `joint_states`, which
+`joint_state_controller` used to: without it a transformable robot's kinematics
+stay at the pose it launched in and its LQI gains are computed for a shape it is
+not in. **A real-machine servo_bridge - converting joint commands into servo
+units for rosserial - is a separate job and still to do.**
+
+`hydrus` starts with its joints at zero, which is a straight line and not a
+stabilisable pose; the LQI generator says so twice while the arms drive to 1.57
+rad, and then stops. That transient is expected.
+
+**No flight controller is spawned either.** In the spinal configuration the flight control
 core lives inside the hardware component, and mujoco_ros_control activates the
 component itself, so `read()`/`write()` run with nothing loaded.
 `joint_state_controller` has no counterpart to spawn either - the component

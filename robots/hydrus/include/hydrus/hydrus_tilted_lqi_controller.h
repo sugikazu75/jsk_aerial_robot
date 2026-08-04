@@ -35,8 +35,15 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/control/under_actuated_tilted_lqi_controller.h>
-#include <spinal/PMatrixPseudoInverseWithInertia.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <spinal/PMatrixPseudoInverseWithInertia.h>
+#else
+#  include <spinal/msg/p_matrix_pseudo_inverse_with_inertia.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
 #include <thread>
 
 namespace aerial_robot_control
@@ -47,10 +54,10 @@ namespace aerial_robot_control
     HydrusTiltedLQIController();
     ~HydrusTiltedLQIController() = default;
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate);
 
   protected:
