@@ -1,0 +1,35 @@
+# Source dependencies of the ROS2 (humble) build.
+#
+# Deliberately shorter than aerial_robot_one.rosinstall: the ROS1 list also
+# pulls the sensor drivers (livox_ros_driver2, fast_lio, ublox_gps, rosserial,
+# mocap_optitrack, sensor_interface), none of which have a ROS2 build here and
+# all of which colcon would try to build if they were in the workspace.
+#
+# NOTE: these branches are not on the upstream remotes yet. Until they are
+# pushed, the humble workflow cannot pass. See docs/ros2_migration.md.
+
+# nlopt, osqp and osqp-eigen, built through ExternalProject. They declare
+# build_type: cmake and need no migration; mujoco_ros_utils in the same repo is
+# ROS1-only and is what generates the MuJoCo models.
+- git:
+    local-name: aerial_robot_3rdparty
+    uri: https://github.com/JSKAerialRobot/aerial_robot_3rdparty.git
+    version: ros2
+
+# kalman filter
+- git:
+    local-name: kalman_filter
+    uri: https://github.com/JSKAerialRobot/kalman_filter.git
+    version: ros2
+
+# the MuJoCo wrapper
+- git:
+    local-name: mujoco
+    uri: https://github.com/sugikazu75/mujoco_catkin.git
+    version: ros2
+
+# mujoco_ros, mujoco_ros_control, mujoco_ros_msgs
+- git:
+    local-name: mujoco_ros_pkgs
+    uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
+    version: PR/hybrid-devel/depend_mujoco

@@ -1,0 +1,32 @@
+name: ROS2 Build Test
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  ci:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs-on: ubuntu-latest
+            ROS_DISTRO: humble
+            DOCKER_IMAGE: ubuntu:jammy
+    runs-on: ${{ matrix.runs-on }}
+    name: ros2_build_test-${{ matrix.ROS_DISTRO }}-${{ matrix.DOCKER_IMAGE }}
+
+    steps:
+      - name: Setup Git
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y git
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: script
+        run: |
+          export REPOSITORY_NAME=${PWD##*/}
+          docker run --rm -i -v $PWD:$PWD \
+            -e "CI_SOURCE_PATH=$PWD" -e REPOSITORY_NAME -e "HOME=$HOME" \
+            -e "ROS_DISTRO=${{ matrix.ROS_DISTRO }}" \
+            ${{ matrix.DOCKER_IMAGE }} sh -c "cd $PWD; /bin/bash .ci/humble.sh"
