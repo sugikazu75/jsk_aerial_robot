@@ -60,12 +60,12 @@
 - git:
     local-name: mujoco
     uri: https://github.com/sugikazu75/mujoco_catkin.git
-    version: master
+    version: 9c1b2ef
 
 - git:
     local-name: mujoco_ros_pkgs
     uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
-    version: devel
+    version: 0d5b020
 
 # pinocchio
 - git:
@@ -83,10 +83,16 @@
 - git:
     local-name: crocoddyl
     uri: https://github.com/sugikazu75/crocoddyl.git
-    version: develop/articulated_aerial_robot
+    version: 746f91a
 
 # ros_controllers
 - git:
     local-name: ros_controllers
     uri: https://github.com/sugikazu75/ros_controllers.git
-    version: devel
+    version: 3e974a6
+
+# dynleg
+- git:
+    local-name: jsk_dynleg_robot
+    uri: https://github.com/sugikazu75/jsk_dynleg_robot.git
+    version: cd37840
