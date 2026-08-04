@@ -1,29 +1,18 @@
-cmake_minimum_required(VERSION 3.0.2)
+# 3.14 rather than the 3.0.2 the catkin build asked for: ament_package needs
+# policies (IN_LIST, for one) that the older minimum leaves switched off.
+cmake_minimum_required(VERSION 3.14)
 project(mini_quadrotor)
 
-find_package(catkin REQUIRED COMPONENTS
-  mujoco_ros_utils
-  )
+if(DEFINED ENV{ROS_VERSION})
+  set(ROS_VERSION $ENV{ROS_VERSION})
+else()
+  message(FATAL_ERROR "ROS_VERSION is not defined")
+endif()
 
-catkin_package(
-  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model
-)
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-install(DIRECTORY config launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  USE_SOURCE_PERMISSIONS
-)
-
-install(DIRECTORY bin
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  USE_SOURCE_PERMISSIONS
-)
-
-mujoco_model_convert(
-  ${PROJECT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/config/mujoco_model.yaml)
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_subdirectory(test)
+if(ROS_VERSION EQUAL 1)
+  include(Ros1)
+else()
+  include(Ros2)
 endif()

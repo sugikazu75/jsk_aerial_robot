@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+
+<!--
+    ROS2 counterpart of spinal.gazebo.xacro.
+
+    Under ROS1 the simulated flight controller was attached by a <gazebo> plugin
+    tag naming gazebo_ros_control/AerialRobotHWSim. ros2_control instead reads a
+    <ros2_control> block out of robot_description and loads the named hardware
+    component, so the same wiring is expressed here.
+
+    The component is AerialRobotMujocoSystem, which holds the attitude estimator
+    and the flight control core as well as the rotor actuators (ros2_control can
+    only pass named doubles between hardware and controller, so the ROS1 split
+    across a controller plugin had nowhere to live). Because of that no
+    controller is spawned against these interfaces in the spinal configuration -
+    they are exported, but the component itself is the authority, as the board is
+    on the real robot.
+
+    `effort` rather than the component's other accepted spelling, `thrust`:
+    both reach the same MuJoCo actuator, and effort is a standard ros2_control
+    interface name that no part of the toolchain will question.
+-->
+
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="spinal" >
+
+  <xacro:macro name="rotor_ros2_control" params="id actuator_prefix">
+    <joint name="rotor${id}">
+      <command_interface name="effort"/>
+      <state_interface name="effort"/>
+      <!-- Which MuJoCo actuator this rotor drives. Defaults to the joint name
+           in the component, but spelled out so a model that names its actuators
+           differently has one obvious place to say so. -->
+      <param name="actuator_name">${actuator_prefix}${id}</param>
+    </joint>
+  </xacro:macro>
+
+  <!-- xacro has no loop; recursion is the idiom. -->
+  <xacro:macro name="rotors_ros2_control" params="rotor_num actuator_prefix id:=1">
+    <xacro:if value="${id &lt;= rotor_num}">
+      <xacro:rotor_ros2_control id="${id}" actuator_prefix="${actuator_prefix}"/>
+      <xacro:rotors_ros2_control rotor_num="${rotor_num}" actuator_prefix="${actuator_prefix}" id="${id + 1}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <xacro:macro name="mujoco_spinal" params="rotor_num name:=aerial_robot_mujoco_system actuator_prefix:=rotor">
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <plugin>aerial_robot_simulation/AerialRobotMujocoSystem</plugin>
+      </hardware>
+      <xacro:rotors_ros2_control rotor_num="${rotor_num}" actuator_prefix="${actuator_prefix}"/>
+    </ros2_control>
+  </xacro:macro>
+
+</robot>

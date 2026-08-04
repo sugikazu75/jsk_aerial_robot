@@ -60,7 +60,10 @@ install(TARGETS aerial_robot_base
 install(TARGETS aerial_robot_base_node
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch
+# config holds the per-sensor noise models that every robot's bringup stacks on
+# top of its own config; they are plain nested yaml and read identically under
+# both versions.
+install(DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}
   USE_SOURCE_PERMISSIONS)
 

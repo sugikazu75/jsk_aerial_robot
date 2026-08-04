@@ -1,0 +1,16 @@
+<!-- ROS2 counterpart of robot_model_plugins.xml.
+
+     Same two plugins; only the library path differs. ROS1 pluginlib wants the
+     lib/lib<name> form, while ROS2's resolves <name> against the ament index
+     and rejects a path with directory components. -->
+<library path="robot_model_pluginlib">
+
+  <class name="multirotor_robot_model" type="MultirotorRobotModel" base_class_type="aerial_robot_model::RobotModel">
+    <description>plugin for general multirotor model </description>
+  </class>
+
+  <class name="underactuated_tilted_robot_model" type="UnderactuatedTiltedRobotModel" base_class_type="aerial_robot_model::RobotModel">
+    <description>plugin for underactuated tilted robot model </description>
+  </class>
+
+</library>

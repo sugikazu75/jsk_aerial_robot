@@ -44,9 +44,24 @@ that dispatches to `cmake/Ros1.cmake` or `cmake/Ros2.cmake`, a format 3 `package
 `#if` with the type namespace aliased, and `ros_compat::` in place of the roscpp and boost
 spellings. The mapping table is in `docs/ros2_migration.md`.
 
-The ROS2 build may legitimately be narrower than the ROS1 one. The first milestone is
-mini_quadrotor hovering in MuJoCo; anything that robot does not launch can stay ROS1-only
-with its dependencies conditioned.
+The ROS2 build may legitimately be narrower than the ROS1 one. The first milestone -
+mini_quadrotor hovering in MuJoCo - is met; anything that robot does not launch can still
+stay ROS1-only with its dependencies conditioned.
+
+## Checking that it still flies
+
+A green build says nothing about flight. The end-to-end check is:
+
+```
+ros2 launch mini_quadrotor bringup.launch.py rm:=false sim:=true mujoco:=true headless:=true
+ros2 topic pub --once /quadrotor/teleop_command/start   std_msgs/msg/Empty "{}"
+ros2 topic pub --once /quadrotor/teleop_command/takeoff std_msgs/msg/Empty "{}"
+ros2 topic echo /quadrotor/uav/cog/odom --once --field pose.pose.position
+```
+
+It should settle at z = 0.6. Every bug that mattered in the launch work - a node in the
+wrong namespace, a node nobody spun, an empty parameter set, a zero velocity in
+`ground_truth` - compiled, loaded, logged nothing, and showed up only here.
 
 ## Formatting and commits
 

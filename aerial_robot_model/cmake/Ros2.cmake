@@ -103,7 +103,7 @@ add_executable(rotor_tf_publisher src/utils/rotor_tf_publisher.cpp)
 ament_target_dependencies(rotor_tf_publisher ${AERIAL_ROBOT_MODEL_DEPS})
 target_link_libraries(rotor_tf_publisher ${orocos_kdl_LIBRARIES})
 
-pluginlib_export_plugin_description_file(aerial_robot_model plugins/robot_model_plugins.xml)
+pluginlib_export_plugin_description_file(aerial_robot_model plugins/robot_model_plugins.ros2.xml)
 
 # Nested one level deeper than it looks: a package that also generates
 # interfaces gets include/<pkg> on its consumers' include path, because that is
