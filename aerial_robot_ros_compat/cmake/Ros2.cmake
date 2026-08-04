@@ -1,4 +1,5 @@
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -30,6 +31,12 @@ target_link_libraries(${PROJECT_NAME}_param_mapping_test ${PROJECT_NAME})
 ament_target_dependencies(${PROJECT_NAME}_param_mapping_test rclcpp)
 install(TARGETS ${PROJECT_NAME}_param_mapping_test DESTINATION lib/${PROJECT_NAME})
 install(FILES test/param_mapping_test.yaml DESTINATION share/${PROJECT_NAME}/test)
+
+# The launch-side half of the compat layer: the robots' launch files import
+# aerial_robot_ros_compat.launch_config to load the ROS1 yaml config, which has
+# no ROS2 equivalent for the same reason the C++ side has none. ROS2-only -
+# under ROS1 the launch files read the yaml directly.
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR ${PROJECT_SOURCE_DIR}/python/${PROJECT_NAME})
 
 install(DIRECTORY include/ DESTINATION include)
 install(TARGETS ${PROJECT_NAME} EXPORT export_${PROJECT_NAME})

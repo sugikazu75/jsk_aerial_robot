@@ -1,44 +1,18 @@
-cmake_minimum_required(VERSION 3.0.2)
+# 3.14 rather than the 3.0.2 the catkin build asked for: ament_package needs
+# policies (IN_LIST, for one) that the older minimum leaves switched off.
+cmake_minimum_required(VERSION 3.14)
 project(gimbalrotor)
 
-add_compile_options(-std=c++17)
+if(DEFINED ENV{ROS_VERSION})
+  set(ROS_VERSION $ENV{ROS_VERSION})
+else()
+  message(FATAL_ERROR "ROS_VERSION is not defined")
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  aerial_robot_control
-  aerial_robot_estimation
-  aerial_robot_model
-  aerial_robot_msgs
-  spinal
-  pluginlib
-  roscpp
-  )
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-find_package(Eigen3 REQUIRED)
-
-catkin_package(
-  CATKIN_DEPENDS aerial_robot_control aerial_robot_estimation aerial_robot_model aerial_robot_msgs pluginlib roscpp spinal
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  )
-
-add_library(gimbalrotor_controller src/control/gimbalrotor_controller.cpp)
-target_link_libraries(gimbalrotor_controller ${catkin_LIBRARIES})
-
-add_library(gimbalrotor_robot_model src/model/gimbalrotor_robot_model.cpp)
-target_link_libraries(gimbalrotor_robot_model ${catkin_LIBRARIES})
-
-add_library(gimbalrotor_navigation src/gimbalrotor_navigation.cpp)
-target_link_libraries(gimbalrotor_navigation ${catkin_LIBRARIES})
-
-install(DIRECTORY config plugins launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-  USE_SOURCE_PERMISSIONS
-  )
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-  add_subdirectory(test)
+if(ROS_VERSION EQUAL 1)
+  include(Ros1)
+else()
+  include(Ros2)
 endif()

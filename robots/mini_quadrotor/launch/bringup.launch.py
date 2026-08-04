@@ -5,18 +5,10 @@
 # The arguments keep their ROS1 names and defaults so the same invocation means
 # the same thing under both versions.
 #
-# The one structural change is where the parameters go. ROS1 loaded these yaml
-# files into a *namespace* on the global parameter server and every node in that
-# namespace could read them; ROS2 has no global server, so each node needs its
-# own copy and a parameter file must name the node it is for. The yaml files are
-# therefore merged - in the order roslaunch would have applied them, and with
-# the same deep merge rosparam did for stacked files - and written out under a
-# `/**: ros__parameters:` header for the one node that reads them.
-#
-# Merging at launch rather than checking in wrapped copies is deliberate. Two
-# sets of gains that can drift apart silently is exactly the failure this
-# migration cannot afford: the robots fly on the ROS1 files, so those stay the
-# only copy.
+# The one structural change is where the parameters go: ROS2 has no global
+# parameter server, so the ROS1 yaml is merged at launch into one parameter file
+# addressed to the node that reads it. That is
+# aerial_robot_ros_compat.launch_config, which explains why.
 #
 # Not carried across, and why:
 #   - Gazebo. There is no ROS2 gazebo bringup for this stack yet; `mujoco:=true`
@@ -29,8 +21,8 @@
 #     carries its own initial pose.
 
 import os
-import tempfile
 
+from aerial_robot_ros_compat.launch_config import as_bool, write_parameter_file
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
@@ -39,50 +31,10 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 import xacro
-import yaml
 
 # EGOMOTION_ESTIMATE = 0, EXPERIMENT_ESTIMATE = 1, GROUND_TRUTH = 2
 DEFAULT_ESTIMATE_MODE = '0'
 DEFAULT_SIM_ESTIMATE_MODE = '2'
-
-
-def as_bool(context, name):
-    value = LaunchConfiguration(name).perform(context).strip().lower()
-    if value in ('true', '1'):
-        return True
-    if value in ('false', '0'):
-        return False
-    raise RuntimeError("launch argument '{}' is not a boolean: {}".format(name, value))
-
-
-def deep_merge(base, override):
-    """Merge `override` into `base`, the way rosparam merged stacked yaml files.
-
-    A plain dict.update() would be wrong: three of these files have a top-level
-    `sensor_plugin:` mapping holding different sensors, and the last one loaded
-    would be the only one left.
-    """
-    for key, value in override.items():
-        if isinstance(value, dict) and isinstance(base.get(key), dict):
-            deep_merge(base[key], value)
-        else:
-            base[key] = value
-    return base
-
-
-def write_parameter_file(config_files, overrides):
-    """Merge the ROS1 yaml files and write one ROS2 parameter file."""
-    merged = {}
-    for path in config_files:
-        with open(path, 'r') as stream:
-            deep_merge(merged, yaml.safe_load(stream) or {})
-    deep_merge(merged, overrides)
-
-    handle, path = tempfile.mkstemp(prefix='mini_quadrotor_params_', suffix='.yaml')
-    with os.fdopen(handle, 'w') as stream:
-        yaml.safe_dump({'/**': {'ros__parameters': merged}}, stream,
-                       default_flow_style=False)
-    return path
 
 
 def launch_setup(context, *args, **kwargs):
@@ -136,7 +88,7 @@ def launch_setup(context, *args, **kwargs):
     estimate_mode = LaunchConfiguration(
         'sim_estimate_mode' if simulation else 'estimate_mode').perform(context)
 
-    parameter_file = write_parameter_file(config_files, {
+    parameter_file = write_parameter_file(config_files, overrides={
         'estimation': {'mode': int(estimate_mode)},
         'uav_model': 0,
         # Private parameters of the base node under ROS1. The compat layer's

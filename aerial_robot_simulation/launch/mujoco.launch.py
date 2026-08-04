@@ -26,6 +26,7 @@
 import os
 import tempfile
 
+from aerial_robot_ros_compat.launch_config import deep_merge, load_merged
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.launch_description_sources import FrontendLaunchDescriptionSource
@@ -38,16 +39,6 @@ import yaml
 MUJOCO_SERVER_NODE = '/mujoco_server'
 
 
-def deep_merge(base, override):
-    """Merge `override` into `base` the way rosparam merged stacked yaml files."""
-    for key, value in override.items():
-        if isinstance(value, dict) and isinstance(base.get(key), dict):
-            deep_merge(base[key], value)
-        else:
-            base[key] = value
-    return base
-
-
 def load_simulation_params(context):
     """The `simulation:` block the hardware component reads, from the ROS1 yaml.
 
@@ -57,15 +48,10 @@ def load_simulation_params(context):
     files, same stacking order, merged here because a ROS2 parameter file has to
     be addressed to a node and these belong to mujoco_ros_control's.
     """
-    params = {}
-    paths = [os.path.join(get_package_share_directory('aerial_robot_simulation'), 'config', 'Mujoco.yaml'),
-             LaunchConfiguration('simulation_config').perform(context)]
-    for path in paths:
-        if not path:
-            continue
-        with open(path, 'r') as stream:
-            deep_merge(params, (yaml.safe_load(stream) or {}).get('simulation') or {})
-    return params
+    return load_merged(
+        [os.path.join(get_package_share_directory('aerial_robot_simulation'), 'config', 'Mujoco.yaml'),
+         LaunchConfiguration('simulation_config').perform(context)],
+        subtree='simulation')
 
 
 def render_plugin_config(context):

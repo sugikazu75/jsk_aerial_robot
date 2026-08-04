@@ -1,0 +1,9 @@
+<!-- ROS2 counterpart of robot_model_plugins.xml. Same class, only the library path
+     differs: ROS1 pluginlib wants the lib/lib<name> form, while ROS2's
+     resolves <name> against the ament index and rejects directory
+     components. -->
+<library path="gimbalrotor_robot_model">
+  <class name="gimbalrotor_robot_model" type="GimbalrotorRobotModel" base_class_type="aerial_robot_model::RobotModel">
+    <description>plugin for gimbalrotor robot model </description>
+  </class>
+</library>

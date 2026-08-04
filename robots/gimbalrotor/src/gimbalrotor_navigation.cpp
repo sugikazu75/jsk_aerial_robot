@@ -12,20 +12,20 @@ GimbalrotorNavigator::GimbalrotorNavigator() : BaseNavigator(), eq_cog_world_(fa
   final_target_baselink_rot_.setRPY(0, 0, 0);
 }
 
-void GimbalrotorNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                                      boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                      boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+void GimbalrotorNavigator::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                                      ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                      ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                                       double loop_du)
 {
   /* initialize the flight control */
   BaseNavigator::initialize(nh, nhp, robot_model, estimator, loop_du);
 
-  target_baselink_rpy_pub_ = nh_.advertise<spinal::DesireCoord>("desire_coordinate", 1);  // to spinal
+  target_baselink_rpy_pub_ = nh_.advertise<spinal_c::DesireCoord>("desire_coordinate", 1);  // to spinal
   final_target_baselink_rot_sub_ =
       nh_.subscribe("final_target_baselink_rot", 1, &GimbalrotorNavigator::targetBaselinkRotCallback, this);
   final_target_baselink_rpy_sub_ =
       nh_.subscribe("final_target_baselink_rpy", 1, &GimbalrotorNavigator::targetBaselinkRPYCallback, this);
-  prev_rotation_stamp_ = ros::Time::now().toSec();
+  prev_rotation_stamp_ = ros_compat::now().toSec();
 }
 
 void GimbalrotorNavigator::update()
@@ -47,7 +47,8 @@ void GimbalrotorNavigator::reset()
   robot_model_->setCogDesireOrientation(rot);
 }
 
-void GimbalrotorNavigator::targetBaselinkRotCallback(const geometry_msgs::QuaternionStampedConstPtr& msg)
+void GimbalrotorNavigator::targetBaselinkRotCallback(
+    const ros_compat::ConstPtr<geometry_msgs_c::QuaternionStamped>& msg)
 {
   ros_compat::quaternionMsgToTf(msg->quaternion, final_target_baselink_rot_);
   target_omega_.setValue(0, 0, 0);  // for sure to reset the target angular velocity
@@ -60,13 +61,14 @@ void GimbalrotorNavigator::targetBaselinkRotCallback(const geometry_msgs::Quater
   }
 }
 
-void GimbalrotorNavigator::targetBaselinkRPYCallback(const geometry_msgs::Vector3StampedConstPtr& msg)
+void GimbalrotorNavigator::targetBaselinkRPYCallback(
+    const ros_compat::ConstPtr<geometry_msgs_c::Vector3Stamped>& msg)
 {
   final_target_baselink_rot_.setRPY(msg->vector.x, msg->vector.y, msg->vector.z);
   target_omega_.setValue(0, 0, 0);  // for sure to reset the target angular velocity
 }
 
-void GimbalrotorNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstPtr& msg)
+void GimbalrotorNavigator::naviCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::FlightNav>& msg)
 {
   BaseNavigator::naviCallback(msg);
   if (msg->roll_nav_mode == 2)
@@ -80,7 +82,7 @@ void GimbalrotorNavigator::baselinkRotationProcess()
   if (curr_target_baselink_rot_ == final_target_baselink_rot_)
     return;
 
-  if (ros::Time::now().toSec() - prev_rotation_stamp_ > baselink_rot_pub_interval_)
+  if (ros_compat::now().toSec() - prev_rotation_stamp_ > baselink_rot_pub_interval_)
   {
     tf2::Quaternion delta_q = curr_target_baselink_rot_.inverse() * final_target_baselink_rot_;
     double angle = delta_q.getAngle();
@@ -99,7 +101,7 @@ void GimbalrotorNavigator::baselinkRotationProcess()
     robot_model_->setCogDesireOrientation(rot);
 
     // send to spinal
-    spinal::DesireCoord msg;
+    spinal_c::DesireCoord msg;
     double r, p, y;
     tf2::Matrix3x3(curr_target_baselink_rot_).getRPY(r, p, y);
     msg.roll = r;
@@ -107,7 +109,7 @@ void GimbalrotorNavigator::baselinkRotationProcess()
     msg.yaw = y;
     target_baselink_rpy_pub_.publish(msg);
 
-    prev_rotation_stamp_ = ros::Time::now().toSec();
+    prev_rotation_stamp_ = ros_compat::now().toSec();
   }
 }
 
@@ -115,7 +117,7 @@ void GimbalrotorNavigator::rosParamInit()
 {
   BaseNavigator::rosParamInit();
 
-  ros::NodeHandle navi_nh(nh_, "navigation");
+  ros_compat::NodeHandle navi_nh(nh_, "navigation");
 
   getParam<double>(navi_nh, "baselink_rot_change_thresh", baselink_rot_change_thresh_,
                    0.02);  // the threshold to change the baselink rotation

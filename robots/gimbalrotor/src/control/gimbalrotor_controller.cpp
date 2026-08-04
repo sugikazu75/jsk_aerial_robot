@@ -10,14 +10,14 @@ GimbalrotorController::GimbalrotorController() : PoseLinearController()
 {
 }
 
-void GimbalrotorController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                                       boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                       boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                       boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+void GimbalrotorController::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                                       ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                       ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                       ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                        double ctrl_loop_rate)
 {
   PoseLinearController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
-  gimbalrotor_robot_model_ = boost::dynamic_pointer_cast<GimbalrotorRobotModel>(robot_model);
+  gimbalrotor_robot_model_ = ros_compat::dynamicPointerCast<GimbalrotorRobotModel>(robot_model);
 
   GimbalrotorController::rosParamInit();
 
@@ -27,14 +27,14 @@ void GimbalrotorController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   target_full_thrust_.resize(motor_num_);
   target_gimbal_angles_.resize(motor_num_ * gimbal_dof_, 0);
 
-  flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
-  gimbal_control_pub_ = nh_.advertise<sensor_msgs::JointState>("gimbals_ctrl", 1);
-  gimbal_state_pub_ = nh_.advertise<sensor_msgs::JointState>("joint_states", 1);
-  target_vectoring_force_pub_ = nh_.advertise<std_msgs::Float32MultiArray>("debug/target_vectoring_force", 1);
-  rpy_gain_pub_ = nh_.advertise<spinal::RollPitchYawTerms>("rpy/gain", 1);
+  flight_cmd_pub_ = nh_.advertise<spinal_c::FourAxisCommand>("four_axes/command", 1);
+  gimbal_control_pub_ = nh_.advertise<sensor_msgs_c::JointState>("gimbals_ctrl", 1);
+  gimbal_state_pub_ = nh_.advertise<sensor_msgs_c::JointState>("joint_states", 1);
+  target_vectoring_force_pub_ = nh_.advertise<std_msgs_c::Float32MultiArray>("debug/target_vectoring_force", 1);
+  rpy_gain_pub_ = nh_.advertise<spinal_c::RollPitchYawTerms>("rpy/gain", 1);
   torque_allocation_matrix_inv_pub_ =
-      nh_.advertise<spinal::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
-  gimbal_dof_pub_ = nh_.advertise<std_msgs::UInt8>("gimbal_dof", 1);
+      nh_.advertise<spinal_c::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
+  gimbal_dof_pub_ = nh_.advertise<std_msgs_c::UInt8>("gimbal_dof", 1);
 }
 
 void GimbalrotorController::reset()
@@ -46,7 +46,7 @@ void GimbalrotorController::reset()
 
 void GimbalrotorController::rosParamInit()
 {
-  ros::NodeHandle control_nh(nh_, "controller");
+  ros_compat::NodeHandle control_nh(nh_, "controller");
   getParam<int>(control_nh, "gimbal_dof", gimbal_dof_, 1);
   getParam<bool>(control_nh, "gimbal_calc_in_fc", gimbal_calc_in_fc_, true);
   getParam<bool>(control_nh, "hovering_approximate", hovering_approximate_, false);
@@ -58,7 +58,7 @@ bool GimbalrotorController::update()
   sendGimbalCommand();
   if (gimbal_calc_in_fc_)
   {
-    std_msgs::UInt8 msg;
+    std_msgs_c::UInt8 msg;
     msg.data = gimbal_dof_;
     gimbal_dof_pub_.publish(msg);
   }
@@ -268,8 +268,8 @@ void GimbalrotorController::sendCmd()
   }
   else
   {
-    sensor_msgs::JointState gimbal_control_msg;
-    gimbal_control_msg.header.stamp = ros::Time::now();
+    sensor_msgs_c::JointState gimbal_control_msg;
+    gimbal_control_msg.header.stamp = ros_compat::now();
     for (int i = 0; i < motor_num_; i++)
     {
       if (gimbal_dof_ == 1)
@@ -284,7 +284,7 @@ void GimbalrotorController::sendCmd()
     }
     gimbal_control_pub_.publish(gimbal_control_msg);
 
-    std_msgs::Float32MultiArray target_vectoring_force_msg;
+    std_msgs_c::Float32MultiArray target_vectoring_force_msg;
     target_vectoring_f_ = target_vectoring_f_trans_ + target_vectoring_f_rot_;
     for (int i = 0; i < target_vectoring_f_.size(); i++)
     {
@@ -296,7 +296,7 @@ void GimbalrotorController::sendCmd()
 
 void GimbalrotorController::sendFourAxisCommand()
 {
-  spinal::FourAxisCommand flight_command_data;
+  spinal_c::FourAxisCommand flight_command_data;
 
   flight_command_data.angles[0] = target_roll_;
   flight_command_data.angles[1] = target_pitch_;
@@ -316,8 +316,8 @@ void GimbalrotorController::sendFourAxisCommand()
 
 void GimbalrotorController::sendGimbalCommand()
 {
-  sensor_msgs::JointState gimbal_state_msg;
-  gimbal_state_msg.header.stamp = ros::Time::now();
+  sensor_msgs_c::JointState gimbal_state_msg;
+  gimbal_state_msg.header.stamp = ros_compat::now();
   for (int i = 0; i < motor_num_; i++)
   {
     if (gimbal_dof_ == 1)
@@ -341,11 +341,11 @@ void GimbalrotorController::sendGimbalCommand()
 
 void GimbalrotorController::sendTorqueAllocationMatrixInv()
 {
-  spinal::TorqueAllocationMatrixInv torque_allocation_matrix_inv_msg;
+  spinal_c::TorqueAllocationMatrixInv torque_allocation_matrix_inv_msg;
   torque_allocation_matrix_inv_msg.rows.resize(motor_num_ * rotor_coef_);
   Eigen::MatrixXd torque_allocation_matrix_inv = integrated_map_inv_rot_;
   if (torque_allocation_matrix_inv.cwiseAbs().maxCoeff() > INT16_MAX * 0.001f)
-    ROS_ERROR("Torque Allocation Matrix overflow");
+    ROS_COMPAT_ERROR("Torque Allocation Matrix overflow");
   for (unsigned int i = 0; i < motor_num_ * rotor_coef_; i++)
   {
     torque_allocation_matrix_inv_msg.rows.at(i).x = torque_allocation_matrix_inv(i, 0) * 1000;
@@ -357,7 +357,7 @@ void GimbalrotorController::sendTorqueAllocationMatrixInv()
 
 void GimbalrotorController::setAttitudeGains()
 {
-  spinal::RollPitchYawTerms rpy_gain_msg;  // for rosserial
+  spinal_c::RollPitchYawTerms rpy_gain_msg;  // for rosserial
   /* to flight controller via rosserial scaling by 1000 */
   rpy_gain_msg.motors.resize(1);
   rpy_gain_msg.motors.at(0).roll_p = pid_controllers_.at(ROLL).getPGain() * 1000;

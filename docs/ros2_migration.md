@@ -30,6 +30,7 @@ half-converted across a commit boundary.
 | aerial_robot_base | yes | yes |
 | aerial_robot_simulation | yes | yes |
 | robots/mini_quadrotor | yes | yes |
+| robots/gimbalrotor | yes | builds, cannot fly |
 | other robots/* | yes | not started |
 
 **The first milestone is met: mini_quadrotor hovers in MuJoCo under ROS2.**
@@ -331,8 +332,8 @@ Extra apt packages installed for humble beyond the base desktop: `ros2-control`,
 `ros2-controllers`, `camera-info-manager`, `image-transport`, `joint-state-publisher`,
 `xacro`, `py-binding-tools`, `geographic-msgs`, `geodesy`, `joy`.
 
-`nlopt` is **not** in apt and will need a source build before `hydrus_xi` and `dragon`
-can be ported.
+`nlopt` is not in apt, but it does not need to be: `aerial_robot_3rdparty` builds it
+through `ExternalProject`. Porting that package is what `hydrus_xi` and `dragon` need.
 
 ## Known rough edges
 
@@ -380,6 +381,11 @@ The split follows who reads what, which is not how ROS1 arranged it:
   parameter files cannot carry substitutions, so `mujoco.launch.py` renders one
   at launch. That is the same job `<rosparam subst_value="true">` did.
 
+**The merging lives in `aerial_robot_ros_compat.launch_config`**, a python
+module the compat package installs alongside its headers - the launch-side half
+of the same job. Robots import `write_parameter_file`; `mujoco.launch.py` uses
+`load_merged` with a `subtree` to lift just the `simulation:` block out.
+
 **No controller is spawned.** In the spinal configuration the flight control
 core lives inside the hardware component, and mujoco_ros_control activates the
 component itself, so `read()`/`write()` run with nothing loaded.
@@ -393,6 +399,26 @@ relative to the *source* tree, which does not survive installation.
 `mini_quadrotor/cmake/Ros2.cmake` resolves that path while the source layout is
 still real and installs a self-contained pair: `robot.xml` with a bare
 `<include file="world.xml"/>`, and the world beside it.
+
+## gimbalrotor
+
+Builds under ROS2 - the robot model, controller and navigator plugins all load
+and initialise under `aerial_robot_base_node` with the robot's own config - and
+**cannot fly there**. `bringup.launch.py` brings up the base node and the
+description, and raises if asked to simulate. Three things are missing, none of
+them launch work:
+
+- **No MuJoCo model.** This robot only ever simulated in Gazebo; it has no
+  `config/mujoco_model.yaml` and no generated `mujoco/`.
+- **No gimbal servos in the simulation.** `AerialRobotMujocoSystem` handles
+  rotor actuators only. A vectored robot needs the servo joints exported as
+  ros2_control interfaces and driven from `gimbals_ctrl`.
+- **No `servo_bridge`.** The ROS1 launch always starts it, and it is outside
+  aerial_robot_model's ROS2 build.
+
+The conversion itself was routine - the compat spellings, message includes under
+an `#if`, and a `*.ros2.xml` per plugin description. `gimbalrotor_robot_model`
+needed nothing at all: it is KDL and pluginlib, with no ROS in it.
 
 ## Still open
 
