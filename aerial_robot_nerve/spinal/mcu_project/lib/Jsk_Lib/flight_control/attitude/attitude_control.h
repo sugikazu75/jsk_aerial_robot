@@ -15,7 +15,13 @@
 #ifndef SIMULATION
 #include "config.h"
 #include <ros.h>
+// ROS2 takes these from spinal_ros2_shim.h, which hoists the generated
+// types out of the msg/srv namespaces ROS2 puts them in.
+#if !defined(AERIAL_ROBOT_ROS_VERSION) || AERIAL_ROBOT_ROS_VERSION != 2
 #include <sensor_msgs/JointState.h>
+#endif
+#elif defined(AERIAL_ROBOT_ROS_VERSION) && AERIAL_ROBOT_ROS_VERSION == 2
+#include <spinal_ros2_shim.h>
 #else
 #include <ros/ros.h>
 #endif
@@ -36,6 +42,9 @@
 
 #include "state_estimate/state_estimate.h"
 
+// ROS2 takes these from spinal_ros2_shim.h, which hoists the generated
+// types out of the msg/srv namespaces ROS2 puts them in.
+#if !defined(AERIAL_ROBOT_ROS_VERSION) || AERIAL_ROBOT_ROS_VERSION != 2
 #include <std_msgs/UInt8.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
@@ -48,6 +57,7 @@
 #include <spinal/UavInfo.h>
 #include <spinal/PMatrixPseudoInverseWithInertia.h>
 #include <spinal/TorqueAllocationMatrixInv.h>
+#endif
 
 #define IDLE_DUTY 0.5f
 #define FORCE_LANDING_INTEGRAL 0.0025f // 500Hz * 0.0025 = 1.25 N / sec

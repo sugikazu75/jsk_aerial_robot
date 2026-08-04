@@ -18,18 +18,22 @@
 
 /* ros */
 #include <ros.h>
+#elif defined(AERIAL_ROBOT_ROS_VERSION) && AERIAL_ROBOT_ROS_VERSION == 2
+#include <spinal_ros2_shim.h>
 #else
 #include <ros/ros.h>
 #endif
 
+// ROS2 takes these from spinal_ros2_shim.h, which hoists the generated
+// types out of the msg/srv namespaces ROS2 puts them in.
+#if !defined(AERIAL_ROBOT_ROS_VERSION) || AERIAL_ROBOT_ROS_VERSION != 2
 #include <spinal/Imu.h>
 #include <spinal/DesireCoord.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#endif
 
 /* sensors */
-#ifdef SIMULATION
-#include <tf/LinearMath/Matrix3x3.h>
-#else
+#ifndef SIMULATION
 #include "sensors/imu/drivers/mpu9250/imu_mpu9250.h"
 #include "sensors/imu/drivers/icm20948/icm_20948.h"
 #include "sensors/gps/gps_ublox.h"

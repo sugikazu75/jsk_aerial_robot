@@ -97,5 +97,62 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES builtin_interfaces std_msgs
 )
 
-ament_export_dependencies(rosidl_default_runtime)
+# ---------------------------------------------------------------------------
+# The firmware's simulation build.
+#
+# attitude_control.cpp and the math library are compiled with -DSIMULATION for
+# the host, where they drive the simulated flight controller. The MuJoCo
+# hardware component in aerial_robot_simulation runs exactly this code, so it
+# has to exist under ROS2 too. The sources are shared with the MCU firmware and
+# are not edited: spinal_ros2_shim.h supplies the `ros::` names their SIMULATION
+# path uses, backed by the compat layer.
+# ---------------------------------------------------------------------------
+
+find_package(aerial_robot_ros_compat REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+
+set(SPINAL_DIRS mcu_project/lib/Jsk_Lib)
+
+add_library(spinal_math SHARED
+  ${SPINAL_DIRS}/math/AP_Math.cpp
+  ${SPINAL_DIRS}/math/matrix3.cpp
+  ${SPINAL_DIRS}/math/vector2.cpp
+  ${SPINAL_DIRS}/math/vector3.cpp
+  ${SPINAL_DIRS}/math/quaternion.cpp
+  ${SPINAL_DIRS}/math/location.cpp)
+target_include_directories(spinal_math PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${SPINAL_DIRS}>"
+  "$<INSTALL_INTERFACE:include>")
+target_compile_definitions(spinal_math PUBLIC SIMULATION)
+ament_target_dependencies(spinal_math aerial_robot_ros_compat rclcpp)
+
+
+add_library(spinal_flight_controller SHARED
+  ${SPINAL_DIRS}/flight_control/attitude/attitude_control.cpp)
+target_include_directories(spinal_flight_controller PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${SPINAL_DIRS}>"
+  "$<INSTALL_INTERFACE:include>")
+target_compile_definitions(spinal_flight_controller PUBLIC SIMULATION)
+ament_target_dependencies(spinal_flight_controller
+  aerial_robot_ros_compat rclcpp std_msgs std_srvs sensor_msgs geometry_msgs)
+
+# The controller publishes and subscribes this package's own interfaces, so it
+# links the generated typesupport directly.
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+target_link_libraries(spinal_flight_controller spinal_math "${cpp_typesupport_target}")
+
+install(DIRECTORY ${SPINAL_DIRS}/ DESTINATION include)
+
+install(TARGETS spinal_math spinal_flight_controller
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+ament_export_include_directories(include)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(aerial_robot_ros_compat rclcpp sensor_msgs geometry_msgs std_msgs std_srvs rosidl_default_runtime)
 ament_package()

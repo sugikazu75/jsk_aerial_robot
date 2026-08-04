@@ -15,6 +15,8 @@
 #ifndef SIMULATION
 #include "config.h"
 #include <ros.h>
+#elif defined(AERIAL_ROBOT_ROS_VERSION) && AERIAL_ROBOT_ROS_VERSION == 2
+#include <spinal_ros2_shim.h>
 #else
 #include <ros/ros.h>
 #endif
@@ -31,9 +33,13 @@
 #include "flight_control/attitude/attitude_control.h"
 
 /* ros */
+// ROS2 takes these from spinal_ros2_shim.h, which hoists the generated
+// types out of the msg/srv namespaces ROS2 puts them in.
+#if !defined(AERIAL_ROBOT_ROS_VERSION) || AERIAL_ROBOT_ROS_VERSION != 2
 #include <spinal/FlightConfigCmd.h>
 #include <spinal/UavInfo.h>
 #include <std_msgs/UInt8.h>
+#endif
 
 class FlightControl
 {

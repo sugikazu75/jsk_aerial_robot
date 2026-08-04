@@ -12,7 +12,10 @@
 #include "flight_control/attitude/attitude_control.h"
 
 #ifdef SIMULATION
+// ROS2 takes this from spinal_ros2_shim.h, pulled in via attitude_control.h.
+#if !defined(AERIAL_ROBOT_ROS_VERSION) || AERIAL_ROBOT_ROS_VERSION != 2
 #include <sensor_msgs/JointState.h>
+#endif
 AttitudeController::AttitudeController(): DELTA_T(0), prev_time_(-1), sim_voltage_(0)
 {
 }
