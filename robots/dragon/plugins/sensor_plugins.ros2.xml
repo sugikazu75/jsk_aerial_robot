@@ -1,0 +1,11 @@
+<!-- ROS2 counterpart of sensor_plugins.xml. Same classes, only the library
+     path differs: ROS1 pluginlib wants the lib/lib<name> form, while ROS2's
+     resolves <name> against the ament index and rejects directory
+     components. -->
+<library path="dragon_sensor_pluginlib">
+
+  <class name="sensor_plugin/dragon_imu" type="sensor_plugin::DragonImu" base_class_type="sensor_plugin::SensorBase">
+    <description>Dragon IMU sensor plugin for full vectoring control .</description>
+  </class>
+
+</library>

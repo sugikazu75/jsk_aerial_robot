@@ -35,8 +35,13 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+
 #include <hydrus/hydrus_robot_model.h>
-#include <kdl_conversions/kdl_msg.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <kdl_conversions/kdl_msg.h>
+#endif
 
 namespace Dragon
 {
@@ -65,7 +70,7 @@ namespace Dragon
     //public functions
     void addCompThrustToJointTorque();
     void addCompThrustToStaticThrust();
-    bool addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const geometry_msgs::Point offset, const geometry_msgs::Wrench wrench);
+    bool addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const geometry_msgs_c::Point offset, const geometry_msgs_c::Wrench wrench);
     bool addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const KDL::Vector offset, const KDL::Wrench wrench);
     bool addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const KDL::Vector offset, const Eigen::VectorXd wrench);
 
@@ -180,7 +185,7 @@ template<> inline KDL::JntArray HydrusLikeRobotModel::getGimbalProcessedJoint()
   return gimbal_processed_joint_;
 }
 
-template<> inline sensor_msgs::JointState HydrusLikeRobotModel::getGimbalProcessedJoint()
+template<> inline sensor_msgs_c::JointState HydrusLikeRobotModel::getGimbalProcessedJoint()
 {
   return kdlJointToMsg(getGimbalProcessedJoint<KDL::JntArray>());
 }

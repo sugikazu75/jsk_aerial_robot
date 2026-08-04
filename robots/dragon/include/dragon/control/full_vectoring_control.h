@@ -35,19 +35,40 @@
 
 #pragma once
 
-#include <aerial_robot_msgs/ApplyWrench.h>
-#include <aerial_robot_msgs/ForceList.h>
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_msgs/ApplyWrench.h>
+#  include <aerial_robot_msgs/ForceList.h>
+#  include <geometry_msgs/WrenchStamped.h>
+#  include <spinal/FourAxisCommand.h>
+#  include <spinal/RollPitchYawTerm.h>
+#  include <spinal/TorqueAllocationMatrixInv.h>
+#  include <std_msgs/String.h>
+#  include <visualization_msgs/MarkerArray.h>
+#else
+#  include <aerial_robot_msgs/msg/apply_wrench.hpp>
+#  include <aerial_robot_msgs/msg/force_list.hpp>
+#  include <geometry_msgs/msg/wrench_stamped.hpp>
+#  include <spinal/msg/four_axis_command.hpp>
+#  include <spinal/msg/roll_pitch_yaw_term.hpp>
+#  include <spinal/msg/torque_allocation_matrix_inv.hpp>
+#  include <std_msgs/msg/string.hpp>
+#  include <visualization_msgs/msg/marker_array.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
+AERIAL_ROBOT_MSG_NAMESPACE(std_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(visualization_msgs);
 #include <aerial_robot_control/control/base/pose_linear_controller.h>
 #include <dragon/model/full_vectoring_robot_model.h>
 #include <dragon/dragon_navigation.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <spinal/FourAxisCommand.h>
-#include <spinal/RollPitchYawTerm.h>
-#include <spinal/TorqueAllocationMatrixInv.h>
-#include <std_msgs/String.h>
 #include <dragon/sensor/imu.h>
-#include <visualization_msgs/MarkerArray.h>
 #include <nlopt.hpp>
+#include <atomic>
+#include <thread>
 
 namespace aerial_robot_control
 {
@@ -57,18 +78,23 @@ namespace aerial_robot_control
     DragonFullVectoringController();
     ~DragonFullVectoringController()
     {
-      wrench_estimate_thread_.interrupt();
-      wrench_estimate_thread_.join();
+      /* A stop flag rather than boost::thread::interrupt(), which std::thread
+         has no equivalent of. The loop already ends when ros::ok() goes false;
+         this also ends it when the controller is destroyed while ROS is still
+         up, which interrupt() was covering. */
+      wrench_estimate_stop_ = true;
+      if (wrench_estimate_thread_.joinable())
+        wrench_estimate_thread_.join();
     }
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate) override;
 
-    const boost::shared_ptr<Dragon::FullVectoringRobotModel> getDragonRobotModel() const { return dragon_robot_model_;}
-    const boost::shared_ptr<aerial_robot_model::RobotModel> getRobotModelForControl() const { return robot_model_for_control_;}
+    const ros_compat::SharedPtr<Dragon::FullVectoringRobotModel> getDragonRobotModel() const { return dragon_robot_model_;}
+    const ros_compat::SharedPtr<aerial_robot_model::RobotModel> getRobotModelForControl() const { return robot_model_for_control_;}
 
     const Eigen::VectorXd getTargetWrench()
     {
@@ -87,15 +113,15 @@ namespace aerial_robot_control
 
   private:
 
-    ros::Publisher flight_cmd_pub_; //for spinal
-    ros::Publisher gimbal_control_pub_;
-    ros::Publisher target_vectoring_force_pub_;
-    ros::Publisher estimate_external_wrench_pub_;
-    ros::Publisher rotor_interfere_wrench_pub_;
-    ros::Publisher interfrence_marker_pub_;
+    ros_compat::Publisher flight_cmd_pub_; //for spinal
+    ros_compat::Publisher gimbal_control_pub_;
+    ros_compat::Publisher target_vectoring_force_pub_;
+    ros_compat::Publisher estimate_external_wrench_pub_;
+    ros_compat::Publisher rotor_interfere_wrench_pub_;
+    ros_compat::Publisher interfrence_marker_pub_;
 
-    boost::shared_ptr<Dragon::FullVectoringRobotModel> dragon_robot_model_;
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_for_control_;
+    ros_compat::SharedPtr<Dragon::FullVectoringRobotModel> dragon_robot_model_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_for_control_;
     std::vector<double> target_base_thrust_;
     std::vector<double> target_gimbal_angles_;
     Eigen::VectorXd target_vectoring_f_;
@@ -140,7 +166,8 @@ namespace aerial_robot_control
 
     /* external wrench */
     std::mutex wrench_mutex_;
-    boost::thread wrench_estimate_thread_;
+    std::thread wrench_estimate_thread_;
+    std::atomic<bool> wrench_estimate_stop_{ false };
     Eigen::VectorXd init_sum_momentum_;
     Eigen::VectorXd est_external_wrench_;
     Eigen::MatrixXd momentum_observer_matrix_;
@@ -171,14 +198,14 @@ namespace aerial_robot_control
     double overlap_dist_inter_joint_thresh_;
 
     /* external (static) wrench compensation */
-    ros::Subscriber add_external_wrench_sub_, clear_external_wrench_sub_;
-    void addExternalWrenchCallback(const aerial_robot_msgs::ApplyWrench::ConstPtr& msg);
-    void clearExternalWrenchCallback(const std_msgs::String::ConstPtr& msg);
+    ros_compat::Subscriber add_external_wrench_sub_, clear_external_wrench_sub_;
+    void addExternalWrenchCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ApplyWrench>& msg);
+    void clearExternalWrenchCallback(const ros_compat::ConstPtr<std_msgs_c::String>& msg);
 
     /* extra vectoring force (i.e., for grasping) */
-    ros::Subscriber extra_vectoring_force_sub_;
+    ros_compat::Subscriber extra_vectoring_force_sub_;
     std::vector<Eigen::Vector3d> extra_vectoring_forces_;
-    void extraVectoringForceCallback(const aerial_robot_msgs::ForceListConstPtr& msg);
+    void extraVectoringForceCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ForceList>& msg);
 
     void externalWrenchEstimate();
 

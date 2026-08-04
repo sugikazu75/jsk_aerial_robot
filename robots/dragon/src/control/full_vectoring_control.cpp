@@ -105,7 +105,7 @@ namespace
 
 
     Eigen::VectorXd wrench_diff = Q * lambda - target_wrench;
-    //ROS_INFO_STREAM("Q * lambda: " << (Q * lambda).transpose() << "; wrench_diff: " << wrench_diff.transpose() << "; lambda: " << lambda.transpose() << "; target wrench: " << target_wrench.transpose() <<  "\n Q: \n" << Q);
+    //ROS_COMPAT_INFO_STREAM("Q * lambda: " << (Q * lambda).transpose() << "; wrench_diff: " << wrench_diff.transpose() << "; lambda: " << lambda.transpose() << "; target wrench: " << target_wrench.transpose() <<  "\n Q: \n" << Q);
     for(int i = 0; i < m; i++) result[i] = wrench_diff(i);
 
     if(grad == NULL) return;
@@ -282,7 +282,7 @@ namespace
     //         grad_matrix(i,j) = grad[i * n + j];
     //       }
     //   }
-    // ROS_INFO_STREAM("cons grad matrix: \n" << grad_matrix);
+    // ROS_COMPAT_INFO_STREAM("cons grad matrix: \n" << grad_matrix);
 
 #endif
 
@@ -357,7 +357,7 @@ namespace
           grad[i * n + j] = grad_dash(i,j);
       }
 
-    //ROS_INFO_STREAM("grad_dash: \n" << grad_dash);
+    //ROS_COMPAT_INFO_STREAM("grad_dash: \n" << grad_dash);
 #endif
   }
 };
@@ -367,28 +367,28 @@ DragonFullVectoringController::DragonFullVectoringController():
 {
 }
 
-void DragonFullVectoringController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                                     boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                     boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                     boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+void DragonFullVectoringController::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                                     ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                     ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                     ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                      double ctrl_loop_rate)
 {
   PoseLinearController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
   rosParamInit();
 
-  dragon_robot_model_ = boost::dynamic_pointer_cast<Dragon::FullVectoringRobotModel>(robot_model);
-  robot_model_for_control_ = boost::make_shared<aerial_robot_model::RobotModel>();
+  dragon_robot_model_ = ros_compat::dynamicPointerCast<Dragon::FullVectoringRobotModel>(robot_model);
+  robot_model_for_control_ = ros_compat::makeShared<aerial_robot_model::RobotModel>();
 
   /* initialize the gimbal target angles */
   target_base_thrust_.resize(motor_num_);
   target_gimbal_angles_.resize(motor_num_ * 2, 0);
 
-  gimbal_control_pub_ = nh_.advertise<sensor_msgs::JointState>("gimbals_ctrl", 1);
-  flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
-  target_vectoring_force_pub_ = nh_.advertise<aerial_robot_msgs::ForceList>("debug/target_vectoring_force", 1);
-  estimate_external_wrench_pub_ = nh_.advertise<geometry_msgs::WrenchStamped>("estimated_external_wrench", 1);
-  rotor_interfere_wrench_pub_ = nh_.advertise<geometry_msgs::WrenchStamped>("rotor_interfere_wrench", 1);
-  interfrence_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("interference_markers", 1);
+  gimbal_control_pub_ = nh_.advertise<sensor_msgs_c::JointState>("gimbals_ctrl", 1);
+  flight_cmd_pub_ = nh_.advertise<spinal_c::FourAxisCommand>("four_axes/command", 1);
+  target_vectoring_force_pub_ = nh_.advertise<aerial_robot_msgs_c::ForceList>("debug/target_vectoring_force", 1);
+  estimate_external_wrench_pub_ = nh_.advertise<geometry_msgs_c::WrenchStamped>("estimated_external_wrench", 1);
+  rotor_interfere_wrench_pub_ = nh_.advertise<geometry_msgs_c::WrenchStamped>("rotor_interfere_wrench", 1);
+  interfrence_marker_pub_ = nh_.advertise<visualization_msgs_c::MarkerArray>("interference_markers", 1);
 
   add_external_wrench_sub_ = nh_.subscribe(std::string("apply_external_wrench"), 1, &DragonFullVectoringController::addExternalWrenchCallback, this);
   clear_external_wrench_sub_ = nh_.subscribe(std::string("clear_external_wrench"), 1, &DragonFullVectoringController::clearExternalWrenchCallback, this);
@@ -412,14 +412,14 @@ void DragonFullVectoringController::initialize(ros::NodeHandle nh, ros::NodeHand
   gimbal_roll_offset_ = 0;
   prev_target_gimbal_angles_.resize(0);
 
-  wrench_estimate_thread_ = boost::thread([this]()
+  wrench_estimate_thread_ = std::thread([this]()
                                           {
-                                            ros::NodeHandle control_nh(nh_, "controller");
+                                            ros_compat::NodeHandle control_nh(nh_, "controller");
                                             double update_rate;
                                             control_nh.param ("wrench_estimate_update_rate", update_rate, 100.0);
 
-                                            ros::Rate loop_rate(update_rate);
-                                            while(ros::ok())
+                                            ros_compat::Rate loop_rate(update_rate);
+                                            while(ros_compat::ok() && !wrench_estimate_stop_)
                                               {
                                                 externalWrenchEstimate();
                                                 loop_rate.sleep();
@@ -487,7 +487,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
               if(dist_inter < overlap_dist_inter_joint_thresh_)
                 {
                   overlap_inter = true;
-                  /// ROS_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() <<  ", interfere with inter_joint" << j+1 << ": " << p_inter.transpose());
+                  /// ROS_COMPAT_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() <<  ", interfere with inter_joint" << j+1 << ": " << p_inter.transpose());
                 }
             }
 
@@ -518,9 +518,9 @@ void DragonFullVectoringController::rotorInterfereCompensation()
 
               if(dist_rotor_l < overlap_dist_rotor_relax_thresh_ || dist_rotor_r < overlap_dist_rotor_relax_thresh_)
                 {
-                  // ROS_INFO_STREAM("p_projected_rotor_l: " << p_projected_rotor_l.transpose() << "; p_projected_rotor_r: " << p_projected_rotor_r.transpose());
-                  // ROS_INFO_STREAM("p_rotor_l: " << p_rotor_l.transpose() << "; p_rotor_r: " << p_rotor_r.transpose());
-                  // ROS_INFO_STREAM("dist_rotor_l: " << dist_rotor_l << "; dist_rotor_r: " << dist_rotor_r);
+                  // ROS_COMPAT_INFO_STREAM("p_projected_rotor_l: " << p_projected_rotor_l.transpose() << "; p_projected_rotor_r: " << p_projected_rotor_r.transpose());
+                  // ROS_COMPAT_INFO_STREAM("p_rotor_l: " << p_rotor_l.transpose() << "; p_rotor_r: " << p_rotor_r.transpose());
+                  // ROS_COMPAT_INFO_STREAM("dist_rotor_l: " << dist_rotor_l << "; dist_rotor_r: " << dist_rotor_r);
                   double rotor_l_weight = 1;
                   double rotor_r_weight = 1;
 
@@ -560,7 +560,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
                       overlap_rotors_.push_back(std::string("rotor") + std::to_string(i + 1) + std::string("_") + rotor_name);
 
 
-                      /// ROS_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with rotor" << j+1 << "right: " << overlap_positions_.back().transpose());
+                      /// ROS_COMPAT_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with rotor" << j+1 << "right: " << overlap_positions_.back().transpose());
                     }
                   else if(dist_rotor_r > overlap_dist_rotor_relax_thresh_)
                     {
@@ -571,7 +571,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
                       overlap_segments_.push_back(std::string("rotor") + s + std::string("_left"));
                       overlap_rotors_.push_back(std::string("rotor") + std::to_string(i + 1) + std::string("_") + rotor_name);
 
-                      /// ROS_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with rotor" << j+1 << "left: " << overlap_positions_.back().transpose());
+                      /// ROS_COMPAT_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with rotor" << j+1 << "left: " << overlap_positions_.back().transpose());
                     }
                   else
                     {
@@ -582,7 +582,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
                       overlap_segments_.push_back(std::string("rotor") + s + std::string("_left&right"));
                       overlap_rotors_.push_back(std::string("rotor") + std::to_string(i + 1) + std::string("_") + rotor_name);
 
-                      /// ROS_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with rotor" << j+1 << "left&right: " << overlap_positions_.back().transpose());
+                      /// ROS_COMPAT_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with rotor" << j+1 << "left&right: " << overlap_positions_.back().transpose());
                     }
 
                   overlap_rotor = true;
@@ -640,7 +640,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
 
                       overlap_segments_.back() = overlap_segments_.back() + std::string("&link");
 
-                      /// ROS_INFO_STREAM("  rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with link" << j+1 << "&rotor : " << overlap_positions_.back().transpose());
+                      /// ROS_COMPAT_INFO_STREAM("  rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with link" << j+1 << "&rotor : " << overlap_positions_.back().transpose());
                     }
                   else
                     {
@@ -654,7 +654,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
                           overlap_segments_.push_back(std::string("link&inter_joint") + s);
                           overlap_rotors_.push_back(std::string("rotor") + std::to_string(i + 1) + std::string("_") + rotor_name);
 
-                          /// ROS_INFO_STREAM(" rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with link & inter_joint" << j+1 << ": " << overlap_positions_.back().transpose());
+                          /// ROS_COMPAT_INFO_STREAM(" rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with link & inter_joint" << j+1 << ": " << overlap_positions_.back().transpose());
                         }
                       else
                         {
@@ -664,7 +664,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
                           overlap_segments_.push_back(std::string("link") + s);
                           overlap_rotors_.push_back(std::string("rotor") + std::to_string(i + 1) + std::string("_") + rotor_name);
 
-                          /// ROS_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with link" << j+1 << ": " << overlap_positions_.back().transpose());
+                          /// ROS_COMPAT_INFO_STREAM("rotor" << i + 1 << "_" << rotor_name << " " << p_rotor.transpose() << ", interfere with link" << j+1 << ": " << overlap_positions_.back().transpose());
                         }
                     }
                 }
@@ -697,7 +697,7 @@ void DragonFullVectoringController::rotorInterfereCompensation()
       Eigen::Vector3d external_wrench(est_external_wrench_(2), est_external_wrench_(3) - tx_bias_, est_external_wrench_(4) - ty_bias_); //fz, mx,my
       if(fz_bias_thresh_ < fabs(fz_bias_)) external_wrench(0) -= fz_bias_;
 
-      /// ROS_WARN_STREAM("compensate rotor overlap interfere: fz_bias: " << fz_bias_ << " external wrench: " << external_wrench.transpose());
+      /// ROS_COMPAT_WARN_STREAM("compensate rotor overlap interfere: fz_bias: " << fz_bias_ << " external wrench: " << external_wrench.transpose());
 
       if(external_wrench(0) >= 0)
         {
@@ -751,12 +751,12 @@ void DragonFullVectoringController::rotorInterfereCompensation()
                 {
                   rotor_interfere_comp_wrench_.segment(2, 3) = (1 - comp_wrench_lpf_rate_) * rotor_interfere_comp_wrench_.segment(2, 3) +  comp_wrench_lpf_rate_ * Eigen::VectorXd::Zero(3);
                   rotor_interfere_force_.setZero();
-                  ROS_DEBUG_STREAM("no rotor_interfere from recalculate");
+                  ROS_COMPAT_DEBUG_STREAM("no rotor_interfere from recalculate");
                   break;
                 }
               else
                 {
-                  /// ROS_WARN_STREAM("rotor_interfere force before recalculate: " << rotor_interfere_force_.transpose());
+                  /// ROS_COMPAT_WARN_STREAM("rotor_interfere force before recalculate: " << rotor_interfere_force_.transpose());
                   A = Eigen::MatrixXd::Zero(3, overlap_positions_.size());
                   for(int j = 0; j < overlap_positions_.size(); j++)
                     A.col(j) = Eigen::Vector3d(1, overlap_positions_.at(j).y(), -overlap_positions_.at(j).x());
@@ -773,38 +773,38 @@ void DragonFullVectoringController::rotorInterfereCompensation()
 
                   if(rotor_interfere_force_.maxCoeff() > 0)
                     {
-                      ROS_DEBUG_STREAM("invalid rotor_interfere force: " << rotor_interfere_force_.transpose()); // loop
+                      ROS_COMPAT_DEBUG_STREAM("invalid rotor_interfere force: " << rotor_interfere_force_.transpose()); // loop
                     }
                   else
                     {
-                      ROS_DEBUG_STREAM("rotor_interfere force recalculate: " << rotor_interfere_force_.transpose());
+                      ROS_COMPAT_DEBUG_STREAM("rotor_interfere force recalculate: " << rotor_interfere_force_.transpose());
                       break;
                     }
                 }
             }
         }
       else
-        ROS_DEBUG_STREAM("rotor_interfere force: " << rotor_interfere_force_.transpose());
+        ROS_COMPAT_DEBUG_STREAM("rotor_interfere force: " << rotor_interfere_force_.transpose());
 
       //rotor_interfere_comp_wrench_.segment(2, 3) = (1 - comp_wrench_lpf_rate_) * rotor_interfere_comp_wrench_.segment(2, 3) +  comp_wrench_lpf_rate_ * (- A * rotor_interfere_force_);
       rotor_interfere_comp_wrench_.segment(2, 3) =  - A * rotor_interfere_force_;
 
-      ROS_DEBUG_STREAM("rotor_interfere_wrench: " << -rotor_interfere_comp_wrench_.segment(2, 3).transpose());
+      ROS_COMPAT_DEBUG_STREAM("rotor_interfere_wrench: " << -rotor_interfere_comp_wrench_.segment(2, 3).transpose());
     }
 
   // visualize the interference
-  visualization_msgs::MarkerArray interference_marker_msg;
+  visualization_msgs_c::MarkerArray interference_marker_msg;
   if(overlap_positions_.size() > 0)
     {
       int id = 0;
       for(int i = 0; i < overlap_positions_.size(); i++)
         {
-          visualization_msgs::Marker segment_sphere;
-          segment_sphere.header.stamp = ros::Time::now();
+          visualization_msgs_c::Marker segment_sphere;
+          segment_sphere.header.stamp = ros_compat::now();
           segment_sphere.header.frame_id = nh_.getNamespace() + std::string("/cog"); //overlap_segments_.at(i);
           segment_sphere.id = id++;
-          segment_sphere.action = visualization_msgs::Marker::ADD;
-          segment_sphere.type = visualization_msgs::Marker::SPHERE;
+          segment_sphere.action = visualization_msgs_c::Marker::ADD;
+          segment_sphere.type = visualization_msgs_c::Marker::SPHERE;
           segment_sphere.pose.position.x = overlap_positions_.at(i).x();
           segment_sphere.pose.position.y = overlap_positions_.at(i).y();
           segment_sphere.pose.position.z = overlap_positions_.at(i).z();
@@ -817,12 +817,12 @@ void DragonFullVectoringController::rotorInterfereCompensation()
 
           interference_marker_msg.markers.push_back(segment_sphere);
 
-          visualization_msgs::Marker force_arrow;
-          force_arrow.header.stamp = ros::Time::now();
+          visualization_msgs_c::Marker force_arrow;
+          force_arrow.header.stamp = ros_compat::now();
           force_arrow.header.frame_id = nh_.getNamespace() + std::string("/cog"); //overlap_segments_.at(i);
           force_arrow.id = id++;
-          force_arrow.action = visualization_msgs::Marker::ADD;
-          force_arrow.type = visualization_msgs::Marker::ARROW;
+          force_arrow.action = visualization_msgs_c::Marker::ADD;
+          force_arrow.type = visualization_msgs_c::Marker::ARROW;
           force_arrow.pose.position.x = overlap_positions_.at(i).x();
           force_arrow.pose.position.y = overlap_positions_.at(i).y();
           force_arrow.pose.position.z = overlap_positions_.at(i).z() - 0.02;
@@ -837,17 +837,17 @@ void DragonFullVectoringController::rotorInterfereCompensation()
         }
 
       // remove the old marker
-      visualization_msgs::Marker delete_operation;
+      visualization_msgs_c::Marker delete_operation;
       delete_operation.id = id++;
-      delete_operation.action = visualization_msgs::Marker::DELETE;
+      delete_operation.action = visualization_msgs_c::Marker::DELETE;
       interference_marker_msg.markers.push_back(delete_operation);
       delete_operation.id = id++;
       interference_marker_msg.markers.push_back(delete_operation);
     }
   else
     {
-      visualization_msgs::Marker delete_operation;
-      delete_operation.action = visualization_msgs::Marker::DELETEALL;
+      visualization_msgs_c::Marker delete_operation;
+      delete_operation.action = visualization_msgs_c::Marker::DELETEALL;
       interference_marker_msg.markers.push_back(delete_operation);
     }
 
@@ -859,7 +859,7 @@ void DragonFullVectoringController::controlCore()
   /* TODO: saturation of z control */
 
   // workaround to handle speical definition of CoG desired orientation
-  if(boost::dynamic_pointer_cast<aerial_robot_navigation::DragonNavigator>(navigator_)->getEqCoGWorldFlag())
+  if(ros_compat::dynamicPointerCast<aerial_robot_navigation::DragonNavigator>(navigator_)->getEqCoGWorldFlag())
     {
       navigator_->setTargetYaw(0);
     }
@@ -1000,7 +1000,7 @@ void DragonFullVectoringController::controlCore()
 
   if(torque_comp)
     {
-      ROS_INFO_STREAM(ss.str());
+      ROS_COMPAT_INFO_STREAM(ss.str());
       rotor_interfere_comp_acc.tail(3) = robot_model_->getInertia<Eigen::Matrix3d>().inverse() * rotor_interfere_comp_wrench_.tail(3);
     }
 
@@ -1011,7 +1011,7 @@ void DragonFullVectoringController::controlCore()
     }
   ss.str("");
   for(int i = 0; i < overlap_rotors_.size(); i++) ss << overlap_rotors_.at(i) << " -> " << overlap_segments_.at(i) << "; ";
-  if(overlap_rotors_.size() > 0) ROS_DEBUG_STREAM("rotor interference: " << ss.str());
+  if(overlap_rotors_.size() > 0) ROS_COMPAT_DEBUG_STREAM("rotor interference: " << ss.str());
 
   // external wrench compensation
   Eigen::MatrixXd rot_inv = Eigen::MatrixXd::Zero(6, 6);
@@ -1028,21 +1028,21 @@ void DragonFullVectoringController::controlCore()
       // exclusive case1
       if(external_wrench_map.size() > 0)
         {
-          ROS_WARN("Cannot support both external wrench compensation and extra vectoring force simultaneously, abandon extra vectoring force");
+          ROS_COMPAT_WARN("Cannot support both external wrench compensation and extra vectoring force simultaneously, abandon extra vectoring force");
           extra_vectoring_forces_.resize(0);
         }
 
       // exclusive case2
       if(gimbal_lock_num > 0)
         {
-          ROS_WARN("Cannot support  extra vectoring force under gimbal roll locked situation");
+          ROS_COMPAT_WARN("Cannot support  extra vectoring force under gimbal roll locked situation");
           extra_vectoring_forces_.resize(0);
         }
 
       // exclusive case3
       if(navigator_->getNaviState() != aerial_robot_navigation::HOVER_STATE || navigator_->getForceLandingFlag())
         {
-          ROS_WARN("clear extra vectoring force since not hovering state");
+          ROS_COMPAT_WARN("clear extra vectoring force since not hovering state");
           extra_vectoring_forces_.resize(0);
         }
     }
@@ -1109,7 +1109,7 @@ void DragonFullVectoringController::controlCore()
               ss2 << "gimbal rolls (real, simple):";
               for (int i = 0; i < motor_num_; i++)
                 ss2 << "(" << target_gimbal_angles_.at(2 * i) <<  ", " << gimbal_simple_angles.at(2 * i) << ")";
-              ROS_INFO_STREAM("lock all gimbal roll FCFxymin: " << f_min_min << "; FCTmin: " <<  t_min_min << ", " << ss2.str() << ": target acc (high freq): " << (target_acc).transpose());
+              ROS_COMPAT_INFO_STREAM("lock all gimbal roll FCFxymin: " << f_min_min << "; FCTmin: " <<  t_min_min << ", " << ss2.str() << ": target acc (high freq): " << (target_acc).transpose());
             }
 
 
@@ -1181,7 +1181,7 @@ void DragonFullVectoringController::controlCore()
                   ss.str("");
                   for(int i = 0; i < motor_num_; i++)
                     ss << target_gimbal_angles_.at(2 * i) << ", ";
-                  ROS_INFO_STREAM(" before fctmin mod, gimbal roll angles: " << ss.str());
+                  ROS_COMPAT_INFO_STREAM(" before fctmin mod, gimbal roll angles: " << ss.str());
                 }
 
               roll_locked_gimbal_ = std::vector<int>(motor_num_, 0);
@@ -1201,7 +1201,7 @@ void DragonFullVectoringController::controlCore()
                   ss << "force: ";
                   for(int i = 0; i < motor_num_; i++)
                     ss << target_base_thrust_.at(i) << ", ";
-                  ROS_INFO_STREAM(" after fctmin mod, gimbal roll angles: " << ss.str());
+                  ROS_COMPAT_INFO_STREAM(" after fctmin mod, gimbal roll angles: " << ss.str());
                 }
             }
 
@@ -1242,7 +1242,7 @@ void DragonFullVectoringController::controlCore()
 
           if(max_thrust_diff > sr_inverse_thrust_diff_thresh_ && navigator_->getNaviState() == aerial_robot_navigation::HOVER_STATE)
             {
-              if(control_verbose_) ROS_INFO_STREAM(" thrust force with normal allocation has exceed the range of thrust force: " << thrust_force_final_vec.transpose() << "; max diff: " << max_thrust_diff);
+              if(control_verbose_) ROS_COMPAT_INFO_STREAM(" thrust force with normal allocation has exceed the range of thrust force: " << thrust_force_final_vec.transpose() << "; max diff: " << max_thrust_diff);
               Eigen::VectorXd vectoring_force_nominal = Eigen::VectorXd::Zero(2 * motor_num_);
               int c = 0;
               for (int i = 0; i < motor_num_; i++)
@@ -1302,7 +1302,7 @@ void DragonFullVectoringController::controlCore()
               wrenchAllocationEqCons(6, wrench_diff.data(), thrust_force_gimbal_angles.size(), thrust_force_gimbal_angles.data(), grad.data(), this);
               Eigen::MatrixXd grad_matrix =  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(grad.data(), 6, thrust_force_gimbal_angles.size());
               Eigen::VectorXd wrench_diff_vec = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(wrench_diff.data(),wrench_diff.size());
-              if(control_verbose_) ROS_INFO_STREAM("[gradient descent allocation method for extra vectoring forces] iteration: " << j << ", wrench diff: " << wrench_diff_vec.transpose());
+              if(control_verbose_) ROS_COMPAT_INFO_STREAM("[gradient descent allocation method for extra vectoring forces] iteration: " << j << ", wrench diff: " << wrench_diff_vec.transpose());
               if (wrench_diff_vec.head(3).norm() < 0.001 && wrench_diff_vec.tail(3).norm() < 0.001) //TODO: rosparam
                 {
                   if(control_verbose_)
@@ -1315,7 +1315,7 @@ void DragonFullVectoringController::controlCore()
                       for(int i = 0; i < motor_num_; i++)
                         ss << "(" << thrust_force_gimbal_angles.at(motor_num_ + 2 * i) << ", " << thrust_force_gimbal_angles.at(motor_num_ + 2 * i + 1) << ") ";
 
-                      ROS_INFO_STREAM("[gradient descent allocation method for extra vectoring forces] iteration: " << j
+                      ROS_COMPAT_INFO_STREAM("[gradient descent allocation method for extra vectoring forces] iteration: " << j
                                       << ", final wrench diff: " << wrench_diff_vec.transpose()
                                       << "\n allocation result: " << ss.str());
                     }
@@ -1324,7 +1324,7 @@ void DragonFullVectoringController::controlCore()
 
               if(j == allocation_refine_max_iteration_)
                 {
-                  ROS_WARN_STREAM("[gradient descent allocation method  for extra vectoring forces] can not converge in iteration: " << allocation_refine_max_iteration_ << ", final wrench diff: " << wrench_diff_vec.transpose());
+                  ROS_COMPAT_WARN_STREAM("[gradient descent allocation method  for extra vectoring forces] can not converge in iteration: " << allocation_refine_max_iteration_ << ", final wrench diff: " << wrench_diff_vec.transpose());
                   break;
                 }
 
@@ -1386,8 +1386,8 @@ void DragonFullVectoringController::controlCore()
       Eigen::VectorXd wrench_diff =  ref_wrench - target_wrench;
       ss << "wrench diff: " << wrench_diff.transpose() << ", ref wrench: " << ref_wrench.transpose() << ", external: " << external_wrench.transpose();
 
-      if (bad) ROS_WARN_STREAM(ss.str());
-      else ROS_INFO_STREAM(ss.str());
+      if (bad) ROS_COMPAT_WARN_STREAM(ss.str());
+      else ROS_COMPAT_INFO_STREAM(ss.str());
     }
 
   prev_target_gimbal_angles_ = target_gimbal_angles_;
@@ -1404,7 +1404,7 @@ void DragonFullVectoringController::externalWrenchEstimate()
     }
 
   Eigen::Vector3d vel_w, omega_cog; // workaround: use the filtered value
-  auto imu_handler = boost::dynamic_pointer_cast<sensor_plugin::DragonImu>(estimator_->getImuHandler(0));
+  auto imu_handler = ros_compat::dynamicPointerCast<sensor_plugin::DragonImu>(estimator_->getImuHandler(0));
   ros_compat::vectorTfToEigen(imu_handler->getFilteredVelCog(), vel_w);
   ros_compat::vectorTfToEigen(imu_handler->getFilteredOmegaCog(), omega_cog);
   Eigen::Matrix3d cog_rot;
@@ -1425,11 +1425,11 @@ void DragonFullVectoringController::externalWrenchEstimate()
 
   if(prev_est_wrench_timestamp_ == 0)
     {
-      prev_est_wrench_timestamp_ = ros::Time::now().toSec();
+      prev_est_wrench_timestamp_ = ros_compat::now().toSec();
       init_sum_momentum_ = sum_momentum; // not good
     }
 
-  double dt = ros::Time::now().toSec() - prev_est_wrench_timestamp_;
+  double dt = ros_compat::now().toSec() - prev_est_wrench_timestamp_;
 
   integrate_term_ += (J_t * getTargetWrench() - N + est_external_wrench_) * dt;
 
@@ -1438,8 +1438,8 @@ void DragonFullVectoringController::externalWrenchEstimate()
   Eigen::VectorXd est_external_wrench_cog = est_external_wrench_;
   est_external_wrench_cog.head(3) = cog_rot.inverse() * est_external_wrench_.head(3);
 
-  geometry_msgs::WrenchStamped wrench_msg;
-  wrench_msg.header.stamp.fromSec(estimator_->getImuLatestTimeStamp());
+  geometry_msgs_c::WrenchStamped wrench_msg;
+  ros_compat::stampFromSec(wrench_msg.header.stamp, estimator_->getImuLatestTimeStamp());
   wrench_msg.wrench.force.x = est_external_wrench_(0);
   wrench_msg.wrench.force.y = est_external_wrench_(1);
   wrench_msg.wrench.force.z = est_external_wrench_(2);
@@ -1448,12 +1448,12 @@ void DragonFullVectoringController::externalWrenchEstimate()
   wrench_msg.wrench.torque.z = est_external_wrench_(5);
   estimate_external_wrench_pub_.publish(wrench_msg);
 
-  prev_est_wrench_timestamp_ = ros::Time::now().toSec();
+  prev_est_wrench_timestamp_ = ros_compat::now().toSec();
 }
 
 bool DragonFullVectoringController::staticIterativeAllocation(const int iterative_cnt, const double iterative_threshold, const Eigen::VectorXd target_acc, const std::map<std::string, Dragon::ExternalWrench>& external_wrench_map, const std::vector<Eigen::Vector3d>& extra_vectoring_forces, KDL::JntArray& gimbal_processed_joint, const std::vector<Eigen::Matrix3d>& links_rotation_from_cog, std::vector<double>& thrust_forces, std::vector<double>& gimbal_angles, Eigen::VectorXd& vectoring_forces)
 {
-  double t = ros::Time::now().toSec();
+  double t = ros_compat::now().toSec();
   const auto& joint_index_map = dragon_robot_model_->getJointIndexMap();
   int gimbal_lock_num = std::accumulate(roll_locked_gimbal_.begin(), roll_locked_gimbal_.end(), 0);
   Eigen::MatrixXd full_q_mat = Eigen::MatrixXd::Zero(6, 3 * motor_num_ - gimbal_lock_num);
@@ -1502,7 +1502,7 @@ bool DragonFullVectoringController::staticIterativeAllocation(const int iterativ
         }
 
 
-      if(control_verbose_) ROS_DEBUG_STREAM("[iterative static allocation method] vectoring force for control in iteration "<< j+1 << ": " << vectoring_forces.transpose());
+      if(control_verbose_) ROS_COMPAT_DEBUG_STREAM("[iterative static allocation method] vectoring force for control in iteration "<< j+1 << ": " << vectoring_forces.transpose());
       last_col = 0;
 
       for(int i = 0; i < motor_num_; i++)
@@ -1561,7 +1561,7 @@ bool DragonFullVectoringController::staticIterativeAllocation(const int iterativ
           if(diff > max_diff) max_diff = diff;
         }
 
-      if(control_verbose_) ROS_DEBUG_STREAM("[iterative static allocation method] iteration: "<< j+1 << ", max_diff: " << max_diff);
+      if(control_verbose_) ROS_COMPAT_DEBUG_STREAM("[iterative static allocation method] iteration: "<< j+1 << ", max_diff: " << max_diff);
 
       if(max_diff < iterative_threshold)
         {
@@ -1587,22 +1587,22 @@ bool DragonFullVectoringController::staticIterativeAllocation(const int iterativ
               ref_wrench.tail(3) = robot_model_for_control_->getInertia<Eigen::Matrix3d>() * target_acc.tail(3);
               Eigen::VectorXd target_wrench = Q * Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(thrust_forces.data(), motor_num_);
               Eigen::VectorXd wrench_diff = target_wrench - ref_wrench;
-              ROS_INFO_STREAM("[iterative static allocation method] converge in iteration " << j+1 << ", max diff of rotor position deviation" << max_diff << ", wrench diff: " << wrench_diff.transpose() << ", use " << ros::Time::now().toSec() - t << "sec"
+              ROS_COMPAT_INFO_STREAM("[iterative static allocation method] converge in iteration " << j+1 << ", max diff of rotor position deviation" << max_diff << ", wrench diff: " << wrench_diff.transpose() << ", use " << ros_compat::now().toSec() - t << "sec"
                               <<  "; allocation result: " << ss.str() << "; squre sum of thrust force: " << thrust_sum);
             }
           return true;
         }
     }
 
-  ROS_WARN_STREAM("[iterative static allocation method] can not converge in iteration " << iterative_cnt << ", use " << ros::Time::now().toSec() - t << "sec");
+  ROS_COMPAT_WARN_STREAM("[iterative static allocation method] can not converge in iteration " << iterative_cnt << ", use " << ros_compat::now().toSec() - t << "sec");
   return false;
 }
 
 bool DragonFullVectoringController::strictNonlinearAllocation(const Eigen::VectorXd target_acc, const std::map<std::string, Dragon::ExternalWrench>& external_wrench_map, const std::vector<Eigen::Vector3d>& extra_vectoring_forces, KDL::JntArray& gimbal_processed_joint, const std::vector<Eigen::Matrix3d>& links_rotation_from_cog)
 {
-  if (external_wrench_map.size() > 0) ROS_ERROR("Currently strictNonlinearAllocation does not support the external wrench compensation");
+  if (external_wrench_map.size() > 0) ROS_COMPAT_ERROR("Currently strictNonlinearAllocation does not support the external wrench compensation");
 
-  double t = ros::Time::now().toSec();
+  double t = ros_compat::now().toSec();
   int gimbal_lock_num = std::accumulate(roll_locked_gimbal_.begin(), roll_locked_gimbal_.end(), 0);
   const auto& joint_index_map = dragon_robot_model_->getJointIndexMap();
   std::vector<double> thrust_force_gimbal_angles(motor_num_ * 3  - gimbal_lock_num, 0); // thrust_force: rotor_num + gimbal_angles: rotor_num x 2
@@ -1635,7 +1635,7 @@ bool DragonFullVectoringController::strictNonlinearAllocation(const Eigen::Vecto
   // calculate sqp, check whether the inverse allocation equals to the desired wrench.
   double thrust_force_sum = 0;
   sqp_cnt_ = 0;
-  t = ros::Time::now().toSec();
+  t = ros_compat::now().toSec();
   nlopt::opt full_vectoring_allocation_solver(nlopt::LD_SLSQP, motor_num_ * 3 - gimbal_lock_num);
   full_vectoring_allocation_solver.set_xtol_rel(1e-4); // => IMPORTANT: related to computation time, TODO: rosparameter
   full_vectoring_allocation_solver.set_maxeval(100); // 100 times, TODO: rosparameter
@@ -1657,7 +1657,7 @@ bool DragonFullVectoringController::strictNonlinearAllocation(const Eigen::Vecto
   if(sqp_ave_cnt_ == 0) sqp_ave_cnt_ = sqp_cnt_;
   else sqp_ave_cnt_ = 0.6 * sqp_ave_cnt_ + 0.4 * sqp_cnt_;
 
-  if(sqp_cnt_ > 50) ROS_WARN_STREAM("[strict nonlinear allocation] SQP constraint result: " <<  result << "; count: " << sqp_cnt_ << "; time: " << ros::Time::now().toSec() - t);
+  if(sqp_cnt_ > 50) ROS_COMPAT_WARN_STREAM("[strict nonlinear allocation] SQP constraint result: " <<  result << "; count: " << sqp_cnt_ << "; time: " << ros_compat::now().toSec() - t);
 
   if(control_verbose_)
     {
@@ -1712,14 +1712,14 @@ bool DragonFullVectoringController::strictNonlinearAllocation(const Eigen::Vecto
       Eigen::VectorXd target_wrench = Q * Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(thrust_force_gimbal_angles.data(), motor_num_);
       Eigen::VectorXd wrench_diff = target_wrench - ref_wrench;
 
-      ROS_INFO_STREAM("[strict nonlinear allocation], sqp result:  " <<  result  << "; count: " << sqp_cnt_ << "; average count: " << sqp_ave_cnt_ << ", wrench diff is : "
-                      << wrench_diff.transpose() << "; time: " << ros::Time::now().toSec() - t
+      ROS_COMPAT_INFO_STREAM("[strict nonlinear allocation], sqp result:  " <<  result  << "; count: " << sqp_cnt_ << "; average count: " << sqp_ave_cnt_ << ", wrench diff is : "
+                      << wrench_diff.transpose() << "; time: " << ros_compat::now().toSec() - t
                       <<  "\n allocation result: " << ss.str() << "; squre sum of thrust force: " << thrust_sum);
 
 
       if(wrench_diff.cwiseAbs().maxCoeff() > 1e-3)
         {
-          ROS_WARN_STREAM("[strict nonlinear allocation] can not converge in iteration " << sqp_cnt_ << ", the max wrench diff is: " << wrench_diff.cwiseAbs().maxCoeff() << "; vector: " << wrench_diff.transpose() << "; target wrench:" << target_wrench.transpose());
+          ROS_COMPAT_WARN_STREAM("[strict nonlinear allocation] can not converge in iteration " << sqp_cnt_ << ", the max wrench diff is: " << wrench_diff.cwiseAbs().maxCoeff() << "; vector: " << wrench_diff.transpose() << "; target wrench:" << target_wrench.transpose());
         }
     }
   return true;
@@ -1727,11 +1727,11 @@ bool DragonFullVectoringController::strictNonlinearAllocation(const Eigen::Vecto
 
 bool DragonFullVectoringController::gradientDescentAllocation(const int iterative_cnt, const Eigen::VectorXd target_acc, const std::map<std::string, Dragon::ExternalWrench>& external_wrench_map, const std::vector<Eigen::Vector3d>& extra_vectoring_forces, KDL::JntArray& gimbal_processed_joint, const std::vector<Eigen::Matrix3d>& links_rotation_from_cog, std::vector<double>& thrust_forces, std::vector<double>& gimbal_angles)
 {
-  if (external_wrench_map.size() > 0) ROS_ERROR("Currently strictNonlinearAllocation does not support the external wrench compensation");
+  if (external_wrench_map.size() > 0) ROS_COMPAT_ERROR("Currently strictNonlinearAllocation does not support the external wrench compensation");
 
   // initialize
   int gimbal_lock_num = std::accumulate(roll_locked_gimbal_.begin(), roll_locked_gimbal_.end(), 0);
-  double t = ros::Time::now().toSec();
+  double t = ros_compat::now().toSec();
   std::vector<double> init_thrust_force(motor_num_), init_gimbal_angles(2 * motor_num_);
   staticIterativeAllocation(1, allocation_refine_threshold_, target_acc, external_wrench_map, extra_vectoring_forces, gimbal_processed_joint, links_rotation_from_cog, init_thrust_force, init_gimbal_angles, target_vectoring_f_);
   setTargetAcc(target_acc); // for "wrenchAllocationEqCons"
@@ -1764,7 +1764,7 @@ bool DragonFullVectoringController::gradientDescentAllocation(const int iterativ
       wrenchAllocationEqCons(6, wrench_diff.data(), thrust_force_gimbal_angles.size(), thrust_force_gimbal_angles.data(), grad.data(), this);
       Eigen::MatrixXd grad_matrix =  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(grad.data(), 6, thrust_force_gimbal_angles.size());
       Eigen::VectorXd wrench_diff_vec = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(wrench_diff.data(),wrench_diff.size());
-      if(control_verbose_) ROS_INFO_STREAM("[gradient descent allocation method] iteration: " << j << ", wrench diff: " << wrench_diff_vec.transpose());
+      if(control_verbose_) ROS_COMPAT_INFO_STREAM("[gradient descent allocation method] iteration: " << j << ", wrench diff: " << wrench_diff_vec.transpose());
       if (wrench_diff_vec.head(3).norm() < 0.001 && wrench_diff_vec.tail(3).norm() < 0.001) // TODO: rosparam
         {
           if(control_verbose_)
@@ -1793,8 +1793,8 @@ bool DragonFullVectoringController::gradientDescentAllocation(const int iterativ
                     }
                 }
 
-              ROS_INFO_STREAM("[gradient descent allocation method] iteration: " << j << ", final wrench diff: " << wrench_diff_vec.transpose()
-                              << ", use " << ros::Time::now().toSec() - t << "sec"
+              ROS_COMPAT_INFO_STREAM("[gradient descent allocation method] iteration: " << j << ", final wrench diff: " << wrench_diff_vec.transpose()
+                              << ", use " << ros_compat::now().toSec() - t << "sec"
                               << "\n allocation result: " << ss.str() << "; squre sum of thrust force:" << thrust_sum);
             }
 
@@ -1803,7 +1803,7 @@ bool DragonFullVectoringController::gradientDescentAllocation(const int iterativ
 
       if(j == iterative_cnt)
         {
-          ROS_WARN_STREAM("[gradient descent allocation method] can not converge in iteration: " << allocation_refine_max_iteration_ << ", final wrench diff: " << wrench_diff_vec.transpose());
+          ROS_COMPAT_WARN_STREAM("[gradient descent allocation method] can not converge in iteration: " << allocation_refine_max_iteration_ << ", final wrench diff: " << wrench_diff_vec.transpose());
           return false;
         }
 
@@ -1889,7 +1889,7 @@ bool DragonFullVectoringController::srInverseAllocation(const Eigen::MatrixXd& q
       acc_diff = y - q * x;
 
       max_acc_diff = acc_diff.cwiseAbs().maxCoeff();
-      if(control_verbose_) ROS_DEBUG_STREAM("  SR inverse, cnt: " <<  cnt << ", sigma: " << sigma  << ", max thrust diff: " << max_thrust_diff << ", thurst force: " << sr_thrust_force_vec.transpose() << ", max acc diff: " << max_acc_diff << "; acc diff: " <<  acc_diff.transpose());
+      if(control_verbose_) ROS_COMPAT_DEBUG_STREAM("  SR inverse, cnt: " <<  cnt << ", sigma: " << sigma  << ", max thrust diff: " << max_thrust_diff << ", thurst force: " << sr_thrust_force_vec.transpose() << ", max acc diff: " << max_acc_diff << "; acc diff: " <<  acc_diff.transpose());
 
 
       if (max_thrust_diff < sr_inverse_thrust_diff_thresh_ && max_acc_diff < sr_inverse_acc_diff_thresh_)
@@ -1913,7 +1913,7 @@ bool DragonFullVectoringController::srInverseAllocation(const Eigen::MatrixXd& q
         }
     }
 
-  if(control_verbose_) ROS_INFO_STREAM("  SR inverse, cnt: " <<  cnt << ", sigma: " << sigma  << ", max thrust diff: " << max_thrust_diff << ", thurst force: " << sr_thrust_force_vec.transpose() << ", max acc diff: " << max_acc_diff << "; acc diff: " <<  acc_diff.transpose());
+  if(control_verbose_) ROS_COMPAT_INFO_STREAM("  SR inverse, cnt: " <<  cnt << ", sigma: " << sigma  << ", max thrust diff: " << max_thrust_diff << ", thurst force: " << sr_thrust_force_vec.transpose() << ", max acc diff: " << max_acc_diff << "; acc diff: " <<  acc_diff.transpose());
 
   // Note: force update the thrust force and gimbal angles
   thrust_force = sr_thrust_force;
@@ -1948,29 +1948,29 @@ Eigen::VectorXd DragonFullVectoringController::calcExternalWrenchSum(const std::
 
 
 /* external wrench */
-void DragonFullVectoringController::addExternalWrenchCallback(const aerial_robot_msgs::ApplyWrench::ConstPtr& msg)
+void DragonFullVectoringController::addExternalWrenchCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ApplyWrench>& msg)
 {
   dragon_robot_model_->addExternalStaticWrench(msg->name, msg->reference_frame, msg->reference_point, msg->wrench);
 }
 
-void DragonFullVectoringController::clearExternalWrenchCallback(const std_msgs::String::ConstPtr& msg)
+void DragonFullVectoringController::clearExternalWrenchCallback(const ros_compat::ConstPtr<std_msgs_c::String>& msg)
 {
   dragon_robot_model_->removeExternalStaticWrench(msg->data);
 }
 
 /* extra vectoring force  */
-void DragonFullVectoringController::extraVectoringForceCallback(const aerial_robot_msgs::ForceListConstPtr& msg)
+void DragonFullVectoringController::extraVectoringForceCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ForceList>& msg)
 {
   if(navigator_->getNaviState() != aerial_robot_navigation::HOVER_STATE || navigator_->getForceLandingFlag()) return;
 
   if(msg->forces.size() == 0)
     {
-      ROS_INFO_STREAM("gimbal control: clear extra vectoring forces");
+      ROS_COMPAT_INFO_STREAM("gimbal control: clear extra vectoring forces");
       extra_vectoring_forces_.resize(0);
     }
   else if(msg->forces.size() != motor_num_)
     {
-      ROS_WARN_STREAM("gimbal control: can not assign the extra vectroing force, the size is wrong");
+      ROS_COMPAT_WARN_STREAM("gimbal control: can not assign the extra vectroing force, the size is wrong");
     }
   else
     {
@@ -1986,15 +1986,15 @@ void DragonFullVectoringController::sendCmd()
   PoseLinearController::sendCmd();
 
   /* send base throttle command */
-  spinal::FourAxisCommand flight_command_data;
+  spinal_c::FourAxisCommand flight_command_data;
   flight_command_data.base_thrust.resize(motor_num_);
   for(int i = 0; i < motor_num_; i++)
     flight_command_data.base_thrust.at(i) = target_base_thrust_.at(i); // double -> float
   flight_cmd_pub_.publish(flight_command_data);
 
   /* send gimbal control command */
-  sensor_msgs::JointState gimbal_control_msg;
-  gimbal_control_msg.header.stamp = ros::Time::now();
+  sensor_msgs_c::JointState gimbal_control_msg;
+  gimbal_control_msg.header.stamp = ros_compat::now();
   if (gimbal_vectoring_check_flag_)
     {
       gimbal_control_msg.position = dragon_robot_model_->getGimbalNominalAngles();
@@ -2013,11 +2013,11 @@ void DragonFullVectoringController::sendCmd()
   gimbal_control_pub_.publish(gimbal_control_msg);
 
 
-  aerial_robot_msgs::ForceList target_force_msg;
+  aerial_robot_msgs_c::ForceList target_force_msg;
   int c = 0;
   for (int i = 0; i < motor_num_; i++)
     {
-      geometry_msgs::Vector3 f;
+      geometry_msgs_c::Vector3 f;
       if(roll_locked_gimbal_.at(i) == 0)
         {
           f.x = target_vectoring_f_(c);
@@ -2036,23 +2036,23 @@ void DragonFullVectoringController::sendCmd()
   target_vectoring_force_pub_.publish(target_force_msg);
 
   /* rotor interfere wrench */
-  geometry_msgs::WrenchStamped wrench_msg;
-  wrench_msg.header.stamp.fromSec(estimator_->getImuLatestTimeStamp());
+  geometry_msgs_c::WrenchStamped wrench_msg;
+  ros_compat::stampFromSec(wrench_msg.header.stamp, estimator_->getImuLatestTimeStamp());
   wrench_msg.wrench.force.z = -rotor_interfere_comp_wrench_(2);
   wrench_msg.wrench.torque.x = -rotor_interfere_comp_wrench_(3);
   wrench_msg.wrench.torque.y = -rotor_interfere_comp_wrench_(4);
   rotor_interfere_wrench_pub_.publish(wrench_msg);
 
 
-  sensor_msgs::Joy force_msg; // can only publish 3 elements
-  force_msg.header.stamp.fromSec(estimator_->getImuLatestTimeStamp());
+  sensor_msgs_c::Joy force_msg; // can only publish 3 elements
+  ros_compat::stampFromSec(force_msg.header.stamp, estimator_->getImuLatestTimeStamp());
   for(int i = 0; i < rotor_interfere_force_.size(); i++)
     force_msg.axes.push_back(rotor_interfere_force_(i));
 }
 
 void DragonFullVectoringController::rosParamInit()
 {
-  ros::NodeHandle control_nh(nh_, "controller");
+  ros_compat::NodeHandle control_nh(nh_, "controller");
 
   getParam<bool>(control_nh, "integral_vectoring_allocation", integral_vectoring_allocation_, false);
   getParam<bool>(control_nh, "gimbal_vectoring_check_flag", gimbal_vectoring_check_flag_, false);

@@ -35,10 +35,12 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+
 #include <dragon/model/hydrus_like_robot_model.h>
 #include <nlopt.hpp>
 #include <numeric>
-#include <ros/console.h>
 #include <sstream>
 
 namespace Dragon
@@ -54,7 +56,7 @@ namespace Dragon
     virtual ~FullVectoringRobotModel() = default;
 
 
-    inline boost::shared_ptr<aerial_robot_model::RobotModel> getRobotModelForPlan() { return robot_model_for_plan_;}
+    inline ros_compat::SharedPtr<aerial_robot_model::RobotModel> getRobotModelForPlan() { return robot_model_for_plan_;}
     inline const Eigen::VectorXd& getHoverVectoringF() const {return hover_vectoring_f_;}
 
     const std::vector<int> getRollLockedGimbal()
@@ -85,7 +87,7 @@ namespace Dragon
 
   private:
 
-    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model_for_plan_;
+    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model_for_plan_;
 
     Eigen::VectorXd hover_vectoring_f_;
 

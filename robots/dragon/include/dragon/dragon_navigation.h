@@ -35,13 +35,30 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+
 #include <aerial_robot_control/flight_navigation.h>
-#include <geometry_msgs/Vector3Stamped.h>
-#include <geometry_msgs/QuaternionStamped.h>
-#include <kdl_conversions/kdl_msg.h>
-#include <sensor_msgs/JointState.h>
-#include <nav_msgs/Odometry.h>
-#include <spinal/DesireCoord.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/QuaternionStamped.h>
+#  include <geometry_msgs/Vector3Stamped.h>
+#  include <nav_msgs/Odometry.h>
+#  include <sensor_msgs/JointState.h>
+#  include <spinal/DesireCoord.h>
+#else
+#  include <geometry_msgs/msg/quaternion_stamped.hpp>
+#  include <geometry_msgs/msg/vector3_stamped.hpp>
+#  include <nav_msgs/msg/odometry.hpp>
+#  include <sensor_msgs/msg/joint_state.hpp>
+#  include <spinal/msg/desire_coord.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(nav_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <kdl_conversions/kdl_msg.h>
+#endif
 
 namespace aerial_robot_navigation
 {
@@ -51,9 +68,9 @@ namespace aerial_robot_navigation
     DragonNavigator();
     ~DragonNavigator(){}
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                     double loop_du) override;
 
     void update() override;
@@ -61,10 +78,10 @@ namespace aerial_robot_navigation
     inline const bool getEqCoGWorldFlag() const { return eq_cog_world_; }
 
   private:
-    ros::Publisher target_baselink_rpy_pub_; // to spinal
-    ros::Publisher joint_control_pub_;
-    ros::Subscriber final_target_baselink_rot_sub_, final_target_baselink_rpy_sub_;
-    ros::Subscriber target_rotation_motion_sub_;
+    ros_compat::Publisher target_baselink_rpy_pub_; // to spinal
+    ros_compat::Publisher joint_control_pub_;
+    ros_compat::Subscriber final_target_baselink_rot_sub_, final_target_baselink_rpy_sub_;
+    ros_compat::Subscriber target_rotation_motion_sub_;
 
     void halt() override;
     void reset() override;
@@ -77,9 +94,9 @@ namespace aerial_robot_navigation
     void baselinkRotationProcess();
     void rosParamInit() override;
 
-    void targetBaselinkRotCallback(const geometry_msgs::QuaternionStampedConstPtr & msg);
-    void targetBaselinkRPYCallback(const geometry_msgs::Vector3StampedConstPtr & msg);
-    void targetRotationMotionCallback(const nav_msgs::OdometryConstPtr& msg);
+    void targetBaselinkRotCallback(const ros_compat::ConstPtr<geometry_msgs_c::QuaternionStamped> & msg);
+    void targetBaselinkRPYCallback(const ros_compat::ConstPtr<geometry_msgs_c::Vector3Stamped> & msg);
+    void targetRotationMotionCallback(const ros_compat::ConstPtr<nav_msgs_c::Odometry>& msg);
 
     /* target baselink rotation */
     double prev_rotation_stamp_;
@@ -91,7 +108,7 @@ namespace aerial_robot_navigation
     bool level_flag_;
     bool servo_torque_;
     double level_shape_control_stamp_;
-    sensor_msgs::JointState level_shape_msg_;
+    sensor_msgs_c::JointState level_shape_msg_;
 
     /* rosparam */
     double height_thresh_;

@@ -35,8 +35,16 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+
 #include <aerial_robot_estimation/sensor/imu.h>
-#include <geometry_msgs/Vector3Stamped.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <geometry_msgs/Vector3Stamped.h>
+#else
+#  include <geometry_msgs/msg/vector3_stamped.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(geometry_msgs);
 #include <mutex>
 
 using namespace Eigen;
@@ -48,9 +56,9 @@ namespace sensor_plugin
   {
   public:
 
-    void initialize(ros::NodeHandle nh,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    void initialize(ros_compat::NodeHandle nh,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                     string sensor_name, int index) override;
 
     void setFilteredOmegaCog(const tf2::Vector3 filtered_omega_cog)
@@ -79,7 +87,7 @@ namespace sensor_plugin
 
   protected:
 
-    void ImuCallback(const spinal::ImuConstPtr& imu_msg) override;
+    void ImuCallback(const ros_compat::ConstPtr<spinal_c::Imu>& imu_msg) override;
 
     // work around to obtain filter states
     std::mutex omega_mutex_;
@@ -88,7 +96,7 @@ namespace sensor_plugin
     tf2::Vector3 filtered_omega_cog_;
     IirFilter lpf_omega_; // for gyro
 
-    ros::Publisher omega_filter_pub_; // debug
+    ros_compat::Publisher omega_filter_pub_; // debug
   };
 };
 

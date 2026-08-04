@@ -24,7 +24,7 @@ namespace
         invalid_cnt ++;
         std::stringstream ss;
         for(const auto& angle: x) ss << angle << ", ";
-        if(planner->getPlanVerbose()) ROS_WARN_STREAM("nlopt, robot stability is invalid with gimbals: " << ss.str() << " (cnt: " << invalid_cnt << ")");
+        if(planner->getPlanVerbose()) ROS_COMPAT_WARN_STREAM("nlopt, robot stability is invalid with gimbals: " << ss.str() << " (cnt: " << invalid_cnt << ")");
         return 0;
       }
 
@@ -58,7 +58,7 @@ namespace
     if(!robot_model->stabilityCheck(planner->getPlanVerbose()))
       {
         invalid_cnt ++;
-        if(planner->getPlanVerbose()) ROS_WARN("nlopt, robot stability is invalid (cnt: %d)", invalid_cnt);
+        if(planner->getPlanVerbose()) ROS_COMPAT_WARN("nlopt, robot stability is invalid (cnt: %d)", invalid_cnt);
         return 0;
       }
     else
@@ -76,7 +76,7 @@ namespace
         planner->getYawRangeLPSolver().updateGradient(gradient);
         if(!planner->getYawRangeLPSolver().solve())
           {
-            ROS_ERROR("cat not calcualte the min u by LP");
+            ROS_COMPAT_ERROR("cat not calcualte the min u by LP");
             planner->setMaxMinYaw(0);
           }
         else
@@ -86,7 +86,7 @@ namespace
             min_yaw = (gradient.transpose() * min_u)(0);
             if(min_yaw > 0)
               {
-                ROS_WARN("the min yaw is positive: %f", min_yaw);
+                ROS_COMPAT_WARN("the min yaw is positive: %f", min_yaw);
                 min_yaw = 0;
               }
           }
@@ -96,7 +96,7 @@ namespace
         planner->getYawRangeLPSolver().updateGradient(reverse_gradient);
         if(!planner->getYawRangeLPSolver().solve())
           {
-            ROS_ERROR("cat not calcualte the max u by LP");
+            ROS_COMPAT_ERROR("cat not calcualte the max u by LP");
             planner->setMaxMinYaw(0);
           }
         else
@@ -105,7 +105,7 @@ namespace
             max_yaw = (gradient.transpose() * max_u)(0);
           }
 
-        //ROS_INFO("LP: max: %f, min: %f", max_yaw, min_yaw); //debug
+        //ROS_COMPAT_INFO("LP: max: %f, min: %f", max_yaw, min_yaw); //debug
         planner->setMaxMinYaw(std::min(max_yaw, -min_yaw));
       }
 
@@ -157,18 +157,18 @@ HydrusXiUnderActuatedNavigator::~HydrusXiUnderActuatedNavigator()
   plan_thread_.join();
 }
 
-void HydrusXiUnderActuatedNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                                                boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                                boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+void HydrusXiUnderActuatedNavigator::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                                                ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                                ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                                                 double loop_du)
 {
   BaseNavigator::initialize(nh, nhp, robot_model, estimator, loop_du);
 
-  robot_model_for_plan_ = boost::make_shared<HydrusTiltedRobotModel>(); // for planning, not the real robot model
+  robot_model_for_plan_ = ros_compat::makeShared<HydrusTiltedRobotModel>(); // for planning, not the real robot model
 
   rosParamInit();
 
-  gimbal_ctrl_pub_ = nh_.advertise<sensor_msgs::JointState>("gimbals_ctrl", 1);
+  gimbal_ctrl_pub_ = nh_.advertise<sensor_msgs_c::JointState>("gimbals_ctrl", 1);
 
   if(nh.hasParam("control_gimbal_names"))
     {
@@ -176,19 +176,19 @@ void HydrusXiUnderActuatedNavigator::initialize(ros::NodeHandle nh, ros::NodeHan
     }
   else
     {
-      ROS_INFO("load control gimbal list from robot model");
+      ROS_COMPAT_INFO("load control gimbal list from robot model");
       for(const auto& name: robot_model->getJointNames())
         {
           if(name.find("gimbal") != std::string::npos)
             {
               control_gimbal_names_.push_back(name);
-              ROS_INFO_STREAM("add " << name);
+              ROS_COMPAT_INFO_STREAM("add " << name);
             }
         }
     }
 
   /* nonlinear optimization for vectoring angles planner */
-  vectoring_nl_solver_ = boost::make_shared<nlopt::opt>(nlopt::LN_COBYLA, control_gimbal_names_.size());
+  vectoring_nl_solver_ = std::make_shared<nlopt::opt>(nlopt::LN_COBYLA, control_gimbal_names_.size());
   if(maximize_yaw_)
     {
       vectoring_nl_solver_->set_max_objective(maximizeMinYawTorque, this);
@@ -234,22 +234,22 @@ void HydrusXiUnderActuatedNavigator::initialize(ros::NodeHandle nh, ros::NodeHan
   if(!yaw_range_lp_solver_.initSolver())
     throw std::runtime_error("can not init LP solver based on osqp");
 
-  plan_thread_ = std::thread(boost::bind(&HydrusXiUnderActuatedNavigator::threadFunc, this));
+  plan_thread_ = std::thread([this]() { threadFunc(); });
 }
 
 void HydrusXiUnderActuatedNavigator::threadFunc()
 {
   double plan_freq;
-  ros::NodeHandle navi_nh(nh_, "navigation");
+  ros_compat::NodeHandle navi_nh(nh_, "navigation");
   getParam<double>(navi_nh, "plan_freq", plan_freq, 20.0);
-  ros::Rate loop_rate(plan_freq);
+  ros_compat::Rate loop_rate(plan_freq);
 
   // sleep for initialization
   double plan_init_sleep;
   getParam<double>(navi_nh, "plan_init_sleep", plan_init_sleep, 2.0);
-  ros::Duration(plan_init_sleep).sleep();
+  ros_compat::duration(plan_init_sleep).sleep();
 
-  while(ros::ok())
+  while(ros_compat::ok())
     {
       plan();
       loop_rate.sleep();
@@ -331,7 +331,7 @@ bool HydrusXiUnderActuatedNavigator::plan()
   vectoring_nl_solver_->set_lower_bounds(lb);
   vectoring_nl_solver_->set_upper_bounds(ub);
 
-  double start_time = ros::Time::now().toSec();
+  double start_time = ros_compat::now().toSec();
   double max_f = 0;
   try
     {
@@ -345,7 +345,7 @@ bool HydrusXiUnderActuatedNavigator::plan()
       if(plan_verbose_)
         {
           std::cout << "nlopt: " << std::setprecision(7)
-                    << ros::Time::now().toSec() - start_time  <<  "[sec], cnt: " << cnt;
+                    << ros_compat::now().toSec() - start_time  <<  "[sec], cnt: " << cnt;
           std::cout << ", found optimal gimbal angles: ";
           for(auto it: opt_gimbal_angles_) std::cout << std::setprecision(5) << it << " ";
           std::cout << ", max min yaw: " << max_min_yaw_;
@@ -365,8 +365,8 @@ bool HydrusXiUnderActuatedNavigator::plan()
     }
 
   /* publish the gimbal angles if necessary */
-  sensor_msgs::JointState gimbal_msg;
-  gimbal_msg.header.stamp = ros::Time::now();
+  sensor_msgs_c::JointState gimbal_msg;
+  gimbal_msg.header.stamp = ros_compat::now();
 
   for(int i = 0; i < control_gimbal_indices_.size(); i++)
     {
@@ -383,7 +383,7 @@ bool HydrusXiUnderActuatedNavigator::plan()
 void HydrusXiUnderActuatedNavigator::rosParamInit()
 {
   BaseNavigator::rosParamInit();
-  ros::NodeHandle navi_nh(nh_, "navigation");
+  ros_compat::NodeHandle navi_nh(nh_, "navigation");
   getParam<bool>(navi_nh, "plan_verbose", plan_verbose_, false);
   getParam<bool>(navi_nh, "maximize_yaw", maximize_yaw_, false);
   getParam<double>(navi_nh, "gimbal_delta_angle", gimbal_delta_angle_, 0.2);

@@ -1,0 +1,9 @@
+<!-- ROS2 counterpart of flight_navigation_plugin.xml. Same classes, only the library
+     path differs: ROS1 pluginlib wants the lib/lib<name> form, while ROS2's
+     resolves <name> against the ament index and rejects directory
+     components. -->
+<library path="dragon_navigation">
+  <class name="aerial_robot_navigation/dragon_navigation" type="aerial_robot_navigation::DragonNavigator" base_class_type="aerial_robot_navigation::BaseNavigator">
+    <description> dragon navigation plugin</description>
+  </class>
+</library>

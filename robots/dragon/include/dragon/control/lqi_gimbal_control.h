@@ -35,14 +35,26 @@
 
 #pragma once
 
-#include <aerial_robot_msgs/ApplyWrench.h>
-#include <aerial_robot_msgs/ForceList.h>
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
+
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <aerial_robot_msgs/ApplyWrench.h>
+#  include <aerial_robot_msgs/ForceList.h>
+#  include <spinal/RollPitchYawTerm.h>
+#  include <std_msgs/String.h>
+#else
+#  include <aerial_robot_msgs/msg/apply_wrench.hpp>
+#  include <aerial_robot_msgs/msg/force_list.hpp>
+#  include <spinal/msg/roll_pitch_yaw_term.hpp>
+#  include <std_msgs/msg/string.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(aerial_robot_msgs);
+AERIAL_ROBOT_MSG_NAMESPACE(spinal);
+AERIAL_ROBOT_MSG_NAMESPACE(std_msgs);
 #include <hydrus/hydrus_lqi_controller.h>
 #include <dragon/model/hydrus_like_robot_model.h>
 #include <dragon/dragon_navigation.h>
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <spinal/RollPitchYawTerm.h>
 
 namespace aerial_robot_control
 {
@@ -52,10 +64,10 @@ namespace aerial_robot_control
     DragonLQIGimbalController();
     ~DragonLQIGimbalController(){}
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                    boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                    ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                     double ctrl_loop_rate) override;
 
     bool update() override;
@@ -65,10 +77,10 @@ namespace aerial_robot_control
     }
 
   private:
-    ros::Publisher gimbal_control_pub_;
-    ros::Publisher gimbal_target_force_pub_;
-    ros::Subscriber att_control_feedback_state_sub_;
-    ros::Subscriber extra_vectoring_force_sub_;
+    ros_compat::Publisher gimbal_control_pub_;
+    ros_compat::Publisher gimbal_target_force_pub_;
+    ros_compat::Subscriber att_control_feedback_state_sub_;
+    ros_compat::Subscriber extra_vectoring_force_sub_;
 
     void gimbalControl();
     void controlCore() override;
@@ -76,10 +88,10 @@ namespace aerial_robot_control
     void sendCmd() override;
     void allocateYawTerm() override {} // do nothing
 
-    void attControlFeedbackStateCallback(const spinal::RollPitchYawTermConstPtr& msg);
-    void extraVectoringForceCallback(const aerial_robot_msgs::ForceListConstPtr& msg);
+    void attControlFeedbackStateCallback(const ros_compat::ConstPtr<spinal_c::RollPitchYawTerm>& msg);
+    void extraVectoringForceCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ForceList>& msg);
 
-    boost::shared_ptr<Dragon::HydrusLikeRobotModel> dragon_robot_model_;
+    ros_compat::SharedPtr<Dragon::HydrusLikeRobotModel> dragon_robot_model_;
     Eigen::MatrixXd P_xy_;
 
     bool gimbal_vectoring_check_flag_;
@@ -92,9 +104,9 @@ namespace aerial_robot_control
 
 
     /* external wrench */
-    ros::Subscriber add_external_wrench_sub_, clear_external_wrench_sub_;
-    void addExternalWrenchCallback(const aerial_robot_msgs::ApplyWrench::ConstPtr& msg);
-    void clearExternalWrenchCallback(const std_msgs::String::ConstPtr& msg);
+    ros_compat::Subscriber add_external_wrench_sub_, clear_external_wrench_sub_;
+    void addExternalWrenchCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ApplyWrench>& msg);
+    void clearExternalWrenchCallback(const ros_compat::ConstPtr<std_msgs_c::String>& msg);
 
     /* extra vectoring force (i.e., for grasping) */
     std::vector<Eigen::Vector3d> extra_vectoring_forces_;

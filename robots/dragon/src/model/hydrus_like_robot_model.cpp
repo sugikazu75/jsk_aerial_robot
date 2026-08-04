@@ -1,7 +1,9 @@
 #include <aerial_robot_ros_compat/tf_compat.h>
 #include <dragon/model/hydrus_like_robot_model.h>
 
-#include <kdl_conversions/kdl_msg.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <kdl_conversions/kdl_msg.h>
+#endif
 
 using namespace Dragon;
 
@@ -54,7 +56,7 @@ HydrusLikeRobotModel::HydrusLikeRobotModel(bool init_with_rosparam, bool verbose
 
 void HydrusLikeRobotModel::getParamFromRos()
 {
-  ros::NodeHandle nh;
+  ros_compat::NodeHandle nh;
   nh.param("edf_radius", edf_radius_, 0.035); //70mm EDF
   nh.param("edf_max_tilt", edf_max_tilt_, 0.26); //15 [deg]
 }
@@ -66,7 +68,7 @@ bool HydrusLikeRobotModel::stabilityCheck(bool verbose)
   /* check the propeller overlap */
   if(!overlapCheck(verbose))
     {
-      ROS_ERROR("propeller overlapped!");
+      ROS_COMPAT_ERROR("propeller overlapped!");
       return false;
     }
 
@@ -92,7 +94,7 @@ bool HydrusLikeRobotModel::overlapCheck(bool verbose)
           /* debug */
           if(dist_thre > projected_dist)
             {
-              ROS_ERROR_STREAM(edf_names_.at(i) << " and " << edf_names_.at(j) << " is overlapped");
+              ROS_COMPAT_ERROR_STREAM(edf_names_.at(i) << " and " << edf_names_.at(j) << " is overlapped");
               return false;
             }
         }
@@ -339,7 +341,7 @@ bool HydrusLikeRobotModel::addExternalStaticWrench(const std::string wrench_name
   const auto seg_frames = getSegmentsTf();
   if(getTree().getSegment(reference_frame) == getTree().getSegments().end())
     {
-      ROS_WARN_STREAM(reference_frame << " can not be found in segment map.");
+      ROS_COMPAT_WARN_STREAM(reference_frame << " can not be found in segment map.");
       return false;
     }
 
@@ -347,13 +349,13 @@ bool HydrusLikeRobotModel::addExternalStaticWrench(const std::string wrench_name
 
   for(const auto wrench: external_wrench_map_)
     {
-      ROS_DEBUG_STREAM(wrench.first << ", pos: " << aerial_robot_model::kdlToEigen(wrench.second.offset).transpose() << ", wrench: " << wrench.second.wrench.transpose());
+      ROS_COMPAT_DEBUG_STREAM(wrench.first << ", pos: " << aerial_robot_model::kdlToEigen(wrench.second.offset).transpose() << ", wrench: " << wrench.second.wrench.transpose());
     }
 
   return true;
 }
 
-bool HydrusLikeRobotModel::addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const geometry_msgs::Point offset, const geometry_msgs::Wrench wrench)
+bool HydrusLikeRobotModel::addExternalStaticWrench(const std::string wrench_name, const std::string reference_frame, const geometry_msgs_c::Point offset, const geometry_msgs_c::Wrench wrench)
 {
   KDL::Vector offset_kdl;
   ros_compat::pointMsgToKdl(offset, offset_kdl);
@@ -376,7 +378,7 @@ bool HydrusLikeRobotModel::removeExternalStaticWrench(const std::string wrench_n
 {
   if(external_wrench_map_.find(wrench_name) == external_wrench_map_.end())
     {
-      ROS_WARN_STREAM("cannot find " << wrench_name << " to remove");
+      ROS_COMPAT_WARN_STREAM("cannot find " << wrench_name << " to remove");
       return false;
     }
 
@@ -421,7 +423,7 @@ void HydrusLikeRobotModel::calcExternalWrenchCompThrust(const std::map<std::stri
     vectoring_q_mat_.middleCols(3 * i, 3) = thrust_wrench_allocations.at(i).leftCols(3);
   wrench_comp_thrust_ = aerial_robot_model::pseudoinverse(vectoring_q_mat_) * (-wrench_sum);
 
-  ROS_DEBUG_STREAM("wrench_comp_thrust: " << wrench_comp_thrust_.transpose());
+  ROS_COMPAT_DEBUG_STREAM("wrench_comp_thrust: " << wrench_comp_thrust_.transpose());
 }
 
 void HydrusLikeRobotModel::addCompThrustToStaticThrust()
@@ -480,7 +482,7 @@ void HydrusLikeRobotModel::calcCompThrustJacobian()
     }
   comp_thrust_jacobian_ = -q_pseudo_inv * wrench_external_wrench_jacobian;
 
-  ROS_DEBUG_STREAM("wrench_external_thrust_jacobian w.r.t. root : \n" << wrench_external_wrench_jacobian);
+  ROS_COMPAT_DEBUG_STREAM("wrench_external_thrust_jacobian w.r.t. root : \n" << wrench_external_wrench_jacobian);
 
   /* derivative for thrust jacobian */
   std::vector<Eigen::MatrixXd> p_jacobians;
@@ -496,7 +498,7 @@ void HydrusLikeRobotModel::calcCompThrustJacobian()
       p_jacobians.push_back(p_jacobian);
     }
 
-  ROS_DEBUG_STREAM("wrench_external q_inv_jacobian: \n" << q_inv_jacobian);
+  ROS_COMPAT_DEBUG_STREAM("wrench_external q_inv_jacobian: \n" << q_inv_jacobian);
   comp_thrust_jacobian_ += -q_pseudo_inv * q_inv_jacobian;
 
   Eigen::MatrixXd q_pseudo_inv_jacobian = Eigen::MatrixXd::Zero(3 * rotor_num, ndof);
@@ -506,7 +508,7 @@ void HydrusLikeRobotModel::calcCompThrustJacobian()
 
   comp_thrust_jacobian_ += (Eigen::MatrixXd::Identity(3 * rotor_num, 3 * rotor_num) - q_pseudo_inv * vectoring_q_mat_) * q_pseudo_inv_jacobian;
 
-  ROS_DEBUG_STREAM("comp_thrust_jacobian: \n" << comp_thrust_jacobian_);
+  ROS_COMPAT_DEBUG_STREAM("comp_thrust_jacobian: \n" << comp_thrust_jacobian_);
 }
 
 

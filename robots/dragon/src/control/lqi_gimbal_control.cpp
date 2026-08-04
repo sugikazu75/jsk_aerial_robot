@@ -10,16 +10,16 @@ DragonLQIGimbalController::DragonLQIGimbalController():
 {
 }
 
-void DragonLQIGimbalController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                                           boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                           boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
-                                           boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator,
+void DragonLQIGimbalController::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                                           ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                           ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
+                                           ros_compat::SharedPtr<aerial_robot_navigation::BaseNavigator> navigator,
                                            double ctrl_loop_rate)
 {
   /* initialize the flight control */
   HydrusLQIController::initialize(nh, nhp, robot_model, estimator, navigator, ctrl_loop_rate);
 
-  dragon_robot_model_ = boost::dynamic_pointer_cast<Dragon::HydrusLikeRobotModel>(robot_model);
+  dragon_robot_model_ = ros_compat::dynamicPointerCast<Dragon::HydrusLikeRobotModel>(robot_model);
 
   /* initialize the matrix */
   P_xy_ = Eigen::MatrixXd::Zero(2, motor_num_ * 2);
@@ -34,8 +34,8 @@ void DragonLQIGimbalController::initialize(ros::NodeHandle nh, ros::NodeHandle n
   /* initialize the gimbal target angles */
   target_gimbal_angles_.resize(motor_num_ * 2, 0);
 
-  gimbal_control_pub_ = nh_.advertise<sensor_msgs::JointState>("gimbals_ctrl", 1);
-  gimbal_target_force_pub_ = nh_.advertise<aerial_robot_msgs::ForceList>("debug/gimbals_target_force", 1);
+  gimbal_control_pub_ = nh_.advertise<sensor_msgs_c::JointState>("gimbals_ctrl", 1);
+  gimbal_target_force_pub_ = nh_.advertise<aerial_robot_msgs_c::ForceList>("debug/gimbals_target_force", 1);
 
   att_control_feedback_state_sub_ = nh_.subscribe("rpy/feedback_state", 1, &DragonLQIGimbalController::attControlFeedbackStateCallback, this);
 
@@ -53,7 +53,7 @@ void DragonLQIGimbalController::initialize(ros::NodeHandle nh, ros::NodeHandle n
   pid_msg_.yaw.d_term.resize(1);
 }
 
-void DragonLQIGimbalController::attControlFeedbackStateCallback(const spinal::RollPitchYawTermConstPtr& msg)
+void DragonLQIGimbalController::attControlFeedbackStateCallback(const ros_compat::ConstPtr<spinal_c::RollPitchYawTerm>& msg)
 {
   if(motor_num_ == 0) return;
 
@@ -161,7 +161,7 @@ void DragonLQIGimbalController::gimbalControl()
   if(P_det < gimbal_roll_pitch_control_p_det_thresh_)
     {
       // no pitch roll
-      if(control_verbose_) ROS_ERROR("low P_det: %f", P_det);
+      if(control_verbose_) ROS_COMPAT_ERROR("low P_det: %f", P_det);
       P = Eigen::MatrixXd::Zero(3, motor_num_  * 2);
       P.block(0, 0, 1, motor_num_ * 2) = P_att.block(2, 0, 1, motor_num_ * 2);
       P.block(1, 0, 2, motor_num_ * 2) = P_xy_ / robot_model_->getMass();
@@ -178,7 +178,7 @@ void DragonLQIGimbalController::gimbalControl()
     {
       if(max_z > gimbal_roll_pitch_control_rate_thresh_ * max_y)
         {
-          if(control_verbose_) ROS_INFO("perform gimbal roll control, max_z: %f, max_y: %f", max_z, max_y);
+          if(control_verbose_) ROS_COMPAT_INFO("perform gimbal roll control, max_z: %f, max_y: %f", max_z, max_y);
           pid_msg_.roll.p_term.at(0) = pid_controllers_.at(ROLL).getPTerm();
           pid_msg_.roll.i_term.at(0) = pid_controllers_.at(ROLL).getITerm();
           pid_msg_.roll.d_term.at(0) = pid_controllers_.at(ROLL).getDTerm();
@@ -191,7 +191,7 @@ void DragonLQIGimbalController::gimbalControl()
 
       if(max_z > gimbal_roll_pitch_control_rate_thresh_ * max_x)
         {
-          if(control_verbose_) ROS_INFO("perform gimbal pitch control, max_z: %f, max_x: %f", max_z, max_y);
+          if(control_verbose_) ROS_COMPAT_INFO("perform gimbal pitch control, max_z: %f, max_x: %f", max_z, max_y);
           pid_msg_.pitch.p_term.at(0) = pid_controllers_.at(PITCH).getPTerm();
           pid_msg_.pitch.i_term.at(0) = pid_controllers_.at(PITCH).getITerm();
           pid_msg_.pitch.d_term.at(0) = pid_controllers_.at(PITCH).getDTerm();
@@ -211,10 +211,10 @@ void DragonLQIGimbalController::gimbalControl()
   pid_msg_.roll.total.at(0) = target_ang_acc_x;
   pid_msg_.pitch.total.at(0) = target_ang_acc_y;
 
-  aerial_robot_msgs::ForceList target_force_msg;
+  aerial_robot_msgs_c::ForceList target_force_msg;
   for(int i = 0; i < motor_num_; i++)
     {
-      geometry_msgs::Vector3 f; f.x = f_xy(2 * i); f.y = f_xy(2 * i + 1);
+      geometry_msgs_c::Vector3 f; f.x = f_xy(2 * i); f.y = f_xy(2 * i + 1);
       target_force_msg.forces.push_back(f);
     }
   gimbal_target_force_pub_.publish(target_force_msg);
@@ -262,7 +262,7 @@ void DragonLQIGimbalController::gimbalControl()
       /* calculate ||f||, but omit pitch and roll term, which will be added in spinal */
       target_base_thrust_.at(i) = (f_i - tf2::Vector3(0, 0, lqi_att_terms_.at(i))).length();
       if(control_verbose_)
-        ROS_INFO("[gimbal control]: rotor%d, target_thrust vs target_z: [%f vs %f]", i+1, target_base_thrust_.at(i), z_control_terms.at(i));
+        ROS_COMPAT_INFO("[gimbal control]: rotor%d, target_thrust vs target_z: [%f vs %f]", i+1, target_base_thrust_.at(i), z_control_terms.at(i));
 
       if(!start_rp_integration_ || navigator_->getForceLandingFlag())
         f_i.setValue(f_xy(2 * i), f_xy(2 * i + 1), robot_model_->getStaticThrust()[i]);
@@ -273,7 +273,7 @@ void DragonLQIGimbalController::gimbalControl()
       /* [S_pitch, -S_roll * C_pitch, C_roll * C_roll]^T = R.transpose * f_i / |f_i| */
       tf2::Quaternion q;  ros_compat::quaternionKdlToTf(links_frame_from_cog.at(i), q);
       tf2::Vector3 r_f_i = tf2::Matrix3x3(q).transpose() * f_i;
-      if(control_verbose_) ROS_INFO("gimbal%d r f: [%f, %f, %f]", i + 1, r_f_i.x(), r_f_i.y(), r_f_i.z());
+      if(control_verbose_) ROS_COMPAT_INFO("gimbal%d r f: [%f, %f, %f]", i + 1, r_f_i.x(), r_f_i.y(), r_f_i.z());
 
       double gimbal_i_roll = atan2(-r_f_i[1], r_f_i[2]);
       double gimbal_i_pitch = atan2(r_f_i[0], -r_f_i[1] * sin(gimbal_i_roll) + r_f_i[2] * cos(gimbal_i_roll));
@@ -290,8 +290,8 @@ void DragonLQIGimbalController::sendCmd()
   HydrusLQIController::sendCmd();
 
   /* send gimbal control command */
-  sensor_msgs::JointState gimbal_control_msg;
-  gimbal_control_msg.header.stamp = ros::Time::now();
+  sensor_msgs_c::JointState gimbal_control_msg;
+  gimbal_control_msg.header.stamp = ros_compat::now();
   if (gimbal_vectoring_check_flag_)
     {
       gimbal_control_msg.position = dragon_robot_model_->getGimbalNominalAngles();
@@ -305,29 +305,29 @@ void DragonLQIGimbalController::sendCmd()
 }
 
 /* external wrench */
-void DragonLQIGimbalController::addExternalWrenchCallback(const aerial_robot_msgs::ApplyWrench::ConstPtr& msg)
+void DragonLQIGimbalController::addExternalWrenchCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ApplyWrench>& msg)
 {
   dragon_robot_model_->addExternalStaticWrench(msg->name, msg->reference_frame, msg->reference_point, msg->wrench);
 }
 
-void DragonLQIGimbalController::clearExternalWrenchCallback(const std_msgs::String::ConstPtr& msg)
+void DragonLQIGimbalController::clearExternalWrenchCallback(const ros_compat::ConstPtr<std_msgs_c::String>& msg)
 {
   dragon_robot_model_->removeExternalStaticWrench(msg->data);
 }
 
 /* extra vectoring force  */
-void DragonLQIGimbalController::extraVectoringForceCallback(const aerial_robot_msgs::ForceListConstPtr& msg)
+void DragonLQIGimbalController::extraVectoringForceCallback(const ros_compat::ConstPtr<aerial_robot_msgs_c::ForceList>& msg)
 {
   if(navigator_->getNaviState() != aerial_robot_navigation::HOVER_STATE || navigator_->getForceLandingFlag()) return;
 
   if(msg->forces.size() == 0)
     {
-      ROS_INFO_STREAM("gimbal control: clear extra vectoring forces");
+      ROS_COMPAT_INFO_STREAM("gimbal control: clear extra vectoring forces");
       extra_vectoring_forces_.resize(0);
     }
   else if(msg->forces.size() != motor_num_)
     {
-      ROS_WARN_STREAM("gimbal control: can not assign the extra vectroing force, the size is wrong");
+      ROS_COMPAT_WARN_STREAM("gimbal control: can not assign the extra vectroing force, the size is wrong");
     }
   else
     {
@@ -341,11 +341,11 @@ void DragonLQIGimbalController::rosParamInit()
 {
   HydrusLQIController::rosParamInit();
 
-  ros::NodeHandle control_nh(nh_, "controller");
+  ros_compat::NodeHandle control_nh(nh_, "controller");
   getParam<bool>(control_nh, "add_lqi_result", add_lqi_result_, false);
   getParam<bool>(control_nh, "gimbal_vectoring_check_flag", gimbal_vectoring_check_flag_, false); // check the gimbal vectoring function without position and yaw control
 
-  ros::NodeHandle roll_pitch_nh(control_nh, "roll_pitch");
+  ros_compat::NodeHandle roll_pitch_nh(control_nh, "roll_pitch");
   getParam<double>(roll_pitch_nh, "gimbal_control_rate_thresh", gimbal_roll_pitch_control_rate_thresh_, 1.0);
   getParam<double>(roll_pitch_nh, "gimbal_control_p_det_thresh", gimbal_roll_pitch_control_p_det_thresh_, 1e-3);
 }

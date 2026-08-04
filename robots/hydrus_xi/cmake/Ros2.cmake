@@ -1,0 +1,96 @@
+# ROS2 build of hydrus_xi.
+#
+# Covers the two pluginlib libraries - the fully actuated robot model and the
+# under-actuated vectoring navigator - and the config, description and MuJoCo
+# models. The jacobian test binary is left out, as hydrus's and
+# aerial_robot_model's already are.
+#
+# NLopt and OsqpEigen come from aerial_robot_3rdparty, which builds them through
+# ExternalProject. Those packages declare `build_type: cmake` and build under
+# colcon unchanged - they needed no migration at all.
+
+add_compile_options(-std=c++17)
+add_definitions(-DAERIAL_ROBOT_ROS_VERSION=2)
+
+find_package(ament_cmake REQUIRED)
+
+find_package(aerial_robot_control REQUIRED)
+find_package(aerial_robot_estimation REQUIRED)
+find_package(aerial_robot_model REQUIRED)
+find_package(aerial_robot_ros_compat REQUIRED)
+find_package(hydrus REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+
+find_package(Eigen3 REQUIRED)
+find_package(NLopt REQUIRED)
+find_package(OsqpEigen REQUIRED)
+
+set(HYDRUS_XI_DEPS
+  aerial_robot_control
+  aerial_robot_estimation
+  aerial_robot_model
+  aerial_robot_ros_compat
+  hydrus
+  pluginlib
+  rclcpp
+  sensor_msgs
+  tf2
+)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g -DNDEBUG")
+
+include_directories(
+  include
+  # aerial_robot_control and aerial_robot_estimation export their targets, but
+  # their headers are not always propagated onto consumers' compile lines.
+  ${aerial_robot_control_INCLUDE_DIRS}
+  ${aerial_robot_estimation_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${NLOPT_INCLUDE_DIRS}
+)
+
+add_library(hydrus_xi_fully_actuated_robot_model SHARED
+  src/hydrus_xi_fully_actuated_robot_model.cpp)
+ament_target_dependencies(hydrus_xi_fully_actuated_robot_model ${HYDRUS_XI_DEPS})
+target_link_libraries(hydrus_xi_fully_actuated_robot_model
+  aerial_robot_model::aerial_robot_model_lib)
+
+add_library(hydrus_xi_under_actuated_navigation SHARED
+  src/hydrus_xi_under_actuated_navigation.cpp)
+ament_target_dependencies(hydrus_xi_under_actuated_navigation ${HYDRUS_XI_DEPS})
+target_link_libraries(hydrus_xi_under_actuated_navigation
+  hydrus::hydrus_robot_model
+  aerial_robot_control::flight_navigation
+  OsqpEigen::OsqpEigen
+  ${NLOPT_LIBRARIES})
+
+pluginlib_export_plugin_description_file(aerial_robot_model plugins/robot_model_plugin.ros2.xml)
+pluginlib_export_plugin_description_file(aerial_robot_control flight_navigation_plugin.ros2.xml)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION include/${PROJECT_NAME})
+
+install(TARGETS hydrus_xi_fully_actuated_robot_model hydrus_xi_under_actuated_navigation
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+install(DIRECTORY config plugins robots urdf
+  DESTINATION share/${PROJECT_NAME}
+  USE_SOURCE_PERMISSIONS)
+
+install(FILES flight_navigation_plugin.ros2.xml
+  DESTINATION share/${PROJECT_NAME})
+
+ament_export_include_directories(include)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${HYDRUS_XI_DEPS})
+
+ament_package()

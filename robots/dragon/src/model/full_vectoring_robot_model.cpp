@@ -168,7 +168,7 @@ there is a diffiretial chain about the roll angle. But we here approximate it to
     Eigen::VectorXd target_wrench_cog = Eigen::VectorXd::Zero(6);
     target_wrench_cog.head(3) = robot_model->getMass() * robot_model->getGravity3d();
     Eigen::VectorXd wrench_diff = Q * lambda - target_wrench_cog;
-    // ROS_INFO_STREAM("Q * lambda: " << (Q * lambda).transpose() << "; wrench_diff: " << wrench_diff.transpose());
+    // ROS_COMPAT_INFO_STREAM("Q * lambda: " << (Q * lambda).transpose() << "; wrench_diff: " << wrench_diff.transpose());
     for(int i = 0; i < m; i++) result[i] = wrench_diff(i);
 
     if(grad == NULL) return;
@@ -358,12 +358,19 @@ FullVectoringRobotModel::FullVectoringRobotModel(bool init_with_rosparam, bool v
   setGimbalNominalAngles(std::vector<double>(0)); // for online initialize
   configuration_t_ = 0;
 
-  robot_model_for_plan_ = boost::make_shared<aerial_robot_model::RobotModel>();
+  robot_model_for_plan_ = ros_compat::makeShared<aerial_robot_model::RobotModel>();
 
   if(debug_verbose_)
     {
+#if AERIAL_ROBOT_ROS_VERSION == 1
       if(ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) )
         ros::console::notifyLoggerLevelsChanged();
+#else
+      /* rcutils raises the level per named logger; the compat macros all log
+         through the node's own logger, so that is the one to raise. */
+      if (auto node = ros_compat::detail::globalNode())
+        node->get_logger().set_level(rclcpp::Logger::Level::Debug);
+#endif
     }
 
   //debug
@@ -374,7 +381,7 @@ FullVectoringRobotModel::FullVectoringRobotModel(bool init_with_rosparam, bool v
 
 void FullVectoringRobotModel::getParamFromRos()
 {
-  ros::NodeHandle nh;
+  ros_compat::NodeHandle nh;
 
   nh.param("debug_verbose", debug_verbose_, false);
 
@@ -452,7 +459,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
 
       if(fabs(fabs(gimbal_nominal_angles.at(i * 2 + 1)) - M_PI /2) < gimbal_lock_threshold_)
         {
-          ROS_DEBUG_STREAM_NAMED("robot_model", "link" << i+1 << " pitch: " << -gimbal_nominal_angles.at(i * 2 + 1) << " exceeds");
+          ROS_COMPAT_DEBUG_STREAM("robot_model: " << "link" << i+1 << " pitch: " << -gimbal_nominal_angles.at(i * 2 + 1) << " exceeds");
           roll_locked_gimbal.at(i) = 1;
         }
       else
@@ -463,7 +470,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
       /* case1: the locked rotors have change  */
       if(prev_roll_locked_gimbal_.at(i) != roll_locked_gimbal.at(i))
         {
-          ROS_DEBUG_STREAM_NAMED("robot_model", "roll locked status change, gimbal " << i+1 <<" , cnt: " << roll_lock_status_accumulator_.at(i));
+          ROS_COMPAT_DEBUG_STREAM("robot_model: " << "roll locked status change, gimbal " << i+1 <<" , cnt: " << roll_lock_status_accumulator_.at(i));
 
           /* robust1: deal with the chattering around the changing bound by adding momentum */
           roll_lock_status_accumulator_.at(i)++;
@@ -471,7 +478,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
             {
               roll_lock_status_accumulator_.at(i) = 0;
               roll_lock_status_change = true;
-              ROS_INFO_STREAM_NAMED("robot_model", "rotor " << i + 1 << ": the gimbal roll lock status changes from " << prev_roll_locked_gimbal_.at(i) << " to " << roll_locked_gimbal.at(i));
+              ROS_COMPAT_INFO_STREAM("robot_model: " << "rotor " << i + 1 << ": the gimbal roll lock status changes from " << prev_roll_locked_gimbal_.at(i) << " to " << roll_locked_gimbal.at(i));
               if(roll_locked_gimbal.at(i) == 0)
                 {
                   roll_lock_angle_smooth_.at(i) = 1;
@@ -489,7 +496,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
         }
 
     }
-  ROS_DEBUG_STREAM_THROTTLE_NAMED(1.0, "robot_model", "max link pitch: " << max_pitch);
+  ROS_COMPAT_DEBUG_STREAM_THROTTLE(1.0, "robot_model: " << "max link pitch: " << max_pitch);
 
   /* 3. calculate the optimized locked gimbal roll angles */
   int gimbal_lock_num = std::accumulate(roll_locked_gimbal.begin(), roll_locked_gimbal.end(), 0);
@@ -506,7 +513,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
           tf2::Vector3 rotation_axis = tf2::Matrix3x3(prev_q) * delta_q.getAxis();
           if(fabs(delta_q.getAngle()) > link_att_change_threshold_)
             {
-              ROS_INFO_STREAM_NAMED("robot_model", "link " << i + 1 << ": the orientation is change more than threshold: " << delta_q.getAngle()
+              ROS_COMPAT_INFO_STREAM("robot_model: " << "link " << i + 1 << ": the orientation is change more than threshold: " << delta_q.getAngle()
                                     << "; the axis: [" << rotation_axis.x() << ", " << rotation_axis.y() << ", " << rotation_axis.z() << "]");
               roll_lock_status_change = true;
             }
@@ -539,7 +546,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
       else
         {
           // periodic check (e.g. 1s) whether the robot configuration is fixed with locked gimbal
-          if (ros::Time::now().toSec() - configuration_t_ > confinguration_check_du_)
+          if (ros_compat::now().toSec() - configuration_t_ > confinguration_check_du_)
             {
               bool fix_configuration = true;
               for(int i = 0; i < getRotorNum(); ++i)
@@ -553,12 +560,12 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
                 }
 
               last_links_rotation_from_cog_ = links_rotation_from_cog;
-              configuration_t_ = ros::Time::now().toSec();
+              configuration_t_ = ros_compat::now().toSec();
 
               if(fix_configuration)
                 prev_links_rotation_from_cog_ = links_rotation_from_cog;
 
-              ROS_DEBUG("the robot configuration is fix? %s", fix_configuration?std::string("Yes").c_str():std::string("No").c_str());
+              ROS_COMPAT_DEBUG("the robot configuration is fix? %s", fix_configuration?std::string("Yes").c_str():std::string("No").c_str());
             }
         }
     }
@@ -579,7 +586,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
         {
           if(roll_lock_angle_smooth_.at(i) == 1)
             {
-              ROS_DEBUG_NAMED("robot_model", "smooth the gimbal roll angle %d, for after free the lock", i+1);
+              ROS_COMPAT_DEBUG("smooth the gimbal roll angle %d, for after free the lock", i+1);
               roll_locked_gimbal.at(i) = 1; // force change back to lock status
 
               if(gimbal_nominal_angles.at(i * 2) - gimbal_nominal_angles_curr.at(i * 2) > gimbal_roll_change_threshold_)
@@ -590,10 +597,10 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
                 {
                   gimbal_nominal_angles_curr.at(i * 2) = gimbal_nominal_angles.at(i * 2);
                   roll_lock_angle_smooth_.at(i) = 0; // stop smoothing
-                  if(debug_verbose_) ROS_INFO_STREAM_NAMED("robot_model", "free the gimbal roll after the smoothing for rotor" << i+1);
+                  if(debug_verbose_) ROS_COMPAT_INFO_STREAM("robot_model: " << "free the gimbal roll after the smoothing for rotor" << i+1);
                 }
 
-              if(debug_verbose_) ROS_DEBUG_STREAM_NAMED("robot_model", "smoothing rotor " << i + 1 << ", desired roll angle: " << gimbal_nominal_angles.at(i * 2) << ", curr angle: " << gimbal_nominal_angles_curr.at(i * 2));
+              if(debug_verbose_) ROS_COMPAT_DEBUG_STREAM("robot_model: " << "smoothing rotor " << i + 1 << ", desired roll angle: " << gimbal_nominal_angles.at(i * 2) << ", curr angle: " << gimbal_nominal_angles_curr.at(i * 2));
 
             }
           else
@@ -612,7 +619,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
           else
             gimbal_nominal_angles_curr.at(i * 2) = locked_angles_.at(gimbal_lock_index);
 
-          if(debug_verbose_) ROS_DEBUG_STREAM_NAMED("robot_model", "smoothing rotor " << i + 1 << ", desired roll angle: " << locked_angles_.at(gimbal_lock_index) << ", curr angle: " << gimbal_nominal_angles_curr.at(i * 2));
+          if(debug_verbose_) ROS_COMPAT_DEBUG_STREAM("robot_model: " << "smoothing rotor " << i + 1 << ", desired roll angle: " << locked_angles_.at(gimbal_lock_index) << ", curr angle: " << gimbal_nominal_angles_curr.at(i * 2));
 
           gimbal_lock_index++;
         }
@@ -632,7 +639,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
 
 
   /* 5.2. convergence  */
-  double t = ros::Time::now().toSec();
+  double t = ros_compat::now().toSec();
   for(int j = 0; j < robot_model_refine_max_iteration_; j++)
     {
       /* 5.2.1. update the wrench allocation matrix  */
@@ -664,7 +671,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
       /* 5.2.2. update the vectoring force for hovering and the gimbal angles */
       Eigen::VectorXd hover_vectoring_f = aerial_robot_model::pseudoinverse(full_q_mat) * getGravity() * robot_model_for_plan_->getMass();
       Eigen::VectorXd static_thrust = Eigen::VectorXd::Zero(getRotorNum());
-      if(debug_verbose_) ROS_INFO_STREAM("vectoring force for hovering in iteration "<< j+1 << ": " << hover_vectoring_f.transpose());
+      if(debug_verbose_) ROS_COMPAT_INFO_STREAM("vectoring force for hovering in iteration "<< j+1 << ": " << hover_vectoring_f.transpose());
       last_col = 0;
       for(int i = 0; i < getRotorNum(); i++)
         {
@@ -705,13 +712,13 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
           double diff = (rotors_origin_from_cog.at(i) - prev_rotors_origin_from_cog.at(i)).norm();
           if(diff > max_diff) max_diff = diff;
         }
-      if(debug_verbose_) ROS_INFO_STREAM_NAMED("robot_model", "refine rotor origin: iteration "<< j+1 << ", max_diff: " << max_diff);
+      if(debug_verbose_) ROS_COMPAT_INFO_STREAM("robot_model: " << "refine rotor origin: iteration "<< j+1 << ", max_diff: " << max_diff);
 
       if(max_diff < robot_model_refine_threshold_)
         {
-          if(debug_verbose_) ROS_DEBUG_STREAM_NAMED("robot_model", "refine rotor origin: converge in iteration " << j+1 << " max_diff " << max_diff << ", use " << ros::Time::now().toSec() - t << "sec");
+          if(debug_verbose_) ROS_COMPAT_DEBUG_STREAM("robot_model: " << "refine rotor origin: converge in iteration " << j+1 << " max_diff " << max_diff << ", use " << ros_compat::now().toSec() - t << "sec");
 
-          // ROS_INFO_STREAM_THROTTLE(1.0, "refine rotor origin: converge in iteration " << j+1 << " max_diff " << max_diff << ", use " << ros::Time::now().toSec() - t << "sec");
+          // ROS_COMPAT_INFO_STREAM_THROTTLE(1.0, "refine rotor origin: converge in iteration " << j+1 << " max_diff " << max_diff << ", use " << ros_compat::now().toSec() - t << "sec");
           setStaticThrust(static_thrust);
 
           setVectoringForceWrenchMatrix(full_q_mat);
@@ -724,7 +731,7 @@ void FullVectoringRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_po
           setStaticThrust(static_thrust);
           hover_vectoring_f_ = hover_vectoring_f;
           setVectoringForceWrenchMatrix(full_q_mat);
-          ROS_WARN_STREAM_NAMED("robot_model", "refine rotor origin: can not converge in iteration " << j+1 << " max_diff " << max_diff);
+          ROS_COMPAT_WARN_STREAM("robot_model: " << "refine rotor origin: can not converge in iteration " << j+1 << " max_diff " << max_diff);
         }
     }
 
@@ -842,7 +849,7 @@ Eigen::VectorXd FullVectoringRobotModel::calcFeasibleControlTDists(const std::ve
             {
               // assume v_i and v_j has same direction, so this is not plane can generate
               t_min_ij = 1e6;
-              ROS_DEBUG_NAMED("robot_model", "the direction of v%d and v%d are too close, so no plane can generate by these two vector", i, j);
+              ROS_COMPAT_DEBUG("the direction of v%d and v%d are too close, so no plane can generate by these two vector", i, j);
             }
           else
             {
@@ -883,13 +890,13 @@ there is a diffiretial chain about the roll angle. But we here approximate it to
   /* TODO: use nonlinear differentiable optimization methods, such as SQP */
 
   /* nonlinear optimization for vectoring angles planner */
-  double start_t = ros::Time::now().toSec();
+  double start_t = ros_compat::now().toSec();
   int num = std::accumulate(roll_locked_gimbal.begin(), roll_locked_gimbal.end(), 0);
   nlopt::opt nl_solver(nlopt::LN_COBYLA, num);
   nl_solver.set_max_objective(minimumControlWrench, this);
   nl_solver.set_xtol_rel(1e-4); //1e-4
   nl_solver.set_maxeval(1000); // 100 times
-  ROS_DEBUG_NAMED("robot_model", "nlopt init time: %f", ros::Time::now().toSec() - start_t); // TODO: change to DEBUG
+  ROS_COMPAT_DEBUG("nlopt init time: %f", ros_compat::now().toSec() - start_t); // TODO: change to DEBUG
 
   std::vector<double> lb(num, - M_PI / 2 - 0.1);
   std::vector<double> ub(num, M_PI / 2 + 0.1);
@@ -928,25 +935,25 @@ there is a diffiretial chain about the roll angle. But we here approximate it to
   min_force_normalized_weight_ = min_force_weight_ / rotor_num;
   Eigen::Matrix3d cog_desire_rot =  getCogDesireOrientation<Eigen::Matrix3d>();
   double max_min_torque = calcFeasibleControlTDists(std::vector<int>(rotor_num, 0), std::vector<double>(), rotor_num, rotor_pos, link_rot, cog_desire_rot).minCoeff();
-  ROS_DEBUG_STREAM_NAMED("robot_model", "max_min_torque: " << max_min_torque);
+  ROS_COMPAT_DEBUG_STREAM("robot_model: " << "max_min_torque: " << max_min_torque);
 
   min_torque_normalized_weight_ = min_torque_weight_ / max_min_torque;
 
   double max_min_control_wrench;
-  start_t = ros::Time::now().toSec();
+  start_t = ros_compat::now().toSec();
   nlopt::result result = nl_solver.optimize(opt_locked_angles, max_min_control_wrench);
 
-  ROS_DEBUG_STREAM_NAMED("robot_model", "nlopt process time: " << ros::Time::now().toSec() - start_t);  // change to DEBUG
-  ROS_DEBUG_STREAM_NAMED("robot_model", "nlopt: opt result: " << max_min_control_wrench);
+  ROS_COMPAT_DEBUG_STREAM("robot_model: " << "nlopt process time: " << ros_compat::now().toSec() - start_t);  // change to DEBUG
+  ROS_COMPAT_DEBUG_STREAM("robot_model: " << "nlopt: opt result: " << max_min_control_wrench);
 
   std::stringstream ss;
   for(auto angle: opt_locked_angles) ss << angle << ", ";
-  ROS_INFO_STREAM_NAMED("robot_model", "nlopt: locked angles: [" << ss.str() << "]");
+  ROS_COMPAT_INFO_STREAM("robot_model: " << "nlopt: locked angles: [" << ss.str() << "]");
 
   const auto f_min_list = calcFeasibleControlFxyDists(roll_locked_gimbal, opt_locked_angles, rotor_num, link_rot);
   const auto t_min_list = calcFeasibleControlTDists(roll_locked_gimbal, opt_locked_angles, rotor_num, rotor_pos, link_rot, cog_desire_rot);
 
-  ROS_DEBUG_NAMED("robot_model", "opt F min: %f, opt T min: %f", f_min_list.minCoeff(), t_min_list.minCoeff());
+  ROS_COMPAT_DEBUG("opt F min: %f, opt T min: %f", f_min_list.minCoeff(), t_min_list.minCoeff());
 
   return opt_locked_angles;
 
@@ -961,7 +968,7 @@ there is a diffiretial chain about the roll angle. But we here approximate it to
   const auto f_min_list = calcFeasibleControlFxyDists(roll_locked_gimbal, locked_angles, rotor_num, link_rot);
   const auto t_min_list = calcFeasibleControlTDists(roll_locked_gimbal, locked_angles, rotor_num, rotor_pos, link_rot, cog_desire_rot);
 
-  ROS_DEBUG_NAMED("robot_model", "F min: %f, T min: %f", f_min_list.minCoeff(), t_min_list.minCoeff());
+  ROS_COMPAT_DEBUG("F min: %f, T min: %f", f_min_list.minCoeff(), t_min_list.minCoeff());
   return locked_angles;
 #endif
 }

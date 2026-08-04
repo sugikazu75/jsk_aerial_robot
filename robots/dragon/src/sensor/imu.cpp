@@ -43,9 +43,9 @@ namespace
 
 namespace sensor_plugin
 {
-  void DragonImu::initialize(ros::NodeHandle nh,
-                  boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                  boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+  void DragonImu::initialize(ros_compat::NodeHandle nh,
+                  ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                  ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                   string sensor_name, int index)
   {
     Imu::initialize(nh, robot_model, estimator, std::string("sensor_plugin/imu"), index);
@@ -57,12 +57,12 @@ namespace sensor_plugin
     lpf_omega_ = IirFilter(sample_freq, cutoff_freq, 3);
 
     // debug
-    omega_filter_pub_ = indexed_nhp_.advertise<geometry_msgs::Vector3Stamped>(string("filter_angular_velocity"), 1);
+    omega_filter_pub_ = indexed_nhp_.advertise<geometry_msgs_c::Vector3Stamped>(string("filter_angular_velocity"), 1);
   }
 
 
   // override to get filtred gyro data
-  void DragonImu::ImuCallback(const spinal::ImuConstPtr& imu_msg)
+  void DragonImu::ImuCallback(const ros_compat::ConstPtr<spinal_c::Imu>& imu_msg)
   {
     imu_stamp_ = imu_msg->stamp;
     tf2::Vector3 filtered_omega;
@@ -71,7 +71,7 @@ namespace sensor_plugin
       {
         if(std::isnan(imu_msg->acc[i]) || std::isnan(imu_msg->gyro[i]) || std::isnan(imu_msg->mag[i]))
           {
-            ROS_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in IMU sensors !");
+            ROS_COMPAT_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in IMU sensors !");
             return;
           }
 
@@ -83,7 +83,7 @@ namespace sensor_plugin
     if(std::isnan(imu_msg->quaternion[0]) || std::isnan(imu_msg->quaternion[1]) ||
        std::isnan(imu_msg->quaternion[2]) || std::isnan(imu_msg->quaternion[3]))
       {
-        ROS_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in Quaternion!");
+        ROS_COMPAT_ERROR_THROTTLE(1.0, "IMU plugin receives Nan value in Quaternion!");
         return;
       }
 
@@ -98,7 +98,7 @@ namespace sensor_plugin
         first_flag = false;
       }
     filtered_omega = lpf_omega_.filterFunction(omega_);
-    geometry_msgs::Vector3Stamped omega_msg;
+    geometry_msgs_c::Vector3Stamped omega_msg;
     omega_msg.header.stamp = imu_msg->stamp;
     ros_compat::vector3TfToMsg(filtered_omega, omega_msg.vector);
     omega_filter_pub_.publish(omega_msg);

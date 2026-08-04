@@ -35,11 +35,19 @@
 
 #pragma once
 
+#include <aerial_robot_ros_compat/message.h>
+#include <aerial_robot_ros_compat/ros_compat.h>
 #include <aerial_robot_control/flight_navigation.h>
 #include <algorithm>
 #include <hydrus/hydrus_tilted_robot_model.h>
 #include <nlopt.hpp>
 #include <OsqpEigen/OsqpEigen.h>
+#if AERIAL_ROBOT_ROS_VERSION == 1
+#  include <sensor_msgs/JointState.h>
+#else
+#  include <sensor_msgs/msg/joint_state.hpp>
+#endif
+AERIAL_ROBOT_MSG_NAMESPACE(sensor_msgs);
 
 namespace aerial_robot_navigation
 {
@@ -49,12 +57,12 @@ namespace aerial_robot_navigation
     HydrusXiUnderActuatedNavigator();
     ~HydrusXiUnderActuatedNavigator();
 
-    void initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                    boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                    boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+    void initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                    ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                    ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                     double loop_du) override;
 
-    inline boost::shared_ptr<HydrusTiltedRobotModel> getRobotModelForPlan() { return robot_model_for_plan_;}
+    inline ros_compat::SharedPtr<HydrusTiltedRobotModel> getRobotModelForPlan() { return robot_model_for_plan_;}
     inline OsqpEigen::Solver& getYawRangeLPSolver() { return yaw_range_lp_solver_;}
 
     inline KDL::JntArray& getJointPositionsForPlan()  {return joint_positions_for_plan_;}
@@ -74,11 +82,11 @@ namespace aerial_robot_navigation
 
     void setMaxMinYaw(const double max_min_yaw) { max_min_yaw_ = max_min_yaw;}
   private:
-    ros::Publisher gimbal_ctrl_pub_;
+    ros_compat::Publisher gimbal_ctrl_pub_;
     std::thread plan_thread_;
-    boost::shared_ptr<HydrusTiltedRobotModel> robot_model_for_plan_;
+    ros_compat::SharedPtr<HydrusTiltedRobotModel> robot_model_for_plan_;
     OsqpEigen::Solver yaw_range_lp_solver_;
-    boost::shared_ptr<nlopt::opt> vectoring_nl_solver_;
+    std::shared_ptr<nlopt::opt> vectoring_nl_solver_;
 
     KDL::JntArray joint_positions_for_plan_;
     std::vector<std::string> control_gimbal_names_;

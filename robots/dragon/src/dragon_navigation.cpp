@@ -16,21 +16,21 @@ DragonNavigator::DragonNavigator():
   level_shape_control_stamp_ = 0;
 }
 
-void DragonNavigator::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
-                                 boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
-                                 boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
+void DragonNavigator::initialize(ros_compat::NodeHandle nh, ros_compat::NodeHandle nhp,
+                                 ros_compat::SharedPtr<aerial_robot_model::RobotModel> robot_model,
+                                 ros_compat::SharedPtr<aerial_robot_estimation::StateEstimator> estimator,
                                  double loop_du)
 {
   /* initialize the flight control */
   BaseNavigator::initialize(nh, nhp, robot_model, estimator, loop_du);
 
-  target_baselink_rpy_pub_ = nh_.advertise<spinal::DesireCoord>("desire_coordinate", 1); // to spinal
-  joint_control_pub_ = nh_.advertise<sensor_msgs::JointState>("joints_ctrl", 1);
+  target_baselink_rpy_pub_ = nh_.advertise<spinal_c::DesireCoord>("desire_coordinate", 1); // to spinal
+  joint_control_pub_ = nh_.advertise<sensor_msgs_c::JointState>("joints_ctrl", 1);
   final_target_baselink_rot_sub_ = nh_.subscribe("final_target_baselink_rot", 1, &DragonNavigator::targetBaselinkRotCallback, this);
   final_target_baselink_rpy_sub_ = nh_.subscribe("final_target_baselink_rpy", 1, &DragonNavigator::targetBaselinkRPYCallback, this);
   target_rotation_motion_sub_ = nh_.subscribe("target_rotation_motion", 1, &DragonNavigator::targetRotationMotionCallback, this);
 
-  prev_rotation_stamp_ = ros::Time::now().toSec();
+  prev_rotation_stamp_ = ros_compat::now().toSec();
 }
 
 void DragonNavigator::update()
@@ -44,7 +44,7 @@ void DragonNavigator::update()
 
 }
 
-void DragonNavigator::targetBaselinkRotCallback(const geometry_msgs::QuaternionStampedConstPtr & msg)
+void DragonNavigator::targetBaselinkRotCallback(const ros_compat::ConstPtr<geometry_msgs_c::QuaternionStamped> & msg)
 {
   ros_compat::quaternionMsgToTf(msg->quaternion, final_target_baselink_rot_);
   target_omega_.setValue(0,0,0); // for sure to reset the target angular velocity
@@ -57,20 +57,20 @@ void DragonNavigator::targetBaselinkRotCallback(const geometry_msgs::QuaternionS
     }
 }
 
-void DragonNavigator::targetBaselinkRPYCallback(const geometry_msgs::Vector3StampedConstPtr & msg)
+void DragonNavigator::targetBaselinkRPYCallback(const ros_compat::ConstPtr<geometry_msgs_c::Vector3Stamped> & msg)
 {
   final_target_baselink_rot_.setRPY(msg->vector.x, msg->vector.y, msg->vector.z);
   target_omega_.setValue(0,0,0); // for sure to reset the target angular velocity
 }
 
 
-void DragonNavigator::targetRotationMotionCallback(const nav_msgs::OdometryConstPtr& msg)
+void DragonNavigator::targetRotationMotionCallback(const ros_compat::ConstPtr<nav_msgs_c::Odometry>& msg)
 {
   std::string frame = msg->header.frame_id;
 
   if(frame != std::string("cog") && frame != std::string("baselink"))
     {
-      ROS_ERROR("frame %s is not support in target rotation motion",frame.c_str());
+      ROS_COMPAT_ERROR("frame %s is not support in target rotation motion",frame.c_str());
       return;
     }
 
@@ -98,7 +98,7 @@ void DragonNavigator::targetRotationMotionCallback(const nav_msgs::OdometryConst
       setTargetOmega(tf2::Matrix3x3(q) * w);
 
       // send to spinal
-      spinal::DesireCoord msg;
+      spinal_c::DesireCoord msg;
       double r,p,y;
       rot.GetRPY(r, p, y);
       msg.roll = r;
@@ -130,7 +130,7 @@ void DragonNavigator::baselinkRotationProcess()
 {
   if(curr_target_baselink_rot_ == final_target_baselink_rot_) return;
 
-  if(ros::Time::now().toSec() - prev_rotation_stamp_ > baselink_rot_pub_interval_)
+  if(ros_compat::now().toSec() - prev_rotation_stamp_ > baselink_rot_pub_interval_)
     {
       tf2::Quaternion delta_q = curr_target_baselink_rot_.inverse() * final_target_baselink_rot_;
       double angle = delta_q.getAngle();
@@ -148,7 +148,7 @@ void DragonNavigator::baselinkRotationProcess()
       robot_model_->setCogDesireOrientation(rot);
 
       // send to spinal
-      spinal::DesireCoord msg;
+      spinal_c::DesireCoord msg;
       double r,p,y;
       tf2::Matrix3x3(curr_target_baselink_rot_).getRPY(r, p, y);
       msg.roll = r;
@@ -156,7 +156,7 @@ void DragonNavigator::baselinkRotationProcess()
       msg.yaw = y;
       target_baselink_rpy_pub_.publish(msg);
 
-      prev_rotation_stamp_ = ros::Time::now().toSec();
+      prev_rotation_stamp_ = ros_compat::now().toSec();
     }
 }
 
@@ -226,14 +226,14 @@ void DragonNavigator::landingProcess()
                 }
               else
                 {
-                  // IMPORTANT: to avoid NaN because of asin(angle) when angle > 1, thus use tfAsin which has clamping process before do asin
-                  tf2::Quaternion delta_q(cross_v, tfAsin(cross_v.length()));
+                  // IMPORTANT: to avoid NaN because of asin(angle) when angle > 1, thus use tf2Asin which has clamping process before do asin
+                  tf2::Quaternion delta_q(cross_v, tf2Asin(cross_v.length()));
                   final_target_baselink_rot_ = curr_target_baselink_rot_ * delta_q;
                   // Note: normalize quaterinon just in case that curr_target_baselink_rot is not a perfect quaternion (e.g., manual rostopic pub)
                   double r,p,y;
                   tf2::Matrix3x3(final_target_baselink_rot_).getRPY(r,p,y);
                   final_target_baselink_rot_.setRPY(0, 0, y);
-                  ROS_DEBUG("refine final_target_baselink_rot_: [%f, %f, %f, %f]", final_target_baselink_rot_.x(), final_target_baselink_rot_.y(),
+                  ROS_COMPAT_DEBUG("refine final_target_baselink_rot_: [%f, %f, %f, %f]", final_target_baselink_rot_.x(), final_target_baselink_rot_.y(),
                             final_target_baselink_rot_.z(), final_target_baselink_rot_.w());
                 }
             }
@@ -245,7 +245,7 @@ void DragonNavigator::landingProcess()
               setTargetPosZ(estimator_->getState(State::Z_COG, estimate_mode_)[0]);
               setTargetVelZ(0);
               land_height_ = 0; // reset the land height, since it is updated in the first land_state which is forced to change to hover state to level the orientation. Thus, it is possible to have the same land height just after switching back to land state and thus stop in midair
-              ROS_INFO("[Navigation] shift to pre_land state to make the robot level");
+              ROS_COMPAT_INFO("[Navigation] shift to pre_land state to make the robot level");
             }
 
           level_flag_ = true;
@@ -266,11 +266,11 @@ void DragonNavigator::landingProcess()
             }
         }
       /* send the joint angles for level pose periodically (every 2s) to address lost package problem */
-      if (ros::Time::now().toSec() - level_shape_control_stamp_ > 2.0)
+      if (ros_compat::now().toSec() - level_shape_control_stamp_ > 2.0)
         {
           joint_control_pub_.publish(level_shape_msg_);
-          level_shape_control_stamp_ = ros::Time::now().toSec();
-          ROS_INFO("send level pose joint angles");
+          level_shape_control_stamp_ = ros_compat::now().toSec();
+          ROS_COMPAT_INFO("send level pose joint angles");
         }
 
       double r,p,y;
@@ -279,7 +279,7 @@ void DragonNavigator::landingProcess()
 
       if(already_level)
         {
-          ROS_INFO("[Navigation] back to land state");
+          ROS_COMPAT_INFO("[Navigation] back to land state");
           setNaviState(LAND_STATE);
           setTeleopFlag(true);
         }
@@ -288,8 +288,12 @@ void DragonNavigator::landingProcess()
 
 void DragonNavigator::servoTorqueProcess()
 {
-  ros::ServiceClient client = nh_.serviceClient<std_srvs::SetBool>(joints_torque_control_srv_name_);
-  std_srvs::SetBool srv;
+  /* The compat client takes request and response separately: roscpp's srv
+     struct carries both and rclcpp's does not, so a spelling shared by the two
+     has to pick one. */
+  auto client = ros_compat::serviceClient<std_srvs_s::SetBool>(nh_, joints_torque_control_srv_name_);
+  std_srvs_s::SetBool::Request req;
+  std_srvs_s::SetBool::Response res;
 
   if(servo_torque_)
     {
@@ -298,16 +302,16 @@ void DragonNavigator::servoTorqueProcess()
           if(estimator_->getState(State::Z_COG, estimate_mode_)[0] < height_thresh_)
             {
 
-              srv.request.data = false;
+              req.data = false;
 
-              if (client.call(srv))
+              if (client.call(req, res))
                 {
-                  ROS_INFO("dragon control: disable the joint torque");
+                  ROS_COMPAT_INFO("dragon control: disable the joint torque");
                   servo_torque_ = false;
                 }
               else
                 {
-                  ROS_ERROR("Failed to call service %s", joints_torque_control_srv_name_.c_str());
+                  ROS_COMPAT_ERROR("Failed to call service %s", joints_torque_control_srv_name_.c_str());
                 }
             }
         }
@@ -316,16 +320,16 @@ void DragonNavigator::servoTorqueProcess()
     {
       if(getNaviState() == ARM_ON_STATE)
         {
-          srv.request.data = true;
+          req.data = true;
 
-          if (client.call(srv))
+          if (client.call(req, res))
             {
-              ROS_INFO("dragon control: enable the joint torque");
+              ROS_COMPAT_INFO("dragon control: enable the joint torque");
               servo_torque_ = true;
             }
           else
             {
-              ROS_ERROR("Failed to call service %s", joints_torque_control_srv_name_.c_str());
+              ROS_COMPAT_ERROR("Failed to call service %s", joints_torque_control_srv_name_.c_str());
             }
         }
     }
@@ -350,28 +354,29 @@ void DragonNavigator::reset()
 
 void DragonNavigator::halt()
 {
-  ros::ServiceClient client = nh_.serviceClient<std_srvs::SetBool>(joints_torque_control_srv_name_);
-  std_srvs::SetBool srv;
-  srv.request.data = false;
-  if (client.call(srv))
-    ROS_INFO("dragon control halt process: disable the joint torque");
-  else
-    ROS_ERROR("Failed to call service %s", joints_torque_control_srv_name_.c_str());
+  std_srvs_s::SetBool::Request req;
+  std_srvs_s::SetBool::Response res;
 
-  client = nh_.serviceClient<std_srvs::SetBool>(gimbals_torque_control_srv_name_);
-
-  srv.request.data = false;
-  if (client.call(srv))
-    ROS_INFO("dragon control halt process: disable the gimbal torque");
+  auto joints_client = ros_compat::serviceClient<std_srvs_s::SetBool>(nh_, joints_torque_control_srv_name_);
+  req.data = false;
+  if (joints_client.call(req, res))
+    ROS_COMPAT_INFO("dragon control halt process: disable the joint torque");
   else
-    ROS_ERROR("Failed to call service %s", gimbals_torque_control_srv_name_.c_str());
+    ROS_COMPAT_ERROR("Failed to call service %s", joints_torque_control_srv_name_.c_str());
+
+  auto gimbals_client = ros_compat::serviceClient<std_srvs_s::SetBool>(nh_, gimbals_torque_control_srv_name_);
+  req.data = false;
+  if (gimbals_client.call(req, res))
+    ROS_COMPAT_INFO("dragon control halt process: disable the gimbal torque");
+  else
+    ROS_COMPAT_ERROR("Failed to call service %s", gimbals_torque_control_srv_name_.c_str());
 }
 
 void DragonNavigator::rosParamInit()
 {
   BaseNavigator::rosParamInit();
 
-  ros::NodeHandle navi_nh(nh_, "navigation");
+  ros_compat::NodeHandle navi_nh(nh_, "navigation");
 
   getParam<std::string>(navi_nh, "joints_torque_control_srv_name", joints_torque_control_srv_name_, std::string("joints/torque_enable"));
   getParam<std::string>(navi_nh, "gimbals_torque_control_srv_name", gimbals_torque_control_srv_name_, std::string("gimbals/torque_enable"));
