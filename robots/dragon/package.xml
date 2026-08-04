@@ -43,6 +43,12 @@
   <exec_depend condition="$ROS_VERSION == 1">rqt_gui</exec_depend>
   <exec_depend condition="$ROS_VERSION == 1">rviz</exec_depend>
 
+  <exec_depend condition="$ROS_VERSION == 2">launch</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">launch_ros</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">mujoco_ros</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">robot_state_publisher</exec_depend>
+  <exec_depend condition="$ROS_VERSION == 2">xacro</exec_depend>
+
   <test_depend condition="$ROS_VERSION == 1">rostest</test_depend>
 
   <export>

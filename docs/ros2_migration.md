@@ -31,12 +31,12 @@ half-converted across a commit boundary.
 | aerial_robot_simulation | yes | yes |
 | robots/mini_quadrotor | yes | yes |
 | robots/hydrus | yes | yes |
-| robots/dragon | yes | builds, no bringup yet |
-| robots/hydrus_xi | yes | builds, no bringup yet |
+| robots/dragon | yes | yes |
+| robots/hydrus_xi | yes | yes |
 | robots/gimbalrotor | yes | builds, cannot fly |
 | aerial_robot_3rdparty (nlopt, osqp, osqp-eigen) | yes | yes, unchanged |
 
-**mini_quadrotor and hydrus both hover in MuJoCo under ROS2.**
+**mini_quadrotor, hydrus, hydrus_xi and dragon all hover in MuJoCo under ROS2.**
 
 ```
 ros2 launch mini_quadrotor bringup.launch.py rm:=false sim:=true mujoco:=true headless:=true
@@ -48,12 +48,17 @@ Measured after takeoff: `uav/cog/odom` z = 0.6000 against a 0.6 m target, xy hel
 to about 2 cm, attitude angles at 1e-5 rad, and the four rotors at 2.61/2.71 N -
 10.6 N in total, which is the 1.084 kg model's weight.
 
-hydrus is the same, with `ros2 launch hydrus bringup.launch.py real_machine:=false
-simulation:=true mujoco:=true`: it reaches its quad shape, climbs, and the
-navigator prints `Hover!!!` with z = 0.600 against 0.6 and xy within 3 cm of the
-takeoff point. Note that `ground_truth` is the **fc site** and `uav/cog/odom` is
-the **cog**; on hydrus those are tens of centimetres apart, so the two disagreeing
-is geometry, not error.
+The other three take the same shape, each with its own launch:
+
+| robot | invocation | settled |
+| --- | --- | --- |
+| hydrus | `real_machine:=false simulation:=true mujoco:=true` | z = 0.600 / 0.6, xy within 3 cm |
+| hydrus_xi | `real_machine:=false simulation:=true mujoco:=true` | z = 0.5999 / 0.6, xy within 2 mm |
+| dragon | `rm:=false sim:=true mujoco:=true` | z = 1.000 / 1.0, xy within 1 cm |
+
+All four print `Hover!!!`. Note that `ground_truth` is the **fc site** and
+`uav/cog/odom` is the **cog**; on the multilink robots those are tens of
+centimetres apart, so the two disagreeing is geometry, not error.
 
 Gazebo under ROS2 comes later; `mujoco:=true` is currently the only simulation
 backend, and the launch says so rather than starting something that cannot work.
@@ -350,10 +355,15 @@ through `ExternalProject`. **They needed no migration at all**: they declare
 
 ## dragon and hydrus_xi
 
-Both build under both versions. **Neither has a ROS2 bringup launch, so neither has
-been flown** - they are converted, not verified in the air. Both ship MuJoCo models
-and both are vectoring robots, so the servo support the hardware component now has is
-the piece they were waiting on.
+Both build under both versions and both hover. They were the first robots to
+exercise the hardware component's servo support in anger - hydrus_xi holds six
+gimbals at the angles its `Servo.yaml` asks for, dragon eight joints and gimbals -
+and it needed no changes for them.
+
+`init_gimbal_angles.py`, which hydrus_xi's ROS1 launch runs to publish each
+gimbal's `simulation/init_value` onto `gimbals_ctrl` once the robot is up, has no
+ROS2 counterpart and needs none: the hardware component starts the gimbals at
+those angles itself, from the same file.
 
 dragon is the largest robot package so far, about 4500 lines. Four things in it are
 worth knowing before the next one:

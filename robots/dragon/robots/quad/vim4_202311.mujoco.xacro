@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<!--
+    Description used by the ROS2 MuJoCo bringup, the counterpart of
+    vim4_202311.gazebo.xacro. Same kinematics and inertias; the simulator
+    attachment is a <ros2_control> block instead of a <gazebo> plugin tag.
+
+    Only the rotors appear in it. The servo joints are held by the hardware
+    component itself, from Servo.yaml, because ROS2 has no position controller
+    for servo_bridge to load - see docs/ros2_migration.md.
+-->
+
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="dragon" >
+
+  <xacro:arg name="robot_name" default="dragon" />
+
+  <!-- robot urdf -->
+  <xacro:include filename="$(find dragon)/robots/quad/vim4_202311.urdf.xacro" />
+
+  <!-- ros2_control hardware component: the simulated spinal -->
+  <xacro:include filename="$(find aerial_robot_simulation)/xacro/spinal.ros2_control.xacro" />
+  <xacro:mujoco_spinal rotor_num="4" />
+
+</robot>
