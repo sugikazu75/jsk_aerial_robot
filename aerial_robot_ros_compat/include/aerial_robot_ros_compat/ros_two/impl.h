@@ -96,6 +96,9 @@ public:
   {
     *this = Time(static_cast<int64_t>(s * 1e9), get_clock_type());
   }
+
+  /** roscpp spells this ros::Time::now(); defined below, once the global node exists. */
+  static Time now();
   bool isZero() const
   {
     return nanoseconds() == 0;
@@ -231,6 +234,13 @@ inline std::string toParamName(const std::string& ns, const std::string& name)
 
 }  // namespace detail
 
+inline Time Time::now()
+{
+  if (auto node = detail::globalNode())
+    return Time(node->now());
+  return Time(0, 0, RCL_ROS_TIME);
+}
+
 class Publisher
 {
 public:
@@ -345,6 +355,17 @@ public:
 private:
   std::shared_ptr<void> srv_;
 };
+
+/**
+ * Maps a service's Request type back to the service.
+ *
+ * roscpp deduces a service from the callback's request and response arguments;
+ * rclcpp needs the service type itself and a ROS2 Request carries no way back to
+ * it. Code that cannot be changed to name the service explicitly - the firmware's
+ * SIMULATION build - specialises this instead. See spinal_ros2_shim.h.
+ */
+template <class Request>
+struct ServiceOf;
 
 /**
  * Blocking service client, as roscpp's ServiceClient is.
@@ -523,7 +544,19 @@ public:
         resolved);
   }
 
-  /** Overload for callbacks taking the message by value, as several here do. */
+  /** Callbacks taking the message by value; the firmware's do. */
+  template <class M, class T>
+  Subscriber subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(M), T* obj,
+                       const TransportHints& = TransportHints())
+  {
+    auto cb = [obj, fp](const ConstPtr<M>& msg) { (obj->*fp)(*msg); };
+    const std::string resolved = resolveName(topic);
+    return Subscriber(
+        node_->create_subscription<M>(resolved, rclcpp::QoS(rclcpp::KeepLast(queue_size ? queue_size : 1)), cb),
+        resolved);
+  }
+
+  /** Overload for callbacks taking the message by const reference. */
   template <class M, class T>
   Subscriber subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(const M&), T* obj,
                        const TransportHints& = TransportHints())
@@ -536,6 +569,21 @@ public:
   }
 
   // ---- services ------------------------------------------------------------
+
+  /**
+   * Deduces the service through ServiceOf, for call sites that cannot name it.
+   *
+   * The firmware's SIMULATION build calls advertiseService(name, &C::cb, this),
+   * which roscpp could deduce and rclcpp cannot. Everything else should use the
+   * ros_compat::advertiseService free function and name the service.
+   */
+  template <class Req, class Res, class T>
+  ServiceServer advertiseService(const std::string& name, bool (T::*fp)(Req&, Res&), T* obj)
+  {
+    using S = typename ServiceOf<Req>::type;
+    auto cb = [obj, fp](const std::shared_ptr<Req> req, std::shared_ptr<Res> res) { (obj->*fp)(*req, *res); };
+    return ServiceServer(node_->create_service<S>(resolveName(name), cb));
+  }
 
   template <class S, class T>
   ServiceServer advertiseService(const std::string& name, bool (T::*fp)(typename S::Request&, typename S::Response&),
