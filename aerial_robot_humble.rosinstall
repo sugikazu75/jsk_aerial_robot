@@ -8,9 +8,11 @@
 # NOTE: these branches are not on the upstream remotes yet. Until they are
 # pushed, the humble workflow cannot pass. See docs/ros2_migration.md.
 
-# nlopt, osqp and osqp-eigen, built through ExternalProject. They declare
-# build_type: cmake and need no migration; mujoco_ros_utils in the same repo is
-# ROS1-only and is what generates the MuJoCo models.
+# nlopt, osqp and osqp-eigen, built through ExternalProject; they declare
+# build_type: cmake and need no migration. Also mujoco_ros_utils, which holds
+# the MuJoCo model generator - it builds under both versions and exports
+# mujoco_model_convert() to each, so a humble-only workspace can generate its
+# own models.
 - git:
     local-name: aerial_robot_3rdparty
     uri: https://github.com/JSKAerialRobot/aerial_robot_3rdparty.git

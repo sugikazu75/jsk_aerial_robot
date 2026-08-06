@@ -24,8 +24,11 @@
   <depend>nlopt</depend>
 
   <depend condition="$ROS_VERSION == 1">roscpp</depend>
-  <!-- regenerates mujoco/*/*/robot.xml; ROS1-only, and the ROS2 build reuses its output -->
+  <!-- generates the MuJoCo model from the xacro. A build dependency only under
+       ROS1, where it hooks into the build; under ROS2 the generator runs as a
+       separate step afterwards, so it is an exec dependency there. -->
   <build_depend condition="$ROS_VERSION == 1">mujoco_ros_utils</build_depend>
+  <exec_depend condition="$ROS_VERSION == 2">mujoco_ros_utils</exec_depend>
 
   <depend condition="$ROS_VERSION == 2">geometry_msgs</depend>
   <depend condition="$ROS_VERSION == 2">nav_msgs</depend>
