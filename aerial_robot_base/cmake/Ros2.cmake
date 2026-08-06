@@ -8,6 +8,7 @@ add_compile_options(-std=c++17)
 add_definitions(-DAERIAL_ROBOT_ROS_VERSION=2)
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 
 find_package(aerial_robot_control REQUIRED)
 find_package(aerial_robot_estimation REQUIRED)
@@ -58,6 +59,16 @@ install(TARGETS aerial_robot_base
   RUNTIME DESTINATION bin)
 
 install(TARGETS aerial_robot_base_node
+  DESTINATION lib/${PROJECT_NAME})
+
+# The ROS2 rewrites of the rospy helpers: the robot interface, the state
+# machine, and the hovering check. They live beside the ROS1 ones rather than
+# replacing them - the flying robots run those - and only these are installed
+# here. See python/aerial_robot_base/robot_interface.py for what changed.
+ament_python_install_package(${PROJECT_NAME}
+  PACKAGE_DIR ${PROJECT_SOURCE_DIR}/python/${PROJECT_NAME})
+
+install(PROGRAMS python/${PROJECT_NAME}/hovering_check.py
   DESTINATION lib/${PROJECT_NAME})
 
 # config holds the per-sensor noise models that every robot's bringup stacks on

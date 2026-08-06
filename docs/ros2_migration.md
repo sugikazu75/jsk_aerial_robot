@@ -119,11 +119,10 @@ gitignored build products, so a fresh checkout has none and a job that skipped
 this would be testing a simulation with nothing to load. It builds, generates,
 builds again, and then asserts each robot's model was installed.
 
-**It does not yet fly the robots.** The ROS1 side does: `mini_quadrotor/test`
-adds a rostest that brings the robot up in MuJoCo and runs
-`aerial_robot_base/hovering_check.py`. Neither the rostest nor that rospy script
-has a ROS2 counterpart yet, so flying is still verified by hand - see the takeoff
-check above. Porting that test is the obvious next piece of CI.
+**It does not yet fly the robots**, though the pieces now exist. The ROS1 side
+runs a rostest that brings the robot up in MuJoCo and drives
+`aerial_robot_base/hovering_check.py`; the ROS2 rewrite of that script works (see
+below) but nothing wires it into the job yet. Flying is still verified by hand.
 
 ## Build commands
 
@@ -189,6 +188,50 @@ package installs a model is decided at *configure* time, and the first pass
 decided there was none. `.ci/humble.sh` does exactly this for all four robots
 and then asserts the models arrived - a generation step that quietly produced
 nothing would otherwise look exactly like a pass.
+
+## The rospy helpers
+
+`aerial_robot_base/python/aerial_robot_base/` holds ROS2 rewrites of the rospy
+helpers, beside - not replacing - the ROS1 ones in `src/`, which the flying
+robots run. Three modules: `robot_interface.py`, `state_machine.py`,
+`hovering_check.py`, plus `transform_utils.py`.
+
+Verified by flying it:
+
+```
+ros2 launch mini_quadrotor bringup.launch.py rm:=false sim:=true mujoco:=true headless:=true
+ros2 run aerial_robot_base hovering_check.py --ros-args \
+    -r __ns:=/quadrotor -p use_sim_time:=true -p waypoint.waypoints:="[0.0, 0.0, 1.6]"
+```
+
+Arm, takeoff, waypoint, land - the same sequence and the same waypoint as the
+ROS1 rostest - and it exits 0.
+
+What had no direct translation:
+
+- **A node to hang things off.** rospy had a process-global one. `RobotInterface`
+  owns one and spins it on a thread of its own; without that nothing arrives and
+  every convergence check waits forever on state that never updates.
+- **`rospy.sleep`.** Now the node clock's sleep, so under simulation everything
+  follows `/clock` as rospy did. A check sleeping in wall seconds against a
+  simulator running at another rate measures the wrong thing.
+- **SMACH.** `smach` and `smach_ros` have no humble release, and what this stack
+  asks of them is a linear sequence of states returning 'succeeded' or
+  'preempted' with a userdata dict. That is forty lines of `State` and
+  `StateMachine` in `state_machine.py`. The introspection server has no
+  replacement and no user here.
+- **`ros_numpy` and `tf.transformations`**, neither of which exists for ROS2.
+  `transform_utils.py` writes out the four quaternion helpers that were used.
+  Quaternions stay (x, y, z, w) - tf1's order and the messages' - *not* Eigen's.
+- **Finding the robot namespace.** rospy asked the master which nodes subscribe
+  to what; there is no master, so it reads the graph instead.
+- **Nested parameters.** ROS2 has no nested-array type, so `waypoint.waypoints`
+  is flat with an explicit `waypoint.stride` (3 or 4). Inferring the stride from
+  the length is ambiguous - twelve numbers are four triples or three quadruples -
+  and inferring it wrong flies the robot somewhere else without complaining.
+
+`keyboard_command.py`, `rms.py`, `send_igmp_report.py` and the robots'
+`simple_demo.py`/`loop_demo.py` are still ROS1-only.
 
 ## The two decisions everything else follows from
 
