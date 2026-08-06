@@ -15,14 +15,14 @@
 # own models.
 - git:
     local-name: aerial_robot_3rdparty
-    uri: https://github.com/JSKAerialRobot/aerial_robot_3rdparty.git
+    uri: https://github.com/sugikazu75/aerial_robot_3rdparty.git
     version: ros2
 
 # kalman filter
 - git:
     local-name: kalman_filter
-    uri: https://github.com/JSKAerialRobot/kalman_filter.git
-    version: ros2
+    uri: https://github.com/sugikazu75/kalman_filter.git
+    version: PR/ros2
 
 # the MuJoCo wrapper
 - git:
