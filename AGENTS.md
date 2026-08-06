@@ -52,9 +52,8 @@ stay ROS1-only with its dependencies conditioned.
 
 `ros_test.yml` builds ROS1; `ros2_test.yml` builds ROS2 on Ubuntu 22.04 / humble
 through `.ci/humble.sh`. The ROS2 job builds, generates the MuJoCo
-models and runs the compat layer's parameter mapping test. It does not fly the robots
-yet, though `hovering_check.py` has a ROS2 rewrite that does - see
-docs/ros2_migration.md. Verify flight by hand.
+models, runs the compat layer's parameter mapping test, and flies mini_quadrotor through
+`hovering_check.py` - the same check the ROS1 rostest runs.
 
 ## Checking that it still flies
 

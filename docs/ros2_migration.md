@@ -119,10 +119,19 @@ gitignored build products, so a fresh checkout has none and a job that skipped
 this would be testing a simulation with nothing to load. It builds, generates,
 builds again, and then asserts each robot's model was installed.
 
-**It does not yet fly the robots**, though the pieces now exist. The ROS1 side
-runs a rostest that brings the robot up in MuJoCo and drives
-`aerial_robot_base/hovering_check.py`; the ROS2 rewrite of that script works (see
-below) but nothing wires it into the job yet. Flying is still verified by hand.
+**It flies mini_quadrotor**, the same arm/takeoff/waypoint/land the ROS1 rostest
+does, through the ROS2 rewrite of `hovering_check.py`. That matters more than the
+build: every bug that mattered in this migration - a node in the wrong namespace,
+a node nobody spun, an empty parameter set, a zero velocity in `ground_truth` -
+compiled, loaded, logged nothing, and showed up only in flight.
+
+It waits for `/quadrotor/uav/cog/odom` rather than sleeping a guessed amount: a
+CI runner does not reach the simulator's real-time factor, so a fixed sleep is
+either flaky or needlessly long. The bringup log is printed on exit, whatever
+the outcome.
+
+The other three robots are not flown in CI. Nothing stops it beyond runtime -
+the same script works against any of them with the right namespace.
 
 ## Build commands
 
@@ -196,7 +205,7 @@ helpers, beside - not replacing - the ROS1 ones in `src/`, which the flying
 robots run. Three modules: `robot_interface.py`, `state_machine.py`,
 `hovering_check.py`, plus `transform_utils.py`.
 
-Verified by flying it:
+Verified by flying it, and now run by CI:
 
 ```
 ros2 launch mini_quadrotor bringup.launch.py rm:=false sim:=true mujoco:=true headless:=true

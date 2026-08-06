@@ -7,10 +7,9 @@
 # colcon against catkin, vcs against wstool, a different dependency list - and
 # the ROS1 script is what the flying robots' CI runs.
 #
-# It builds and generates the MuJoCo models, as the catkin job does, but does
-# not yet fly the robots: the ROS1 hovering test is a rostest driving a rospy
-# script, and neither has a ROS2 counterpart yet. Flying under ROS2 is verified
-# by hand - see docs/ros2_migration.md for the takeoff check.
+# It builds, generates the MuJoCo models, and flies mini_quadrotor in MuJoCo -
+# the same arm/takeoff/waypoint/land the ROS1 rostest does, through the ROS2
+# rewrite of hovering_check.py.
 
 set -ex
 
@@ -118,3 +117,28 @@ source install/setup.bash
 install/aerial_robot_ros_compat/lib/aerial_robot_ros_compat/aerial_robot_ros_compat_param_mapping_test \
     --ros-args --params-file \
     install/aerial_robot_ros_compat/share/aerial_robot_ros_compat/test/param_mapping_test.yaml
+
+# And fly it. A green build says nothing about flight: every bug that mattered
+# in this migration - a node in the wrong namespace, a node nobody spun, an
+# empty parameter set, a zero velocity in ground_truth - compiled, loaded,
+# logged nothing, and showed up only here.
+ros2 launch mini_quadrotor bringup.launch.py \
+    rm:=false sim:=true mujoco:=true headless:=true > /tmp/bringup.log 2>&1 &
+BRINGUP_PID=$!
+trap 'kill ${BRINGUP_PID} 2>/dev/null; cat /tmp/bringup.log' EXIT
+
+# Wait for the robot rather than sleeping a guessed amount: a CI runner does not
+# reach the simulator's real-time factor, so a fixed sleep is either flaky or
+# needlessly long.
+for _ in $(seq 60); do
+    if timeout 5 ros2 topic echo /quadrotor/uav/cog/odom --once > /dev/null 2>&1; then
+        break
+    fi
+done
+
+# The estimator calibrates its accelerometer bias before it will arm.
+sleep 10
+
+timeout 300 ros2 run aerial_robot_base hovering_check.py --ros-args \
+    -r __ns:=/quadrotor -p use_sim_time:=true \
+    -p waypoint.waypoints:="[0.0, 0.0, 1.6]"
