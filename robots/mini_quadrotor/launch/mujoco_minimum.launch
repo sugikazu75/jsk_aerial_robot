@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="robot_ns" value="quadrotor"/>
+
+  ########## Robot description #########
+  <group ns="$(arg robot_ns)">
+    <param name="robot_description" command="$(find xacro)/xacro '$(find mini_quadrotor)/urdf/robot.urdf.xacro' robot_name:=$(arg robot_ns)" />
+  </group>
+
+  ########## Simulation in Mujoco #########
+  <include file="$(find aerial_robot_simulation)/launch/mujoco.launch" >
+    <arg name="robot_ns" value="$(arg robot_ns)" />
+    <arg name="headless" value="False"/>
+    <arg name="mujoco_model" value="$(find mini_quadrotor)/mujoco/robot.xml"/>
+    <arg name="use_spinal" value="False"/>
+  </include>
+
+</launch>
