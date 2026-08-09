@@ -45,11 +45,11 @@
   <run_depend>tf</run_depend>
 
   <export>
-    <gazebo_ros_control plugin="${prefix}/aerial_robot_hw_sim_plugins.xml"/>
-    <controller_interface plugin="${prefix}/flight_controllers_plugins.xml"/>
-    <mujoco_ros plugin="${prefix}/mujoco_visualization_plugin.xml"/>
-    <mujoco_ros_control plugin="${prefix}/mujoco_robot_hw_sim_plugin.xml"/>
-    <controller_interface plugin="${prefix}/rotor_controllers_plugin.xml"/>
+    <gazebo_ros_control plugin="${prefix}/plugins/aerial_robot_hw_sim_plugins.xml"/>
+    <controller_interface plugin="${prefix}/plugins/flight_controllers_plugins.xml"/>
+    <mujoco_ros plugin="${prefix}/plugins/mujoco_visualization_plugin.xml"/>
+    <mujoco_ros_control plugin="${prefix}/plugins/mujoco_robot_hw_sim_plugin.xml"/>
+    <controller_interface plugin="${prefix}/plugins/rotor_controllers_plugin.xml"/>
   </export>
 
 </package>
