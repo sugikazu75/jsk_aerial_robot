@@ -1,15 +1,22 @@
 #pragma once
 
 #include <ros/ros.h>
-#include <aerial_robot_simulation/rotor_interface.h>
 #include <control_msgs/JointControllerState.h>
 #include <controller_interface/controller.h>
+#include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <std_msgs/Float64.h>
 #include <urdf/model.h>
 
 #include <memory>
+
+namespace hardware_interface
+{
+class RotorInterface : public JointCommandInterface
+{
+};
+}  // namespace hardware_interface
 
 namespace rotor_controllers
 {
