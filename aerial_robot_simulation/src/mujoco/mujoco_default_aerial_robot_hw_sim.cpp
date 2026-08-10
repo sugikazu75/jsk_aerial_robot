@@ -6,7 +6,8 @@ namespace mujoco_ros::control
 bool DefaultAerialRobotHWSim::InitSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
                                       const std::string& robot_namespace, ros::NodeHandle model_nh,
                                       const urdf::Model* const urdf_model,
-                                      std::vector<transmission_interface::TransmissionInfo> transmissions, bool ignore_actuators)
+                                      std::vector<transmission_interface::TransmissionInfo> transmissions,
+                                      bool ignore_actuators)
 {
   std::vector<transmission_interface::TransmissionInfo> standard_transmissions;
   std::vector<transmission_interface::TransmissionInfo> rotor_transmissions;
