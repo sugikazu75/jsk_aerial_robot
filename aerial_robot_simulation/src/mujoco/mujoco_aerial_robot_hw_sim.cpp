@@ -168,7 +168,8 @@ void AerialRobotHWSim::WriteSim(ros::Time time, ros::Duration period)
   {
     int rotor_id = mj_name2id(m_ptr_, mjOBJ_ACTUATOR, rotor_list_.at(i).c_str());
     double rotor_force = spinal_interface_.getForce(i);
-    d_ptr_->ctrl[rotor_id] = rotor_force;
+    if (std::isfinite(rotor_force))
+      d_ptr_->ctrl[rotor_id] = rotor_force;
   }
 }
 

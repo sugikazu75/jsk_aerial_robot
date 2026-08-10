@@ -113,7 +113,8 @@ void DefaultAerialRobotHWSim::WriteSim(ros::Time time, ros::Duration period)
   for (size_t i = 0; i < rotor_names_.size(); i++)
   {
     int rotor_id = mj_name2id(m_ptr_, mjtObj_::mjOBJ_ACTUATOR, rotor_names_[i].c_str());
-    d_ptr_->ctrl[rotor_id] = rotor_cmd_.at(i);
+    if (std::isfinite(rotor_cmd_.at(i)))
+      d_ptr_->ctrl[rotor_id] = rotor_cmd_.at(i);
   }
 }
 
