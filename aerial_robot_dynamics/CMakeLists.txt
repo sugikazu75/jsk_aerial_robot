@@ -1,18 +1,25 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(aerial_robot_dynamics)
 
+if(POLICY CMP0057)
+  cmake_policy(SET CMP0057 NEW)
+endif()
+
 add_compile_options(-std=c++17)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   urdf
   )
+catkin_python_setup()
 
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(proxsuite REQUIRED)
 find_package(urdfdom_headers REQUIRED)
+find_package(eigenpy REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 
 option(BUILD_BENCH "Build Benchmark Code" ON)
 
@@ -43,10 +50,27 @@ target_link_libraries(robot_model
   proxsuite::proxsuite
   )
 
+add_library(robot_model_py MODULE src/python_bindings.cpp)
+set_target_properties(robot_model_py PROPERTIES
+  PREFIX ""
+  OUTPUT_NAME "_robot_model"
+  SUFFIX "${PYTHON_MODULE_EXTENSION}"
+  LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
+  )
+target_link_libraries(robot_model_py PRIVATE
+  robot_model
+  eigenpy::eigenpy
+  Python3::Module
+  )
+
 install(TARGETS robot_model
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(TARGETS robot_model_py
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
