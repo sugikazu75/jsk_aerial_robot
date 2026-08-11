@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   urdf
   )
-catkin_python_setup()
 
 find_package(Eigen3 REQUIRED)
 find_package(pinocchio REQUIRED)
@@ -63,6 +62,17 @@ target_link_libraries(robot_model_py PRIVATE
   Python3::Module
   )
 
+set(${PROJECT_NAME}_PYTHON_FILES
+  src/aerial_robot_dynamics/__init__.py
+  src/aerial_robot_dynamics/robot_description.py
+  )
+foreach(python_file ${${PROJECT_NAME}_PYTHON_FILES})
+  get_filename_component(python_file_name ${python_file} NAME)
+  configure_file(${python_file}
+    ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}/${python_file_name}
+    COPYONLY)
+endforeach()
+
 install(TARGETS robot_model
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -71,6 +81,10 @@ install(TARGETS robot_model
 
 install(TARGETS robot_model_py
   LIBRARY DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
+)
+
+install(FILES ${${PROJECT_NAME}_PYTHON_FILES}
+  DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}/
