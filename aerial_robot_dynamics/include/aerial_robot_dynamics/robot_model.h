@@ -63,9 +63,12 @@ public:
     return inverseDynamicsOsqp(q, v, a, tau);
   }
   bool inverseDynamicsOsqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
-                           Eigen::VectorXd& tau);
+                           Eigen::VectorXd& tau, const Eigen::VectorXd& base_residual_lower = Eigen::VectorXd::Zero(6),
+                           const Eigen::VectorXd& base_residual_upper = Eigen::VectorXd::Zero(6));
   bool inverseDynamicsProxqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v, const Eigen::VectorXd& a,
-                             Eigen::VectorXd& tau);
+                             Eigen::VectorXd& tau,
+                             const Eigen::VectorXd& base_residual_lower = Eigen::VectorXd::Zero(6),
+                             const Eigen::VectorXd& base_residual_upper = Eigen::VectorXd::Zero(6));
 
   std::vector<pinocchio::Force> computeFExtByThrust(const Eigen::VectorXd& thrust);  // external force is expressed in
                                                                                      // the LOCAL frame
@@ -176,5 +179,9 @@ private:
   Eigen::VectorXd thrust_lower_limits_;
 
   Config config_;
+
+  // joint torque box for the QP
+  void jointTorqueBounds(const Eigen::VectorXd& base_residual_lower, const Eigen::VectorXd& base_residual_upper,
+                         Eigen::VectorXd& lower, Eigen::VectorXd& upper) const;
 };
 }  // namespace aerial_robot_dynamics

@@ -47,24 +47,26 @@ void validateOutputSize(const Eigen::Ref<Eigen::VectorXd>& out, Eigen::Index exp
 
 bool inverseDynamicsOsqp(PinocchioRobotModel& self, const Eigen::Ref<const Eigen::VectorXd>& q,
                          const Eigen::Ref<const Eigen::VectorXd>& v, const Eigen::Ref<const Eigen::VectorXd>& a,
-                         Eigen::Ref<Eigen::VectorXd> tau)
+                         Eigen::Ref<Eigen::VectorXd> tau, const Eigen::VectorXd& base_residual_lower,
+                         const Eigen::VectorXd& base_residual_upper)
 {
   validateOutputSize(tau, self.getModel()->nv + self.getRotorNum(), "tau");
 
   Eigen::VectorXd tau_result;
-  const bool solved = self.inverseDynamicsOsqp(q, v, a, tau_result);
+  const bool solved = self.inverseDynamicsOsqp(q, v, a, tau_result, base_residual_lower, base_residual_upper);
   tau = tau_result;
   return solved;
 }
 
 bool inverseDynamicsProxqp(PinocchioRobotModel& self, const Eigen::Ref<const Eigen::VectorXd>& q,
                            const Eigen::Ref<const Eigen::VectorXd>& v, const Eigen::Ref<const Eigen::VectorXd>& a,
-                           Eigen::Ref<Eigen::VectorXd> tau)
+                           Eigen::Ref<Eigen::VectorXd> tau, const Eigen::VectorXd& base_residual_lower,
+                           const Eigen::VectorXd& base_residual_upper)
 {
   validateOutputSize(tau, self.getModel()->nv + self.getRotorNum(), "tau");
 
   Eigen::VectorXd tau_result;
-  const bool solved = self.inverseDynamicsProxqp(q, v, a, tau_result);
+  const bool solved = self.inverseDynamicsProxqp(q, v, a, tau_result, base_residual_lower, base_residual_upper);
   tau = tau_result;
   return solved;
 }
@@ -179,13 +181,21 @@ BOOST_PYTHON_MODULE(_robot_model)
       .def("inverse_dynamics", &inverseDynamics,
            (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau")))
       .def("inverseDynamicsOsqp", &inverseDynamicsOsqp,
-           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau")))
+           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau"),
+            bp::arg("base_residual_lower") = Eigen::VectorXd(Eigen::VectorXd::Zero(6)),
+            bp::arg("base_residual_upper") = Eigen::VectorXd(Eigen::VectorXd::Zero(6))))
       .def("inverse_dynamics_osqp", &inverseDynamicsOsqp,
-           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau")))
+           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau"),
+            bp::arg("base_residual_lower") = Eigen::VectorXd(Eigen::VectorXd::Zero(6)),
+            bp::arg("base_residual_upper") = Eigen::VectorXd(Eigen::VectorXd::Zero(6))))
       .def("inverseDynamicsProxqp", &inverseDynamicsProxqp,
-           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau")))
+           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau"),
+            bp::arg("base_residual_lower") = Eigen::VectorXd(Eigen::VectorXd::Zero(6)),
+            bp::arg("base_residual_upper") = Eigen::VectorXd(Eigen::VectorXd::Zero(6))))
       .def("inverse_dynamics_proxqp", &inverseDynamicsProxqp,
-           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau")))
+           (bp::arg("self"), bp::arg("q"), bp::arg("v"), bp::arg("a"), bp::arg("tau"),
+            bp::arg("base_residual_lower") = Eigen::VectorXd(Eigen::VectorXd::Zero(6)),
+            bp::arg("base_residual_upper") = Eigen::VectorXd(Eigen::VectorXd::Zero(6))))
 
       .def("computeFExtByThrust", &PinocchioRobotModel::computeFExtByThrust, (bp::arg("self"), bp::arg("thrust")))
       .def("compute_f_ext_by_thrust", &PinocchioRobotModel::computeFExtByThrust, (bp::arg("self"), bp::arg("thrust")))
