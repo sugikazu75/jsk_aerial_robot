@@ -154,7 +154,8 @@ BOOST_PYTHON_MODULE(_robot_model)
 
   bp::class_<PinocchioRobotModel::Config>("Config")
       .def_readwrite("thrust_hessian_weight", &PinocchioRobotModel::Config::thrust_hessian_weight)
-      .def_readwrite("verbose", &PinocchioRobotModel::Config::verbose);
+      .def_readwrite("verbose", &PinocchioRobotModel::Config::verbose)
+      .def_readwrite("warm_start_inverse_dynamics", &PinocchioRobotModel::Config::warm_start_inverse_dynamics);
 
   bp::class_<PinocchioRobotModel, boost::noncopyable>("PinocchioRobotModel", bp::no_init)
       .def(bp::init<std::string, std::string, bool>(
