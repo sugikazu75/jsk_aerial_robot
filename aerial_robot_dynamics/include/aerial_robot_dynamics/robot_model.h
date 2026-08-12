@@ -37,6 +37,7 @@ public:
   {
     double thrust_hessian_weight = 1.0;
     bool verbose = true;
+    bool warm_start_inverse_dynamics = true;
   };
 
   PinocchioRobotModel(std::string robot_description, std::string pinocchio_robot_description, bool is_floating_base);
