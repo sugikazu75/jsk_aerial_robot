@@ -389,10 +389,9 @@ bool PinocchioRobotModel::inverseDynamicsProxqp(const Eigen::VectorXd& q, const 
   }
   else
   {
-    // only A and b change, so update those warm-start
+    // A and b change with the configuration, and l and u change with residual bounds
     id_solver_proxqp_->settings.initial_guess = proxsuite::proxqp::InitialGuessStatus::WARM_START_WITH_PREVIOUS_RESULT;
-    id_solver_proxqp_->update(proxsuite::nullopt, proxsuite::nullopt, A, b, proxsuite::nullopt, proxsuite::nullopt,
-                              proxsuite::nullopt);
+    id_solver_proxqp_->update(proxsuite::nullopt, proxsuite::nullopt, A, b, proxsuite::nullopt, l, u);
   }
 
   id_solver_proxqp_->solve();
