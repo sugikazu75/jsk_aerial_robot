@@ -45,6 +45,7 @@
 #include <std_msgs/Int8.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <std_srvs/SetBool.h>
 #include <sensor_msgs/JointState.h>
 #include <spinal/ServoStates.h>
@@ -221,7 +222,6 @@ protected:
   ros::NodeHandle nhp_;
 
   ros::Publisher servo_states_pub_;
-  ros::Publisher mujoco_control_input_pub_;
   ros::Publisher joint_profile_pub_;
   ros::Subscriber uav_info_sub_;
   map<string, ros::Subscriber> servo_states_subs_;
@@ -234,13 +234,13 @@ protected:
   map<string, ros::ServiceServer> servo_enable_srvs_;
   map<string, ros::Publisher> servo_enable_pubs_;
   map<string, vector<ros::Publisher> > servo_target_pos_sim_pubs_; // TODO: should be actionlib, trajectory controller
+  map<string, vector<ros::Publisher> > servo_target_commands_sim_pubs_;
 
   map<string, ServoGroupHandler> servos_handler_;
   double moving_check_rate_;
   double moving_angle_thresh_;
   bool send_init_joint_pose_;
   bool simulation_mode_;
-  bool use_mujoco_;
   int send_init_joint_pose_cnt_;
 
   void servoStatesCallback(const spinal::ServoStatesConstPtr& state_msg, const std::string& servo_group_name);

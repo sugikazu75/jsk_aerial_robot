@@ -1,8 +1,8 @@
 # aerial robot third party
 - git:
     local-name: aerial_robot_3rdparty
-    uri: https://github.com/JSKAerialRobot/aerial_robot_3rdparty.git
-    version: 3875fa5
+    uri: https://github.com/sugikazu75/aerial_robot_3rdparty.git
+    version: PR/mujoco/util
 
 # kalman filter
 - git:
@@ -56,3 +56,37 @@
     local-name: mocap_optitrack
     uri: https://github.com/sugikazu75/mocap_optitrack.git
     version: 50fb60d
+
+- git:
+    local-name: mujoco
+    uri: https://github.com/sugikazu75/mujoco_catkin.git
+    version: master
+
+- git:
+    local-name: mujoco_ros_pkgs
+    uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
+    version: devel
+
+# pinocchio
+- git:
+    local-name: pinocchio
+    uri: https://github.com/stack-of-tasks/pinocchio.git
+    version: v4.0.0
+
+# proxsuite
+- git:
+    local-name: proxsuite
+    uri: https://github.com/Simple-Robotics/proxsuite.git
+    version: 1dd3f80
+
+# crocoddyl
+- git:
+    local-name: crocoddyl
+    uri: https://github.com/sugikazu75/crocoddyl.git
+    version: develop/articulated_aerial_robot
+
+# ros_controllers
+- git:
+    local-name: ros_controllers
+    uri: https://github.com/sugikazu75/ros_controllers.git
+    version: devel
