@@ -53,7 +53,7 @@ add_library(robot_model_py MODULE src/python_bindings.cpp)
 set_target_properties(robot_model_py PROPERTIES
   PREFIX ""
   OUTPUT_NAME "_robot_model"
-  SUFFIX "${PYTHON_MODULE_EXTENSION}"
+  SUFFIX ".${Python3_SOABI}.so"
   LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}
   )
 target_link_libraries(robot_model_py PRIVATE
