@@ -239,8 +239,28 @@ Eigen::MatrixXd PinocchioRobotModel::forwardDynamicsDerivatives(const Eigen::Vec
   return data_->Minv * tauext_partial_thrust;
 }
 
+void PinocchioRobotModel::jointTorqueBounds(const Eigen::VectorXd& base_residual_lower,
+                                            const Eigen::VectorXd& base_residual_upper, Eigen::VectorXd& lower,
+                                            Eigen::VectorXd& upper) const
+{
+  lower = -joint_torque_limits_;
+  upper = joint_torque_limits_;
+  if (!is_floating_base_)
+    return;
+
+  if (base_residual_lower.size() != 6 || base_residual_upper.size() != 6)
+    throw std::invalid_argument("base residual bounds must have six elements");
+  if ((base_residual_upper.array() < base_residual_lower.array()).any())
+    throw std::invalid_argument("base residual lower bound must not exceed the upper bound");
+
+  lower.head(6) = base_residual_lower;
+  upper.head(6) = base_residual_upper;
+}
+
 bool PinocchioRobotModel::inverseDynamicsOsqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
-                                              const Eigen::VectorXd& a, Eigen::VectorXd& tau)
+                                              const Eigen::VectorXd& a, Eigen::VectorXd& tau,
+                                              const Eigen::VectorXd& base_residual_lower,
+                                              const Eigen::VectorXd& base_residual_upper)
 {
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -269,11 +289,14 @@ bool PinocchioRobotModel::inverseDynamicsOsqp(const Eigen::VectorXd& q, const Ei
   lower_bound_ = Eigen::VectorXd::Zero(n_constraints);
   upper_bound_ = Eigen::VectorXd::Zero(n_constraints);
 
-  lower_bound_.head(model_->nv) = -joint_torque_limits_;                // joint torque inequality constraint
+  Eigen::VectorXd torque_lower, torque_upper;
+  jointTorqueBounds(base_residual_lower, base_residual_upper, torque_lower, torque_upper);
+
+  lower_bound_.head(model_->nv) = torque_lower;                         // joint torque inequality constraint
   lower_bound_.segment(model_->nv, rotor_num_) = thrust_lower_limits_;  // thrust inequality constraint
   lower_bound_.tail(model_->nv) = rnea_solution;                        // rnea equality constraint
 
-  upper_bound_.head(model_->nv) = joint_torque_limits_;                 // joint torque inequality constraint
+  upper_bound_.head(model_->nv) = torque_upper;                         // joint torque inequality constraint
   upper_bound_.segment(model_->nv, rotor_num_) = thrust_upper_limits_;  // thrust inequality constraint
   upper_bound_.tail(model_->nv) = rnea_solution;                        // rnea equality constraint
 
@@ -318,7 +341,9 @@ bool PinocchioRobotModel::inverseDynamicsOsqp(const Eigen::VectorXd& q, const Ei
 }
 
 bool PinocchioRobotModel::inverseDynamicsProxqp(const Eigen::VectorXd& q, const Eigen::VectorXd& v,
-                                                const Eigen::VectorXd& a, Eigen::VectorXd& tau)
+                                                const Eigen::VectorXd& a, Eigen::VectorXd& tau,
+                                                const Eigen::VectorXd& base_residual_lower,
+                                                const Eigen::VectorXd& base_residual_upper)
 {
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -346,9 +371,11 @@ bool PinocchioRobotModel::inverseDynamicsProxqp(const Eigen::VectorXd& q, const 
   Eigen::MatrixXd C = Eigen::MatrixXd::Identity(n_in, n_variables);
   Eigen::VectorXd l = Eigen::VectorXd::Zero(n_in);
   Eigen::VectorXd u = Eigen::VectorXd::Zero(n_in);
-  l.head(model_->nv) = -joint_torque_limits_;
+  Eigen::VectorXd torque_lower, torque_upper;
+  jointTorqueBounds(base_residual_lower, base_residual_upper, torque_lower, torque_upper);
+  l.head(model_->nv) = torque_lower;
   l.tail(rotor_num_) = thrust_lower_limits_;
-  u.head(model_->nv) = joint_torque_limits_;
+  u.head(model_->nv) = torque_upper;
   u.tail(rotor_num_) = thrust_upper_limits_;
 
   if (!id_solver_proxqp_)
@@ -362,10 +389,11 @@ bool PinocchioRobotModel::inverseDynamicsProxqp(const Eigen::VectorXd& q, const 
   }
   else
   {
-    // only A and b change, so update those warm-start
-    id_solver_proxqp_->settings.initial_guess = proxsuite::proxqp::InitialGuessStatus::WARM_START_WITH_PREVIOUS_RESULT;
-    id_solver_proxqp_->update(proxsuite::nullopt, proxsuite::nullopt, A, b, proxsuite::nullopt, proxsuite::nullopt,
-                              proxsuite::nullopt);
+    // A and b change with the configuration, and l and u change with residual bounds
+    id_solver_proxqp_->settings.initial_guess =
+        config_.warm_start_inverse_dynamics ? proxsuite::proxqp::InitialGuessStatus::WARM_START_WITH_PREVIOUS_RESULT :
+                                              proxsuite::proxqp::InitialGuessStatus::EQUALITY_CONSTRAINED_INITIAL_GUESS;
+    id_solver_proxqp_->update(proxsuite::nullopt, proxsuite::nullopt, A, b, proxsuite::nullopt, l, u);
   }
 
   id_solver_proxqp_->solve();
