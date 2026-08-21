@@ -66,7 +66,7 @@ namespace aerial_robot_model {
 
     void updateRobotModel();
     void updateRobotModel(const KDL::JntArray& joint_positions);
-    void updateRobotModel(const sensor_msgs::JointState& state);
+    virtual void updateRobotModel(const sensor_msgs::JointState& state);
 
     // kinematics
     const bool initialized() const { return initialized_; }
