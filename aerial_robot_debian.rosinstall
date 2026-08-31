@@ -2,7 +2,7 @@
 - git:
     local-name: aerial_robot_3rdparty
     uri: https://github.com/sugikazu75/aerial_robot_3rdparty.git
-    version: 5f6b8db
+    version: d3774b1
 
 # kalman filter
 - git:
