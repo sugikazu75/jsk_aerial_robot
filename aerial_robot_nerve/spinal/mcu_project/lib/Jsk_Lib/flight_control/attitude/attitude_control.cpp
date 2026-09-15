@@ -58,7 +58,7 @@ AttitudeController::AttitudeController():
 }
 
 void AttitudeController::init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, StateEstimate* estimator,
-                              DShot* dshot, DirectServo* servo, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex)
+                              DShot* dshot, DirectServo* servo, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex, DShot* dshot2)
 {
 
   pwm_htim1_ = htim1;
@@ -66,6 +66,7 @@ void AttitudeController::init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2
   nh_ = nh;
   estimator_ = estimator;
   dshot_ = dshot;
+  dshot2_ = dshot2;
   servo_ = servo;
   bat_ = bat;
   mutex_ = mutex;
@@ -103,10 +104,13 @@ void AttitudeController::init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2
       HAL_TIM_PWM_Start(pwm_htim1_, TIM_CHANNEL_4);
     }
 
-  HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_4);
+  if (!dshot2_)
+    {
+      HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_1);
+      HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_3);
+      HAL_TIM_PWM_Start(pwm_htim2_,TIM_CHANNEL_4);
+    }
 
   nh_->advertise(pwms_pub_);
   nh_->advertise(control_term_pub_);
@@ -219,13 +223,14 @@ void AttitudeController::pwmsControl(void)
       for (int i = 0; i < 4; i++)
         {
           // target_pwm_: 0.5 ~ 1.0
-          uint16_t motor_v = (uint16_t)((target_pwm_[i] - 0.5) / 0.5 * DSHOT_RANGE + DSHOT_MIN_THROTTLE);
-
-          if (motor_v > DSHOT_MAX_THROTTLE)
+          uint16_t motor_v;
+          if(target_pwm_[i] <= IDLE_DUTY)
+            motor_v = DSHOT_DISARM_THROTTLE;
+          else if(target_pwm_[i] >= MAX_PWM)
             motor_v = DSHOT_MAX_THROTTLE;
-          else if (motor_v < DSHOT_MIN_THROTTLE)
-            motor_v = DSHOT_MIN_THROTTLE;
-    
+          else
+            motor_v = (uint16_t)((target_pwm_[i] - 0.5) / 0.5 * DSHOT_RANGE + DSHOT_MIN_THROTTLE);
+
           motor_value[i] = motor_v;
         }
 
@@ -258,10 +263,28 @@ void AttitudeController::pwmsControl(void)
       pwm_htim1_->Instance->CCR4 = (uint32_t)(target_pwm_[3] * pwm_htim1_->Init.Period);
     }
 
-  pwm_htim2_->Instance->CCR1 = (uint32_t)(target_pwm_[4] * pwm_htim2_->Init.Period);
-  pwm_htim2_->Instance->CCR2 = (uint32_t)(target_pwm_[5] * pwm_htim2_->Init.Period);
-  pwm_htim2_->Instance->CCR3 = (uint32_t)(target_pwm_[6] * pwm_htim2_->Init.Period);
-  pwm_htim2_->Instance->CCR4 = (uint32_t)(target_pwm_[7] * pwm_htim2_->Init.Period);
+  if (dshot2_)
+    {
+      uint16_t motor_value[4];
+      for (int i = 0; i < 4; i++)
+        {
+          float pwm = target_pwm_[i + 4];
+          if (pwm <= IDLE_DUTY)
+            motor_value[i] = DSHOT_DISARM_THROTTLE;
+          else if (pwm >= MAX_PWM)
+            motor_value[i] = DSHOT_MAX_THROTTLE;
+          else
+            motor_value[i] = (uint16_t)((pwm - 0.5) / 0.5 * DSHOT_RANGE + DSHOT_MIN_THROTTLE);
+        }
+      dshot2_->write(motor_value, false);
+    }
+  else
+    {
+      pwm_htim2_->Instance->CCR1 = (uint32_t)(target_pwm_[4] * pwm_htim2_->Init.Period);
+      pwm_htim2_->Instance->CCR2 = (uint32_t)(target_pwm_[5] * pwm_htim2_->Init.Period);
+      pwm_htim2_->Instance->CCR3 = (uint32_t)(target_pwm_[6] * pwm_htim2_->Init.Period);
+      pwm_htim2_->Instance->CCR4 = (uint32_t)(target_pwm_[7] * pwm_htim2_->Init.Period);
+    }
 
 #endif
 }

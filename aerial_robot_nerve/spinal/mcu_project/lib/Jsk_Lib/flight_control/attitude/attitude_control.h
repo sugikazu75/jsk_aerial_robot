@@ -81,7 +81,7 @@ public:
   void init(ros::NodeHandle* nh, StateEstimate* estimator);
 #else
   void init(TIM_HandleTypeDef* htim1, TIM_HandleTypeDef* htim2, StateEstimate* estimator,
-            DShot* dshot, DirectServo* servo, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex = NULL);
+            DShot* dshot, DirectServo* servo, BatteryStatus* bat, ros::NodeHandle* nh, osMutexId* mutex = NULL, DShot* dshot2 = NULL);
 #endif
 
   void baseInit(); // common part in both pc and board
@@ -160,6 +160,7 @@ private:
   BatteryStatus* bat_;
   osMutexId* mutex_;
   DShot* dshot_;
+  DShot* dshot2_;
   DirectServo* servo_;
 #endif
 
