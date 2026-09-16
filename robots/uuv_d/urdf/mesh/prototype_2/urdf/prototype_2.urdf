@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version:   Build Version: 1.6.9305.33219
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="prototype_2">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="5.0128636417574E-06 -0.111574505345062 0.00195458383793646"
+        rpy="0 0 0" />
+      <mass
+        value="2.96056993122665" />
+      <inertia
+        ixx="0.0170040677656555"
+        ixy="7.98612545459733E-06"
+        ixz="-3.52107950986871E-09"
+        iyy="0.00943442433014907"
+        iyz="2.67294728800918E-11"
+        izz="0.0125174721752126" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://prototype_2/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://prototype_2/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="thrust1" />
+  <joint
+    name="rotor1"
+    type="revolute">
+    <origin
+      xyz="0.092197 -0.12685 -0.092197"
+      rpy="1.9549 0 2.7255" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust1" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust2" />
+  <joint
+    name="rotor2"
+    type="revolute">
+    <origin
+      xyz="0.092197 -0.12685 0.092197"
+      rpy="1.1867 0 2.7255" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust2" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust3" />
+  <joint
+    name="rotor3"
+    type="revolute">
+    <origin
+      xyz="-0.092197 -0.12685 0.092197"
+      rpy="1.1867 0 -2.7255" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust3" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust4" />
+  <joint
+    name="rotor4"
+    type="revolute">
+    <origin
+      xyz="-0.092197 -0.12685 -0.092197"
+      rpy="1.9549 0 -2.7255" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust4" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust5" />
+  <joint
+    name="rotor5"
+    type="revolute">
+    <origin
+      xyz="0.092197 0.12685 -0.092197"
+      rpy="1.9549 0 0.41613" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust5" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust6" />
+  <joint
+    name="rotor6"
+    type="revolute">
+    <origin
+      xyz="0.092197 0.12685 0.092197"
+      rpy="1.1867 0 0.41613" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust6" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust7" />
+  <joint
+    name="rotor7"
+    type="revolute">
+    <origin
+      xyz="-0.092197 0.12685 0.092197"
+      rpy="1.1867 0 -0.41613" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust7" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="thrust8" />
+  <joint
+    name="rotor8"
+    type="revolute">
+    <origin
+      xyz="-0.092197 0.12685 -0.092197"
+      rpy="1.9549 0 -0.41613" />
+    <parent
+      link="base_link" />
+    <child
+      link="thrust8" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="20"
+      upper="-20"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="fc" />
+  <joint
+    name="fc"
+    type="fixed">
+    <origin
+      xyz="0.0078688 -0.056686 -0.007546"
+      rpy="-3.1416 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="fc" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+</robot>

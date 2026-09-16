@@ -20,16 +20,6 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- Gazebo does not pick up the RViz-side material overrides for these meshes. -->
-  <xacro:gazebo_link_color link="t1" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t2" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t3" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t4" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t5" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t6" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t7" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-  <xacro:gazebo_link_color link="t8" rgba="0.75 1.0 0.2 1.0" emissive="0.18 0.24 0.05 1.0"/>
-
   <gazebo reference="root_joint">
     <disableFixedJointLumping>true</disableFixedJointLumping>
   </gazebo>
@@ -42,14 +32,14 @@
       <link name="base_link">
         <neutrally_buoyant>0</neutrally_buoyant>
         <!-- todo: adjust the volume according to the real robot -->
-        <volume>0.0037</volume> 
+        <volume>0.0047</volume> 
         <scaling_volume>1.0</scaling_volume>
         <box>
           <width>0.28</width>
           <length>0.28</length>
           <height>0.072</height>
         </box>
-        <center_of_buoyancy>0.000610809453814865 0 -0.1655</center_of_buoyancy>
+        <center_of_buoyancy>5.0128636417574e-06 -0.0 -0.02</center_of_buoyancy>
         <hydrodynamic_model>
           <type>fossen</type>
           <added_mass>

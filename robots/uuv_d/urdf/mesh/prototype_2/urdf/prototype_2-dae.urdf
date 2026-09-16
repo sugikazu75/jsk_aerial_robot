@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<robot name="prototype_2">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="5.0128636417574e-06 -0.111574505345062 0.00195458383793646" rpy="0.0 -0.0 0.0"/>
+      <mass value="2.96056993122665"/>
+      <inertia ixx="0.0170040677656555" ixy="7.98612545459733e-06" ixz="-3.52107950986871e-09" iyy="0.00943442433014907" iyz="2.67294728800918e-11" izz="0.0125174721752126"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="package://prototype_2/meshes/base_link.dae"/>
+      </geometry>
+      <material name="__unnamed_material_1"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://prototype_2/meshes/base_link.stl"/>
+      </geometry>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+    </collision>
+  </link>
+  <link name="thrust1"/>
+  <link name="thrust2"/>
+  <link name="thrust3"/>
+  <link name="thrust4"/>
+  <link name="thrust5"/>
+  <link name="thrust6"/>
+  <link name="thrust7"/>
+  <link name="thrust8"/>
+  <link name="fc"/>
+  <joint name="rotor1" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust1"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="0.092197 -0.12685 -0.092197" rpy="1.9549 -0.0 2.7255"/>
+  </joint>
+  <joint name="rotor2" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust2"/>
+    <axis xyz=" 0.  0. -1."/>
+    <origin xyz="0.092197 -0.12685 0.092197" rpy="1.1867 -0.0 2.7255"/>
+  </joint>
+  <joint name="rotor3" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust3"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="-0.092197 -0.12685 0.092197" rpy="1.1867 -0.0 -2.7255"/>
+  </joint>
+  <joint name="rotor4" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust4"/>
+    <axis xyz=" 0.  0. -1."/>
+    <origin xyz="-0.092197 -0.12685 -0.092197" rpy="1.9549 -0.0 -2.7255"/>
+  </joint>
+  <joint name="rotor5" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust5"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="0.092197 0.12685 -0.092197" rpy="1.9549 -0.0 0.41613"/>
+  </joint>
+  <joint name="rotor6" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust6"/>
+    <axis xyz=" 0.  0. -1."/>
+    <origin xyz="0.092197 0.12685 0.092197" rpy="1.1867 -0.0 0.41613"/>
+  </joint>
+  <joint name="rotor7" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust7"/>
+    <axis xyz="0. 0. 1."/>
+    <origin xyz="-0.092197 0.12685 0.092197" rpy="1.1867 -0.0 -0.41613"/>
+  </joint>
+  <joint name="rotor8" type="continuous">
+    <limit effort="0.0" velocity="0.0" lower="-20.0" upper="20.0"/>
+    <parent link="base_link"/>
+    <child link="thrust8"/>
+    <axis xyz=" 0.  0. -1."/>
+    <origin xyz="-0.092197 0.12685 -0.092197" rpy="1.9549 -0.0 -0.41613"/>
+  </joint>
+  <joint name="fc" type="fixed">
+    <limit effort="0.0" velocity="0.0"/>
+    <parent link="base_link"/>
+    <child link="fc"/>
+    <axis xyz="0. 0. 0."/>
+    <origin xyz="0.0078688 -0.056686 -0.007546" rpy="3.1415853071795867 -0.0 0.0"/>
+  </joint>
+  <material name="__unnamed_material_1">
+    <color rgba="0.75294118 0.75294118 0.75294118 1.        "/>
+  </material>
+</robot>
