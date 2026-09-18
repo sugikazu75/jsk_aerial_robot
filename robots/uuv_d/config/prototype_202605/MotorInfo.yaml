@@ -2,37 +2,12 @@ motor_info:
         # min_pwm: 0.58 # original one-way rotor setting
         min_pwm: 0.50 # for virtual birotate motor in underwater simulation
         max_pwm: 1.00
-        min_thrust: -25 #[N]
+        min_thrust: 20 #[N]
         force_landing_thrust: 0.5 #[N]
         m_f_rate: -0.02
         pwm_conversion_mode: 1 # Polynominal Mode
-        vel_ref_num: 4
-        
+        vel_ref_num: 1
         ref1:        
-                voltage: 25.2
-                max_thrust: 24.26 #20.26
-                polynominal4: 0.0
-                polynominal3: 0.0
-                polynominal2: 0.0
-                polynominal1: 26.281904
-                polynominal0: 54.204760
-        ref2:
-                voltage: 24.2
-                max_thrust: 22.07 #18.07
-                polynominal4: 0.0
-                polynominal3: 0.0
-                polynominal2: 0.0
-                polynominal1: 30.016745
-                polynominal0: 47.916863
-        ref3:        
-                voltage: 23.2
-                max_thrust: 21.35 #17.35
-                polynominal4: 0.0
-                polynominal3: 0.0
-                polynominal2: 0.0
-                polynominal1: 29.353625
-                polynominal0: 46.259062
-        ref4:        
                 voltage: 16
                 max_thrust: 15 #15.91
                 polynominal4: 0.0006
