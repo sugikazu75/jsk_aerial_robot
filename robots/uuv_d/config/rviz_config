@@ -192,7 +192,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: uuv_d/base_link
+    Fixed Frame: uuv_d/fc
     Frame Rate: 30
   Name: root
   Tools:

@@ -1,4 +1,4 @@
-aerial_robot_control_name: aerial_robot_control/uuv_d_controller
+aerial_robot_control_name: aerial_robot_control/uuv_d_controller # if you use one link robot aerial_robot_control/uuv_d_controller
 
 controller:
   xy:

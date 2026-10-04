@@ -2,6 +2,15 @@
 
 namespace aerial_robot_control
 {
+namespace
+{
+std::string cogFrameId(const ros::NodeHandle& nh)
+{
+  std::string ns = nh.getNamespace();
+  if (!ns.empty() && ns.front() == '/') ns.erase(0, 1);
+  return ns.empty() ? std::string("cog") : ns + "/cog";
+}
+}
 UUVDController::UUVDController()
   : PoseLinearController(),
     torque_allocation_matrix_inv_pub_stamp_(0.0),
@@ -29,6 +38,7 @@ void UUVDController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   rpy_gain_pub_ = nh_.advertise<spinal::RollPitchYawTerms>("rpy/gain", 1);
   flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
   torque_allocation_matrix_inv_pub_ = nh_.advertise<spinal::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
+  gravity_wrench_pub_ = nh_.advertise<geometry_msgs::WrenchStamped>("debug/gravity_wrench", 1);
   debug_wrench_pubs_.resize(motor_num_);
   for (int i = 0; i < motor_num_; i++)
   {
@@ -61,6 +71,25 @@ void UUVDController::publishDebugWrench()
     // 配信
     debug_wrench_pubs_.at(i).publish(wrench_msg);
   }
+}
+void UUVDController::publishGravityWrench()
+{
+  if (!gravity_wrench_pub_) return;
+
+  tf::Vector3 gravity_world(0.0, 0.0, -robot_model_->getMass() * gravity_magnitude_);
+  tf::Matrix3x3 cog_rot = estimator_->getOrientation(Frame::COG, estimate_mode_);
+  tf::Vector3 gravity_cog = cog_rot.inverse() * gravity_world;
+
+  geometry_msgs::WrenchStamped wrench_msg;
+  wrench_msg.header.stamp = ros::Time::now();
+  wrench_msg.header.frame_id = cogFrameId(nh_);
+  wrench_msg.wrench.force.x = gravity_cog.x();
+  wrench_msg.wrench.force.y = gravity_cog.y();
+  wrench_msg.wrench.force.z = gravity_cog.z();
+  wrench_msg.wrench.torque.x = 0.0;
+  wrench_msg.wrench.torque.y = 0.0;
+  wrench_msg.wrench.torque.z = 0.0;
+  gravity_wrench_pub_.publish(wrench_msg);
 }
 void UUVDController::controlCore()
 {
@@ -124,6 +153,7 @@ void UUVDController::sendCmd()
   sendFourAxisCommand();
   sendTorqueAllocationMatrixInv();
   publishDebugWrench();
+  publishGravityWrench();
   
 }
 

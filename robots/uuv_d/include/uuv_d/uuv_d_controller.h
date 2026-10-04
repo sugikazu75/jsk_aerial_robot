@@ -39,6 +39,8 @@ private:
   void setAttitudeGains();
 
   std::vector<ros::Publisher> debug_wrench_pubs_;
+  ros::Publisher gravity_wrench_pub_;
   void publishDebugWrench();
+  void publishGravityWrench();
 };
 }  // namespace aerial_robot_control
