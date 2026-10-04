@@ -2,4 +2,7 @@
   <class name="aerial_robot_control/uuv_d_controller" type="aerial_robot_control::UUVDController" base_class_type="aerial_robot_control::ControlBase">
     <description>Base pose-linear controller plugin for uuv_d</description>
   </class>
+  <class name="aerial_robot_control/uuv_d_multilink_controller" type="aerial_robot_control::UUVDMultilinkController" base_class_type="aerial_robot_control::ControlBase">
+    <description>Base pose-linear controller plugin for uuv_d multilink type</description>
+  </class>
 </library>

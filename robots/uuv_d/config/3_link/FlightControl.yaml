@@ -1,0 +1,47 @@
+aerial_robot_control_name: aerial_robot_control/uuv_d_multilink_controller # if you use one link robot aerial_robot_control/uuv_d_controller
+
+controller:
+  xy:
+    p_gain: 3.0
+    i_gain: 0.1
+    d_gain: 1.0
+    limit_sum: 50.0
+    limit_p: 20.0
+    limit_i: 20.0
+    limit_d: 20.0
+
+  z:
+    p_gain: 3.0
+    i_gain: 0.1
+    d_gain: 1.0
+    limit_err_p: 20.0
+    limit_sum: 50.0 # N for clamping thrust force
+    limit_p: 25.0
+    limit_i: 25.0
+    limit_d: 25.0
+    force_landing_descending_rate: -0.5
+  
+  roll_pitch:
+    p_gain: 2.0
+    i_gain: 0.2
+    d_gain: 2.0
+    limit_err_p: 20.0
+    limit_sum: 50.0
+    limit_p: 50.0
+    limit_i: 50.0
+    limit_d: 50.0
+
+    start_rp_integration_height: 0.3
+
+
+  yaw:
+    p_gain: 2.0
+    i_gain: 0.2 
+    d_gain: 1.0
+    limit_err_p: 20
+    limit_sum: 20.0
+    limit_p: 30
+    limit_i: 20.0
+    limit_d: 20.0
+
+    need_d_control: false # yaw D feedback is applied on Spinal

@@ -8,19 +8,26 @@ find_package(catkin REQUIRED COMPONENTS
   aerial_robot_msgs
   aerial_robot_control
   aerial_robot_model
+  aerial_robot_simulation
+  gazebo_ros_control
+  geometry_msgs
   mujoco_ros_control
+  pluginlib
   spinal
+  tf
   eigen_conversions
   tf_conversions
   std_srvs
   )
 
 find_package(Eigen3 REQUIRED)
+find_package(GAZEBO REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include test
-  LIBRARIES uuv_d_robot_model uuv_d_controller_pluginlib uuv_d_numerical_jacobians
-  CATKIN_DEPENDS roscpp aerial_robot_msgs aerial_robot_control aerial_robot_model spinal eigen_conversions tf_conversions std_srvs
+  LIBRARIES uuv_d_robot_model uuv_d_controller_pluginlib uuv_d_buoyancy_hw_sim uuv_d_numerical_jacobians
+  CATKIN_DEPENDS roscpp aerial_robot_msgs aerial_robot_control aerial_robot_model aerial_robot_simulation gazebo_ros_control geometry_msgs pluginlib spinal tf eigen_conversions tf_conversions std_srvs
+  DEPENDS GAZEBO
 )
 
 # Eigen requires optimization to get good performance
@@ -43,20 +50,31 @@ include_directories(
   test
   ${Boost_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
+  ${GAZEBO_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
 
 
 ### flight control plugin
+add_library(uuv_d_robot_model
+  src/model/uuv_d_multilink_robot_model.cpp)
+target_link_libraries(uuv_d_robot_model ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+add_dependencies(uuv_d_robot_model aerial_robot_msgs_generate_messages_cpp spinal_generate_messages_cpp)
+
 add_library(uuv_d_controller_pluginlib
-  src/uuv_d_controller.cpp)
-target_link_libraries(uuv_d_controller_pluginlib ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
+  src/uuv_d_controller.cpp
+  src/uuv_d_multilink_controller.cpp)
+target_link_libraries(uuv_d_controller_pluginlib uuv_d_robot_model ${catkin_LIBRARIES} ${EIGEN3_LIBRARIES})
 add_dependencies(uuv_d_controller_pluginlib aerial_robot_msgs_generate_messages_cpp spinal_generate_messages_cpp)
+
+add_library(uuv_d_buoyancy_hw_sim src/model/uuv_d_buoyancy_hw_sim.cpp)
+target_compile_definitions(uuv_d_buoyancy_hw_sim PRIVATE SIMULATION)
+target_link_libraries(uuv_d_buoyancy_hw_sim ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 install(DIRECTORY include/uuv_d/ test/uuv_d/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
-install(DIRECTORY config scripts plugins launch
+install(DIRECTORY config plugins launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
 )
@@ -64,6 +82,10 @@ install(DIRECTORY config scripts plugins launch
 install(DIRECTORY bin
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   USE_SOURCE_PERMISSIONS
+)
+
+install(TARGETS uuv_d_buoyancy_hw_sim
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
 mujoco_model_convert(

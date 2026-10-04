@@ -1,0 +1,90 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+  - Class: rviz/Views
+    Name: Views
+Visualization Manager:
+  Displays:
+    - Class: rviz/Grid
+      Enabled: true
+      Name: Grid
+    - Class: rviz/TF
+      Enabled: true
+      Frames:
+        All Enabled: true
+      Name: TF
+      Show Axes: true
+      Show Names: true
+    - Class: rviz/RobotModel
+      Enabled: true
+      Name: RobotModel
+      Robot Description: uuv_d/robot_description
+      TF Prefix: uuv_d
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy link1
+      Topic: /uuv_d/debug/buoyancy_wrench/link1
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy link2
+      Topic: /uuv_d/debug/buoyancy_wrench/link2
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy link3
+      Topic: /uuv_d/debug/buoyancy_wrench/link3
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy gimbal1
+      Topic: /uuv_d/debug/buoyancy_wrench/gimbal_link1
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy gimbal2
+      Topic: /uuv_d/debug/buoyancy_wrench/gimbal_link2
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy gimbal3
+      Topic: /uuv_d/debug/buoyancy_wrench/gimbal_link3
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 35; 166; 190
+      Name: Buoyancy gimbal4
+      Topic: /uuv_d/debug/buoyancy_wrench/gimbal_link4
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 204; 68; 68
+      Name: Gravity
+      Topic: /uuv_d/debug/gravity_wrench
+  Global Options:
+    Fixed Frame: uuv_d/fc
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+    - Class: rviz/MoveCamera
+    - Class: rviz/FocusCamera
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 2.5
+      Focal Point:
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      Name: Current View
+      Pitch: 0.35
+      Target Frame: <Fixed Frame>
+      Yaw: 0.8
+    Saved: ~

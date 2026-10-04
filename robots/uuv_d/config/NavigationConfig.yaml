@@ -8,7 +8,7 @@ navigation:
   # Attitude Control Mode: 4
 
 
-  takeoff_height: -5.0
+  takeoff_height: -7.0
   outdoor_takeoff_height: 0.0
   initial_target_pitch: 0.0
   initial_target_roll: 0.0

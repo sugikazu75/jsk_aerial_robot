@@ -1,3 +1,7 @@
 <library path="lib/libuuv_d_robot_model">
-
+ <class name="uuv_d/uuv_d_multilink_robot_model"
+         type="uuv_d_model::UUVDMultilinkRobotModel"
+         base_class_type="aerial_robot_model::RobotModel">
+    <description>plugin for uuv_d multilink robot model</description>
+  </class>
 </library>

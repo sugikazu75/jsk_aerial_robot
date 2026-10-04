@@ -1,0 +1,29 @@
+environment:
+  buoyancy:
+    enabled: false
+    per_link_enabled: true
+    submerged_ratio: 1.0
+    debug_rate: 20.0
+    # Initial estimates: per-link volumes sum to 0.00336 m^3; COBs start at URDF inertial origins.
+    links:
+      link2:
+        volume: 0.0021
+        cob: [0.00022805, -0.00090746, -0.031355]
+      link1:
+        volume: 0.0006
+        cob: [0.22434, -0.00052, 0.04141]
+      link3:
+        volume: 0.0006
+        cob: [0.22696, 0.00053, 0.04094]
+      gimbal_link1:
+        volume: 0.00014
+        cob: [0.042287, 0.0, -0.0039984]
+      gimbal_link2:
+        volume: 0.00014
+        cob: [-0.0045106, -0.046287, -0.0021866]
+      gimbal_link3:
+        volume: 0.00014
+        cob: [0.0045106, 0.046287, -0.0021866]
+      gimbal_link4:
+        volume: 0.00014
+        cob: [0.046287, -0.0045106, -0.0021866]

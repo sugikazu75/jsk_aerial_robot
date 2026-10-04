@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="spinal_3_link">
+  <xacro:macro name="gazebo_spinal_3_link" params="robot_name imu_frame:=fc mag_frame:=magnet gps_frame:=gps">
+    <gazebo>
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        <robotNamespace>${robot_name}</robotNamespace>
+        <robotSimType>uuv_d/BuoyancyHWSim</robotSimType>
+      </plugin>
+    </gazebo>
+
+    <gazebo reference="${imu_frame}">
+      <sensor name="spinal_imu" type="imu">
+        <imu>
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0.0</mean><stddev>2e-4</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></x>
+            <y><noise type="gaussian"><mean>0.0</mean><stddev>2e-4</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></y>
+            <z><noise type="gaussian"><mean>0.0</mean><stddev>2e-4</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></x>
+            <y><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></y>
+            <z><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></z>
+          </linear_acceleration>
+        </imu>
+        <always_on>1</always_on>
+        <update_rate>1000</update_rate>
+      </sensor>
+    </gazebo>
+
+    <gazebo reference="${mag_frame}">
+      <sensor name="magnetometer" type="magnetometer">
+        <magnetometer>
+          <x><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.05</bias_mean><bias_stddev>0.01</bias_stddev></noise></x>
+          <y><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.05</bias_mean><bias_stddev>0.01</bias_stddev></noise></y>
+          <z><noise type="gaussian"><mean>0.0</mean><stddev>1.7e-2</stddev><bias_mean>0.5</bias_mean><bias_stddev>0.01</bias_stddev></noise></z>
+        </magnetometer>
+        <always_on>1</always_on>
+        <update_rate>1000</update_rate>
+      </sensor>
+    </gazebo>
+
+    <gazebo>
+      <plugin name="gps_controller" filename="libhector_gazebo_ros_gps.so">
+        <robotNamespace>${robot_name}</robotNamespace>
+        <updateRate>5.0</updateRate>
+        <bodyName>${gps_frame}</bodyName>
+        <topicName>sim/gps/fix</topicName>
+        <velocityTopicName>sim/gps/velocity</velocityTopicName>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

@@ -1,0 +1,7 @@
+<library path="lib/libuuv_d_buoyancy_hw_sim">
+  <class name="uuv_d/BuoyancyHWSim"
+         type="uuv_d_simulation::BuoyancyHWSim"
+         base_class_type="gazebo_ros_control::RobotHWSim">
+    <description>JSK hardware simulation with per-link buoyancy for uuv_d.</description>
+  </class>
+</library>

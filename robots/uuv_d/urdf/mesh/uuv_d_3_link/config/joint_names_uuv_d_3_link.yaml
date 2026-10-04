@@ -1,0 +1,1 @@
+controller_joint_names: ['', 'right', 'gimbal1', 'rotor1', 'gimbal2', 'rotor2', 'rotor3', 'left', 'gimbal3', 'rotor5', 'gimbal4', 'rotor6', 'rotor4', ]

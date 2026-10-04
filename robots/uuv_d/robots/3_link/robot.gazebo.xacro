@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="uuv_d" >
+
+  <xacro:arg name="robot_name" default="uuv_d" />
+
+  <!-- robot urdf -->
+  <xacro:include filename="$(find uuv_d)/robots/3_link/robot.urdf.xacro" />
+
+  <!-- gazebo plugin for default controller and sensors -->
+  <xacro:include filename="$(find uuv_d)/robots/3_link/spinal.gazebo.xacro" />
+  <xacro:gazebo_spinal_3_link robot_name="$(arg robot_name)" gps_frame="fc"/>
+
+  <xacro:macro name="gazebo_link_color" params="link rgba emissive">
+    <gazebo reference="${link}">
+      <ambient>${rgba}</ambient>
+      <diffuse>${rgba}</diffuse>
+      <specular>0.75 1.0 0.2 1.0</specular>
+      <emissive>${emissive}</emissive>
+    </gazebo>
+  </xacro:macro>
+
+  <gazebo reference="root_joint">
+    <disableFixedJointLumping>true</disableFixedJointLumping>
+  </gazebo>
+
+</robot>
