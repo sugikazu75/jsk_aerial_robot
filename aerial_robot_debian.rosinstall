@@ -1,8 +1,8 @@
 # aerial robot third party
 - git:
     local-name: aerial_robot_3rdparty
-    uri: https://github.com/sugikazu75/aerial_robot_3rdparty.git
-    version: PR/mujoco/util
+    uri: https://github.com/JSKAerialRobot/aerial_robot_3rdparty.git
+    version: 003970e
 
 # kalman filter
 - git:
@@ -60,12 +60,12 @@
 - git:
     local-name: mujoco
     uri: https://github.com/sugikazu75/mujoco_catkin.git
-    version: master
+    version: a429c7c
 
 - git:
     local-name: mujoco_ros_pkgs
     uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
-    version: devel
+    version: 6de14a3
 
 # pinocchio
 - git:

@@ -5,7 +5,8 @@ namespace mujoco_ros::control
 bool AerialRobotHWSim::InitSim(const mjModel* m_ptr, mjData* d_ptr, mujoco_ros::MujocoEnv* mujoco_env_ptr,
                                const std::string& robot_namespace, ros::NodeHandle model_nh,
                                const urdf::Model* const urdf_model,
-                               std::vector<transmission_interface::TransmissionInfo> transmissions, bool ignore_actuators)
+                               std::vector<transmission_interface::TransmissionInfo> transmissions,
+                               bool ignore_actuators)
 {
   /* separate rotor transmissions and standard transmissions */
   std::vector<transmission_interface::TransmissionInfo> standard_transmissions;
@@ -168,7 +169,8 @@ void AerialRobotHWSim::WriteSim(ros::Time time, ros::Duration period)
   {
     int rotor_id = mj_name2id(m_ptr_, mjOBJ_ACTUATOR, rotor_list_.at(i).c_str());
     double rotor_force = spinal_interface_.getForce(i);
-    d_ptr_->ctrl[rotor_id] = rotor_force;
+    if (std::isfinite(rotor_force))
+      d_ptr_->ctrl[rotor_id] = rotor_force;
   }
 }
 

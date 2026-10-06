@@ -1,6 +1,6 @@
 #pragma once
 
-#include <aerial_robot_simulation/rotor_interface.h>
+#include <aerial_robot_simulation/rotor_controller.h>
 #include <mujoco_ros_control/default_robot_hw_sim.hpp>
 #include <nav_msgs/Odometry.h>
 #include <tf/tf.h>

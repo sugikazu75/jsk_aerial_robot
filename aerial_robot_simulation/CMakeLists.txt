@@ -79,11 +79,7 @@ install(TARGETS aerial_robot_hw_sim spinal_interface flight_controllers mujoco_s
   DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(DIRECTORY scripts
+install(DIRECTORY scripts plugins
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
-)
-
-install(FILES aerial_robot_hw_sim_plugins.xml flight_controllers_plugins.xml mujoco_robot_hw_sim_plugin.xml mujoco_visualization_plugin.xml rotor_controllers_plugin.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
