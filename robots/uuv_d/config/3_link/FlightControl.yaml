@@ -2,8 +2,8 @@ aerial_robot_control_name: aerial_robot_control/uuv_d_multilink_controller # if 
 
 controller:
   xy:
-    p_gain: 3.0
-    i_gain: 0.1
+    p_gain: 2.0
+    i_gain: 0.05
     d_gain: 1.0
     limit_sum: 50.0
     limit_p: 20.0
@@ -11,8 +11,8 @@ controller:
     limit_d: 20.0
 
   z:
-    p_gain: 3.0
-    i_gain: 0.1
+    p_gain: 1.0
+    i_gain: 0.05
     d_gain: 1.0
     limit_err_p: 20.0
     limit_sum: 50.0 # N for clamping thrust force
@@ -23,20 +23,20 @@ controller:
   
   roll_pitch:
     p_gain: 2.0
-    i_gain: 0.2
-    d_gain: 2.0
+    i_gain: 0.03
+    d_gain: 1.0
     limit_err_p: 20.0
     limit_sum: 50.0
     limit_p: 50.0
     limit_i: 50.0
     limit_d: 50.0
 
-    start_rp_integration_height: 0.3
+    start_integration_height: 0.3
 
 
   yaw:
     p_gain: 2.0
-    i_gain: 0.2 
+    i_gain: 0.03
     d_gain: 1.0
     limit_err_p: 20
     limit_sum: 20.0

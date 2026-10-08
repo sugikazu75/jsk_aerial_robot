@@ -68,6 +68,43 @@ Visualization Manager:
       Force Color: 204; 68; 68
       Name: Gravity
       Topic: /uuv_d/debug/gravity_wrench
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 68; 204; 68
+      Name: Motor1
+      Topic: /uuv_d/motor_0/wrench
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 68; 204; 68
+      Name: Motor2
+      Topic: /uuv_d/motor_1/wrench
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 68; 204; 68
+      Name: Motor3
+      Topic: /uuv_d/motor_2/wrench
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 68; 204; 68
+      Name: Motor4
+      Topic: /uuv_d/motor_3/wrench
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 68; 204; 68
+      Name: Motor5
+      Topic: /uuv_d/motor_4/wrench
+    - Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.2
+      Force Color: 68; 204; 68
+      Name: Motor6
+      Topic: /uuv_d/motor_5/wrench
+
   Global Options:
     Fixed Frame: uuv_d/fc
   Name: root

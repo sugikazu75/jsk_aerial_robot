@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   gazebo_ros_control
   geometry_msgs
   mujoco_ros_control
+  mujoco_ros_utils
   pluginlib
   spinal
   tf
@@ -26,7 +27,7 @@ find_package(GAZEBO REQUIRED)
 catkin_package(
   INCLUDE_DIRS include test
   LIBRARIES uuv_d_robot_model uuv_d_controller_pluginlib uuv_d_buoyancy_hw_sim uuv_d_numerical_jacobians
-  CATKIN_DEPENDS roscpp aerial_robot_msgs aerial_robot_control aerial_robot_model aerial_robot_simulation gazebo_ros_control geometry_msgs pluginlib spinal tf eigen_conversions tf_conversions std_srvs
+  CATKIN_DEPENDS roscpp aerial_robot_msgs aerial_robot_control aerial_robot_model aerial_robot_simulation gazebo_ros_control geometry_msgs mujoco_ros_utils pluginlib spinal tf eigen_conversions tf_conversions std_srvs
   DEPENDS GAZEBO
 )
 
