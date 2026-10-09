@@ -46,6 +46,12 @@ private:
   bool output_rate_limit_initialized_;
   double max_gimbal_angle_step_;
   double max_thrust_step_;
+  std::vector<double> gimbal_lower_limits_;
+  std::vector<double> gimbal_upper_limits_;
+  double gimbal_branch_tolerance_;
+  Eigen::VectorXd allocation_lambda_;  // [2D force per gimbal rotor, fixed rotor thrusts]
+  std::vector<double> selected_gimbal_angles_;  // selected branch before the rate limit
+  bool gimbal_selection_initialized_;
   double target_roll_;
   double target_pitch_;
   double candidate_yaw_term_;
@@ -66,7 +72,9 @@ private:
   boost::shared_ptr<uuv_d_model::UUVDMultilinkRobotModel> uuv_d_robot_model_;
   boost::shared_ptr<uuv_d_model::UUVDMultilinkRobotModel> robot_model_for_control_;
   void wrenchAllocation(const Eigen::VectorXd& target_wrench);
+  double selectGimbalAngle(int gimbal_index, double raw_angle, double reference_angle) const;
   void applyOutputRateLimit();
+  void updateRotorThrusts();
   void processGimbalAngles();
 
   void sendFourAxisCommand();

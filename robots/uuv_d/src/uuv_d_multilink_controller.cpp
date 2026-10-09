@@ -1,6 +1,7 @@
 #include <uuv_d/uuv_d_multilink_controller.h>
 #include <XmlRpcValue.h>
 #include <cmath>
+#include <limits>
 
 namespace aerial_robot_control
 {
@@ -38,7 +39,9 @@ UUVDMultilinkController::UUVDMultilinkController()
     fixed_motor_num_(2),
     output_rate_limit_initialized_(false),
     max_gimbal_angle_step_(0.05),
-    max_thrust_step_(0.5)
+    max_thrust_step_(0.5),
+    gimbal_branch_tolerance_(0.2),
+    gimbal_selection_initialized_(false)
 {
 }
 
@@ -116,6 +119,27 @@ void UUVDMultilinkController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp
   getParam<double>(control_nh, "torque_allocation_matrix_inv_pub_interval", torque_allocation_matrix_inv_pub_interval_, 0.05);
   getParam<double>(control_nh, "max_gimbal_angle_step", max_gimbal_angle_step_, 0.05);
   getParam<double>(control_nh, "max_thrust_step", max_thrust_step_, 0.5);
+  getParam<double>(control_nh, "gimbal_branch_tolerance", gimbal_branch_tolerance_, 0.2);
+
+  selected_gimbal_angles_.assign(gimbal_motor_num_, 0.0);
+
+  // gimbal joint limits from URDF, used for branch selection and clamping
+  gimbal_lower_limits_.assign(gimbal_motor_num_, -M_PI_2);
+  gimbal_upper_limits_.assign(gimbal_motor_num_, M_PI_2);
+  for (int i = 0; i < gimbal_motor_num_; i++)
+  {
+    const std::string name = "gimbal" + std::to_string(i + 1);
+    const auto joint = robot_model_->getUrdfModel().getJoint(name);
+    if (joint && joint->limits && joint->limits->lower < joint->limits->upper)
+    {
+      gimbal_lower_limits_.at(i) = joint->limits->lower;
+      gimbal_upper_limits_.at(i) = joint->limits->upper;
+    }
+    else
+    {
+      ROS_WARN("[UUVDMultilinkController] No joint limits for %s; use [-pi/2, pi/2]", name.c_str());
+    }
+  }
 
   rpy_gain_pub_ = nh_.advertise<spinal::RollPitchYawTerms>("rpy/gain", 1);
   flight_cmd_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
@@ -251,13 +275,11 @@ void UUVDMultilinkController::wrenchAllocation(const Eigen::VectorXd& target_wre
 {
   Eigen::MatrixXd full_q_mat;
   std::vector<int> gimbal_rotor_indices;
-  std::vector<int> fixed_rotor_indices;
 
   if (uuv_d_robot_model_)
   {
     full_q_mat = uuv_d_robot_model_->getFullWrenchAllocationMatrixfromCoG();
     gimbal_rotor_indices = uuv_d_robot_model_->getGimbalRotorIndices();
-    fixed_rotor_indices = uuv_d_robot_model_->getFixedRotorIndices();
   }
   else
   {
@@ -265,43 +287,71 @@ void UUVDMultilinkController::wrenchAllocation(const Eigen::VectorXd& target_wre
     return;
   }
 
+  // lambda: [2D force of each gimbal rotor (gimbal force basis), thrust of each fixed rotor]
   Eigen::MatrixXd full_q_mat_inv = aerial_robot_model::pseudoinverse(full_q_mat);
   Eigen::VectorXd lambda = full_q_mat_inv * target_wrench;
 
-  float lower_limit = static_cast<float>(robot_model_->getThrustLowerLimit());
-  float upper_limit = static_cast<float>(robot_model_->getThrustUpperLimit());
+  allocation_lambda_ = lambda;  // converted to thrusts in updateRotorThrusts()
 
-  std::fill(target_base_thrust_.begin(), target_base_thrust_.end(), 0.0);
+  // start the branch selection from the measured gimbal angles
+  if (!gimbal_selection_initialized_)
+  {
+    const auto& current_gimbal_angles = uuv_d_robot_model_->getCurrentGimbalAngles();
+    for (size_t i = 0; i < selected_gimbal_angles_.size(); ++i)
+      selected_gimbal_angles_.at(i) = current_gimbal_angles.size() == selected_gimbal_angles_.size() ? current_gimbal_angles.at(i) : 0.0;
+    gimbal_selection_initialized_ = true;
+  }
 
+  // decide only the gimbal angles here; thrusts are decided in updateRotorThrusts()
   for (size_t i = 0; i < gimbal_rotor_indices.size(); ++i)
   {
-    int rotor_index = gimbal_rotor_indices.at(i);
-    double raw_angle = std::atan2(-lambda(2 * i + 0), lambda(2 * i + 1));
-    double angle = angles::normalize_angle(raw_angle);
-    float thrust = static_cast<float>(lambda.segment(2 * i, 2).norm());
-
-    if (angle > M_PI_2) {
-      angle -= M_PI;
-      thrust = -thrust;
-    } else if (angle < -M_PI_2) {
-      angle += M_PI;
-      thrust = -thrust;
+    // keep the previous angle when the force is too small to define a direction
+    if (lambda.segment(2 * i, 2).norm() > 1e-3)
+    {
+      const double raw_angle = std::atan2(-lambda(2 * i + 0), lambda(2 * i + 1));  // rotor axis is (-sin q, cos q)
+      // reference is the previous selection, not the rate-limited angle, to keep the branch while turning
+      selected_gimbal_angles_.at(i) = selectGimbalAngle(i, raw_angle, selected_gimbal_angles_.at(i));
     }
-
-    angle = std::clamp(angle, -1.57, 1.57);
-    target_base_thrust_.at(rotor_index) = std::clamp(thrust, lower_limit, upper_limit);
-    target_gimbal_angles_.at(i) = angle;
-    }
-
-  int fixed_col_offset = 2 * gimbal_rotor_indices.size();
-
-  for (size_t i = 0; i < fixed_rotor_indices.size(); ++i)
-  {
-    int rotor_index = fixed_rotor_indices.at(i);
-
-    float thrust_val = static_cast<float>(lambda(fixed_col_offset + i));
-    target_base_thrust_.at(rotor_index) = std::clamp(thrust_val, lower_limit, upper_limit);
+    target_gimbal_angles_.at(i) = selected_gimbal_angles_.at(i);
   }
+
+}
+
+double UUVDMultilinkController::selectGimbalAngle(int gimbal_index, double raw_angle, double reference_angle) const
+{
+  // choose among q + k*pi (thrust sign flips with odd k) the reachable angle closest to the reference
+  const double lower = gimbal_lower_limits_.at(gimbal_index);
+  const double upper = gimbal_upper_limits_.at(gimbal_index);
+  const double base = angles::normalize_angle(raw_angle);
+
+  double best_angle = std::clamp(reference_angle, lower, upper);
+  double best_direction_error = std::numeric_limits<double>::max();
+  double best_distance = std::numeric_limits<double>::max();
+  bool best_feasible = false;
+  for (int k = -2; k <= 2; ++k)
+  {
+    const double candidate = base + k * M_PI;
+    const double clamped = std::clamp(candidate, lower, upper);
+    const double direction_error = std::fabs(candidate - clamped);  // force direction lost by the joint limit
+    const double distance = std::fabs(clamped - reference_angle);
+    const bool feasible = direction_error <= gimbal_branch_tolerance_;
+
+    // prefer feasible candidates, then the closest one; if none is feasible, the smallest direction error
+    bool better;
+    if (feasible != best_feasible) better = feasible;
+    else if (feasible) better = distance < best_distance;
+    else better = direction_error < best_direction_error ||
+                  (direction_error == best_direction_error && distance < best_distance);
+
+    if (better)
+    {
+      best_angle = clamped;
+      best_direction_error = direction_error;
+      best_distance = distance;
+      best_feasible = feasible;
+    }
+  }
+  return best_angle;
 }
 
 void UUVDMultilinkController::applyOutputRateLimit()
@@ -324,6 +374,19 @@ void UUVDMultilinkController::applyOutputRateLimit()
     output_rate_limit_initialized_ = true;
   }
 
+  // plain difference, since shortest_angular_distance may turn the gimbal through the joint limit
+  const double angle_step = std::max(0.0, max_gimbal_angle_step_);
+  for (size_t i = 0; i < target_gimbal_angles_.size(); ++i)
+  {
+    const double diff = target_gimbal_angles_.at(i) - prev_gimbal_angles_.at(i);
+    const double limited = prev_gimbal_angles_.at(i) + std::clamp(diff, -angle_step, angle_step);
+    target_gimbal_angles_.at(i) = static_cast<float>(std::clamp(limited, gimbal_lower_limits_.at(i), gimbal_upper_limits_.at(i)));
+    prev_gimbal_angles_.at(i) = target_gimbal_angles_.at(i);
+  }
+
+  // thrusts must be decided after the gimbal angles are rate-limited
+  updateRotorThrusts();
+
   const float thrust_step = static_cast<float>(std::max(0.0, max_thrust_step_));
   for (size_t i = 0; i < target_base_thrust_.size(); ++i)
   {
@@ -332,15 +395,34 @@ void UUVDMultilinkController::applyOutputRateLimit()
     target_base_thrust_.at(i) = prev_base_thrust_.at(i) + limited_diff;
     prev_base_thrust_.at(i) = target_base_thrust_.at(i);
   }
+}
 
-  const float angle_step = static_cast<float>(std::max(0.0, max_gimbal_angle_step_));
-  for (size_t i = 0; i < target_gimbal_angles_.size(); ++i)
+void UUVDMultilinkController::updateRotorThrusts()
+{
+  if (!uuv_d_robot_model_) return;
+
+  const auto& gimbal_rotor_indices = uuv_d_robot_model_->getGimbalRotorIndices();
+  const auto& fixed_rotor_indices = uuv_d_robot_model_->getFixedRotorIndices();
+  const int rotor_num = target_base_thrust_.size();
+
+  if (allocation_lambda_.size() != static_cast<int>(2 * gimbal_rotor_indices.size() + fixed_rotor_indices.size()))
+    return;
+
+  // thrusts of wrenchAllocation() at the commanded gimbal angles
+  Eigen::VectorXd thrust = Eigen::VectorXd::Zero(rotor_num);
+  for (size_t i = 0; i < gimbal_rotor_indices.size(); ++i)
   {
-    const double diff = angles::shortest_angular_distance(prev_gimbal_angles_.at(i), target_gimbal_angles_.at(i));
-    const double limited_diff = std::clamp(diff, -static_cast<double>(angle_step), static_cast<double>(angle_step));
-    target_gimbal_angles_.at(i) = static_cast<float>(angles::normalize_angle(prev_gimbal_angles_.at(i) + limited_diff));
-    prev_gimbal_angles_.at(i) = target_gimbal_angles_.at(i);
+    // project the 2D force onto the rotor axis (-sin q, cos q)
+    const double q = target_gimbal_angles_.at(i);
+    thrust(gimbal_rotor_indices.at(i)) = -allocation_lambda_(2 * i) * std::sin(q) + allocation_lambda_(2 * i + 1) * std::cos(q);
   }
+  for (size_t i = 0; i < fixed_rotor_indices.size(); ++i)
+    thrust(fixed_rotor_indices.at(i)) = allocation_lambda_(2 * gimbal_rotor_indices.size() + i);
+
+  const float lower_limit = static_cast<float>(robot_model_->getThrustLowerLimit());
+  const float upper_limit = static_cast<float>(robot_model_->getThrustUpperLimit());
+  for (int i = 0; i < rotor_num; ++i)
+    target_base_thrust_.at(i) = std::clamp(static_cast<float>(thrust(i)), lower_limit, upper_limit);
 }
 
 void UUVDMultilinkController::processGimbalAngles()
@@ -373,6 +455,8 @@ void UUVDMultilinkController::reset()
   std::fill(prev_base_thrust_.begin(), prev_base_thrust_.end(), 0.0);
   std::fill(prev_gimbal_angles_.begin(), prev_gimbal_angles_.end(), 0.0);
   output_rate_limit_initialized_ = false;
+  gimbal_selection_initialized_ = false;
+  allocation_lambda_.resize(0);
   candidate_yaw_term_ = 0.0;
 
   setAttitudeGains();
