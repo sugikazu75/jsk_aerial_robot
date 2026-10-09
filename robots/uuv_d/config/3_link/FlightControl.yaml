@@ -52,3 +52,7 @@ controller:
 
   # gimbal angle selection
   gimbal_branch_tolerance: 0.2 # [rad] allowed force direction error caused by the gimbal joint limit
+
+  # thrust re-allocation with measured gimbal angles
+  thrust_torque_weight: 10.0 # weight of torque against force
+  thrust_anchor_weight: 0.1 # pull toward the thrusts of the angle allocation

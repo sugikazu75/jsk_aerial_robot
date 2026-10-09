@@ -41,6 +41,8 @@ UUVDMultilinkController::UUVDMultilinkController()
     max_gimbal_angle_step_(0.05),
     max_thrust_step_(0.5),
     gimbal_branch_tolerance_(0.2),
+    thrust_torque_weight_(10.0),
+    thrust_anchor_weight_(0.1),
     gimbal_selection_initialized_(false)
 {
 }
@@ -120,6 +122,10 @@ void UUVDMultilinkController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp
   getParam<double>(control_nh, "max_gimbal_angle_step", max_gimbal_angle_step_, 0.05);
   getParam<double>(control_nh, "max_thrust_step", max_thrust_step_, 0.5);
   getParam<double>(control_nh, "gimbal_branch_tolerance", gimbal_branch_tolerance_, 0.2);
+  getParam<double>(control_nh, "thrust_torque_weight", thrust_torque_weight_, 10.0);
+  getParam<double>(control_nh, "thrust_anchor_weight", thrust_anchor_weight_, 0.1);
+
+  target_wrench_cog_ = Eigen::VectorXd::Zero(6);
 
   selected_gimbal_angles_.assign(gimbal_motor_num_, 0.0);
 
@@ -243,6 +249,8 @@ void UUVDMultilinkController::controlCore()
                        robot_model_->getMass() * target_acc_cog.y() - external_force_cog.y(),
                        robot_model_->getMass() * target_acc_cog.z() - external_force_cog.z(),
                        -buoyancy_torque_cog.x(), -buoyancy_torque_cog.y(), -buoyancy_torque_cog.z();
+  target_wrench_cog_ = target_wrench_cog;
+
   wrenchAllocation(target_wrench_cog);
   applyOutputRateLimit();
   processGimbalAngles();
@@ -291,7 +299,7 @@ void UUVDMultilinkController::wrenchAllocation(const Eigen::VectorXd& target_wre
   Eigen::MatrixXd full_q_mat_inv = aerial_robot_model::pseudoinverse(full_q_mat);
   Eigen::VectorXd lambda = full_q_mat_inv * target_wrench;
 
-  allocation_lambda_ = lambda;  // converted to thrusts in updateRotorThrusts()
+  allocation_lambda_ = lambda;  // reused as the anchor in updateRotorThrusts()
 
   // start the branch selection from the measured gimbal angles
   if (!gimbal_selection_initialized_)
@@ -408,16 +416,38 @@ void UUVDMultilinkController::updateRotorThrusts()
   if (allocation_lambda_.size() != static_cast<int>(2 * gimbal_rotor_indices.size() + fixed_rotor_indices.size()))
     return;
 
-  // thrusts of wrenchAllocation() at the commanded gimbal angles
-  Eigen::VectorXd thrust = Eigen::VectorXd::Zero(rotor_num);
+  // anchor: thrusts of wrenchAllocation() at the commanded gimbal angles
+  Eigen::VectorXd anchor = Eigen::VectorXd::Zero(rotor_num);
   for (size_t i = 0; i < gimbal_rotor_indices.size(); ++i)
   {
     // project the 2D force onto the rotor axis (-sin q, cos q)
     const double q = target_gimbal_angles_.at(i);
-    thrust(gimbal_rotor_indices.at(i)) = -allocation_lambda_(2 * i) * std::sin(q) + allocation_lambda_(2 * i + 1) * std::cos(q);
+    anchor(gimbal_rotor_indices.at(i)) = -allocation_lambda_(2 * i) * std::sin(q) + allocation_lambda_(2 * i + 1) * std::cos(q);
   }
   for (size_t i = 0; i < fixed_rotor_indices.size(); ++i)
-    thrust(fixed_rotor_indices.at(i)) = allocation_lambda_(2 * gimbal_rotor_indices.size() + i);
+    anchor(fixed_rotor_indices.at(i)) = allocation_lambda_(2 * gimbal_rotor_indices.size() + i);
+
+  // re-solve the target wrench with the measured gimbal angles to remove torque errors while the gimbals turn
+  const Eigen::MatrixXd q_mat = uuv_d_robot_model_->calcWrenchMatrixOnCoG();
+
+  // weight torque more, since an attitude error is not recovered by the position loop
+  Eigen::VectorXd weight = Eigen::VectorXd::Ones(6);
+  weight.tail(3).setConstant(thrust_torque_weight_);
+  const Eigen::MatrixXd wq = weight.asDiagonal() * q_mat;
+
+  // min |W(Q f - w)|^2 + a |f - anchor|^2; the anchor term keeps ill-conditioned directions from amplifying noise
+  // derivative: 2 Q^T W^T W (Q f - w) + 2 a (f - anchor) = 0
+  // solve: (Q^T W^T W Q + a I) f = Q^T W^T W w + a anchor
+  const Eigen::MatrixXd h = wq.transpose() * wq + thrust_anchor_weight_ * Eigen::MatrixXd::Identity(rotor_num, rotor_num);
+  const Eigen::VectorXd thrust = h.ldlt().solve(wq.transpose() * (weight.asDiagonal() * target_wrench_cog_) +
+                                                thrust_anchor_weight_ * anchor);
+
+  if (!thrust.allFinite())
+  {
+    ROS_ERROR_THROTTLE(1.0, "[UUVDMultilinkController] invalid thrust re-allocation; keep previous thrust");
+    target_base_thrust_ = prev_base_thrust_;
+    return;
+  }
 
   const float lower_limit = static_cast<float>(robot_model_->getThrustLowerLimit());
   const float upper_limit = static_cast<float>(robot_model_->getThrustUpperLimit());
@@ -456,6 +486,7 @@ void UUVDMultilinkController::reset()
   std::fill(prev_gimbal_angles_.begin(), prev_gimbal_angles_.end(), 0.0);
   output_rate_limit_initialized_ = false;
   gimbal_selection_initialized_ = false;
+  target_wrench_cog_.setZero();
   allocation_lambda_.resize(0);
   candidate_yaw_term_ = 0.0;
 
