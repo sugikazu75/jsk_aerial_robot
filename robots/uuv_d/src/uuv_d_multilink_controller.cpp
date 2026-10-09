@@ -125,6 +125,15 @@ void UUVDMultilinkController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp
   getParam<double>(control_nh, "thrust_torque_weight", thrust_torque_weight_, 10.0);
   getParam<double>(control_nh, "thrust_anchor_weight", thrust_anchor_weight_, 0.1);
 
+  // internal z force per gimbal rotor; enlarges small rotor forces so that gimbal angles become less sensitive
+  if (!control_nh.getParam("gimbal_internal_force", gimbal_internal_force_))
+    gimbal_internal_force_ = {-3.0, 0.0, 0.0, -3.0};
+  if (gimbal_internal_force_.size() != static_cast<size_t>(gimbal_motor_num_))
+  {
+    ROS_ERROR("[UUVDMultilinkController] gimbal_internal_force needs %d elements; disabled", gimbal_motor_num_);
+    gimbal_internal_force_.assign(gimbal_motor_num_, 0.0);
+  }
+
   target_wrench_cog_ = Eigen::VectorXd::Zero(6);
 
   selected_gimbal_angles_.assign(gimbal_motor_num_, 0.0);
@@ -299,6 +308,13 @@ void UUVDMultilinkController::wrenchAllocation(const Eigen::VectorXd& target_wre
   Eigen::MatrixXd full_q_mat_inv = aerial_robot_model::pseudoinverse(full_q_mat);
   Eigen::VectorXd lambda = full_q_mat_inv * target_wrench;
 
+  // add the internal force only in the null space so that the net wrench is unchanged
+  Eigen::VectorXd internal_force = Eigen::VectorXd::Zero(lambda.size());
+  for (size_t i = 0; i < gimbal_rotor_indices.size(); ++i)
+    internal_force(2 * i + 1) = gimbal_internal_force_.at(i);  // 2nd column of the basis is z
+  const Eigen::MatrixXd null_projector =
+    Eigen::MatrixXd::Identity(lambda.size(), lambda.size()) - full_q_mat_inv * full_q_mat;
+  lambda += null_projector * internal_force;
   allocation_lambda_ = lambda;  // reused as the anchor in updateRotorThrusts()
 
   // start the branch selection from the measured gimbal angles

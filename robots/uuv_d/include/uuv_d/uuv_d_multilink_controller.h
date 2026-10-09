@@ -51,6 +51,7 @@ private:
   double gimbal_branch_tolerance_;
   double thrust_torque_weight_;
   double thrust_anchor_weight_;
+  std::vector<double> gimbal_internal_force_;  // internal z force per gimbal rotor (null space only)
   Eigen::VectorXd allocation_lambda_;  // [2D force per gimbal rotor, fixed rotor thrusts]
   Eigen::VectorXd target_wrench_cog_;
   std::vector<double> selected_gimbal_angles_;  // selected branch before the rate limit
