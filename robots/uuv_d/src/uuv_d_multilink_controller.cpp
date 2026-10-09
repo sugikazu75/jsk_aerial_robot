@@ -135,11 +135,11 @@ void UUVDMultilinkController::publishDebugWrench()
   for (int i = 0; i < motor_num_; i++)
   {
     geometry_msgs::WrenchStamped wrench_msg;
-    
+
     // ヘッダー情報の設定
     wrench_msg.header.stamp = ros::Time::now();
     // ※注意：ここのフレーム名はURDF/TFツリーで定義されているモーターのリンク名と完全に一致させる必要があります。
-    wrench_msg.header.frame_id = "uuv_d/thrust" + std::to_string(i+1); 
+    wrench_msg.header.frame_id = "uuv_d/thrust" + std::to_string(i+1);
 
     // 力の設定（Z軸方向に推力が発生すると仮定）
     wrench_msg.wrench.force.x = 0.0;
