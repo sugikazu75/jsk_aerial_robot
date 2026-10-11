@@ -34,8 +34,6 @@
         - type: aerial_robot_simulation/ThrustVisualizerPlugin
           min_force: 0.001
           rgba: [0.0, 0.8, 1.0, 0.9]
-        - type: mujoco_ros_sensors/ForceVisualizerPlugin
-          rgba: [0.8, 0.2, 0.2, 0.9]
         $(arg extra_mujoco_plugins)
     </rosparam>
 
