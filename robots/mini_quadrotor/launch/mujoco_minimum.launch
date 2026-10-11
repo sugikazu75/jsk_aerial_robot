@@ -3,6 +3,11 @@
   <arg name="robot_ns" value="quadrotor"/>
   <arg name="headless" value="False"/>
   <arg name="rviz_config" value="$(find mini_quadrotor)/config/rviz_config"/>
+  <arg name="lidar" default="False" doc="simulate livox mid360 with mujoco_ros_lidar (run bin/update_mujoco_model.sh once beforehand)" />
+  <arg name="lidar_visualize" default="False" doc="draw lidar hit points in the mujoco viewer" />
+  <!-- livox mid360 in mujoco: point cloud / imu are published to $(arg robot_ns)/livox/lidar, livox/imu (same topics as the real driver, imu in g) -->
+  <arg name="mujoco_lidar_plugin" value="- {type: mujoco_ros_lidar/LidarPlugin, sensors: [{site_attached: lidar, name: livox/lidar, frame_id: $(arg robot_ns)/livox_frame, visualize: $(arg lidar_visualize), imu_site: lidar_imu, imu_name: livox/imu}]}" if="$(arg lidar)" />
+  <arg name="mujoco_lidar_plugin" value="" unless="$(arg lidar)" />
 
   ########## Robot description #########
   <group ns="$(arg robot_ns)">
@@ -15,7 +20,10 @@
     <arg name="headless" value="$(arg headless)"/>
     <arg name="mujoco_model" value="$(find mini_quadrotor)/mujoco/robot.xml"/>
     <arg name="use_spinal" value="False"/>
+    <arg name="extra_mujoco_plugins" value="$(arg mujoco_lidar_plugin)"/>
   </include>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="livox_frame_publisher" ns="$(arg robot_ns)"
+        args="-0.011 -0.02329 0.04412 0 0 0 $(arg robot_ns)/lidar_imu $(arg robot_ns)/livox_frame" if="$(arg lidar)" />
 
   ########## Visualization #########
   <group ns="$(arg robot_ns)">

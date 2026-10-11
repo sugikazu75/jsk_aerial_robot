@@ -21,6 +21,8 @@
   <arg name="config_dir" default="$(find mini_quadrotor)/config" />
   <arg name="mujoco" default="False" />
   <arg name="demo" default="True" />
+  <arg name="lidar" default="False" doc="simulate livox mid360 with mujoco_ros_lidar (run bin/update_mujoco_model.sh once beforehand)" />
+  <arg name="lidar_visualize" default="False" doc="draw lidar hit points in the mujoco viewer" />
 
   ###########  Parameters  ###########
   <group ns="$(arg robot_ns)">
@@ -77,6 +79,7 @@
     <arg name="real_machine" value="$(arg real_machine)" />
     <arg name="simulation" value="$(arg simulation)" />
     <arg name="robot_ns" value="$(arg robot_ns)" />
+    <arg name="lidar" value="$(arg lidar)" />
   </include >
 
   ########## Simulation in Gazebo #########
@@ -93,11 +96,18 @@
   </include>
 
   ########## Simulation in Mujoco #########
+  <!-- livox mid360 in mujoco: point cloud / imu are published to $(arg robot_ns)/livox/lidar, livox/imu (same topics as the real driver, imu in g) -->
+  <arg name="mujoco_lidar_plugin" value="- {type: mujoco_ros_lidar/LidarPlugin, sensors: [{site_attached: lidar, name: livox/lidar, frame_id: $(arg robot_ns)/livox_frame, visualize: $(arg lidar_visualize), imu_site: lidar_imu, imu_name: livox/imu}]}" if="$(arg lidar)" />
+  <arg name="mujoco_lidar_plugin" value="" unless="$(arg lidar)" />
   <include file="$(find aerial_robot_simulation)/launch/mujoco.launch" if="$(eval arg('simulation') and not arg('real_machine') and arg('mujoco'))" >
     <arg name="robot_ns" value="$(arg robot_ns)" />
     <arg name="headless" value="$(arg headless)"/>
     <arg name="mujoco_model" value="$(find mini_quadrotor)/mujoco/robot.xml"/>
+    <arg name="extra_mujoco_plugins" value="$(arg mujoco_lidar_plugin)"/>
   </include>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="livox_frame_publisher" ns="$(arg robot_ns)"
+        args="-0.011 -0.02329 0.04412 0 0 0 $(arg robot_ns)/lidar_imu $(arg robot_ns)/livox_frame"
+        if="$(eval arg('simulation') and not arg('real_machine') and arg('mujoco') and arg('lidar'))" />
 
   ########## Simple Demo #########
   <node pkg="aerial_robot_base" type="simple_demo.py" name="simple_demo" ns="$(arg robot_ns)" output="screen" if="$(arg demo)"/>

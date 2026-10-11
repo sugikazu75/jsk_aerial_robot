@@ -1,0 +1,39 @@
+--- mini_quadrotor_orig.xml	2026-10-11 14:48:26.308165045 +0900
++++ ../../mujoco/robot.xml	2026-10-11 15:01:05.562429400 +0900
+@@ -7,6 +7,23 @@
+     <mesh name="prop_5inch" file="prop_5inch.stl"/>
+   </asset>
+   <worldbody>
++    <!-- room (10 m x 8 m x 3 m). walls are semi-transparent only for the viewer; the lidar still hits them -->
++    <geom name="wall_front" type="box" pos="5.05 0 1.5" size="0.05 4.1 1.5" rgba="0.8 0.8 0.8 0.3"/>
++    <geom name="wall_back" type="box" pos="-5.05 0 1.5" size="0.05 4.1 1.5" rgba="0.8 0.8 0.8 0.3"/>
++    <geom name="wall_left" type="box" pos="0 4.05 1.5" size="5 0.05 1.5" rgba="0.7 0.7 0.8 0.3"/>
++    <geom name="wall_right" type="box" pos="0 -4.05 1.5" size="5 0.05 1.5" rgba="0.7 0.7 0.8 0.3"/>
++    <!-- obstacles -->
++    <geom name="pillar1" type="box" pos="2.5 1.5 1.5" size="0.25 0.25 1.5" rgba="0.9 0.3 0.3 1"/>
++    <geom name="pillar2" type="cylinder" pos="-2.5 -1.5 1.5" size="0.2 1.5" rgba="0.3 0.3 0.9 1"/>
++    <geom name="box1" type="box" pos="3.0 -2.0 0.4" size="0.4 0.6 0.4" rgba="0.3 0.8 0.3 1"/>
++    <geom name="box2" type="box" pos="-3.5 2.5 0.25" size="0.5 0.5 0.25" euler="0 0 0.5" rgba="0.8 0.8 0.2 1"/>
++    <geom name="cylinder1" type="cylinder" pos="1.0 -3.0 0.5" size="0.35 0.5" rgba="0.8 0.5 0.2 1"/>
++    <geom name="ramp" type="box" pos="-2.5 1.0 0.25" size="1.0 0.6 0.05" euler="0 -0.25 0" rgba="0.6 0.5 0.4 1"/>
++    <geom name="step1" type="box" pos="0.5 3.2 0.1" size="0.25 0.7 0.1" rgba="0.5 0.6 0.6 1"/>
++    <geom name="step2" type="box" pos="1.0 3.2 0.2" size="0.25 0.7 0.2" rgba="0.5 0.6 0.6 1"/>
++    <geom name="step3" type="box" pos="1.5 3.2 0.3" size="0.25 0.7 0.3" rgba="0.5 0.6 0.6 1"/>
++    <geom name="table_top" type="box" pos="-1.0 -3.0 0.75" size="0.6 0.4 0.03" rgba="0.6 0.4 0.3 1"/>
++    <geom name="table_leg" type="cylinder" pos="-1.0 -3.0 0.36" size="0.05 0.36" rgba="0.3 0.3 0.3 1"/>
+     <body name="root" pos="0 0 0.2">
+       <freejoint name="root_joint"/>
+       <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="1e-05" diaginertia="2e-06 1e-06 1e-06"/>
+@@ -22,7 +39,12 @@
+         </body>
+         <body name="lidar_imu" pos="0.011 0.02329 0.04538">
+           <inertial pos="0 0 0" mass="0" diaginertia="0 0 0"/>
++          <!-- livox mid360 built-in imu (livox/imu) -->
++          <site name="lidar_imu" pos="0 0 0"/>
+         </body>
++        <!-- livox mid360 optical center (= lidar_imu + (-0.011, -0.02329, 0.04412)). Attached to main_body so that
++             the lidar plugin ignores the housing included in the main_body mesh. -->
++        <site name="lidar" pos="0 0 0.0895"/>
+         <body name="battery" pos="0 0 -0.035" quat="0.707107 0.707107 0 0">
+           <inertial pos="0 0 0" mass="0.188" diaginertia="0.0002 0.0002 0.0002"/>
+           <geom name="battery" type="mesh" mesh="turnigy_3S_2200mAh" contype="1" conaffinity="0"/>

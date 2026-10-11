@@ -4,6 +4,7 @@
   <arg name="real_machine" default="false" />
   <arg name="simulation" default="false" />
   <arg name="robot_ns" default="quadrotor" />
+  <arg name="lidar" default="false" />
 
   <group ns="$(arg robot_ns)">
     <group if="$(arg real_machine)">
@@ -24,6 +25,19 @@
         </include>
 
       </group>
+    </group>
+
+    <!-- fast lio with the simulated mid360 (mujoco_ros_lidar). The simulator publishes PointCloud2 instead of
+         livox CustomMsg, so use the velodyne-style input (per-point 'time' [s] and 'ring' fields) -->
+    <group if="$(eval arg('simulation') and not arg('real_machine') and arg('lidar'))">
+      <include file="$(find fast_lio)/launch/mapping_mid360.launch" >
+        <arg name="rviz" value="false" />
+      </include>
+      <rosparam>
+        preprocess:
+          lidar_type: 2
+          timestamp_unit: 0
+      </rosparam>
     </group>
 
     <!-- basic configuration for sensors (e.g. noise sigma) -->

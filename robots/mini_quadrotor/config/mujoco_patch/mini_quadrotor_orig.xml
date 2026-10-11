@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+<mujoco model="module_quadrotor">
+  <compiler angle="radian"/>
+  <asset>
+    <mesh name="main_body_livox" file="main_body_livox.stl"/>
+    <mesh name="turnigy_3S_2200mAh" file="turnigy_3S_2200mAh.stl"/>
+    <mesh name="prop_5inch" file="prop_5inch.stl"/>
+  </asset>
+  <worldbody>
+    <body name="root" pos="0 0 0.2">
+      <freejoint name="root_joint"/>
+      <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="1e-05" diaginertia="2e-06 1e-06 1e-06"/>
+      <body name="main_body">
+        <inertial pos="0.002 0 0.026" quat="0.5 0.5 -0.5 0.5" mass="0.86" diaginertia="0.0045 0.003 0.003"/>
+        <geom name="main_body" type="mesh" mesh="main_body_livox" contype="1" conaffinity="0"/>
+        <body name="fc" pos="-0.02 -0.005 0.03">
+          <inertial pos="0 0 0" mass="0" diaginertia="0 0 0"/>
+          <site name="fc" pos="0 0 0"/>
+        </body>
+        <body name="magnet">
+          <inertial pos="0 0 0" mass="0" diaginertia="0 0 0"/>
+        </body>
+        <body name="lidar_imu" pos="0.011 0.02329 0.04538">
+          <inertial pos="0 0 0" mass="0" diaginertia="0 0 0"/>
+        </body>
+        <body name="battery" pos="0 0 -0.035" quat="0.707107 0.707107 0 0">
+          <inertial pos="0 0 0" mass="0.188" diaginertia="0.0002 0.0002 0.0002"/>
+          <geom name="battery" type="mesh" mesh="turnigy_3S_2200mAh" contype="1" conaffinity="0"/>
+        </body>
+        <body name="thrust1" pos="-0.085 -0.085 0.026">
+          <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.0091" diaginertia="1.612e-05 8.07e-06 8.07e-06"/>
+          <geom name="thrust1" type="mesh" mesh="prop_5inch" contype="1" conaffinity="0"/>
+          <site name="rotor1" pos="0 0 0"/>
+        </body>
+        <body name="thrust2" pos="0.085 -0.085 0.026">
+          <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.0091" diaginertia="1.612e-05 8.07e-06 8.07e-06"/>
+          <geom name="thrust2" type="mesh" mesh="prop_5inch" contype="1" conaffinity="0"/>
+          <site name="rotor2" pos="0 0 0"/>
+        </body>
+        <body name="thrust3" pos="0.085 0.085 0.026">
+          <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.0091" diaginertia="1.612e-05 8.07e-06 8.07e-06"/>
+          <geom name="thrust3" type="mesh" mesh="prop_5inch" contype="1" conaffinity="0"/>
+          <site name="rotor3" pos="0 0 0"/>
+        </body>
+        <body name="thrust4" pos="-0.085 0.085 0.026">
+          <inertial pos="0 0 0" quat="0.5 0.5 -0.5 0.5" mass="0.0091" diaginertia="1.612e-05 8.07e-06 8.07e-06"/>
+          <geom name="thrust4" type="mesh" mesh="prop_5inch" contype="1" conaffinity="0"/>
+          <site name="rotor4" pos="0 0 0"/>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <compiler balanceinertia="true" fusestatic="false"/>
+  <actuator>
+    <motor name="rotor1" ctrllimited="true" ctrlrange="0 8" gear="0 0 1 0 0 0.011" site="rotor1"/>
+    <motor name="rotor2" ctrllimited="true" ctrlrange="0 8" gear="0 0 1 0 0 -0.011" site="rotor2"/>
+    <motor name="rotor3" ctrllimited="true" ctrlrange="0 8" gear="0 0 1 0 0 0.011" site="rotor3"/>
+    <motor name="rotor4" ctrllimited="true" ctrlrange="0 8" gear="0 0 1 0 0 -0.011" site="rotor4"/>
+  </actuator>
+  <sensor>
+    <accelerometer name="acc" site="fc"/>
+    <gyro name="gyro" site="fc"/>
+    <magnetometer name="mag" site="fc"/>
+  </sensor>
+  <include file="../../../../aerial_robot_3rdparty/mujoco_ros_utils/config/world.xml"/>
+</mujoco>
