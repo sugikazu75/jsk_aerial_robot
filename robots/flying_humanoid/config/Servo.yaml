@@ -1,0 +1,136 @@
+servo_controller:
+
+  gimbals:
+    angle_sgn: 1
+    angle_scale: 0.00153398078
+    zero_point_offset: 2047
+    torque_scale: 0.0053
+    simulation:
+      pid: {p: 20.0, i: 0.1, d: 1.0, i_clamp_max: 2.0, i_clamp_min: -2.0}
+      type: effort_controllers/JointPositionController
+
+    controller1:
+      name: gimbal1
+      id: 0
+      simulation:
+        init_value: 0.0
+    controller2:
+      name: gimbal2
+      id: 4
+      angle_sgn: -1
+      simulation:
+        init_value: 0.0
+
+  joints:
+    angle_sgn: 1
+    angle_scale: 0.00153398078
+    zero_point_offset: 2047
+    torque_scale: 0.0053 # 0.0036 [A/bit] * (3.4/2.3) [Nm/A]. copied from dragon
+    simulation:
+      # JointComputeTorqueController is not in the upstream ros_controllers
+      pid: {p: 15.0, i: 0.0, d: 1.0}
+      type: effort_controllers/JointPositionController
+
+    controller01:
+      name: lleg_joint1
+      id: 1
+      angle_sgn: -1
+      simulation:
+        init_value: 0.0
+    controller02:
+      name: lleg_joint2
+      id: 2
+      angle_sgn: -1
+      simulation:
+        init_value: 0.0
+    controller03:
+      name: lleg_joint3
+      id: 3
+      simulation:
+        init_value: -0.5
+    controller04:
+      name: lleg_joint4
+      id: 8
+      angle_sgn: -1
+      simulation:
+        init_value: 1.0
+    controller05:
+      name: lleg_joint5
+      id: 9
+      simulation:
+        init_value: -0.5
+    controller06:
+      name: lleg_joint6
+      id: 10
+      simulation:
+        init_value: -0.0
+    controller07:
+      name: rleg_joint1
+      id: 5
+      angle_sgn: 1
+      simulation:
+        init_value: 0.0
+    controller08:
+      name: rleg_joint2
+      id: 6
+      angle_sgn: 1
+      simulation:
+        init_value: -0.0
+    controller09:
+      name: rleg_joint3
+      id: 7
+      simulation:
+        init_value: -0.5
+    controller10:
+      name: rleg_joint4
+      id: 11
+      angle_sgn: -1
+      simulation:
+        init_value: 1.0
+    controller11:
+      name: rleg_joint5
+      id: 12
+      simulation:
+        init_value: -0.5
+    controller12:
+      name: rleg_joint6
+      id: 13
+      angle_sgn: -1
+      simulation:
+        init_value: 0.0
+
+initial_joint_positions:
+  joint_map:
+    root_joint: "0 0 0.27 1 0 0 0"
+    gimbal1: "0.0"
+    gimbal2: "0.0"
+    lleg_joint1: "0.0"
+    lleg_joint2: "0.0"
+    lleg_joint3: "-0.5"
+    lleg_joint4: "1.0"
+    lleg_joint5: "-0.5"
+    lleg_joint6: "-0.0"
+    rleg_joint1: "0.0"
+    rleg_joint2: "-0.0"
+    rleg_joint3: "-0.5"
+    rleg_joint4: "1.0"
+    rleg_joint5: "-0.5"
+    rleg_joint6: "0.0"
+
+initial_joint_velocities:
+  joint_map:
+    root_joint: "0 0 0 0 0 0"
+    gimbal1: "0.0"
+    gimbal2: "0.0"
+    lleg_joint1: "0.0"
+    lleg_joint2: "0.0"
+    lleg_joint3: "0.0"
+    lleg_joint4: "0.0"
+    lleg_joint5: "0.0"
+    lleg_joint6: "0.0"
+    rleg_joint1: "0.0"
+    rleg_joint2: "0.0"
+    rleg_joint3: "0.0"
+    rleg_joint4: "0.0"
+    rleg_joint5: "0.0"
+    rleg_joint6: "0.0"

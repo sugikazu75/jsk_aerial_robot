@@ -1,0 +1,7 @@
+zeros:
+  lleg_joint3: -0.75
+  lleg_joint4: 1.5
+  lleg_joint5: -0.75
+  rleg_joint3: -0.75
+  rleg_joint4: 1.5
+  rleg_joint5: -0.75

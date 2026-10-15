@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="real_machine" default="false" />
+  <arg name="simulation" default="false" />
+  <arg name="robot_ns" default="flying_humanoid" />
+
+  <group ns="$(arg robot_ns)">
+    <group if="$(arg real_machine)">
+      <group unless="$(arg simulation)">
+
+        <!-- fc & IMU & GPS -->
+        <include file="$(find spinal)/launch/bridge.launch" >
+          <arg name="mode" value="serial" />
+          <arg name="serial_port" value="/dev/flight_controller" />
+        </include>
+
+        <!-- mocap -->
+        <include file="$(find aerial_robot_base)/launch/external_module/mocap.launch" />
+
+        <!-- realsense T265 -->
+        <include file="$(find timed_roslaunch)/launch/timed_roslaunch.launch">
+          <arg name="time" value="3.0" />
+          <arg name="pkg" value="realsense2_camera" />
+          <arg name="file" value="rs_t265.launch" />
+          <arg name="node_name" value="t265_launcher"/>
+        </include>
+
+      </group>
+    </group>
+
+    <!-- basic configuration for sensors (e.g. noise sigma) -->
+    <rosparam file="$(find aerial_robot_base)/config/sensors/imu/spinal.yaml" command="load" />
+    <rosparam file="$(find aerial_robot_base)/config/sensors/mocap.yaml" command="load" />
+    <rosparam file="$(find flying_humanoid)/config/sensors/realsense_t265.yaml" command="load" />
+  </group>
+
+</launch>

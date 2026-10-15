@@ -1,0 +1,6 @@
+package:
+  ["flying_humanoid"]
+
+flying_humanoid:
+  input: ["robots/flying_humanoid.urdf.xacro"]
+  filename: [""]
