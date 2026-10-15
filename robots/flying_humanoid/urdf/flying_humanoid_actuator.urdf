@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<robot name="flying_humanoid" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find flying_humanoid)/urdf/common.xacro" />
+
+  <xacro:joint_transmission joint="lleg_joint1"/>
+  <xacro:joint_transmission joint="lleg_joint2"/>
+  <xacro:joint_transmission joint="lleg_joint3"/>
+  <xacro:joint_transmission joint="lleg_joint4"/>
+  <xacro:joint_transmission joint="lleg_joint5"/>
+  <xacro:joint_transmission joint="lleg_joint6"/>
+
+  <xacro:joint_transmission joint="rleg_joint1"/>
+  <xacro:joint_transmission joint="rleg_joint2"/>
+  <xacro:joint_transmission joint="rleg_joint3"/>
+  <xacro:joint_transmission joint="rleg_joint4"/>
+  <xacro:joint_transmission joint="rleg_joint5"/>
+  <xacro:joint_transmission joint="rleg_joint6"/>
+
+  <xacro:joint_transmission joint="gimbal1"/>
+  <xacro:joint_transmission joint="gimbal2"/>
+
+  <xacro:rotor_transmission id="1"/>
+  <xacro:rotor_transmission id="2"/>
+
+</robot>

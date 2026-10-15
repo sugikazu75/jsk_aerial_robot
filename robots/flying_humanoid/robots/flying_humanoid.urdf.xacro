@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot name="flying_humanoid" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find flying_humanoid)/urdf/common.xacro" />
+  <xacro:include filename="$(find flying_humanoid)/urdf/flying_humanoid.urdf" />
+  <xacro:include filename="$(find flying_humanoid)/urdf/flying_humanoid_actuator.urdf"/>
+
+  <mujoco>
+    <default>
+      <joint damping="1.0" armature="0.01" />
+    </default>
+  </mujoco>
+
+  <m_f_rate value="-0.0067" />
+
+  <xacro:rotor_arm id="1" origin="-0.00020126  0.0975 0.07725" rpy="0 0 ${pi/2}"/>
+  <xacro:rotor_arm id="2" origin="-0.00020126 -0.0975 0.07725" rpy="0 0 ${pi/2}"/>
+
+  <!-- root joint -->
+  <link name="root">
+    <xacro:virtual_inertial/>
+  </link>
+  <joint name="root_joint" type="fixed">
+    <parent link="root"/>
+    <child link="base_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+</robot>

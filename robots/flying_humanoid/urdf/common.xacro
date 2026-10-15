@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="common" >
+
+  <baselink name="fc" />
+  <thrust_link name="thrust" />
+
+  <!-- macro of virtual inertial -->
+  <xacro:macro name="virtual_inertial" params="x:=0 y:=0 z:=0">
+    <inertial>
+      <origin xyz="${x} ${y} ${z}"/>
+      <mass value="0.00001"/>
+      <inertia
+          ixx="0.000001" ixy="0.0" ixz="0.0"
+          iyy="0.000001" iyz="0.0"
+          izz="0.000002"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- macro of virtual joint -->
+  <xacro:macro name="virtual_joint" params="origin='0 0 0' parent child">
+    <joint name="${parent}_2_${child}" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${child}"/>
+      <origin xyz="${origin}"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- macro of virtual link -->
+  <xacro:macro name="virtual_link" params="origin='0 0 0' name parent">
+    <link name="${name}">
+      <xacro:virtual_inertial/>
+    </link>
+    <xacro:virtual_joint parent="${parent}" child="${name}" origin="${origin}"/>
+  </xacro:macro>
+
+  <xacro:macro name="rotor_arm" params="id parent:=base_link origin:='0 0 0' rpy:='0 0 0'">
+    <link name="rotor_arm${id}">
+      <xacro:virtual_inertial/>
+    </link>
+    <joint name="motor_coord_joint${id}" type="fixed">
+      <parent link="${parent}"/>
+      <child link="rotor_arm${id}"/>
+      <origin xyz="${origin}" rpy="${rpy}"/>
+      <axis xyz="0 0 1"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="joint_transmission" params="joint">
+    <transmission name="${joint}_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${joint}">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${joint}_servo">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+  <xacro:macro name="rotor_transmission" params="id">
+    <transmission name="rotor${id}_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rotor${id}">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+      </joint>
+      <actuator name="rotor${id}">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+</robot>
