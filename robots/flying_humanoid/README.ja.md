@@ -54,7 +54,7 @@ catkin build
 ```bash
 mkdir -p ~/ros/flying_humanoid_ws/src
 cd ~/ros/flying_humanoid_ws/src
-git clone -b PR/flying_humanoid/trajopt_walking_controller https://github.com/sugikazu75/jsk_aerial_robot.git
+git clone -b develop/flying_humanoid https://github.com/sugikazu75/jsk_aerial_robot.git
 source ~/ros/ocp_ws/devel/setup.bash
 cd ~/ros/flying_humanoid_ws
 vcs import src < src/jsk_aerial_robot/aerial_robot_${ROS_DISTRO}.rosinstall --recursive   # crocoddyl もここで入る
