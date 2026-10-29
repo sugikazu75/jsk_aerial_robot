@@ -39,7 +39,7 @@ rosrun aerial_robot_base keyboard_command.py   # in another terminal: r to arm, 
 
 ```bash
 roslaunch flying_humanoid bringup.launch real_machine:=False simulation:=True headless:=False walk:=True
-rosrun flying_humanoid walk_interface.py       # in another terminal: an IPython shell with `robot`
+python3 $(rospack find flying_humanoid)/scripts/walk_interface.py   # in another terminal: an IPython shell with `robot`
 ```
 
 ```python

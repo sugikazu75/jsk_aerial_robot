@@ -3,7 +3,7 @@
 
 Launch bringup.launch with walk:=True, then run this script, which opens an IPython shell with `robot`:
 
-  rosrun flying_humanoid walk_interface.py
+  python3 $(rospack find flying_humanoid)/scripts/walk_interface.py
   >>> robot.start()
   >>> robot.takeoff()     # the rotors are on while walking
   >>> robot.plan(4)       # plan a walk of 4 steps from the current state, and wait until it is loaded
