@@ -7,6 +7,7 @@
 
 #include <aerial_robot_control/control/base/base.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 
 #include <Eigen/Core>
@@ -24,6 +25,8 @@ namespace flying_humanoid
 //  - "walk/start" (std_msgs/Bool): true starts the replay, false rewinds it.
 // Before the replay, the robot keeps the first sample of the trajectory. The trajectory starts from the state measured
 // when it was planned, so plan it just before walking.
+// When the robot is armed without a trajectory, it requests a standing one (0 steps) on "walk/plan_request", so that
+// the thrusts to stand are sent after the takeoff even before any walk is planned.
 // The thrusts are fed forward from the trajectory, plus a PD feedback on the attitude of the baselink.
 class WalkController : public aerial_robot_control::ControlBase
 {
@@ -32,6 +35,7 @@ public:
                   boost::shared_ptr<aerial_robot_model::RobotModel> robot_model,
                   boost::shared_ptr<aerial_robot_estimation::StateEstimator> estimator,
                   boost::shared_ptr<aerial_robot_navigation::BaseNavigator> navigator, double ctrl_loop_du) override;
+  void activate() override;
   bool update() override;
   void reset() override;
 
@@ -64,6 +68,7 @@ private:
   ros::Publisher four_axis_command_pub_;
   ros::Publisher desire_coord_pub_;
   ros::Publisher trajectory_loaded_pub_;
+  ros::Publisher plan_request_pub_;
   ros::Subscriber trajectory_sub_;
   ros::Subscriber start_sub_;
 
@@ -76,6 +81,7 @@ private:
   double replay_time_ = 0.0;
   bool replaying_ = false;
   bool first_run_ = true;
+  bool standing_requested_ = false;
 
   // attitude feedback on the thrusts
   double roll_p_gain_ = 5.0, roll_d_gain_ = 0.5;

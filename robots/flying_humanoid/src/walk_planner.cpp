@@ -129,6 +129,18 @@ bool WalkPlanner::plan(int num_steps, const Eigen::VectorXd& q_start)
   x0.tail(nr) = f0_;
   problem_->set_x0(x0);
 
+  // standing (0 steps): no optimization, just the static thrusts by the QP at the current state
+  if (num_steps == 0)
+  {
+    xs_.assign(2, x0);
+    us_.assign(1, Eigen::VectorXd::Zero(knots_.front()->get_nu()));
+    fs_.clear();
+    gait_phases_.assign(1, DOUBLE_SUPPORT);
+    logger_->clear();
+    std::cout << "standing: static thrusts " << f0_.transpose() << std::endl;
+    return true;
+  }
+
   xs_.assign(problem_->get_T() + 1, x0);
   us_ = problem_->quasiStatic_xs(std::vector<Eigen::VectorXd>(xs_.begin(), xs_.end() - 1));
 
@@ -557,8 +569,11 @@ bool WalkPlanner::saveSolverLog(const std::string& filename) const
 
 bool WalkPlanner::saveNodeDiagnosis(const std::string& filename)
 {
+  // nothing to diagnose without an optimization (standing)
+  if (!problem_ || us_.size() != problem_->get_T())
+    return false;
   std::ofstream ofs(filename);
-  if (!ofs || !problem_)
+  if (!ofs)
     return false;
 
   // evaluate every node at the solution
@@ -617,7 +632,7 @@ bool WalkPlanner::saveNodeDiagnosis(const std::string& filename)
 
 void WalkPlanner::checkDerivatives()
 {
-  if (!problem_ || xs_.empty())
+  if (!problem_ || us_.size() != problem_->get_T())
     return;
 
   // representative nodes: the first knot, the middle of the first swing, its touchdown and the next double support

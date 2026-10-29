@@ -70,7 +70,9 @@ walk controller   <──walk/trajectory (String: CSV)───────┘
 - The walk controller (`src/walk_controller.cpp`, `config/WalkControl.yaml`) is an `aerial_robot_control` plugin,
   loaded by `aerial_robot_base` instead of the gimbalrotor controller. Before `walk/start`, it holds the first
   sample of the trajectory. The thrusts are fed forward from the trajectory, plus a PD feedback on the attitude of the
-  baselink.
+  baselink. When the robot is armed (`start`) without any trajectory, the controller requests a standing one (0 steps):
+  a single sample of the current state with the static thrusts by a QP, without optimization. So the thrusts are sent
+  after the takeoff before planning any walk.
 
 ## Walk planner
 

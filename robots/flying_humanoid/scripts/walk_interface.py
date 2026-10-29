@@ -36,8 +36,13 @@ class FlyingHumanoidInterface(RobotInterface):
         self.plan_request_pub.publish(Int32(data=num_steps))
         rospy.loginfo("planning a walk of %d steps...", num_steps)
 
+        # wait for this plan, not for another one (e.g. the standing one requested by the controller on start)
+        def loaded():
+            path = self.loaded_trajectory
+            return path is not None and path != previous and "_%dsteps_" % num_steps in path
+
         deadline = rospy.Time.now() + rospy.Duration(timeout)
-        while self.loaded_trajectory == previous:
+        while not loaded():
             if rospy.is_shutdown() or rospy.Time.now() > deadline:
                 rospy.logerr("the walk trajectory was not loaded in %.0f s", timeout)
                 return None

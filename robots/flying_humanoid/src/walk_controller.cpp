@@ -48,6 +48,7 @@ void WalkController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   four_axis_command_pub_ = nh_.advertise<spinal::FourAxisCommand>("four_axes/command", 1);
   desire_coord_pub_ = nh_.advertise<spinal::DesireCoord>("desire_coordinate", 1);
   trajectory_loaded_pub_ = nh_.advertise<std_msgs::String>("walk/trajectory_loaded", 1, true);
+  plan_request_pub_ = nh_.advertise<std_msgs::Int32>("walk/plan_request", 1);
   trajectory_sub_ = nh_.subscribe("walk/trajectory", 1, &WalkController::trajectoryCallback, this);
   start_sub_ = nh_.subscribe("walk/start", 1, &WalkController::startCallback, this);
 }
@@ -62,6 +63,26 @@ void WalkController::startCallback(const std_msgs::Bool::ConstPtr& msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   start_requested_ = msg->data;
+}
+
+void WalkController::activate()
+{
+  ControlBase::activate();
+
+  // without any trajectory, nothing tells the thrusts to stand: plan standing (0 steps) from the current state
+  bool pending;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    pending = !pending_trajectory_.empty();
+  }
+  if (trajectory_.empty() && !pending && !standing_requested_)
+  {
+    ROS_INFO("no walk trajectory yet: request a standing one to have the thrusts after the takeoff");
+    std_msgs::Int32 msg;
+    msg.data = 0;
+    plan_request_pub_.publish(msg);
+    standing_requested_ = true;
+  }
 }
 
 bool WalkController::update()
@@ -119,6 +140,7 @@ void WalkController::reset()
   ControlBase::reset();
   rewind();
   first_run_ = true;
+  standing_requested_ = false;
 }
 
 void WalkController::rewind()

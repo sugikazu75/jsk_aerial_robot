@@ -89,6 +89,7 @@ public:
                                         const std::string& baselink);
 
   // plan a walk starting from q_start (with zero velocity)
+  // 0 steps gives a single sample standing at q_start with the static thrusts (no optimization)
   // returns false when the solver did not converge (the result is still available)
   bool plan(int num_steps, const Eigen::VectorXd& q_start);
   bool saveCsv(const std::string& filename) const;
