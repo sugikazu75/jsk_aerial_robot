@@ -94,7 +94,14 @@ Main parameters in `config/WalkPlanner.yaml`:
 | `touchdown_constraint` | the swing foot lands exactly on its target with zero velocity (equality constraint) |
 | `touchdown_velocity_weight` | the same as a cost |
 | `terminal_posture_constraint` | the joint angles return to those at the start (equality constraint on the terminal node) |
+| `terminal_thrust_weight` | the thrusts return to the static ones at the start (cost on the terminal node, see below) |
 | `*_weight` | cost weights |
+
+Without `terminal_thrust_weight`, the thrusts end unbalanced (e.g. 2.2 N / 3.9 N against 4.8 N / 4.8 N at the start):
+in the double support, the contact forces take any distribution of the thrusts. The thrusts cannot be constrained,
+since the constraints of the crocoddyl fork see only q and v. They are in a cost model built on the state with the
+thrusts, which however cannot hold the costs needing the multibody state (CoM, wrench cone, centroidal momentum), so
+the terminal node has only the state costs.
 
 ### Solvers
 

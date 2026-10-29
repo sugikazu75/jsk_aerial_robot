@@ -71,6 +71,7 @@ flying_humanoid::WalkPlannerParams loadParams(ros::NodeHandle& nh, ros::NodeHand
   p.touchdown_velocity_weight = param(pnh, "touchdown_velocity_weight", p.touchdown_velocity_weight);
   p.touchdown_constraint = param(pnh, "touchdown_constraint", p.touchdown_constraint);
   p.terminal_posture_constraint = param(pnh, "terminal_posture_constraint", p.terminal_posture_constraint);
+  p.terminal_thrust_weight = param(pnh, "terminal_thrust_weight", p.terminal_thrust_weight);
   return p;
 }
 }  // namespace

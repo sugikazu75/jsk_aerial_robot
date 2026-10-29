@@ -51,3 +51,4 @@ foot_size: [0.08, 0.05]  # [m]
 touchdown_velocity_weight: 10000.0  # the swing foot lands with zero velocity
 touchdown_constraint: true  # ... exactly on its target (equality constraint, needs solver_type 3)
 terminal_posture_constraint: true  # end with the joint angles at the start
+terminal_thrust_weight: 1000.0  # end with the thrusts at the start (cost on the terminal node, 0 to disable)

@@ -124,15 +124,9 @@ bool WalkPlanner::plan(int num_steps, const Eigen::VectorXd& q_start)
   const int nq = model_.nq;
   const int nv = model_.nv;
   const int nr = thrusters_.size();
-  auto first_knot = std::static_pointer_cast<IntegratedActionModelEulerWithThrusts>(knots_.front());
-  auto dmodel = std::static_pointer_cast<DifferentialActionModelContactFwdDynamicsWithThrusts>(
-      first_knot->get_differential());
-  const Eigen::VectorXd f_eq = dmodel->computeEquilibriumThrust(dmodel->createData(), q0_);
-  std::cout << "equilibrium thrust: " << f_eq.transpose() << std::endl;
-
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(nq + nv + nr);
   x0.head(nq) = q0_;
-  x0.tail(nr) = f_eq;
+  x0.tail(nr) = f0_;
   problem_->set_x0(x0);
 
   xs_.assign(problem_->get_T() + 1, x0);
@@ -237,6 +231,15 @@ void WalkPlanner::createProblem(int num_steps)
   // stand still, then move the weight onto the left foot
   for (int i = 0; i < params_.support_knots * 5; ++i)
     addKnot(com_ref, feet, {});
+
+  // thrusts which keep the robot static at the start: the initial guess, and the reference of the terminal thrusts
+  {
+    auto first_knot = std::static_pointer_cast<IntegratedActionModelEulerWithThrusts>(knots_.front());
+    auto dmodel = std::static_pointer_cast<DifferentialActionModelContactFwdDynamicsWithThrusts>(
+        first_knot->get_differential());
+    f0_ = dmodel->computeEquilibriumThrust(dmodel->createData(), q0_);
+    std::cout << "equilibrium thrust: " << f0_.transpose() << std::endl;
+  }
   if (num_steps > 0)
   {
     for (int i = 0; i < half_support_knots; ++i)
@@ -468,28 +471,66 @@ void WalkPlanner::addKnot(const Eigen::Vector3d& com_ref, const FootTasks& suppo
   }
 
   // joint position/velocity limits (not on the floating base pose)
-  {
-    const int ndx = state_->get_ndx();
-    Eigen::VectorXd lb = state_->get_lb().tail(ndx);
-    Eigen::VectorXd ub = state_->get_ub().tail(ndx);
-    Eigen::VectorXd weight = Eigen::VectorXd::Constant(ndx, params_.state_bound_weight);
-    lb.head(6).setConstant(-std::numeric_limits<double>::infinity());
-    ub.head(6).setConstant(std::numeric_limits<double>::infinity());
-    weight.head(6).setZero();
-    costs->addCost("stateBound",
-                   std::make_shared<crocoddyl::CostModelResidual>(
-                       state_,
-                       std::make_shared<crocoddyl::ActivationModelWeightedQuadraticBarrier>(
-                           crocoddyl::ActivationBounds(lb, ub, params_.state_bound_margin), weight),
-                       std::make_shared<crocoddyl::ResidualModelState>(state_, state_->zero(), nu)),
-                   1.0);
-  }
+  const int ndx = state_->get_ndx();
+  Eigen::VectorXd bound_lb = state_->get_lb().tail(ndx);
+  Eigen::VectorXd bound_ub = state_->get_ub().tail(ndx);
+  Eigen::VectorXd bound_weight = Eigen::VectorXd::Constant(ndx, params_.state_bound_weight);
+  bound_lb.head(6).setConstant(-std::numeric_limits<double>::infinity());
+  bound_ub.head(6).setConstant(std::numeric_limits<double>::infinity());
+  bound_weight.head(6).setZero();
+  costs->addCost("stateBound",
+                 std::make_shared<crocoddyl::CostModelResidual>(
+                     state_,
+                     std::make_shared<crocoddyl::ActivationModelWeightedQuadraticBarrier>(
+                         crocoddyl::ActivationBounds(bound_lb, bound_ub, params_.state_bound_margin), bound_weight),
+                     std::make_shared<crocoddyl::ResidualModelState>(state_, state_->zero(), nu)),
+                 1.0);
 
   // control regularization (thrust rates and joint torques)
   costs->addCost("ctrlReg",
                  std::make_shared<crocoddyl::CostModelResidual>(
                      state_, std::make_shared<crocoddyl::ResidualModelControl>(state_, nu)),
                  params_.control_weight);
+
+  // terminal node: bring the thrusts back to those at the start.
+  // Only a cost model on the state with the thrusts sees the thrusts, and it cannot hold the costs which need the
+  // multibody state (CoM, wrench cone, centroidal momentum, ...). So the terminal node has only the state costs.
+  if (terminal && params_.terminal_thrust_weight > 0.0)
+  {
+    const int nr = thrusters_.size();
+    auto state = state_with_thrusts_;
+    Eigen::VectorXd x_ref_with_thrusts(model_.nq + model_.nv + nr);
+    x_ref_with_thrusts << x_ref, f0_;
+    auto residual = std::make_shared<crocoddyl::ResidualModelState>(state, x_ref_with_thrusts, nu);
+    auto pad = [nr](const Eigen::VectorXd& v, double value) {
+      Eigen::VectorXd padded(v.size() + nr);
+      padded << v, Eigen::VectorXd::Constant(nr, value);
+      return padded;
+    };
+
+    costs = std::make_shared<crocoddyl::CostModelSum>(state, nu);
+    costs->addCost("stateReg",
+                   std::make_shared<crocoddyl::CostModelResidual>(
+                       state, std::make_shared<crocoddyl::ActivationModelWeightedQuad>(pad(params_.x_weights, 0.0)),
+                       residual),
+                   params_.state_weight);
+    Eigen::VectorXd thrust_weight = Eigen::VectorXd::Zero(ndx + nr);
+    thrust_weight.tail(nr).setOnes();
+    costs->addCost("terminalThrust",
+                   std::make_shared<crocoddyl::CostModelResidual>(
+                       state, std::make_shared<crocoddyl::ActivationModelWeightedQuad>(thrust_weight), residual),
+                   params_.terminal_thrust_weight);
+    const double inf = std::numeric_limits<double>::infinity();
+    costs->addCost("stateBound",
+                   std::make_shared<crocoddyl::CostModelResidual>(
+                       state,
+                       std::make_shared<crocoddyl::ActivationModelWeightedQuadraticBarrier>(
+                           crocoddyl::ActivationBounds(pad(bound_lb, -inf), pad(bound_ub, inf),
+                                                       params_.state_bound_margin),
+                           pad(bound_weight, 0.0)),
+                       std::make_shared<crocoddyl::ResidualModelState>(state, state->zero(), nu)),
+                   1.0);
+  }
 
   auto dmodel = std::make_shared<DifferentialActionModelContactFwdDynamicsWithThrusts>(
       state_with_thrusts_, actuation, contacts, costs, constraints, params_.contact_jacobian_damping, true);

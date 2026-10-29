@@ -70,6 +70,7 @@ struct WalkPlannerParams
   double touchdown_velocity_weight = 1e4;  // the swing foot lands with zero velocity
   bool touchdown_constraint = true;        // ... exactly on its target (equality constraint, needs HPIPM-SQP)
   bool terminal_posture_constraint = true;  // end with the joint angles at the start
+  double terminal_thrust_weight = 1000.0;   // end with the thrusts at the start (cost, 0 to disable)
 };
 
 // Plans a walk of the given number of steps on flat ground by trajectory optimization.
@@ -117,6 +118,7 @@ private:
 
   Eigen::VectorXd q0_;       // configuration at the start
   Eigen::Matrix3d heading_;  // yaw of the root at the start
+  Eigen::VectorXd f0_;       // thrusts which keep the robot static at the start
   std::vector<std::shared_ptr<crocoddyl::ActionModelAbstract>> knots_;
   std::vector<int> gait_phases_;
   std::shared_ptr<crocoddyl::ShootingProblem> problem_;
