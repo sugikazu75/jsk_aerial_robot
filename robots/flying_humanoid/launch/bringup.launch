@@ -44,8 +44,8 @@
 
     ###########  Control  ###########
     <group unless="$(arg walk)">
-      <rosparam file="$(arg config_dir)/Control.yaml" command="load" unless="$(arg simulation)"/>
-      <rosparam file="$(arg config_dir)/Control_sim.yaml" command="load" if="$(arg simulation)"/>
+      <rosparam file="$(arg config_dir)/FlightControl.yaml" command="load" unless="$(arg simulation)"/>
+      <rosparam file="$(arg config_dir)/FlightControl_sim.yaml" command="load" if="$(arg simulation)"/>
       <param name="flight_navigation_plugin_name" value="aerial_robot_navigation/gimbalrotor_navigation"/>
     </group>
     <rosparam file="$(arg config_dir)/WalkControl.yaml" command="load" if="$(arg walk)"/>
