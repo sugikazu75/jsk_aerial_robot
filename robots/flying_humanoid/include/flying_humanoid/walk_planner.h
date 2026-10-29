@@ -29,6 +29,14 @@ enum GaitPhase
   SWING_RIGHT = 2
 };
 
+// Planned trajectories to visualize: the optimized feet, and the references of the feet and the CoM in the costs
+struct WalkPaths
+{
+  std::vector<pinocchio::SE3> lfoot, rfoot;
+  std::vector<pinocchio::SE3> lfoot_ref, rfoot_ref;
+  std::vector<Eigen::Vector3d> com_ref;
+};
+
 struct WalkPlannerParams
 {
   // gait
@@ -99,6 +107,8 @@ public:
   bool saveNodeDiagnosis(const std::string& filename);    // cost terms, constraint violations and gaps of each node
   void checkDerivatives();  // compare the analytic derivatives with finite differences at some nodes
 
+  WalkPaths paths();
+
 private:
   typedef std::vector<std::pair<pinocchio::FrameIndex, pinocchio::SE3>> FootTasks;
 
@@ -122,6 +132,7 @@ private:
   Eigen::VectorXd f0_;       // thrusts which keep the robot static at the start
   std::vector<std::shared_ptr<crocoddyl::ActionModelAbstract>> knots_;
   std::vector<int> gait_phases_;
+  WalkPaths refs_;  // references of the feet and the CoM of each knot
   std::shared_ptr<crocoddyl::ShootingProblem> problem_;
   std::vector<Eigen::VectorXd> xs_;
   std::vector<Eigen::VectorXd> us_;

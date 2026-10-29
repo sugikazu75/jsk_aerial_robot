@@ -2,16 +2,20 @@
 // tells its path to the walk controller on "walk/trajectory".
 // The walk starts from the measured state: the baselink pose ("uav/baselink/odom") and the joint positions
 // ("joint_states"). With use_measured_state: false, it starts from initial_configuration at the origin instead.
+// The planned feet (lfoot_traj, rfoot_traj) and the references of the feet and the CoM (lfoot_ref_traj,
+// rfoot_ref_traj, com_ref_traj) are published as paths in the world frame for rviz.
 
 #include <flying_humanoid/walk_planner.h>
 
 #include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 
 #include <ctime>
+#include <functional>
 #include <filesystem>
 #include <memory>
 
@@ -74,6 +78,30 @@ flying_humanoid::WalkPlannerParams loadParams(ros::NodeHandle& nh, ros::NodeHand
   p.terminal_thrust_weight = param(pnh, "terminal_thrust_weight", p.terminal_thrust_weight);
   return p;
 }
+
+template <class Point>
+nav_msgs::Path toPath(const std::vector<Point>& points, const std::function<pinocchio::SE3(const Point&)>& pose)
+{
+  nav_msgs::Path path;
+  path.header.stamp = ros::Time::now();
+  path.header.frame_id = "world";
+  for (const auto& point : points)
+  {
+    const pinocchio::SE3 M = pose(point);
+    const Eigen::Quaterniond quat(M.rotation());
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.header = path.header;
+    pose_msg.pose.position.x = M.translation().x();
+    pose_msg.pose.position.y = M.translation().y();
+    pose_msg.pose.position.z = M.translation().z();
+    pose_msg.pose.orientation.x = quat.x();
+    pose_msg.pose.orientation.y = quat.y();
+    pose_msg.pose.orientation.z = quat.z();
+    pose_msg.pose.orientation.w = quat.w();
+    path.poses.push_back(pose_msg);
+  }
+  return path;
+}
 }  // namespace
 
 class WalkPlannerNode
@@ -96,6 +124,12 @@ public:
     std::filesystem::create_directories(result_dir_);
 
     trajectory_pub_ = nh_.advertise<std_msgs::String>("walk/trajectory", 1);
+    // latched, so that rviz started later shows the last plan
+    lfoot_traj_pub_ = nh_.advertise<nav_msgs::Path>("lfoot_traj", 1, true);
+    rfoot_traj_pub_ = nh_.advertise<nav_msgs::Path>("rfoot_traj", 1, true);
+    lfoot_ref_traj_pub_ = nh_.advertise<nav_msgs::Path>("lfoot_ref_traj", 1, true);
+    rfoot_ref_traj_pub_ = nh_.advertise<nav_msgs::Path>("rfoot_ref_traj", 1, true);
+    com_ref_traj_pub_ = nh_.advertise<nav_msgs::Path>("com_ref_traj", 1, true);
     request_sub_ = nh_.subscribe("walk/plan_request", 1, &WalkPlannerNode::requestCallback, this);
     odom_sub_ = nh_.subscribe("uav/baselink/odom", 1, &WalkPlannerNode::odomCallback, this);
     joint_state_sub_ = nh_.subscribe("joint_states", 1, &WalkPlannerNode::jointStateCallback, this);
@@ -165,14 +199,31 @@ private:
       planner_->saveNodeDiagnosis(base + "_nodes.csv");
       planner_->checkDerivatives();
     }
+    publishPaths();
+
     std_msgs::String path;
     path.data = filename;
     trajectory_pub_.publish(path);
   }
 
+  void publishPaths()
+  {
+    const flying_humanoid::WalkPaths paths = planner_->paths();
+    const std::function<pinocchio::SE3(const pinocchio::SE3&)> pose = [](const pinocchio::SE3& M) { return M; };
+    const std::function<pinocchio::SE3(const Eigen::Vector3d&)> position = [](const Eigen::Vector3d& p) {
+      return pinocchio::SE3(Eigen::Matrix3d::Identity(), p);
+    };
+    lfoot_traj_pub_.publish(toPath(paths.lfoot, pose));
+    rfoot_traj_pub_.publish(toPath(paths.rfoot, pose));
+    lfoot_ref_traj_pub_.publish(toPath(paths.lfoot_ref, pose));
+    rfoot_ref_traj_pub_.publish(toPath(paths.rfoot_ref, pose));
+    com_ref_traj_pub_.publish(toPath(paths.com_ref, position));
+  }
+
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Publisher trajectory_pub_;
+  ros::Publisher lfoot_traj_pub_, rfoot_traj_pub_, lfoot_ref_traj_pub_, rfoot_ref_traj_pub_, com_ref_traj_pub_;
   ros::Subscriber request_sub_;
   ros::Subscriber odom_sub_;
   ros::Subscriber joint_state_sub_;

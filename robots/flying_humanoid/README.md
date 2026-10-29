@@ -68,6 +68,8 @@ walk controller   <──walk/trajectory (String: CSV)───────┘
 ```
 
 - `walk_planner` (`src/walk_planner*.cpp`, `config/WalkPlanner.yaml`) is a node started by `bringup.launch walk:=True`.
+  It also publishes the planned feet (`lfoot_traj`, `rfoot_traj`) and the references of the feet and the CoM
+  (`lfoot_ref_traj`, `rfoot_ref_traj`, `com_ref_traj`) as paths in the `world` frame, shown by `config/rviz_config`.
 - The walk controller (`src/walk_controller.cpp`, `config/WalkControl.yaml`) is an `aerial_robot_control` plugin,
   loaded by `aerial_robot_base` instead of the gimbalrotor controller. Before `walk/start`, it holds the first
   sample of the trajectory. The thrusts are fed forward from the trajectory, plus a PD feedback on the attitude of the

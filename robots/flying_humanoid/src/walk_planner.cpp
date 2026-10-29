@@ -214,6 +214,7 @@ void WalkPlanner::createProblem(int num_steps)
 {
   knots_.clear();
   gait_phases_.clear();
+  refs_ = WalkPaths();
 
   // Everything is relative to the state at the start (q0_): the robot walks along its heading (yaw of the root),
   // and each foot keeps its height, which may not be zero because of the offset of the motion capture.
@@ -396,6 +397,12 @@ void WalkPlanner::addKnot(const Eigen::Vector3d& com_ref, const FootTasks& suppo
   auto costs = std::make_shared<crocoddyl::CostModelSum>(state_, nu);
   auto constraints = std::make_shared<crocoddyl::ConstraintModelManager>(state_, nu);
 
+  // references to visualize
+  for (const auto* tasks : { &support_feet, &swing_feet })
+    for (const auto& foot : *tasks)
+      (foot.first == lfoot_id_ ? refs_.lfoot_ref : refs_.rfoot_ref).push_back(foot.second);
+  refs_.com_ref.push_back(com);
+
   // CoM tracking
   costs->addCost("comTrack",
                  std::make_shared<crocoddyl::CostModelResidual>(
@@ -567,6 +574,20 @@ void WalkPlanner::addKnot(const Eigen::Vector3d& com_ref, const FootTasks& suppo
   else
     gait_phases_.push_back(support_feet.front().first == lfoot_id_ ? SWING_RIGHT : SWING_LEFT);
 }
+
+WalkPaths WalkPlanner::paths()
+{
+  WalkPaths paths = refs_;
+  for (const auto& x : xs_)
+  {
+    pinocchio::forwardKinematics(model_, data_, x.head(model_.nq));
+    pinocchio::updateFramePlacements(model_, data_);
+    paths.lfoot.push_back(data_.oMf[lfoot_id_]);
+    paths.rfoot.push_back(data_.oMf[rfoot_id_]);
+  }
+  return paths;
+}
+
 bool WalkPlanner::saveSolverLog(const std::string& filename) const
 {
   return logger_->save(filename);
