@@ -472,12 +472,17 @@ void WalkPlanner::addKnot(const Eigen::Vector3d& com_ref, const FootTasks& suppo
   // terminal node: the joint angles return to the initial ones (equality constraint)
   if (terminal && params_.terminal_posture_constraint)
   {
+    // the joint angles of initial_configuration, not of the start: the measured ones may have sunk under the load
+    // (e.g. steady-state error of the servos), and ending with them would keep and accumulate the sinking and tilt
+    Eigen::VectorXd x_terminal = x_ref;
+    x_terminal.segment(7, model_.nq - 7) =
+        Eigen::Map<const Eigen::VectorXd>(params_.initial_configuration.data() + 7, model_.nq - 7);
     // rows of the state residual (tangent space: root 6, joints nv - 6, velocities nv) for the joint angles
     std::vector<std::size_t> joint_rows;
     for (int i = 6; i < model_.nv; ++i)
       joint_rows.push_back(i);
     auto joint_residual = std::make_shared<crocoddyl::ResidualModelSelect>(
-        std::make_shared<crocoddyl::ResidualModelState>(state_, x_ref, nu), joint_rows);
+        std::make_shared<crocoddyl::ResidualModelState>(state_, x_terminal, nu), joint_rows);
     constraints->addConstraint("terminalPosture",
                                std::make_shared<crocoddyl::ConstraintModelResidual>(state_, joint_residual));
   }

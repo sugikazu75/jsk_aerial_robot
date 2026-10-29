@@ -13,7 +13,8 @@ lateral_shift_scale: 0.5  # how much the CoM moves toward the support foot (0: s
 # along the heading of the robot with the feet at their measured heights.
 use_measured_state: true
 baselink: fc
-# used instead of the measured state with use_measured_state: false (the feet are put on the ground at the origin)
+# the joint angles at the end of a walk (terminal_posture_constraint), and the start with use_measured_state: false
+# (the feet are put on the ground at the origin)
 initial_configuration: [0, 0, 0.15,                          # root position
                         0, 0, 0, 1.0,                        # root orientation (x, y, z, w)
                         0, 0,                                # gimbals
@@ -50,5 +51,5 @@ mu: 0.7
 foot_size: [0.08, 0.05]  # [m]
 touchdown_velocity_weight: 10000.0  # the swing foot lands with zero velocity
 touchdown_constraint: true  # ... exactly on its target (equality constraint, needs solver_type 3)
-terminal_posture_constraint: true  # end with the joint angles at the start
+terminal_posture_constraint: true  # end with the joint angles of initial_configuration
 terminal_thrust_weight: 1000.0  # end with the thrusts at the start (cost on the terminal node, 0 to disable)

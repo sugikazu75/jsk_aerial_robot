@@ -40,8 +40,8 @@ struct WalkPlannerParams
   int step_knots = 31;        // knots of one swing phase
   int support_knots = 8;      // knots of one double support phase
   double lateral_shift_scale = 0.5;  // how much the CoM moves toward the support foot (0: stays at the center)
-  std::vector<double> initial_configuration;  // q: root position, root quaternion (x, y, z, w), joints. used when the
-                                              // measured state is not available
+  std::vector<double> initial_configuration;  // q: root position, root quaternion (x, y, z, w), joints. the joint
+                                              // angles at the end of a walk, and the start without the measured state
   double m_f_rate = 0.0;                      // rotor torque per thrust [m]
 
   // solver
@@ -69,7 +69,7 @@ struct WalkPlannerParams
   double contact_jacobian_damping = 1e-6;
   double touchdown_velocity_weight = 1e4;  // the swing foot lands with zero velocity
   bool touchdown_constraint = true;        // ... exactly on its target (equality constraint, needs HPIPM-SQP)
-  bool terminal_posture_constraint = true;  // end with the joint angles at the start
+  bool terminal_posture_constraint = true;  // end with the joint angles of initial_configuration
   double terminal_thrust_weight = 1000.0;   // end with the thrusts at the start (cost, 0 to disable)
 };
 

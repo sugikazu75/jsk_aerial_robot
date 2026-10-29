@@ -96,7 +96,7 @@ Main parameters in `config/WalkPlanner.yaml`:
 | `solver_type` | 0: FDDP, 1: box-FDDP, 3: HPIPM-SQP |
 | `touchdown_constraint` | the swing foot lands exactly on its target with zero velocity (equality constraint) |
 | `touchdown_velocity_weight` | the same as a cost |
-| `terminal_posture_constraint` | the joint angles return to those at the start (equality constraint on the terminal node) |
+| `terminal_posture_constraint` | the joint angles end at those of `initial_configuration` (equality constraint on the terminal node) |
 | `terminal_thrust_weight` | the thrusts return to the static ones at the start (cost on the terminal node, see below) |
 | `*_weight` | cost weights |
 
