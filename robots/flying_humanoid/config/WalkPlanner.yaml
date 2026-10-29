@@ -1,0 +1,53 @@
+# parameters of walk_planner (loaded into its private namespace)
+
+lfoot: lfoot
+rfoot: rfoot
+step_length: 0.06  # [m] distance a foot moves in one step
+step_height: 0.02  # [m]
+time_step: 0.025   # [s]
+step_knots: 31     # knots of one swing phase
+support_knots: 8   # knots of one double support phase
+lateral_shift_scale: 0.5  # how much the CoM moves toward the support foot (0: stays at the center)
+
+# The walk starts from the measured state (uav/baselink/odom of the baselink frame, and joint_states), and goes
+# along the heading of the robot with the feet at their measured heights.
+use_measured_state: true
+baselink: fc
+# used instead of the measured state with use_measured_state: false (the feet are put on the ground at the origin)
+initial_configuration: [0, 0, 0.15,                          # root position
+                        0, 0, 0, 1.0,                        # root orientation (x, y, z, w)
+                        0, 0,                                # gimbals
+                        0.0, 0.0, -0.5, 1.0, -0.5, -0.0,     # lleg
+                        0.0, -0.0, -0.5, 1.0, -0.5, 0.0]     # rleg
+
+# solver
+#  0: FDDP       enforces the equality constraints only on the terminal node (touchdown_constraint is ignored)
+#  1: box-FDDP   also keeps the joint torques in their limits, but mishandles even the terminal equality constraint
+#  3: HPIPM-SQP  enforces the equality constraints on every node (crocoddyl built with BUILD_WITH_HPIPM=ON)
+solver_type: 3
+max_iterations: 1000
+num_threads: 4
+
+# cost weights
+x_weights: [0.0, 0.0, 0.0, 10000.0, 100000.0, 1000.0,        # root
+            0.0, 0.0,                                        # gimbals
+            0.1, 0.1, 0.1, 10.0, 0.1, 0.1,                   # lleg
+            0.1, 0.1, 0.1, 10.0, 0.1, 0.1,                   # rleg
+            100.0, 100.0, 100.0, 10000.0, 10000.0, 100.0,    # root
+            10.0, 10.0,                                      # gimbals
+            100.0, 100.0, 100.0, 10.0, 100.0, 100.0,         # lleg
+            100.0, 100.0, 100.0, 10.0, 100.0, 100.0]         # rleg
+state_weight: 1.0
+control_weight: 0.01
+thrust_reg_weight: [0.001, 0.001]
+thrust_barrier_weight: 10.0
+com_track_weight: [10000.0, 100000.0, 1000.0]
+foot_track_weight: [1000000.0, 1000000.0, 1000000.0, 1000.0, 10000.0, 10000.0]
+centroidal_momentum_weight: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+contact_wrench_weight: 100.0
+minimum_contact_force: 5.0  # [N]
+mu: 0.7
+foot_size: [0.08, 0.05]  # [m]
+touchdown_velocity_weight: 10000.0  # the swing foot lands with zero velocity
+touchdown_constraint: true  # ... exactly on its target (equality constraint, needs solver_type 3)
+terminal_posture_constraint: true  # end with the joint angles at the start

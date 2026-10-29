@@ -1,0 +1,10 @@
+# crocoddyl with the thrust-rate state and actuation used by walk_planner
+# (DifferentialActionModelContactFwdDynamicsWithThrusts, ActuationModelFloatingBaseThrusterRates, ...)
+# and the HPIPM-SQP solver, which enforces the equality constraints on every node.
+# pinocchio comes from apt (ros-one-pinocchio, v4).
+# hpipm-cpp (with hpipm and blasfeo) comes from ~/ros/ocp_ws: source it before building this workspace,
+#   catkin config --extend ~/ros/ocp_ws/devel
+- git:
+    local-name: crocoddyl
+    uri: https://github.com/sugikazu75/crocoddyl.git
+    version: PR/thrust_rate/exact_gradient
