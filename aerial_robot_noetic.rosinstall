@@ -66,3 +66,11 @@
     local-name: mujoco_ros_pkgs
     uri: https://github.com/sugikazu75/mujoco_ros_pkgs.git
     version: 6de14a3
+
+# crocoddyl
+# thrust-rate state/actuation and HPIPM-SQP solver for the walk planner of flying_humanoid.
+# HPIPM-SQP is built when hpipm-cpp is found (e.g. extend ~/ros/ocp_ws/devel)
+- git:
+    local-name: crocoddyl
+    uri: https://github.com/sugikazu75/crocoddyl.git
+    version: PR/thrust_rate/exact_gradient
