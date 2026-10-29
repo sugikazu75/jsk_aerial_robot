@@ -39,19 +39,19 @@ rosrun aerial_robot_base keyboard_command.py   # in another terminal: r to arm, 
 
 ```bash
 roslaunch flying_humanoid bringup.launch real_machine:=False simulation:=True headless:=False walk:=True
-rosrun flying_humanoid walk_interface.py 4     # in another terminal: plan a walk of 4 steps, take off and walk
+rosrun flying_humanoid walk_interface.py       # in another terminal: an IPython shell with `robot`
 ```
-
-`walk_interface.py` takes off before walking if the robot has not: the rotors are on (in the takeoff state of the
-navigator) while walking. Run it again for the next walk. `FlyingHumanoidInterface` in `scripts/walk_interface.py`
-can be used in your own script:
 
 ```python
-robot = FlyingHumanoidInterface()
-robot.plan(4)              # plan from the current state, and wait until the controller loads it
-robot.start(); robot.takeoff()
-robot.walk()               # replay it
+robot.start()
+robot.takeoff()     # the rotors are on (in the takeoff state of the navigator) while walking
+robot.plan(4)       # plan a walk of 4 steps from the current state, and wait until the controller loads it
+robot.walk()        # replay it
+robot.plan(2)       # the next walk: plan again just before walking
+robot.walk()
 ```
+
+`FlyingHumanoidInterface` in `scripts/walk_interface.py` can be used in your own script as well.
 
 ### How it works
 

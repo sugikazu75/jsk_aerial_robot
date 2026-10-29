@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 """Walk the flying humanoid with the trajectories planned by walk_planner.
 
-Launch bringup.launch with walk:=True, then
+Launch bringup.launch with walk:=True, then run this script, which opens an IPython shell with `robot`:
 
-  rosrun flying_humanoid walk_interface.py 4      # plan a walk of 4 steps, take off and walk
-
-or use FlyingHumanoidInterface from your own script:
-
-  robot = FlyingHumanoidInterface()
-  robot.plan(4)           # trajectory optimization (takes a while)
-  robot.start(); robot.takeoff()
-  robot.walk()            # replay the planned trajectory
+  rosrun flying_humanoid walk_interface.py
+  >>> robot.start()
+  >>> robot.takeoff()     # the rotors are on while walking
+  >>> robot.plan(4)       # plan a walk of 4 steps from the current state, and wait until it is loaded
+  >>> robot.walk()        # replay the planned trajectory
+  >>> robot.plan(2)       # the next walk: plan again just before walking
+  >>> robot.walk()
 """
-
-import argparse
 
 import rospy
 from aerial_robot_base.robot_interface import RobotInterface
@@ -59,20 +56,8 @@ class FlyingHumanoidInterface(RobotInterface):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("num_steps", type=int)
-    args = parser.parse_args(rospy.myargv()[1:])
+    from IPython import embed
 
     rospy.init_node("walk_interface")
     robot = FlyingHumanoidInterface()
-
-    if robot.plan(args.num_steps) is None:
-        exit(1)
-
-    if robot.getFlightState() != robot.TAKEOFF_STATE:
-        robot.start()
-        robot.takeoff()
-        rospy.sleep(3.0)  # let the thrusts rise to the standing ones
-
-    robot.walk()
-    rospy.sleep(1.0)  # keep the node alive until the message is delivered
+    embed()
