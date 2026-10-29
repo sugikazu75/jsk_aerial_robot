@@ -69,15 +69,17 @@ void WalkController::activate()
 {
   ControlBase::activate();
 
-  // without any trajectory, nothing tells the thrusts to stand: plan standing (0 steps) from the current state
+  // At each arming, plan standing (0 steps) from the current state: without a trajectory nothing tells the thrusts to
+  // stand, and the first sample of an old trajectory has the attitude (yaw included) of the state it was planned from.
+  // A trajectory loaded since the last disarming (planned before arming) is kept.
   bool pending;
   {
     std::lock_guard<std::mutex> lock(mutex_);
     pending = !pending_trajectory_.empty();
   }
-  if (trajectory_.empty() && !pending && !standing_requested_)
+  if (!loaded_since_reset_ && !pending && !standing_requested_)
   {
-    ROS_INFO("no walk trajectory yet: request a standing one to have the thrusts after the takeoff");
+    ROS_INFO("request a standing trajectory from the current state");
     std_msgs::Int32 msg;
     msg.data = 0;
     plan_request_pub_.publish(msg);
@@ -141,6 +143,7 @@ void WalkController::reset()
   rewind();
   first_run_ = true;
   standing_requested_ = false;
+  loaded_since_reset_ = false;
 }
 
 void WalkController::rewind()
@@ -169,6 +172,7 @@ void WalkController::loadPendingTrajectory()
 
   rewind();
   publishJointCommand(trajectory_.front());
+  loaded_since_reset_ = true;
   ROS_INFO_STREAM("loaded the walk trajectory " << filename << " (" << trajectory_.size() << " samples)");
 
   std_msgs::String msg;

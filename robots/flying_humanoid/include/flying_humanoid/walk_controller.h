@@ -25,8 +25,9 @@ namespace flying_humanoid
 //  - "walk/start" (std_msgs/Bool): true starts the replay, false rewinds it.
 // Before the replay, the robot keeps the first sample of the trajectory. The trajectory starts from the state measured
 // when it was planned, so plan it just before walking.
-// When the robot is armed without a trajectory, it requests a standing one (0 steps) on "walk/plan_request", so that
-// the thrusts to stand are sent after the takeoff even before any walk is planned.
+// At each arming, it requests a standing trajectory (0 steps) from the current state on "walk/plan_request", unless a
+// trajectory has been loaded since the last disarming: the thrusts to stand are sent after the takeoff even before
+// any walk is planned, with the attitude of the current state.
 // The thrusts are fed forward from the trajectory, plus a PD feedback on the attitude of the baselink.
 class WalkController : public aerial_robot_control::ControlBase
 {
@@ -82,6 +83,7 @@ private:
   bool replaying_ = false;
   bool first_run_ = true;
   bool standing_requested_ = false;
+  bool loaded_since_reset_ = false;  // a trajectory has been loaded since the last reset (disarming or takeoff)
 
   // attitude feedback on the thrusts
   double roll_p_gain_ = 5.0, roll_d_gain_ = 0.5;
