@@ -6,36 +6,80 @@ supporting a part of its weight.
 
 ## Setup
 
-The walk needs the following in addition to the usual setup of jsk_aerial_robot (the flight does not).
+From an environment with only ROS installed (ROS-O on Ubuntu 22.04/24.04: `configure.sh` of the repository root has
+been run, and `/opt/ros/one` exists). Every command below is for this environment.
+
+The walk needs the following in addition to the usual packages of jsk_aerial_robot (the flight does not).
 
 | package | from | |
 |---|---|---|
 | crocoddyl | `aerial_robot_*.rosinstall` of the repository root | a fork with the thrust-rate models (`PR/thrust_rate/exact_gradient` of sugikazu75/crocoddyl) |
-| pinocchio (v4) | apt: `ros-${ROS_DISTRO}-pinocchio` | |
-| hpipm-cpp, hpipm, blasfeo | another workspace, e.g. `~/ros/ocp_ws` | for the HPIPM-SQP solver (see [Solvers](#solvers)) |
+| pinocchio (v4) | apt | |
+| blasfeo, hpipm, hpipm-cpp | another workspace `~/ros/ocp_ws` | for the HPIPM-SQP solver (see [Solvers](#solvers)) |
 
-Extend the workspace with hpipm-cpp, and build in Release (without optimization, the planning becomes much slower).
-`BUILD_WITH_MULTITHREADS` lets crocoddyl use `num_threads` of the planner.
+### 1. apt packages
 
 ```bash
-cd ~/ros/flying_humanoid_ws
-catkin config --extend ~/ros/ocp_ws/devel
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_MULTITHREADS=ON \
-  -DBUILD_BENCHMARK=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF
-catkin build flying_humanoid
+sudo apt install -y python3-vcstool python3-catkin-tools python3-ipython coinor-libipopt-dev \
+  ros-${ROS_DISTRO}-pinocchio ros-${ROS_DISTRO}-eigenpy
 ```
 
-If crocoddyl is built without hpipm-cpp, set `solver_type: 0` and `touchdown_constraint: false` in
-`config/WalkPlanner.yaml`.
+### 2. Workspace for HPIPM (`~/ros/ocp_ws`)
 
-## Fly
+The `catkin` branches of these forks add a `package.xml` so that catkin builds them.
+
+```bash
+mkdir -p ~/ros/ocp_ws/src
+cd ~/ros/ocp_ws/src
+git clone -b catkin https://github.com/sugikazu75/blasfeo.git --recursive    # linear algebra optimized for each CPU architecture
+git clone -b catkin https://github.com/sugikazu75/hpipm.git --recursive      # interior point solver of optimal control on blasfeo
+git clone -b catkin https://github.com/sugikazu75/hpipm-cpp.git --recursive  # C++ wrapper of hpipm
+source /opt/ros/${ROS_DISTRO}/setup.bash
+cd ~/ros/ocp_ws
+rosdep install -y -r --from-paths src --ignore-src --rosdistro ${ROS_DISTRO}
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+catkin build
+```
+
+### 3. Workspace of the robot (`~/ros/flying_humanoid_ws`)
+
+It extends `~/ros/ocp_ws` (sourced before the first `catkin config`), so that crocoddyl finds hpipm-cpp and builds
+the HPIPM-SQP solver. Build in Release: without optimization, the planning becomes much slower.
+`BUILD_WITH_MULTITHREADS` lets crocoddyl use `num_threads` of the planner. `BUILD_WITH_ODYN=OFF`: crocoddyl would use
+ODYN if found, which is not needed here.
+
+```bash
+mkdir -p ~/ros/flying_humanoid_ws/src
+cd ~/ros/flying_humanoid_ws/src
+git clone -b PR/flying_humanoid/trajopt_walking_controller https://github.com/sugikazu75/jsk_aerial_robot.git
+source ~/ros/ocp_ws/devel/setup.bash
+cd ~/ros/flying_humanoid_ws
+vcs import src < src/jsk_aerial_robot/aerial_robot_${ROS_DISTRO}.rosinstall --recursive   # crocoddyl is included
+rosdep install -y -r --from-paths src --ignore-src --rosdistro ${ROS_DISTRO}
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DBUILD_WITH_MULTITHREADS=ON -DBUILD_BENCHMARK=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DBUILD_WITH_ODYN=OFF
+catkin build
+```
+
+Without `~/ros/ocp_ws`, skip step 2 and source `/opt/ros/${ROS_DISTRO}/setup.bash` instead in step 3: crocoddyl is
+built without HPIPM-SQP. Then set `solver_type: 0` and `touchdown_constraint: false` in `config/WalkPlanner.yaml`.
+
+## Run
+
+In every terminal:
+
+```bash
+source ~/ros/flying_humanoid_ws/devel/setup.bash
+```
+
+### Fly
 
 ```bash
 roslaunch flying_humanoid bringup.launch real_machine:=False simulation:=True headless:=False
 rosrun aerial_robot_base keyboard_command.py   # in another terminal: r to arm, t to take off, l to land
 ```
 
-## Walk
+### Walk
 
 ```bash
 roslaunch flying_humanoid bringup.launch real_machine:=False simulation:=True headless:=False walk:=True
@@ -53,6 +97,8 @@ robot.walk(2)       # the same as robot.plan(2) and robot.walk()
 ```
 
 `FlyingHumanoidInterface` in `scripts/walk_interface.py` can be used in your own script as well.
+
+For the real robot, use `real_machine:=True simulation:=False` (the defaults) instead.
 
 ### How it works
 
