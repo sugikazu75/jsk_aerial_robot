@@ -1,0 +1,14 @@
+aerial_robot_control_name: aerial_robot_control/flying_humanoid_walk_controller
+
+walk:
+  gimbal_names: [gimbal1, gimbal2]  # published on gimbals_ctrl, the other joints on joints_ctrl
+
+  # PD feedback on the baselink attitude, added to the planned thrusts
+  roll_p_gain: 5.0
+  roll_d_gain: 0.5
+  pitch_p_gain: 5.0
+  pitch_d_gain: 0.5
+  yaw_p_gain: 1.0
+  yaw_d_gain: 0.1
+  max_moment: 2.0  # [Nm]
+  sr_inverse_lambda: 0.001

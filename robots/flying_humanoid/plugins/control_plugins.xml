@@ -1,0 +1,5 @@
+<library path="lib/libflying_humanoid_walk_controller">
+  <class name="aerial_robot_control/flying_humanoid_walk_controller" type="flying_humanoid::WalkController" base_class_type="aerial_robot_control::ControlBase">
+    <description>Replays the walk trajectory planned by walk_planner</description>
+  </class>
+</library>

@@ -36,13 +36,16 @@ target_link_libraries(flying_humanoid_robot_model ${catkin_LIBRARIES} pinocchio:
 add_executable(walk_planner src/walk_planner.cpp src/walk_planner_node.cpp)
 target_link_libraries(walk_planner flying_humanoid_robot_model ${catkin_LIBRARIES} crocoddyl::crocoddyl)
 
-install(TARGETS flying_humanoid_robot_model walk_planner
+add_library(flying_humanoid_walk_controller src/walk_controller.cpp)
+target_link_libraries(flying_humanoid_walk_controller flying_humanoid_robot_model ${catkin_LIBRARIES})
+
+install(TARGETS flying_humanoid_robot_model flying_humanoid_walk_controller walk_planner
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
-install(DIRECTORY config launch meshes robots urdf
+install(DIRECTORY config launch meshes plugins robots urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   USE_SOURCE_PERMISSIONS
   )

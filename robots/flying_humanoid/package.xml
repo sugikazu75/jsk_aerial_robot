@@ -53,4 +53,8 @@
   <run_depend>rviz</run_depend>
   <run_depend>xacro</run_depend>
 
+  <export>
+    <aerial_robot_control plugin="${prefix}/plugins/control_plugins.xml" />
+  </export>
+
 </package>
