@@ -13,6 +13,8 @@
   <arg name="robot_model" default="$(find flying_humanoid)/robots/flying_humanoid.urdf.xacro" />
   <arg name="mujoco_model" default="$(find flying_humanoid)/mujoco/robot.xml" />
   <arg name="servo_config" default="$(arg config_dir)/Servo.yaml" />
+  <!-- False: fly with the gimbalrotor controller, True: walk with the trajectories planned by walk_planner -->
+  <arg name="walk" default="False" />
 
   ###########  Parameters  ###########
   <group ns="$(arg robot_ns)">
@@ -41,12 +43,20 @@
     <rosparam file="$(arg config_dir)/Simulation.yaml" command="load" if="$(eval arg('simulation') and not arg('real_machine'))"/>
 
     ###########  Control  ###########
-    <rosparam file="$(arg config_dir)/Control.yaml" command="load" unless="$(arg simulation)"/>
-    <rosparam file="$(arg config_dir)/Control_sim.yaml" command="load" if="$(arg simulation)"/>
+    <group unless="$(arg walk)">
+      <rosparam file="$(arg config_dir)/Control.yaml" command="load" unless="$(arg simulation)"/>
+      <rosparam file="$(arg config_dir)/Control_sim.yaml" command="load" if="$(arg simulation)"/>
+      <param name="flight_navigation_plugin_name" value="aerial_robot_navigation/gimbalrotor_navigation"/>
+    </group>
+    <rosparam file="$(arg config_dir)/WalkControl.yaml" command="load" if="$(arg walk)"/>
 
     ###########  Navigation  ###########
-    <param name="flight_navigation_plugin_name" value="aerial_robot_navigation/gimbalrotor_navigation"/>
     <rosparam file="$(arg config_dir)/Navigation.yaml" command="load" />
+
+    ###########  Walk Planner  ###########
+    <node pkg="flying_humanoid" type="walk_planner" name="walk_planner" output="screen" if="$(arg walk)">
+      <rosparam file="$(arg config_dir)/WalkPlanner.yaml" command="load" />
+    </node>
 
   </group>
 

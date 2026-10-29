@@ -50,7 +50,7 @@ install(DIRECTORY config launch meshes plugins robots urdf
   USE_SOURCE_PERMISSIONS
   )
 
-catkin_install_python(PROGRAMS scripts/load_initial_joint_states.py
+catkin_install_python(PROGRAMS scripts/load_initial_joint_states.py scripts/walk_interface.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
 
