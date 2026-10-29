@@ -1,5 +1,7 @@
 # Flying Humanoid
 
+English | [日本語](README.ja.md)
+
 A biped with two gimbal rotors on its body. It flies with the gimbalrotor controller, and walks by replaying a
 trajectory planned by trajectory optimization ([crocoddyl](https://github.com/loco-3d/crocoddyl)), with the rotors
 supporting a part of its weight.
