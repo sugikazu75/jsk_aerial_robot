@@ -10,6 +10,7 @@ Launch bringup.launch with walk:=True, then run this script, which opens an IPyt
   >>> robot.walk()        # replay the planned trajectory
   >>> robot.plan(2)       # the next walk: plan again just before walking
   >>> robot.walk()
+  >>> robot.walk(2)       # the same as robot.plan(2) and robot.walk()
 """
 
 import rospy
@@ -51,9 +52,16 @@ class FlyingHumanoidInterface(RobotInterface):
         rospy.loginfo("loaded %s", self.loaded_trajectory)
         return self.loaded_trajectory
 
-    def walk(self):
-        """Replay the loaded trajectory. The robot must have taken off."""
+    def walk(self, num_steps=None):
+        """Replay the loaded trajectory. The robot must have taken off.
+
+        With num_steps, plan a walk of num_steps from the current state first, then replay it.
+        Return False if the planned trajectory was not loaded.
+        """
+        if num_steps is not None and self.plan(num_steps) is None:
+            return False
         self.walk_start_pub.publish(Bool(data=True))
+        return True
 
     def stop(self):
         """Stop and rewind the trajectory."""

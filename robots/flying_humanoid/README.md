@@ -49,6 +49,7 @@ robot.plan(4)       # plan a walk of 4 steps from the current state, and wait un
 robot.walk()        # replay it
 robot.plan(2)       # the next walk: plan again just before walking
 robot.walk()
+robot.walk(2)       # the same as robot.plan(2) and robot.walk()
 ```
 
 `FlyingHumanoidInterface` in `scripts/walk_interface.py` can be used in your own script as well.
