@@ -5,6 +5,12 @@ controller:
   wrench_allocation_matrix_pub_interval: 0.1
   gimbal_calc_in_fc : false
 
+  # external wrench estimation
+  wrench_estimate_flag: true
+  wrench_estimate_update_rate: 200
+  momentum_observer_force_weight: 10
+  momentum_observer_torque_weight: 10
+
   xy:
     p_gain: 4.0
     i_gain: 0.1

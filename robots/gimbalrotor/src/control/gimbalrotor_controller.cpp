@@ -92,6 +92,12 @@ void GimbalrotorController::controlCore()
   else
     target_wrench_acc_cog.tail(3) = Eigen::Vector3d(target_ang_acc_x, target_ang_acc_y, target_ang_acc_z) + gyro;
 
+  /* target wrench in CoG frame for external wrench estimation */
+  Eigen::VectorXd target_wrench_cog = Eigen::VectorXd::Zero(6);
+  target_wrench_cog.head(3) = gimbalrotor_robot_model_->getMass() * Eigen::Vector3d(target_acc_cog.x(), target_acc_cog.y(), target_acc_cog.z());
+  target_wrench_cog.tail(3) = inertia * target_wrench_acc_cog.tail(3);
+  setTargetWrenchCog(target_wrench_cog);
+
   pid_msg_.roll.total.at(0) = target_ang_acc_x;
   pid_msg_.roll.p_term.at(0) = pid_controllers_.at(ROLL).getPTerm();
   pid_msg_.roll.i_term.at(0) = pid_controllers_.at(ROLL).getITerm();
