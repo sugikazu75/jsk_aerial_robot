@@ -4,7 +4,11 @@ using namespace std;
 
 namespace aerial_robot_control
 {
-GimbalrotorController::GimbalrotorController() : PoseLinearController()
+GimbalrotorController::GimbalrotorController()
+  : PoseLinearController(),
+    wrench_compensation_flag_(false),
+    wrench_compensation_mask_(Eigen::VectorXd::Zero(6)),
+    compensation_wrench_(Eigen::VectorXd::Zero(6))
 {
 }
 
@@ -49,6 +53,50 @@ void GimbalrotorController::rosParamInit()
   getParam<bool>(control_nh, "gimbal_calc_in_fc", gimbal_calc_in_fc_, true);
   getParam<bool>(control_nh, "hovering_approximate", hovering_approximate_, false);
   getParam<bool>(control_nh, "underactuate", underactuate_, false);
+
+  getParam<bool>(control_nh, "wrench_compensation_flag", wrench_compensation_flag_, false);
+  std::vector<double> mask;
+  control_nh.param("wrench_compensation_mask", mask, std::vector<double>{1, 1, 0, 0, 0, 1});
+  if (mask.size() != 6)
+  {
+    ROS_ERROR("wrench_compensation_mask should have 6 elements, disable compensation");
+    wrench_compensation_flag_ = false;
+    mask.assign(6, 0);
+  }
+  {
+    // the estimation thread is already running
+    std::lock_guard<std::mutex> lock(compensation_mutex_);
+    wrench_compensation_mask_ = Eigen::Map<Eigen::VectorXd>(mask.data(), 6);
+  }
+
+  if (wrench_compensation_flag_ && !wrench_estimate_flag_)
+  {
+    ROS_ERROR("wrench compensation requires wrench_estimate_flag, disable compensation");
+    wrench_compensation_flag_ = false;
+  }
+  if (wrench_compensation_flag_ && underactuate_)
+  {
+    ROS_ERROR("wrench compensation is not supported in underactuate mode, disable compensation");
+    wrench_compensation_flag_ = false;
+  }
+}
+
+void GimbalrotorController::externalWrenchEstimate()
+{
+  PoseLinearController::externalWrenchEstimate();
+
+  // the estimated value is kept when the estimation is stopped, so compensate only in hovering
+  std::lock_guard<std::mutex> lock(compensation_mutex_);
+  if (navigator_->getNaviState() == aerial_robot_navigation::HOVER_STATE)
+    compensation_wrench_ = wrench_compensation_mask_.cwiseProduct(est_external_wrench_);
+  else
+    compensation_wrench_ = Eigen::VectorXd::Zero(6);
+}
+
+const Eigen::VectorXd GimbalrotorController::getCompensationWrench()
+{
+  std::lock_guard<std::mutex> lock(compensation_mutex_);
+  return compensation_wrench_;
 }
 
 bool GimbalrotorController::update()
@@ -70,6 +118,16 @@ void GimbalrotorController::controlCore()
   tf::Matrix3x3 uav_rot = estimator_->getOrientation(Frame::COG, estimate_mode_);
   tf::Vector3 target_acc_w(pid_controllers_.at(X).result(), pid_controllers_.at(Y).result(),
                            pid_controllers_.at(Z).result());
+
+  /* feedforward compensation of the estimated external wrench */
+  Eigen::VectorXd compensation_wrench = Eigen::VectorXd::Zero(6);
+  if (wrench_compensation_flag_)
+  {
+    compensation_wrench = getCompensationWrench();
+    target_acc_w -= tf::Vector3(compensation_wrench(0), compensation_wrench(1), compensation_wrench(2)) /
+                    gimbalrotor_robot_model_->getMass();
+  }
+
   tf::Vector3 target_acc_dash = (tf::Matrix3x3(tf::createQuaternionFromYaw(rpy_.z()))).inverse() * target_acc_w;
   tf::Vector3 target_acc_cog = uav_rot.inverse() * target_acc_w;
   Eigen::VectorXd target_wrench_acc_cog = Eigen::VectorXd::Zero(6);
@@ -92,7 +150,10 @@ void GimbalrotorController::controlCore()
   else
     target_wrench_acc_cog.tail(3) = Eigen::Vector3d(target_ang_acc_x, target_ang_acc_y, target_ang_acc_z) + gyro;
 
-  /* target wrench in CoG frame for external wrench estimation */
+  Eigen::Vector3d compensation_ang_acc = inertia.inverse() * compensation_wrench.tail(3);
+  target_wrench_acc_cog.tail(3) -= compensation_ang_acc;
+
+  /* target wrench in CoG frame for external wrench estimation, which should include the compensation term */
   Eigen::VectorXd target_wrench_cog = Eigen::VectorXd::Zero(6);
   target_wrench_cog.head(3) = gimbalrotor_robot_model_->getMass() * Eigen::Vector3d(target_acc_cog.x(), target_acc_cog.y(), target_acc_cog.z());
   target_wrench_cog.tail(3) = inertia * target_wrench_acc_cog.tail(3);
@@ -232,7 +293,7 @@ void GimbalrotorController::controlCore()
 
     last_col += rotor_coef_;
   }
-  candidate_yaw_term_ = pid_controllers_.at(YAW).result() * max_yaw_scale;
+  candidate_yaw_term_ = (pid_controllers_.at(YAW).result() - compensation_ang_acc.z()) * max_yaw_scale;
 
   /* calculate target full thrusts and gimbal angles (considering full components)*/
   last_col = 0;

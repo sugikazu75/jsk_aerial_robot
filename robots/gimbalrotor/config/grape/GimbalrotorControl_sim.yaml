@@ -10,6 +10,8 @@ controller:
   wrench_estimate_update_rate: 200
   momentum_observer_force_weight: 10
   momentum_observer_torque_weight: 10
+  wrench_compensation_flag: true
+  wrench_compensation_mask: [1, 1, 0, 0, 0, 1] # [fx, fy, fz (world frame), tx, ty, tz (CoG frame)]
 
   xy:
     p_gain: 2.0

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <numeric>
 #include <aerial_robot_control/control/base/pose_linear_controller.h>
 #include <aerial_robot_control/control/fully_actuated_controller.h>
@@ -49,10 +50,18 @@ private:
   bool underactuate_;
   double target_roll_ = 0.0, target_pitch_ = 0.0;
 
+  /* feedforward compensation of the estimated external wrench */
+  bool wrench_compensation_flag_;
+  Eigen::VectorXd wrench_compensation_mask_;  // [fx, fy, fz (world frame), tx, ty, tz (CoG frame)]
+  Eigen::VectorXd compensation_wrench_;       // masked estimated external wrench, updated in the estimation thread
+  std::mutex compensation_mutex_;
+
   void rosParamInit();
   bool update() override;
   virtual void reset() override;
   void controlCore() override;
+  void externalWrenchEstimate() override;
+  const Eigen::VectorXd getCompensationWrench();
   void sendCmd() override;
   void sendFourAxisCommand();
   void sendGimbalCommand();
