@@ -25,7 +25,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -65,6 +65,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+          Value: true
         gimbal1_link:
           Alpha: 1
           Show Axes: false
@@ -85,10 +86,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        lidar_imu:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         main_body:
           Alpha: 1
           Show Axes: false
@@ -147,10 +144,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        body:
-          Value: true
-        camera_init:
-          Value: true
         gimbalrotor/cog:
           Value: true
         gimbalrotor/fc:
@@ -162,8 +155,6 @@ Visualization Manager:
         gimbalrotor/gimbal3_link:
           Value: true
         gimbalrotor/gimbal4_link:
-          Value: true
-        gimbalrotor/lidar_imu:
           Value: true
         gimbalrotor/main_body:
           Value: true
@@ -190,14 +181,11 @@ Visualization Manager:
       Marker Alpha: 1
       Marker Scale: 0.5
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
-      Show Names: true
+      Show Names: false
       Tree:
         world:
-          camera_init:
-            body:
-              {}
           gimbalrotor/root:
             gimbalrotor/cog:
               {}
@@ -216,8 +204,6 @@ Visualization Manager:
               gimbalrotor/gimbal4_link:
                 gimbalrotor/thrust4:
                   {}
-              gimbalrotor/lidar_imu:
-                {}
               gimbalrotor/rotor_arm1:
                 {}
               gimbalrotor/rotor_arm2:
@@ -284,6 +270,21 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Alpha: 1
+      Arrow Width: 0.25
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.25
+      Force Color: 204; 51; 51
+      Hide Small Values: false
+      History Length: 1
+      Name: WrenchStamped
+      Queue Size: 10
+      Topic: /gimbalrotor/estimated_external_wrench_cog
+      Torque Arrow Scale: 0.25
+      Torque Color: 204; 204; 51
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -312,7 +313,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.347715377807617
+      Distance: 2.8252451419830322
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -320,17 +321,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.6962937116622925
-        Y: -0.21910473704338074
-        Z: 0.09653152525424957
+        X: 0.24291358888149261
+        Y: 0.0013770435471087694
+        Z: 0.47831442952156067
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4753970503807068
+      Pitch: 0.49039703607559204
       Target Frame: <Fixed Frame>
-      Yaw: 4.68358850479126
+      Yaw: 5.018589973449707
     Saved: ~
 Window Geometry:
   Displays:
@@ -349,4 +350,4 @@ Window Geometry:
     collapsed: true
   Width: 1267
   X: 70
-  Y: 124
+  Y: 27
