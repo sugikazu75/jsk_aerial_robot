@@ -42,7 +42,13 @@ int main(int argc, char** argv)
   ros::NodeHandle np("~");
 
   ServoBridge *servo_bridge = new ServoBridge(n,np);
-  ros::spin();
+
+  /* multi-threaded spinner: servo states from multiple buses, control commands, and joint state timer are processed in parallel */
+  int spinner_thread_num;
+  np.param("spinner_thread_num", spinner_thread_num, 2);
+  ros::AsyncSpinner spinner(spinner_thread_num);
+  spinner.start();
+  ros::waitForShutdown();
   delete servo_bridge;
 
   return 0;

@@ -57,11 +57,15 @@
 #include <controller_manager_msgs/SwitchController.h>
 #include <urdf/model.h>
 
+/* servo backend */
+#include <aerial_robot_model/servo_backend.h>
+
 /* filter */
 #include <kalman_filter/lpf_filter.h>
 
 /* util */
 #include <string>
+#include <mutex>
 #include <boost/algorithm/clamp.hpp>
 
 using namespace std;
@@ -75,7 +79,7 @@ namespace ValueType
 class SingleServoHandle
 {
 public:
-  SingleServoHandle(string name, int id, int angle_sgn, double zero_point_offset, double angle_scale, double upper_limit, double lower_limit, double torque_scale, bool receive_real_state, bool filter_flag = false, double sample_freq = 0, double cutoff_freq = 0): name_(name), id_(id), curr_angle_val_(0), target_angle_val_(0), init_target_angle_val_(false), curr_torque_val_(0), target_torque_val_(0), angle_sgn_(angle_sgn), zero_point_offset_(zero_point_offset), angle_scale_(angle_scale), upper_limit_(upper_limit), lower_limit_(lower_limit), torque_scale_(torque_scale), receive_real_state_(receive_real_state), filter_flag_(filter_flag)
+  SingleServoHandle(string name, int id, int angle_sgn, double zero_point_offset, double angle_scale, double upper_limit, double lower_limit, double torque_scale, bool receive_real_state, bool filter_flag = false, double sample_freq = 0, double cutoff_freq = 0): name_(name), id_(id), curr_angle_val_(0), target_angle_val_(0), init_target_angle_val_(false), curr_torque_val_(0), target_torque_val_(0), angle_sgn_(angle_sgn), zero_point_offset_(zero_point_offset), angle_scale_(angle_scale), upper_limit_(upper_limit), lower_limit_(lower_limit), torque_scale_(torque_scale), receive_real_state_(receive_real_state), filter_flag_(filter_flag), type_(ServoType::DYNAMIXEL), state_received_(false)
   {
     /* for simulation */
     //joint_ctrl_pub_ = nh_.advertise<std_msgs::Float64>(std::string("/j") + std_  + std::string("_controller/command"), 1);
@@ -134,6 +138,13 @@ public:
     target_torque_val_ = val;
   }
 
+  /* bookkeeping of the feedback from the real servo */
+  inline void markStateReceived(const ros::Time& stamp)
+  {
+    state_received_ = true;
+    last_state_time_ = stamp;
+  }
+
 
   inline void setName(const string& name){ name_ = name; }
   inline void setId(const int& id){ id_ = id; }
@@ -141,6 +152,8 @@ public:
   inline void setZeroPointOffset(const int& offset){ zero_point_offset_ = offset; }
   inline void setAngleScale(const double& scale){ angle_scale_ = scale; }
   inline void setTorqueScale(const double& scale){ torque_scale_ = scale; }
+  inline void setType(const string& type){ type_ = type; }
+  inline void setBackend(const ServoBackendPtr& backend){ backend_ = backend; }
 
   const double getCurrAngleVal(int value_type) const
   {
@@ -190,6 +203,11 @@ public:
   inline const int& getZeroPointOffset() const {return zero_point_offset_; }
   inline const double& getAngleScale() const {return angle_scale_; }
   inline const double& getTorqueScale() const {return torque_scale_; }
+  inline const string& getType() const {return type_; }
+  inline const ServoBackendPtr& getBackend() const {return backend_; }
+  inline bool receiveRealState() const {return receive_real_state_; }
+  inline bool stateReceived() const {return state_received_; }
+  inline const ros::Time& getLastStateTime() const {return last_state_time_; }
 
 private:
   int id_;
@@ -207,6 +225,11 @@ private:
   bool receive_real_state_;
   bool filter_flag_;
   bool init_target_angle_val_;
+
+  string type_;
+  ServoBackendPtr backend_;
+  bool state_received_;
+  ros::Time last_state_time_;
 
 
   IirFilter lpf_angle_;
@@ -237,11 +260,25 @@ protected:
   map<string, vector<ros::Publisher> > servo_target_commands_sim_pubs_;
 
   map<string, ServoGroupHandler> servos_handler_;
+  map<string, ServoBackendPtr> servo_backends_; // servo type -> backend
   double moving_check_rate_;
   double moving_angle_thresh_;
   bool send_init_joint_pose_;
   bool simulation_mode_;
   int send_init_joint_pose_cnt_;
+
+  /* joint states publish */
+  std::mutex mutex_; // guard servo handlers and backends among callbacks (multi-threaded spinner)
+  ros::Timer joint_state_timer_;
+  double joint_state_pub_rate_;
+  double state_timeout_;
+  bool use_servo_state_stamp_;
+  bool real_state_received_;
+  ros::Time latest_state_stamp_;
+
+  void jointStatePublish(const ros::TimerEvent& e);
+  void flushBackends();
+  void clearBackends();
 
   void publishSimCommand(const std::string& servo_group_name, int index, double position, bool has_vel_torque, double velocity, double ff_torque);
   void servoStatesCallback(const spinal::ServoStatesConstPtr& state_msg, const std::string& servo_group_name);
