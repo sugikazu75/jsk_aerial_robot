@@ -206,6 +206,7 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
 
                   /* init the servo command publisher to the controller */
                   servo_target_pos_sim_pubs_[servo_group_params.first].push_back(nh_.advertise<std_msgs::Float64>(load_srv.request.name + string("/command"), 1));
+                  servo_target_commands_sim_pubs_[servo_group_params.first].push_back(nh_.advertise<std_msgs::Float64MultiArray>(load_srv.request.name + string("/commands"), 1));
                   // wait for the publisher initialization
                   while(servo_target_pos_sim_pubs_[servo_group_params.first].back().getNumSubscribers() == 0 && ros::ok())
                     ros::Duration(0.1).sleep();
@@ -303,6 +304,37 @@ void ServoBridge::servoStatesCallback(const spinal::ServoStatesConstPtr& state_m
   servo_states_pub_.publish(servo_states_msg);
 }
 
+void ServoBridge::publishSimCommand(const std::string& servo_group_name, int index, double position, bool has_vel_torque, double velocity, double ff_torque)
+{
+  auto pos_pubs = servo_target_pos_sim_pubs_.find(servo_group_name);
+  if(pos_pubs == servo_target_pos_sim_pubs_.end() || index >= (int)pos_pubs->second.size())
+    {
+      ROS_ERROR_THROTTLE(1.0, "[servo bridge]: no simulation controller for servo %d in group %s", index, servo_group_name.c_str());
+      return;
+    }
+
+  /*
+    Send to only one of "command" and "commands".
+    "command" (position only) resets the velocity and feed-forward torque in the controller (e.g., JointComputeTorqueController),
+    so sending both topics can overwrite the velocity and ff torque with zero.
+  */
+  const ros::Publisher& commands_pub = servo_target_commands_sim_pubs_.at(servo_group_name).at(index);
+  if(has_vel_torque && commands_pub.getNumSubscribers() > 0)
+    {
+      // pos, vel, ff_torque
+      std_msgs::Float64MultiArray pos_vel_torque_msg;
+      pos_vel_torque_msg.data.push_back(position);
+      pos_vel_torque_msg.data.push_back(velocity);
+      pos_vel_torque_msg.data.push_back(ff_torque);
+      commands_pub.publish(pos_vel_torque_msg);
+      return;
+    }
+
+  std_msgs::Float64 msg;
+  msg.data = position;
+  pos_pubs->second.at(index).publish(msg);
+}
+
 void ServoBridge::servoCtrlCallback(const sensor_msgs::JointStateConstPtr& servo_ctrl_msg, const string& servo_group_name)
 {
   spinal::ServoControlCmd target_angle_msg;
@@ -344,9 +376,12 @@ void ServoBridge::servoCtrlCallback(const sensor_msgs::JointStateConstPtr& servo
 
           if(simulation_mode_)
             {
-              std_msgs::Float64 msg;
-              msg.data = servo_ctrl_msg->position[i];
-              servo_target_pos_sim_pubs_[servo_group_name].at(distance(servos_handler_[servo_group_name].begin(), servo_handler)).publish(msg);
+              // pos, vel, ff_torque
+              bool has_vel_torque = (servo_ctrl_msg->position.size() == servo_ctrl_msg->velocity.size()) && (servo_ctrl_msg->position.size() == servo_ctrl_msg->effort.size());
+              publishSimCommand(servo_group_name, distance(servos_handler_[servo_group_name].begin(), servo_handler),
+                                servo_ctrl_msg->position.at(i), has_vel_torque,
+                                has_vel_torque ? servo_ctrl_msg->velocity.at(i): 0.0,
+                                has_vel_torque ? servo_ctrl_msg->effort.at(i): 0.0);
             }
         }
     }
@@ -379,9 +414,12 @@ void ServoBridge::servoCtrlCallback(const sensor_msgs::JointStateConstPtr& servo
 
           if(simulation_mode_)
             {
-              std_msgs::Float64 msg;
-              msg.data = servo_ctrl_msg->position[i];
-              servo_target_pos_sim_pubs_[servo_group_name].at(i).publish(msg);
+              // pos, vel, ff_torque
+              bool has_vel_torque = (servo_ctrl_msg->position.size() == servo_ctrl_msg->velocity.size()) && (servo_ctrl_msg->position.size() == servo_ctrl_msg->effort.size());
+              publishSimCommand(servo_group_name, i,
+                                servo_ctrl_msg->position.at(i), has_vel_torque,
+                                has_vel_torque ? servo_ctrl_msg->velocity.at(i): 0.0,
+                                has_vel_torque ? servo_ctrl_msg->effort.at(i): 0.0);
             }
         }
     }
@@ -435,14 +473,14 @@ void ServoBridge::servoTorqueCtrlCallback(const sensor_msgs::JointStateConstPtr&
   else
     { /* for fast tranmission: no searching process, in the predefine order */
 
-      if(servo_ctrl_msg->position.size() != servos_handler_[servo_group_name].size())
+      if(servo_ctrl_msg->effort.size() != servos_handler_[servo_group_name].size())
         {
-          ROS_ERROR("[servo bridge, servo control control]: the joint num from rosparam %d is not equal with ros msgs %d",
-                    (int)servos_handler_[servo_group_name].size(), (int)servo_ctrl_msg->position.size());
+          ROS_ERROR("[servo bridge, servo torque control]: the joint num from rosparam %d is not equal with ros msgs %d",
+                    (int)servos_handler_[servo_group_name].size(), (int)servo_ctrl_msg->effort.size());
           return;
         }
 
-      for(int i = 0; i < servo_ctrl_msg->position.size(); i++)
+      for(int i = 0; i < servo_ctrl_msg->effort.size(); i++)
         {
           /*  use the kinematics order (e.g. joint1 ~ joint N, gimbal_roll -> gimbal_pitch) */
           SingleServoHandlePtr servo_handler = servos_handler_[servo_group_name].at(i);
@@ -474,6 +512,7 @@ bool ServoBridge::servoEnableCallback(std_srvs::SetBool::Request &req, std_srvs:
   else
     servo_enable_pubs_["common"].publish(torque_msg);
 
+  res.success = true;
   return true;
 }
 
