@@ -2,7 +2,7 @@
 
 set -ex
 
-apt-get update -qq && apt-get install -y -q wget sudo lsb-release gnupg git sed build-essential ca-certificates # for docker
+apt-get update -qq && apt-get install -y -q curl wget sudo lsb-release gnupg git sed build-essential ca-certificates # for docker
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 
 echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
@@ -12,7 +12,7 @@ if [[ "$ROS_DISTRO" ==  "one" ]]; then
     ${CI_SOURCE_PATH}/configure.sh
 else
     sudo sh -c "echo \"deb ${REPOSITORY} `lsb_release -cs` main\" > /etc/apt/sources.list.d/ros-latest.list"
-    wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+    curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
     sudo apt-get update -qq
 
     if [[ "$ROS_DISTRO" ==  "noetic" ]]; then
@@ -34,9 +34,14 @@ source /opt/ros/${ROS_DISTRO}/setup.bash
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws
 cp -r ${CI_SOURCE_PATH} src/${REPOSITORY_NAME} # copy the whole contents instead of create symbolic link
-wstool init src
-wstool merge -t src src/${REPOSITORY_NAME}/aerial_robot_${ROS_DISTRO}.rosinstall
-wstool update -t src
+
+if [[ "$ROS_DISTRO" ==  "one" ]]; then
+    vcs import src < src/${REPOSITORY_NAME}/aerial_robot_${ROS_DISTRO}.rosinstall --recursive
+else
+    wstool init src
+    wstool merge -t src src/${REPOSITORY_NAME}/aerial_robot_${ROS_DISTRO}.rosinstall
+    wstool update -t src
+fi
 rosdep install --from-paths src -y -q -r --ignore-src --rosdistro ${ROS_DISTRO} # -r is indisapensible
 
 # Build
