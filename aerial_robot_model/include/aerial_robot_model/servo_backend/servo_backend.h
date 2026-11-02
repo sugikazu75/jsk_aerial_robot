@@ -33,51 +33,58 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <aerial_robot_model/servo_bridge.h>
+#ifndef SERVO_BACKEND_SERVO_BACKEND_H
+#define SERVO_BACKEND_SERVO_BACKEND_H
 
-DynamixelBackend::DynamixelBackend(const ros::Publisher& pos_pub, const ros::Publisher& torque_pub,
-                                   const ros::Publisher& enable_pub)
-  : ServoBackend(ServoType::DYNAMIXEL), pos_pub_(pos_pub), torque_pub_(torque_pub), enable_pub_(enable_pub)
-{
-}
+#include <memory>
+#include <string>
 
-void DynamixelBackend::addCommand(const SingleServoHandle& servo, const ServoCommand& cmd)
+class SingleServoHandle;
+
+namespace ServoType
 {
-  if (cmd.has_position)
+const std::string DYNAMIXEL = "dynamixel";
+};
+
+/* command for single servo in the joint space (radian, rad/s, Nm) */
+struct ServoCommand
+{
+  bool has_position = false;
+  bool has_velocity = false;
+  bool has_effort = false;
+  double position = 0;
+  double velocity = 0;
+  double effort = 0;
+};
+
+/*
+  Interface to send the servo commands to the real machine.
+  The commands are buffered by add*() and sent at once by flush().
+  The target values in the servo handle are already updated (and clamped) before add*() is called.
+  Note: all methods are called under the lock of ServoBridge.
+*/
+class ServoBackend
+{
+public:
+  explicit ServoBackend(const std::string& type) : type_(type)
   {
-    pos_msg_.index.push_back(servo.getId());
-    pos_msg_.angles.push_back(servo.getTargetAngleVal(ValueType::BIT));
-    pos_pending_ = true;
+  }
+  virtual ~ServoBackend() = default;
+
+  const std::string& getType() const
+  {
+    return type_;
   }
 
-  if (cmd.has_effort)
-  {
-    torque_msg_.index.push_back(servo.getId());
-    torque_msg_.angles.push_back(servo.getTargetTorqueVal(ValueType::BIT));
-  }
-}
+  virtual void addCommand(const SingleServoHandle& servo, const ServoCommand& cmd) = 0;
+  virtual void addTorqueEnable(const SingleServoHandle& servo, bool enable) = 0;
+  virtual void flush() = 0;
+  virtual void clear() = 0;
 
-void DynamixelBackend::addTorqueEnable(const SingleServoHandle& servo, bool enable)
-{
-  enable_msg_.index.push_back(servo.getId());
-  enable_msg_.torque_enable.push_back(enable);
-}
+protected:
+  std::string type_;
+};
 
-void DynamixelBackend::flush()
-{
-  if (pos_pending_)
-    pos_pub_.publish(pos_msg_);
-  if (torque_msg_.index.size() > 0)
-    torque_pub_.publish(torque_msg_);
-  if (enable_msg_.index.size() > 0)
-    enable_pub_.publish(enable_msg_);
-  clear();
-}
+using ServoBackendPtr = std::shared_ptr<ServoBackend>;
 
-void DynamixelBackend::clear()
-{
-  pos_msg_ = spinal::ServoControlCmd();
-  torque_msg_ = spinal::ServoControlCmd();
-  enable_msg_ = spinal::ServoTorqueCmd();
-  pos_pending_ = false;
-}
+#endif

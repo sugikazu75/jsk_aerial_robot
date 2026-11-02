@@ -92,7 +92,9 @@ add_library(robot_model_pluginlib
   src/model/plugin/underactuated_tilted_robot_model.cpp)
 target_link_libraries(robot_model_pluginlib ${catkin_LIBRARIES} aerial_robot_model)
 
-add_library(servo_bridge src/servo_bridge/servo_bridge.cpp src/servo_bridge/servo_backend.cpp)
+add_library(servo_bridge
+  src/servo_bridge/servo_bridge.cpp
+  src/servo_backend/dynamixel_backend.cpp)
 target_link_libraries(servo_bridge ${catkin_LIBRARIES})
 add_executable(servo_bridge_node src/servo_bridge/servo_bridge_node.cpp)
 target_link_libraries (servo_bridge_node  ${catkin_LIBRARIES} servo_bridge)

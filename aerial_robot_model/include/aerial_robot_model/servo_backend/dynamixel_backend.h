@@ -33,63 +33,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef SERVO_BACKEND_H
-#define SERVO_BACKEND_H
+#ifndef SERVO_BACKEND_DYNAMIXEL_BACKEND_H
+#define SERVO_BACKEND_DYNAMIXEL_BACKEND_H
+
+#include <aerial_robot_model/servo_backend/servo_backend.h>
 
 #include <ros/ros.h>
 #include <spinal/ServoControlCmd.h>
 #include <spinal/ServoTorqueCmd.h>
-
-#include <memory>
-#include <string>
-
-class SingleServoHandle;
-
-namespace ServoType
-{
-const std::string DYNAMIXEL = "dynamixel";
-};
-
-/* command for single servo in the joint space (radian, rad/s, Nm) */
-struct ServoCommand
-{
-  bool has_position = false;
-  bool has_velocity = false;
-  bool has_effort = false;
-  double position = 0;
-  double velocity = 0;
-  double effort = 0;
-};
-
-/*
-  Interface to send the servo commands to the real machine.
-  The commands are buffered by add*() and sent at once by flush().
-  The target values in the servo handle are already updated (and clamped) before add*() is called.
-  Note: all methods are called under the lock of ServoBridge.
-*/
-class ServoBackend
-{
-public:
-  explicit ServoBackend(const std::string& type) : type_(type)
-  {
-  }
-  virtual ~ServoBackend() = default;
-
-  const std::string& getType() const
-  {
-    return type_;
-  }
-
-  virtual void addCommand(const SingleServoHandle& servo, const ServoCommand& cmd) = 0;
-  virtual void addTorqueEnable(const SingleServoHandle& servo, bool enable) = 0;
-  virtual void flush() = 0;
-  virtual void clear() = 0;
-
-protected:
-  std::string type_;
-};
-
-using ServoBackendPtr = std::shared_ptr<ServoBackend>;
 
 /* Dynamixel via spinal (rosserial): convert to the servo unit (BIT) and publish spinal messages */
 class DynamixelBackend : public ServoBackend

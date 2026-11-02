@@ -58,7 +58,7 @@
 #include <urdf/model.h>
 
 /* servo backend */
-#include <aerial_robot_model/servo_backend.h>
+#include <aerial_robot_model/servo_backend/servo_backend.h>
 
 /* filter */
 #include <kalman_filter/lpf_filter.h>

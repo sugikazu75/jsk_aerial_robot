@@ -35,6 +35,7 @@
 
 
 #include <aerial_robot_model/servo_bridge.h>
+#include <aerial_robot_model/servo_backend/dynamixel_backend.h>
 
 ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(nhp), real_state_received_(false)
 {
