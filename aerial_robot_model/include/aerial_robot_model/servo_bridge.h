@@ -75,7 +75,7 @@ namespace ValueType
 class SingleServoHandle
 {
 public:
-  SingleServoHandle(string name, int id, int angle_sgn, double zero_point_offset, double angle_scale, double upper_limit, double lower_limit, double torque_scale, bool receive_real_state, bool filter_flag = false, double sample_freq = 0, double cutoff_freq = 0): name_(name), id_(id), curr_angle_val_(0), target_angle_val_(0), init_target_angle_val_(false), curr_torque_val_(0), angle_sgn_(angle_sgn), zero_point_offset_(zero_point_offset), angle_scale_(angle_scale), upper_limit_(upper_limit), lower_limit_(lower_limit), torque_scale_(torque_scale), receive_real_state_(receive_real_state), filter_flag_(filter_flag)
+  SingleServoHandle(string name, int id, int angle_sgn, double zero_point_offset, double angle_scale, double upper_limit, double lower_limit, double torque_scale, bool receive_real_state, bool filter_flag = false, double sample_freq = 0, double cutoff_freq = 0): name_(name), id_(id), curr_angle_val_(0), target_angle_val_(0), init_target_angle_val_(false), curr_torque_val_(0), target_torque_val_(0), angle_sgn_(angle_sgn), zero_point_offset_(zero_point_offset), angle_scale_(angle_scale), upper_limit_(upper_limit), lower_limit_(lower_limit), torque_scale_(torque_scale), receive_real_state_(receive_real_state), filter_flag_(filter_flag)
   {
     /* for simulation */
     //joint_ctrl_pub_ = nh_.advertise<std_msgs::Float64>(std::string("/j") + std_  + std::string("_controller/command"), 1);
@@ -107,7 +107,7 @@ public:
 
     if(!init_target_angle_val_)
       {
-        target_angle_val_ = boost::algorithm::clamp(val, lower_limit_, upper_limit_);
+        target_angle_val_ = boost::algorithm::clamp(curr_angle_val_, lower_limit_, upper_limit_);
         init_target_angle_val_ = true;
       }
   }
@@ -245,6 +245,7 @@ protected:
   bool use_mujoco_;
   int send_init_joint_pose_cnt_;
 
+  void publishSimCommand(const std::string& servo_group_name, int index, double position, bool has_vel_torque, double velocity, double ff_torque);
   void servoStatesCallback(const spinal::ServoStatesConstPtr& state_msg, const std::string& servo_group_name);
   void servoCtrlCallback(const sensor_msgs::JointStateConstPtr& joints_ctrl_msg, const std::string& servo_group_name);
   void servoTorqueCtrlCallback(const sensor_msgs::JointStateConstPtr& joints_ctrl_msg, const std::string& servo_group_name);
