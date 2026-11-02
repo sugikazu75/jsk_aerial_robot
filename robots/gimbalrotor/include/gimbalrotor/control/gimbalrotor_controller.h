@@ -55,6 +55,15 @@ private:
   Eigen::VectorXd wrench_compensation_mask_;  // [fx, fy, fz (world frame), tx, ty, tz (CoG frame)]
   Eigen::VectorXd compensation_wrench_;       // masked estimated external wrench, updated in the estimation thread
   std::mutex compensation_mutex_;
+  double wrench_compensation_start_delay_;    // wait for the convergence of the estimation after hovering [s]
+  double wrench_compensation_average_duration_;  // average the estimation for the hand over of the I term [s]
+  double wrench_compensation_force_std_thresh_;  // retry the averaging if the estimation fluctuates (e.g., touched) [N]
+  double wrench_compensation_torque_std_thresh_;  // [Nm]
+  Eigen::VectorXd compensation_sum_, compensation_sq_sum_;
+  int compensation_sample_num_;
+  bool compensation_active_;
+  double hover_start_time_;
+  Eigen::VectorXd applied_compensation_wrench_;
 
   void rosParamInit();
   bool update() override;
@@ -62,6 +71,9 @@ private:
   void controlCore() override;
   void externalWrenchEstimate() override;
   const Eigen::VectorXd getCompensationWrench();
+  Eigen::VectorXd updateWrenchCompensation();
+  void handOverIntegralTerm(const Eigen::VectorXd& wrench, bool to_compensation);
+  void resetCompensationAverage();
   void sendCmd() override;
   void sendFourAxisCommand();
   void sendGimbalCommand();

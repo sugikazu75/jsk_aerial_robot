@@ -8,7 +8,17 @@ GimbalrotorController::GimbalrotorController()
   : PoseLinearController(),
     wrench_compensation_flag_(false),
     wrench_compensation_mask_(Eigen::VectorXd::Zero(6)),
-    compensation_wrench_(Eigen::VectorXd::Zero(6))
+    compensation_wrench_(Eigen::VectorXd::Zero(6)),
+    wrench_compensation_start_delay_(0.5),
+    wrench_compensation_average_duration_(1.0),
+    wrench_compensation_force_std_thresh_(0.5),
+    wrench_compensation_torque_std_thresh_(0.05),
+    compensation_sum_(Eigen::VectorXd::Zero(6)),
+    compensation_sq_sum_(Eigen::VectorXd::Zero(6)),
+    compensation_sample_num_(0),
+    compensation_active_(false),
+    hover_start_time_(-1),
+    applied_compensation_wrench_(Eigen::VectorXd::Zero(6))
 {
 }
 
@@ -43,6 +53,12 @@ void GimbalrotorController::reset()
 {
   PoseLinearController::reset();
 
+  // PID is also reset, so nothing to hand over
+  compensation_active_ = false;
+  hover_start_time_ = -1;
+  applied_compensation_wrench_ = Eigen::VectorXd::Zero(6);
+  resetCompensationAverage();
+
   setAttitudeGains();
 }
 
@@ -56,7 +72,11 @@ void GimbalrotorController::rosParamInit()
 
   getParam<bool>(control_nh, "wrench_compensation_flag", wrench_compensation_flag_, false);
   std::vector<double> mask;
-  control_nh.param("wrench_compensation_mask", mask, std::vector<double>{1, 1, 0, 0, 0, 1});
+  control_nh.param("wrench_compensation_mask", mask, std::vector<double>{1, 1, 1, 0, 0, 1});
+  getParam<double>(control_nh, "wrench_compensation_start_delay", wrench_compensation_start_delay_, 0.5);
+  getParam<double>(control_nh, "wrench_compensation_average_duration", wrench_compensation_average_duration_, 1.0);
+  getParam<double>(control_nh, "wrench_compensation_force_std_thresh", wrench_compensation_force_std_thresh_, 0.5);
+  getParam<double>(control_nh, "wrench_compensation_torque_std_thresh", wrench_compensation_torque_std_thresh_, 0.05);
   if (mask.size() != 6)
   {
     ROS_ERROR("wrench_compensation_mask should have 6 elements, disable compensation");
@@ -85,18 +105,110 @@ void GimbalrotorController::externalWrenchEstimate()
 {
   PoseLinearController::externalWrenchEstimate();
 
-  // the estimated value is kept when the estimation is stopped, so compensate only in hovering
+  // whether to use this value is decided in the control thread (see updateWrenchCompensation)
   std::lock_guard<std::mutex> lock(compensation_mutex_);
-  if (navigator_->getNaviState() == aerial_robot_navigation::HOVER_STATE)
-    compensation_wrench_ = wrench_compensation_mask_.cwiseProduct(est_external_wrench_);
-  else
-    compensation_wrench_ = Eigen::VectorXd::Zero(6);
+  compensation_wrench_ = wrench_compensation_mask_.cwiseProduct(est_external_wrench_);
 }
 
 const Eigen::VectorXd GimbalrotorController::getCompensationWrench()
 {
   std::lock_guard<std::mutex> lock(compensation_mutex_);
   return compensation_wrench_;
+}
+
+Eigen::VectorXd GimbalrotorController::updateWrenchCompensation()
+{
+  // the estimated value is kept when the estimation is stopped, so compensate only in hovering
+  bool hovering = navigator_->getNaviState() == aerial_robot_navigation::HOVER_STATE;
+  double now = ros::Time::now().toSec();
+  if (!hovering)
+    hover_start_time_ = -1;
+  else if (hover_start_time_ < 0)
+    hover_start_time_ = now;
+
+  if (!compensation_active_)
+  {
+    if (!hovering)
+    {
+      resetCompensationAverage();
+      return Eigen::VectorXd::Zero(6);
+    }
+
+    // wait for the convergence of the estimation, then average it
+    if (now - hover_start_time_ < wrench_compensation_start_delay_)
+      return Eigen::VectorXd::Zero(6);
+
+    Eigen::VectorXd wrench = getCompensationWrench();
+    compensation_sum_ += wrench;
+    compensation_sq_sum_ += wrench.cwiseProduct(wrench);
+    compensation_sample_num_++;
+    if (now - hover_start_time_ < wrench_compensation_start_delay_ + wrench_compensation_average_duration_)
+      return Eigen::VectorXd::Zero(6);
+
+    Eigen::VectorXd mean = compensation_sum_ / compensation_sample_num_;
+    Eigen::VectorXd std_dev =
+        (compensation_sq_sum_ / compensation_sample_num_ - mean.cwiseProduct(mean)).cwiseMax(0).cwiseSqrt();
+    resetCompensationAverage();
+
+    if (std_dev.head(3).maxCoeff() > wrench_compensation_force_std_thresh_ ||
+        std_dev.tail(3).maxCoeff() > wrench_compensation_torque_std_thresh_)
+    {
+      // e.g., the robot is touched, so retry the averaging without waiting for the convergence again
+      ROS_WARN_STREAM("estimated external wrench fluctuates (std: " << std_dev.transpose()
+                                                                    << "), retry averaging for wrench compensation");
+      hover_start_time_ = now - wrench_compensation_start_delay_;
+      return Eigen::VectorXd::Zero(6);
+    }
+
+    // hand over the disturbance held by the I term to the compensation
+    applied_compensation_wrench_ = mean;
+    handOverIntegralTerm(applied_compensation_wrench_, true);
+    compensation_active_ = true;
+    ROS_INFO_STREAM("start external wrench compensation: " << applied_compensation_wrench_.transpose()
+                                                           << " (std: " << std_dev.transpose() << ")");
+    // the PID result in this cycle still includes the original I term
+    return Eigen::VectorXd::Zero(6);
+  }
+
+  if (!hovering)
+  {
+    // hand back the compensation to the I term to keep supporting the disturbance (e.g., in landing)
+    handOverIntegralTerm(applied_compensation_wrench_, false);
+    compensation_active_ = false;
+    ROS_INFO_STREAM("stop external wrench compensation: " << applied_compensation_wrench_.transpose());
+    // the PID result in this cycle does not include the handed back I term yet
+    return applied_compensation_wrench_;
+  }
+
+  applied_compensation_wrench_ = getCompensationWrench();
+  return applied_compensation_wrench_;
+}
+
+void GimbalrotorController::resetCompensationAverage()
+{
+  compensation_sum_ = Eigen::VectorXd::Zero(6);
+  compensation_sq_sum_ = Eigen::VectorXd::Zero(6);
+  compensation_sample_num_ = 0;
+}
+
+void GimbalrotorController::handOverIntegralTerm(const Eigen::VectorXd& wrench, bool to_compensation)
+{
+  // the compensation gives -wrench, so the I term (acc unit) is shifted by +wrench to keep the total command
+  double sign = to_compensation ? 1.0 : -1.0;
+  Eigen::Vector3d ang_acc = gimbalrotor_robot_model_->getInertia<Eigen::Matrix3d>().inverse() * wrench.tail(3);
+  double mass = gimbalrotor_robot_model_->getMass();
+  std::vector<std::pair<int, double>> shifts = {
+      { X, wrench(0) / mass }, { Y, wrench(1) / mass }, { Z, wrench(2) / mass }, { YAW, ang_acc.z() }
+  };
+
+  for (const auto& shift : shifts)
+  {
+    auto& pid = pid_controllers_.at(shift.first);
+    if (pid.getIGain() == 0 || shift.second == 0)
+      continue;
+    // calculate from the I term instead of the integrated error, since the I term may be saturated
+    pid.setErrI((pid.getITerm() + sign * shift.second) / pid.getIGain());
+  }
 }
 
 bool GimbalrotorController::update()
@@ -123,7 +235,7 @@ void GimbalrotorController::controlCore()
   Eigen::VectorXd compensation_wrench = Eigen::VectorXd::Zero(6);
   if (wrench_compensation_flag_)
   {
-    compensation_wrench = getCompensationWrench();
+    compensation_wrench = updateWrenchCompensation();
     target_acc_w -= tf::Vector3(compensation_wrench(0), compensation_wrench(1), compensation_wrench(2)) /
                     gimbalrotor_robot_model_->getMass();
   }

@@ -11,7 +11,11 @@ controller:
   momentum_observer_force_weight: 10
   momentum_observer_torque_weight: 10
   wrench_compensation_flag: true
-  wrench_compensation_mask: [1, 1, 0, 0, 0, 1] # [fx, fy, fz (world frame), tx, ty, tz (CoG frame)]
+  wrench_compensation_mask: [1, 1, 1, 0, 0, 1] # [fx, fy, fz (world frame), tx, ty, tz (CoG frame)]
+  wrench_compensation_start_delay: 0.5 # wait for the convergence of the estimation after hovering [s]
+  wrench_compensation_average_duration: 1.0 # average the estimation for the hand over of the I term [s]
+  wrench_compensation_force_std_thresh: 0.5 # retry the averaging if the estimation fluctuates (e.g., touched) [N]
+  wrench_compensation_torque_std_thresh: 0.05 # [Nm]
 
   xy:
     p_gain: 2.0
