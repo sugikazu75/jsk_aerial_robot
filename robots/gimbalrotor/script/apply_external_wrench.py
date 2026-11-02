@@ -23,7 +23,7 @@ WRENCH_SEQUENCE = [
 class ExternalWrenchApplier:
     def __init__(self):
         robot_ns = rospy.get_param("~robot_ns", "gimbalrotor")
-        self.body_name = rospy.get_param("~body_name", robot_ns + "::main_body")
+        self.body_name = rospy.get_param("~body_name", robot_ns + "::root")  # main_body is lumped into root by gazebo
         self.reference_frame = rospy.get_param("~reference_frame", "world")
         self.offset = rospy.get_param("~offset", [0.0, 0.0, 0.0])  # point of action in body frame
         self.loop = rospy.get_param("~loop", False)
