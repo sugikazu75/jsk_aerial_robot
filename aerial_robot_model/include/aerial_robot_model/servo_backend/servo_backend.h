@@ -36,6 +36,8 @@
 #ifndef SERVO_BACKEND_SERVO_BACKEND_H
 #define SERVO_BACKEND_SERVO_BACKEND_H
 
+#include <xmlrpcpp/XmlRpcValue.h>
+
 #include <memory>
 #include <string>
 
@@ -44,7 +46,8 @@ class SingleServoHandle;
 namespace ServoType
 {
 const std::string DYNAMIXEL = "dynamixel";
-};
+const std::string CUBEMARS = "cubemars";
+};  // namespace ServoType
 
 /* command for single servo in the joint space (radian, rad/s, Nm) */
 struct ServoCommand
@@ -76,10 +79,29 @@ public:
     return type_;
   }
 
+  /* register a servo with its parameters (servo specific param > group param). return false if the config is invalid */
+  virtual bool addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& group_params, XmlRpc::XmlRpcValue& servo_params)
+  {
+    return true;
+  }
+
   virtual void addCommand(const SingleServoHandle& servo, const ServoCommand& cmd) = 0;
-  virtual void addTorqueEnable(const SingleServoHandle& servo, bool enable) = 0;
+  /* return false if the servo can not be enabled */
+  virtual bool addTorqueEnable(const SingleServoHandle& servo, bool enable) = 0;
   virtual void flush() = 0;
   virtual void clear() = 0;
+
+  /* correct the multi-turn ambiguity of the joint angle. return false if not supported or failed */
+  virtual bool roughCalib(const SingleServoHandle& servo, std::string& message)
+  {
+    message = "not supported";
+    return false;
+  }
+
+  /* stop the internal threads (e.g., CAN receive thread) before the servo handlers are destroyed */
+  virtual void stop()
+  {
+  }
 
 protected:
   std::string type_;

@@ -58,10 +58,11 @@ void DynamixelBackend::addCommand(const SingleServoHandle& servo, const ServoCom
   }
 }
 
-void DynamixelBackend::addTorqueEnable(const SingleServoHandle& servo, bool enable)
+bool DynamixelBackend::addTorqueEnable(const SingleServoHandle& servo, bool enable)
 {
   enable_msg_.index.push_back(servo.getId());
   enable_msg_.torque_enable.push_back(enable);
+  return true;
 }
 
 void DynamixelBackend::flush()

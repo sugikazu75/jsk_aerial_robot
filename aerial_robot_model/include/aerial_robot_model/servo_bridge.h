@@ -47,6 +47,7 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_srvs/SetBool.h>
+#include <std_srvs/Trigger.h>
 #include <sensor_msgs/JointState.h>
 #include <spinal/ServoStates.h>
 #include <spinal/ServoControlCmd.h>
@@ -79,7 +80,7 @@ namespace ValueType
 class SingleServoHandle
 {
 public:
-  SingleServoHandle(string name, int id, int angle_sgn, double zero_point_offset, double angle_scale, double upper_limit, double lower_limit, double torque_scale, bool receive_real_state, bool filter_flag = false, double sample_freq = 0, double cutoff_freq = 0): name_(name), id_(id), curr_angle_val_(0), target_angle_val_(0), init_target_angle_val_(false), curr_torque_val_(0), target_torque_val_(0), angle_sgn_(angle_sgn), zero_point_offset_(zero_point_offset), angle_scale_(angle_scale), upper_limit_(upper_limit), lower_limit_(lower_limit), torque_scale_(torque_scale), receive_real_state_(receive_real_state), filter_flag_(filter_flag), type_(ServoType::DYNAMIXEL), state_received_(false)
+  SingleServoHandle(string name, int id, int angle_sgn, double zero_point_offset, double angle_scale, double upper_limit, double lower_limit, double torque_scale, bool receive_real_state, bool filter_flag = false, double sample_freq = 0, double cutoff_freq = 0): name_(name), id_(id), curr_angle_val_(0), target_angle_val_(0), init_target_angle_val_(false), curr_torque_val_(0), target_torque_val_(0), angle_sgn_(angle_sgn), zero_point_offset_(zero_point_offset), angle_scale_(angle_scale), upper_limit_(upper_limit), lower_limit_(lower_limit), torque_scale_(torque_scale), receive_real_state_(receive_real_state), filter_flag_(filter_flag), type_(ServoType::DYNAMIXEL), state_received_(false), curr_vel_val_(0), velocity_available_(false)
   {
     /* for simulation */
     //joint_ctrl_pub_ = nh_.advertise<std_msgs::Float64>(std::string("/j") + std_  + std::string("_controller/command"), 1);
@@ -126,6 +127,13 @@ public:
       ROS_ERROR("%s: wrong value type", name_.c_str());
 
     if(!receive_real_state_) curr_angle_val_ = target_angle_val_;
+  }
+
+  /* joint velocity [rad/s], only for the servos which provide velocity (e.g., cubemars) */
+  inline void setCurrVelocityVal(const double& val)
+  {
+    curr_vel_val_ = val;
+    velocity_available_ = true;
   }
 
   inline void setCurrTorqueVal(const double& val)
@@ -197,7 +205,7 @@ public:
   }
 
 
-  inline const string& getName(){return name_; }
+  inline const string& getName() const {return name_; }
   inline const int& getId() const {return id_; }
   inline const int& getAngleSgn() const {return angle_sgn_; }
   inline const int& getZeroPointOffset() const {return zero_point_offset_; }
@@ -207,6 +215,8 @@ public:
   inline const ServoBackendPtr& getBackend() const {return backend_; }
   inline bool receiveRealState() const {return receive_real_state_; }
   inline bool stateReceived() const {return state_received_; }
+  inline const double getCurrVelocityVal() const {return curr_vel_val_; }
+  inline bool velocityAvailable() const {return velocity_available_; }
   inline const ros::Time& getLastStateTime() const {return last_state_time_; }
 
 private:
@@ -230,6 +240,8 @@ private:
   ServoBackendPtr backend_;
   bool state_received_;
   ros::Time last_state_time_;
+  double curr_vel_val_; // rad/s
+  bool velocity_available_;
 
 
   IirFilter lpf_angle_;
@@ -255,6 +267,7 @@ protected:
   map<string, ros::Publisher> servo_target_pos_pubs_;
   map<string, ros::Publisher> servo_target_torque_pubs_;
   map<string, ros::ServiceServer> servo_enable_srvs_;
+  map<string, ros::ServiceServer> servo_rough_calib_srvs_;
   map<string, ros::Publisher> servo_enable_pubs_;
   map<string, vector<ros::Publisher> > servo_target_pos_sim_pubs_; // TODO: should be actionlib, trajectory controller
   map<string, vector<ros::Publisher> > servo_target_commands_sim_pubs_;
@@ -285,11 +298,16 @@ protected:
   void servoCtrlCallback(const sensor_msgs::JointStateConstPtr& joints_ctrl_msg, const std::string& servo_group_name);
   void servoTorqueCtrlCallback(const sensor_msgs::JointStateConstPtr& joints_ctrl_msg, const std::string& servo_group_name);
   bool servoEnableCallback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res, const std::string& servo_group_name);
+  bool servoRoughCalibCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res, const std::string& servo_group_name);
   void uavInfoCallback(const spinal::UavInfoConstPtr& uav_msg);
 
 public:
   ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp);
-  ~ServoBridge()  {}
+  ~ServoBridge()
+  {
+    /* stop the threads in backends (e.g., CAN receive thread) before destroying the servo handlers */
+    for(auto& backend : servo_backends_) backend.second->stop();
+  }
   void servoStatePublish();
 
 };

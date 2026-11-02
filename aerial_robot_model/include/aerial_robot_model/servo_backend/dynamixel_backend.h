@@ -49,7 +49,7 @@ public:
   DynamixelBackend(const ros::Publisher& pos_pub, const ros::Publisher& torque_pub, const ros::Publisher& enable_pub);
 
   void addCommand(const SingleServoHandle& servo, const ServoCommand& cmd) override;
-  void addTorqueEnable(const SingleServoHandle& servo, bool enable) override;
+  bool addTorqueEnable(const SingleServoHandle& servo, bool enable) override;
   void flush() override;
   void clear() override;
 

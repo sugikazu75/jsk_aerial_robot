@@ -49,6 +49,7 @@ int main(int argc, char** argv)
   ros::AsyncSpinner spinner(spinner_thread_num);
   spinner.start();
   ros::waitForShutdown();
+  spinner.stop();
   delete servo_bridge;
 
   return 0;

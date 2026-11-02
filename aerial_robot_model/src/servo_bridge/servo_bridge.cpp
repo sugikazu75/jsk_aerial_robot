@@ -36,6 +36,7 @@
 
 #include <aerial_robot_model/servo_bridge.h>
 #include <aerial_robot_model/servo_backend/dynamixel_backend.h>
+#include <aerial_robot_model/servo_backend/cubemars/cubemars_backend.h>
 
 ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(nhp), real_state_received_(false)
 {
@@ -43,6 +44,8 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
   nhp_.param("joint_state_pub_rate", joint_state_pub_rate_, 100.0); // [Hz]
   nhp_.param("state_timeout", state_timeout_, 1.0); // [sec], warn if the feedback from the real servo stops
   nhp_.param("use_servo_state_stamp", use_servo_state_stamp_, false); // true: latest stamp of servo states, false: ros::Time::now()
+  double cubemars_command_rate;
+  nhp_.param("cubemars_command_rate", cubemars_command_rate, 500.0); // [Hz], re-send the latest command to keep cubemars motors enabled
   if(simulation_mode_)
     {
       if(!ros::service::waitForService(nh_.getNamespace() + std::string("/controller_manager/load_controller")))
@@ -79,6 +82,8 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
 
   /* backend to send commands to real machine: dynamixel via spinal (one usb serial) */
   servo_backends_.insert(make_pair(ServoType::DYNAMIXEL, std::make_shared<DynamixelBackend>(servo_target_pos_pubs_.at("common"), servo_target_torque_pubs_.at("common"), servo_enable_pubs_.at("common"))));
+  /* backend for cubemars motors (v3 protocol) via SocketCAN, CAN is not used in simulation */
+  servo_backends_.insert(make_pair(ServoType::CUBEMARS, std::make_shared<CubemarsBackend>(mutex_, !simulation_mode_, cubemars_command_rate)));
 
 
   /* get additional config for servos from ros parameters */
@@ -109,6 +114,8 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
       servo_torque_ctrl_subs_.insert(make_pair(group_name, nh_.subscribe<sensor_msgs::JointState>(group_name + string("_torque_ctrl"), 10, boost::bind(&ServoBridge::servoTorqueCtrlCallback, this, _1, group_name))));
       /* mandatory service: get torque enalbe/disable flag  */
       servo_enable_srvs_.insert(make_pair(group_name, nh_.advertiseService<std_srvs::SetBool::Request, std_srvs::SetBool::Response>(servo_group_params.first + string("/torque_enable"), boost::bind(&ServoBridge::servoEnableCallback, this, _1, _2, servo_group_params.first))));
+      /* service: correct the multi-turn ambiguity of the joint angle (e.g., cubemars motor with single encoder) */
+      servo_rough_calib_srvs_.insert(make_pair(group_name, nh_.advertiseService<std_srvs::Trigger::Request, std_srvs::Trigger::Response>(servo_group_params.first + string("/rough_calib"), boost::bind(&ServoBridge::servoRoughCalibCallback, this, _1, _2, servo_group_params.first))));
 
       if(servo_group_params.second.hasMember("state_sub_topic"))
         {
@@ -145,12 +152,24 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
 
               /* get parameters from rosparam */
               int servo_id = servo_params.second["id"]; 
-              int angle_sgn = servo_params.second.hasMember("angle_sgn")? 
-                servo_params.second["angle_sgn"]:servo_group_params.second["angle_sgn"];
-              int zero_point_offset = servo_params.second.hasMember("zero_point_offset")?
-                servo_params.second["zero_point_offset"]:servo_group_params.second["zero_point_offset"];
-              double angle_scale = servo_params.second.hasMember("angle_scale")?
-                servo_params.second["angle_scale"]:servo_group_params.second["angle_scale"];
+              int angle_sgn = 1;
+              int zero_point_offset = 0; // only for dynamixel (servo unit)
+              double angle_scale = 1.0; // only for dynamixel (servo unit)
+              if(servo_type == ServoType::DYNAMIXEL)
+                {
+                  angle_sgn = servo_params.second.hasMember("angle_sgn")? 
+                    servo_params.second["angle_sgn"]:servo_group_params.second["angle_sgn"];
+                  zero_point_offset = servo_params.second.hasMember("zero_point_offset")?
+                    servo_params.second["zero_point_offset"]:servo_group_params.second["zero_point_offset"];
+                  angle_scale = servo_params.second.hasMember("angle_scale")?
+                    servo_params.second["angle_scale"]:servo_group_params.second["angle_scale"];
+                }
+              else
+                {
+                  /* other servos handle the unit conversion (e.g., zero point offset in radian) in the backend */
+                  if(servo_params.second.hasMember("angle_sgn")) angle_sgn = servo_params.second["angle_sgn"];
+                  else if(servo_group_params.second.hasMember("angle_sgn")) angle_sgn = servo_group_params.second["angle_sgn"];
+                }
 
               double torque_scale = servo_group_params.second.hasMember("torque_scale")?
                 servo_group_params.second["torque_scale"]:(servo_params.second.hasMember("torque_scale")?servo_params.second["torque_scale"]: XmlRpc::XmlRpcValue(1.0));
@@ -166,6 +185,12 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
               servo_group_handler.push_back(SingleServoHandlePtr(new SingleServoHandle(servo_params.second["name"], servo_params.second["id"], angle_sgn, zero_point_offset, angle_scale, upper_limit, lower_limit, torque_scale, !no_real_state_flags_.at(group_name), filter_flag, sample_freq, cutoff_freq)));
               servo_group_handler.back()->setType(servo_type);
               servo_group_handler.back()->setBackend(servo_backends_.at(servo_type));
+              if(!servo_backends_.at(servo_type)->addServo(servo_group_handler.back().get(), servo_group_params.second, servo_params.second))
+                {
+                  ROS_ERROR("[servo bridge]: failed to add %s to %s backend, skip", string(servo_params.second["name"]).c_str(), servo_type.c_str());
+                  servo_group_handler.pop_back();
+                  continue;
+                }
 
               /* rosparam and load controller for gazebo */
               if(simulation_mode_)
@@ -331,10 +356,23 @@ void ServoBridge::jointStatePublish(const ros::TimerEvent& e)
     std::lock_guard<std::mutex> lock(mutex_);
 
     // wait for the first feedback from real machine to avoid publishing the dummy initial value
+    if(!real_state_received_)
+      {
+        // the servo states can be also updated in the backend (e.g., CAN receive thread)
+        for(const auto& servo_group : servos_handler_)
+          for(const auto& servo_handler: servo_group.second)
+            if(servo_handler->stateReceived()) real_state_received_ = true;
+      }
     if(!real_state_received_) return;
 
     const ros::Time now = ros::Time::now();
     servo_states_msg.header.stamp = use_servo_state_stamp_ ? latest_state_stamp_ : now;
+
+    // publish velocity only if some servos provide velocity (0 for the other servos)
+    bool velocity_available = false;
+    for(const auto& servo_group : servos_handler_)
+      for(const auto& servo_handler: servo_group.second)
+        if(servo_handler->velocityAvailable()) velocity_available = true;
 
     for(const auto& servo_group : servos_handler_)
       {
@@ -343,6 +381,7 @@ void ServoBridge::jointStatePublish(const ros::TimerEvent& e)
             servo_states_msg.name.push_back(servo_handler->getName());
             servo_states_msg.position.push_back(servo_handler->getCurrAngleVal(ValueType::RADIAN));
             servo_states_msg.effort.push_back(servo_handler->getCurrTorqueVal());
+            if(velocity_available) servo_states_msg.velocity.push_back(servo_handler->getCurrVelocityVal());
 
             if(servo_handler->receiveRealState() &&
                (!servo_handler->stateReceived() ||
@@ -570,12 +609,36 @@ bool ServoBridge::servoEnableCallback(std_srvs::SetBool::Request &req, std_srvs:
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  res.success = true;
   for(auto servo_handler: servos_handler_[servo_group_name])
-    servo_handler->getBackend()->addTorqueEnable(*servo_handler, req.data);
+    {
+      if(!servo_handler->getBackend()->addTorqueEnable(*servo_handler, req.data))
+        {
+          res.success = false;
+          res.message += servo_handler->getName() + string(" ");
+        }
+    }
 
   flushBackends();
 
+  if(!res.success) res.message = string("failed to set torque: ") + res.message;
+  return true;
+}
+
+bool ServoBridge::servoRoughCalibCallback(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res, const std::string& servo_group_name)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+
   res.success = true;
+  for(auto servo_handler: servos_handler_[servo_group_name])
+    {
+      if(servo_handler->getType() == ServoType::DYNAMIXEL) continue; // absolute encoder
+
+      std::string message;
+      if(!servo_handler->getBackend()->roughCalib(*servo_handler, message)) res.success = false;
+      res.message += message + string("; ");
+    }
+
   return true;
 }
 
