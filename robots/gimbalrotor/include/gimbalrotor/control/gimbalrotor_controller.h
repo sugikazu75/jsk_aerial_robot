@@ -32,6 +32,7 @@ private:
   ros::Publisher rpy_gain_pub_;                      // for spinal
   ros::Publisher torque_allocation_matrix_inv_pub_;  // for spinal
   ros::Publisher gimbal_dof_pub_;                    // for spinal
+  ros::Publisher estimate_external_wrench_cog_pub_;  // both force and torque in CoG frame for visualization
 
   boost::shared_ptr<GimbalrotorRobotModel> gimbalrotor_robot_model_;
   std::vector<float> target_base_thrust_;
@@ -64,6 +65,7 @@ private:
   bool compensation_active_;
   double hover_start_time_;
   Eigen::VectorXd applied_compensation_wrench_;
+  std::string cog_frame_id_;
 
   void rosParamInit();
   bool update() override;

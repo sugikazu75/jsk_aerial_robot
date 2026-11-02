@@ -47,6 +47,15 @@ void GimbalrotorController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
   torque_allocation_matrix_inv_pub_ =
       nh_.advertise<spinal::TorqueAllocationMatrixInv>("torque_allocation_matrix_inv", 1);
   gimbal_dof_pub_ = nh_.advertise<std_msgs::UInt8>("gimbal_dof", 1);
+
+  std::string tf_prefix;
+  nhp_.param("tf_prefix", tf_prefix, std::string(""));
+  {
+    // the estimation thread is already running
+    std::lock_guard<std::mutex> lock(compensation_mutex_);
+    cog_frame_id_ = tf::resolve(tf_prefix, std::string("cog"));
+    estimate_external_wrench_cog_pub_ = nh_.advertise<geometry_msgs::WrenchStamped>("estimated_external_wrench_cog", 1);
+  }
 }
 
 void GimbalrotorController::reset()
@@ -108,6 +117,28 @@ void GimbalrotorController::externalWrenchEstimate()
   // whether to use this value is decided in the control thread (see updateWrenchCompensation)
   std::lock_guard<std::mutex> lock(compensation_mutex_);
   compensation_wrench_ = wrench_compensation_mask_.cwiseProduct(est_external_wrench_);
+
+  /* publish the estimated wrench in CoG frame (force is in world frame in the original topic) */
+  if (!estimate_external_wrench_cog_pub_)
+    return;
+  if (navigator_->getNaviState() != aerial_robot_navigation::HOVER_STATE &&
+      navigator_->getNaviState() != aerial_robot_navigation::LAND_STATE)
+    return;  // the estimation is stopped
+
+  Eigen::Matrix3d cog_rot;
+  tf::matrixTFToEigen(estimator_->getOrientation(Frame::COG, estimate_mode_), cog_rot);
+  Eigen::Vector3d force_cog = cog_rot.transpose() * est_external_wrench_.head(3);
+
+  geometry_msgs::WrenchStamped msg;
+  msg.header.stamp.fromSec(estimator_->getImuLatestTimeStamp());
+  msg.header.frame_id = cog_frame_id_;
+  msg.wrench.force.x = force_cog.x();
+  msg.wrench.force.y = force_cog.y();
+  msg.wrench.force.z = force_cog.z();
+  msg.wrench.torque.x = est_external_wrench_(3);
+  msg.wrench.torque.y = est_external_wrench_(4);
+  msg.wrench.torque.z = est_external_wrench_(5);
+  estimate_external_wrench_cog_pub_.publish(msg);
 }
 
 const Eigen::VectorXd GimbalrotorController::getCompensationWrench()
