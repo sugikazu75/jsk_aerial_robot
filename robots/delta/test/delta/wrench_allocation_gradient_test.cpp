@@ -178,6 +178,36 @@ TEST_F(WrenchAllocationGradientTest, EqConstraintsGradient)
   }
 }
 
+/* the constraints have to be consistent with the wrench calculated by the kinematics model at the same gimbal angles */
+TEST_F(WrenchAllocationGradientTest, EqConstraintsValue)
+{
+  auto robot_model_for_control = controller_->getRobotModelForControl();
+
+  for (int sample = 0; sample < sample_num_; sample++)
+  {
+    randomizeControllerState();
+    std::vector<double> x = randomVariables();
+    std::vector<double> result = evalConstraints(x);
+
+    KDL::JntArray joint_positions = robot_model_for_control->getJointPositions();
+    Eigen::VectorXd lambda(motor_num_);
+    for (int i = 0; i < motor_num_; i++)
+    {
+      lambda(i) = x.at(i);
+      joint_positions(robot_model_for_control->getGimbalJointIndices().at(i)) = x.at(i + motor_num_);
+    }
+    robot_model_for_control->updateRobotModel(joint_positions);
+
+    Eigen::VectorXd target_wrench = controller_->getTargetAccCog();
+    target_wrench.head(3) *= robot_model_for_control->getMass();
+    target_wrench.tail(3) = robot_model_for_control->getInertia<Eigen::Matrix3d>() * target_wrench.tail(3).eval();
+
+    Eigen::VectorXd expected = robot_model_for_control->calcWrenchMatrixOnCoG() * lambda - target_wrench;
+    for (int i = 0; i < m_; i++)
+      EXPECT_NEAR(result.at(i), expected(i), gradient_diff_thre_) << "constraint " << i << " at sample " << sample;
+  }
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "wrench_allocation_gradient_test");

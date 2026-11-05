@@ -20,7 +20,6 @@ void DeltaController::initialize(ros::NodeHandle nh, ros::NodeHandle nhp,
 
   first_run_ = true;
 
-  rotor_tilt_.resize(motor_num_);
   lambda_all_.resize(motor_num_, 0.0);
   target_gimbal_angles_.resize(motor_num_, 0.0);
 
@@ -85,23 +84,6 @@ void DeltaController::rosParamInit()
   getParam<bool>(control_nh, "hovering_approximate", hovering_approximate_, false);
   getParam<bool>(control_nh, "use_fc_for_att_control", use_fc_for_att_control_, true);
   getParam<bool>(control_nh, "linear_mode", linear_mode_, false);
-
-  /* get tilt angle of each thruster */
-  auto urdf_model = robot_model_->getUrdfModel();
-  auto robot_model_xml = robot_model_->getRobotModelXml("robot_description");
-  for (int i = 0; i < motor_num_; i++)
-  {
-    std::string rotor_parent_joint_name = std::string("gimbal_link") + std::to_string(i + 1) + std::string("2") +
-                                          std::string("rotor_parent") +
-                                          std::to_string(i + 1);  // we assume gimbal_link*2_rotor_parent* exists
-    urdf::JointConstSharedPtr joint = urdf_model.getJoint(rotor_parent_joint_name);
-    urdf::Pose origin = joint->parent_to_joint_origin_transform;
-
-    double r, p, y;
-    origin.rotation.getRPY(r, p, y);
-
-    rotor_tilt_.at(i) = p;
-  }
 }
 
 bool DeltaController::update()

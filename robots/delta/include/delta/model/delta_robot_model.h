@@ -34,6 +34,16 @@ public:
   {
     return current_gimbal_angles_;
   }
+  // index of each gimbal joint in KDL::JntArray. index: rotor
+  const std::vector<int>& getGimbalJointIndices() const
+  {
+    return gimbal_joint_indices_;
+  }
+  // column of each gimbal joint in the full body jacobians. index: rotor
+  const std::vector<int>& getGimbalJacobianCols() const
+  {
+    return gimbal_jacobian_cols_;
+  }
 
 private:
   std::mutex links_rotation_mutex_;
@@ -43,6 +53,8 @@ private:
   std::vector<KDL::Rotation> links_rotation_from_cog_;
   std::vector<double> current_joint_angles_;
   std::vector<double> current_gimbal_angles_;
+  std::vector<int> gimbal_joint_indices_;
+  std::vector<int> gimbal_jacobian_cols_;
 
 protected:
   void updateRobotModelImpl(const KDL::JntArray& joint_positions) override;

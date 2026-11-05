@@ -8,6 +8,15 @@ DeltaRobotModel::DeltaRobotModel(bool init_with_rosparam, bool verbose, double f
   links_rotation_from_cog_.resize(rotor_num);
   current_joint_angles_.resize(getJointNum() - rotor_num);
   current_gimbal_angles_.resize(rotor_num);
+
+  const auto& joint_names = getJointNames();
+  for (int i = 0; i < rotor_num; i++)
+  {
+    const std::string gimbal_name = std::string("gimbal") + std::to_string(i + 1);
+    gimbal_joint_indices_.push_back(getJointIndexMap().at(gimbal_name));
+    gimbal_jacobian_cols_.push_back(
+        6 + std::distance(joint_names.begin(), std::find(joint_names.begin(), joint_names.end(), gimbal_name)));
+  }
 }
 
 void DeltaRobotModel::updateRobotModelImpl(const KDL::JntArray& joint_positions)

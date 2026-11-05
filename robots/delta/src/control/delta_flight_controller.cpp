@@ -131,6 +131,8 @@ void DeltaController::nonlinearWrenchAllocation()
                                           lb.at(i + motor_num_), ub.at(i + motor_num_));
   }
 
+  const KDL::JntArray joint_positions = robot_model_for_control_->getJointPositions();
+
   double max_val;
   nlopt::result result;
   try
@@ -141,6 +143,9 @@ void DeltaController::nonlinearWrenchAllocation()
   catch (std::runtime_error error)
   {
   }
+
+  /* the constraints function updates the model with the decision variables. the linear allocation uses this model */
+  robot_model_for_control_->updateRobotModel(joint_positions);
 
   if (result < 0)
     ROS_ERROR_STREAM("[nlopt] failed to solve. result is " << result);

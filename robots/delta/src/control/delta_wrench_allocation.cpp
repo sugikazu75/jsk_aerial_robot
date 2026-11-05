@@ -40,18 +40,26 @@ double nonlinearWrenchAllocationMinObjective(const std::vector<double>& x, std::
 void nonlinearWrenchAllocationEqConstraints(unsigned m, double* result, unsigned n, const double* x, double* grad,
                                             void* ptr)
 {
-  // 0 ~ 6 : Q * lambda - target_wrench_cog = 0
+  // 0 ~ 6 : Q(phi) * lambda - target_wrench_cog(phi) = 0
+  // the rotor direction u, the rotor position p and the inertia I are calculated by the kinematics model,
+  // since all of them (p and I via the CoG shift) depend on the gimbal angles
 
   DeltaController* controller = reinterpret_cast<DeltaController*>(ptr);
   auto robot_model_for_control = controller->getRobotModelForControl();
 
   int motor_num = robot_model_for_control->getRotorNum();
 
-  std::vector<Eigen::Matrix3d> links_rotation_from_cog =
-      robot_model_for_control->getLinksRotationFromCog<Eigen::Matrix3d>();
+  /* reflect the gimbal angles of the decision variables to the model. link joints are kept */
+  const std::vector<int>& gimbal_joint_indices = robot_model_for_control->getGimbalJointIndices();
+  KDL::JntArray joint_positions = robot_model_for_control->getJointPositions();
+  for (int i = 0; i < motor_num; i++)
+    joint_positions(gimbal_joint_indices.at(i)) = x[i + motor_num];
+  robot_model_for_control->updateRobotModel(joint_positions);
+
   std::vector<Eigen::Vector3d> rotors_origin_from_cog =
       robot_model_for_control->getRotorsOriginFromCog<Eigen::Vector3d>();
-  std::vector<double> rotor_tilt = controller->getRotorTilt();
+  std::vector<Eigen::Vector3d> rotors_normal_from_cog =
+      robot_model_for_control->getRotorsNormalFromCog<Eigen::Vector3d>();
 
   Eigen::VectorXd target_acc_cog = controller->getTargetAccCog();
   double mass = robot_model_for_control->getMass();
@@ -70,15 +78,10 @@ void nonlinearWrenchAllocationEqConstraints(unsigned m, double* result, unsigned
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(6, motor_num);
   for (int i = 0; i < motor_num; i++)
   {
-    Eigen::Vector3d u_Li;
-    u_Li << sin(rotor_tilt.at(i)), -sin(x[i + motor_num]) * cos(rotor_tilt.at(i)),
-        cos(x[i + motor_num]) * cos(rotor_tilt.at(i));
-
-    // cog_u_Li = cog_R_Li * u_Li
-    Q.block(0, i, 3, 1) = links_rotation_from_cog.at(i) * u_Li;
+    Q.block(0, i, 3, 1) = rotors_normal_from_cog.at(i);
     Q.block(3, i, 3, 1) = (aerial_robot_model::skew(rotors_origin_from_cog.at(i)) +
                            m_f_rate * rotor_direction.at(i + 1) * Eigen::MatrixXd::Identity(3, 3)) *
-                          links_rotation_from_cog.at(i) * u_Li;
+                          rotors_normal_from_cog.at(i);
   }
 
   Eigen::VectorXd wrench_diff = Q * lambda - target_wrench_cog;
@@ -99,17 +102,33 @@ void nonlinearWrenchAllocationEqConstraints(unsigned m, double* result, unsigned
   }
 
   /* gimbal part */
+  // df/dphi_j = sum_i(lambda_i * du_i/dphi_j)
+  // dtau/dphi_j = sum_i(lambda_i * (dp_i/dphi_j x u_i + p_i x du_i/dphi_j + sigma_i * du_i/dphi_j)) - dI/dphi_j * alpha
+  // every rotor contributes to the derivative w.r.t. each gimbal, because the gimbal motion shifts the CoG
+  robot_model_for_control->calcCoGMomentumJacobian();  // should be processed first
+  robot_model_for_control->calcInertiaJacobian();
+  robot_model_for_control->calcBasicKinematicsJacobian();  // need cog jacobian
+
+  const std::vector<int>& gimbal_jacobian_cols = robot_model_for_control->getGimbalJacobianCols();
+  const std::vector<Eigen::MatrixXd>& u_jacobians = robot_model_for_control->getUJacobians();
+  const std::vector<Eigen::MatrixXd>& p_jacobians = robot_model_for_control->getPJacobians();
+  const std::vector<Eigen::Matrix3d>& inertia_jacobian = robot_model_for_control->getInertiaJacobian();
+
   Eigen::MatrixXd df_dphi = Eigen::MatrixXd::Zero(3, motor_num);
   Eigen::MatrixXd dtau_dphi = Eigen::MatrixXd::Zero(3, motor_num);
-  for (int i = 0; i < motor_num; i++)
+  for (int j = 0; j < motor_num; j++)
   {
-    Eigen::Vector3d du_Li_dphi;
-    du_Li_dphi << 0, -cos(x[i + motor_num]) * cos(rotor_tilt.at(i)), -sin(x[i + motor_num]) * cos(rotor_tilt.at(i));
+    const int col = gimbal_jacobian_cols.at(j);
+    for (int i = 0; i < motor_num; i++)
+    {
+      const Eigen::Vector3d du = u_jacobians.at(i).col(col);
+      const Eigen::Vector3d dp = p_jacobians.at(i).col(col);
 
-    df_dphi.block(0, i, 3, 1) = links_rotation_from_cog.at(i) * du_Li_dphi * x[i];
-    dtau_dphi.block(0, i, 3, 1) = (aerial_robot_model::skew(rotors_origin_from_cog.at(i)) +
-                                   m_f_rate * rotor_direction.at(i + 1) * Eigen::MatrixXd::Identity(3, 3)) *
-                                  links_rotation_from_cog.at(i) * du_Li_dphi * x[i];
+      df_dphi.col(j) += x[i] * du;
+      dtau_dphi.col(j) += x[i] * (dp.cross(rotors_normal_from_cog.at(i)) + rotors_origin_from_cog.at(i).cross(du) +
+                                  m_f_rate * rotor_direction.at(i + 1) * du);
+    }
+    dtau_dphi.col(j) -= inertia_jacobian.at(col) * target_acc_cog.tail(3);
   }
 
   for (int i = 0; i < 3; i++)

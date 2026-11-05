@@ -47,10 +47,6 @@ public:
   {
     return robot_model_for_control_;
   }
-  const std::vector<double>& getRotorTilt()
-  {
-    return rotor_tilt_;
-  }
   Eigen::VectorXd getTargetAccCog()
   {
     return target_acc_cog_;
@@ -107,7 +103,6 @@ private:
   int nlopt_result_;
   int nlopt_iterations_ = 0;
   std::vector<float> nlopt_log_;
-  std::vector<double> rotor_tilt_;
   std::vector<float> lambda_all_;
   std::vector<double> target_gimbal_angles_;
   Eigen::MatrixXd q_mat_;
