@@ -92,11 +92,6 @@ bool getParam(XmlRpc::XmlRpcValue& servo_params, XmlRpc::XmlRpcValue& group_para
 MitCanBackend::MitCanBackend(std::mutex& state_mutex, bool use_can, double command_rate)
   : ServoBackend(ServoType::CUBEMARS), state_mutex_(state_mutex), use_can_(use_can), command_rate_(command_rate)
 {
-  if (use_can_ && command_rate_ > 0)
-  {
-    running_ = true;
-    command_thread_ = std::thread(&MitCanBackend::commandLoop, this);
-  }
 }
 
 MitCanBackend::~MitCanBackend()
@@ -200,6 +195,13 @@ bool MitCanBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& grou
 
   motors_.insert(std::make_pair(key, motor));
   handle_motors_.insert(std::make_pair(servo, motor));
+
+  /* start the periodic command only if there is a motor */
+  if (use_can_ && command_rate_ > 0 && !running_)
+  {
+    running_ = true;
+    command_thread_ = std::thread(&MitCanBackend::commandLoop, this);
+  }
 
   ROS_INFO("[mit can backend]: %s, model: %s (protocol %s), bus: %s, id: %d, kp: %f, kd: %f", name.c_str(),
            motor->model_name.c_str(), motor->model.protocol.c_str(), motor->bus.c_str(), motor->id, motor->kp,
@@ -332,24 +334,23 @@ void MitCanBackend::commandLoop()
   const auto period = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
       std::chrono::duration<double>(1.0 / command_rate_));
   auto next = std::chrono::steady_clock::now();
-  std::vector<BusFrame> frames;
 
   while (running_)
   {
-    frames.clear();
     {
+      /*
+        Send under the lock to keep the order with flush(): a frame built before disable must not be sent after the
+        disable frame. The send is non-blocking.
+      */
       std::lock_guard<std::mutex> lock(state_mutex_);
       for (const auto& motor : motors_)
       {
         const Motor& m = *motor.second;
         auto bus = buses_.find(m.bus);
         if (m.enabled && bus != buses_.end())
-          frames.push_back(std::make_pair(bus->second.get(), m.protocol->makeMitFrame(m.id, m.model, m.cmd)));
+          bus->second->send(m.protocol->makeMitFrame(m.id, m.model, m.cmd));
       }
     }
-
-    for (auto& frame : frames)
-      frame.first->send(frame.second);
 
     next += period;
     const auto now = std::chrono::steady_clock::now();
