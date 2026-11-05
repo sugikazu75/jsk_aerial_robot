@@ -47,7 +47,8 @@ namespace ServoType
 {
 const std::string DYNAMIXEL = "dynamixel";
 const std::string CUBEMARS = "cubemars";
-};  // namespace ServoType
+const std::string XIAOMI = "xiaomi";  // Xiaomi CyberGear and RobStride
+};                                    // namespace ServoType
 
 /* command for single servo in the joint space (radian, rad/s, Nm) */
 struct ServoCommand

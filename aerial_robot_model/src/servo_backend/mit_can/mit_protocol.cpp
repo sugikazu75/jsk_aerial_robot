@@ -35,8 +35,11 @@
 
 #include <aerial_robot_model/servo_backend/mit_can/mit_protocol.h>
 #include <aerial_robot_model/servo_backend/mit_can/cubemars_v3_protocol.h>
+#include <aerial_robot_model/servo_backend/mit_can/xiaomi_protocol.h>
+#include <aerial_robot_model/servo_backend/servo_backend.h>
 
 #include <algorithm>
+#include <cmath>
 
 int MitProtocol::floatToUint(double x, double x_min, double x_max, int bits)
 {
@@ -55,9 +58,20 @@ const std::map<std::string, MitMotorModel>& mitMotorModels()
 {
   static const std::map<std::string, MitMotorModel> models = {
     /* v3: AK Series Motor Module V3 Driver Software User Manual (V1.0.1), force control mode parameter range */
-    // protocol, p_max, v_max, t_max, kp_max, kd_max, torque_constant, pole_pairs, gear_ratio
-    { "AKE60_8", { "cubemars_v3", 12.56, 40.0, 15.0, 500.0, 5.0, 0.7382, 14, 8 } },
-    { "AK40_10_V3", { "cubemars_v3", 12.56, 45.0, 5.0, 500.0, 5.0, 0.4894, 14, 10 } },
+    // servo_type, protocol, p_max, v_max, t_max, kp_max, kd_max, torque_constant, pole_pairs, gear_ratio
+    { "AKE60_8", { ServoType::CUBEMARS, "cubemars_v3", 12.56, 40.0, 15.0, 500.0, 5.0, 0.7382, 14, 8 } },
+    { "AK40_10_V3", { ServoType::CUBEMARS, "cubemars_v3", 12.56, 45.0, 5.0, 500.0, 5.0, 0.4894, 14, 10 } },
+    /*
+      xiaomi: instruction manual of each motor, and xiaomimotor_lib for RobStride02 and RobStride03 (no manual).
+      RobStride04: the table of communication type 1 says kp 0 ~ 5000, kd 0 ~ 100, while the sample code in the same
+      manual says kp 0 ~ 500, kd 0 ~ 5. Use the table.
+      The gear ratio of RobStride02 and RobStride03 is not confirmed by the manual.
+    */
+    { "CyberGear", { ServoType::XIAOMI, "xiaomi", 4 * M_PI, 30.0, 12.0, 500.0, 5.0, 0, 0, 7.75 } },
+    { "RobStride01", { ServoType::XIAOMI, "xiaomi", 4 * M_PI, 44.0, 17.0, 500.0, 5.0, 0, 0, 7.75 } },
+    { "RobStride02", { ServoType::XIAOMI, "xiaomi", 4 * M_PI, 44.0, 17.0, 500.0, 5.0, 0, 0, 7.75 } },
+    { "RobStride03", { ServoType::XIAOMI, "xiaomi", 4 * M_PI, 20.0, 60.0, 5000.0, 100.0, 0, 0, 9 } },
+    { "RobStride04", { ServoType::XIAOMI, "xiaomi", 4 * M_PI, 15.0, 120.0, 5000.0, 100.0, 0, 0, 9 } },
   };
   return models;
 }
@@ -66,5 +80,7 @@ MitProtocolPtr createMitProtocol(const std::string& protocol)
 {
   if (protocol == "cubemars_v3")
     return std::make_shared<CubemarsV3Protocol>();
+  if (protocol == "xiaomi")
+    return std::make_shared<XiaomiProtocol>();
   return MitProtocolPtr();
 }

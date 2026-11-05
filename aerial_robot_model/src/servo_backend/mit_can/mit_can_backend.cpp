@@ -90,7 +90,7 @@ bool getParam(XmlRpc::XmlRpcValue& servo_params, XmlRpc::XmlRpcValue& group_para
 }  // namespace
 
 MitCanBackend::MitCanBackend(std::mutex& state_mutex, bool use_can, double command_rate)
-  : ServoBackend(ServoType::CUBEMARS), state_mutex_(state_mutex), use_can_(use_can), command_rate_(command_rate)
+  : ServoBackend("mit_can"), state_mutex_(state_mutex), use_can_(use_can), command_rate_(command_rate)
 {
 }
 
@@ -126,12 +126,16 @@ bool MitCanBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& grou
   }
 
   const auto& models = mitMotorModels();
+  /* the model should belong to the servo type */
   if (!getParam(servo_params, group_params, "model", motor->model_name) ||
-      models.find(motor->model_name) == models.end())
+      models.find(motor->model_name) == models.end() || models.at(motor->model_name).servo_type != servo->getType())
   {
     std::string candidates;
     for (const auto& model : models)
-      candidates += model.first + " ";
+    {
+      if (model.second.servo_type == servo->getType())
+        candidates += model.first + " ";
+    }
     ROS_ERROR("[mit can backend]: please set valid 'model' for %s, candidates: %s", name.c_str(), candidates.c_str());
     return false;
   }
@@ -258,17 +262,19 @@ void MitCanBackend::canCallback(const std::string& bus, const can_frame& frame)
   if (!motor.protocol->parseStatus(frame, motor.model, status))
     return;
 
-  if (status.disabled)
+  if (status.disabled && motor.running)
   {
-    ROS_INFO("[mit can backend]: %s is disabled", name.c_str());
+    if (motor.enabled)
+      ROS_ERROR("[mit can backend]: %s stopped unexpectedly. set torque off and on to enable it again", name.c_str());
+    else
+      ROS_INFO("[mit can backend]: %s is disabled", name.c_str());
   }
-  else
-  {
-    if (status.error_code != 0 && status.error_code != motor.error_code)
-      ROS_ERROR("[mit can backend]: %s error %d (%s)", name.c_str(), status.error_code,
-                motor.protocol->errorString(status.error_code).c_str());
-    motor.error_code = status.error_code;
-  }
+  motor.running = !status.disabled;
+
+  if (status.error_code != 0 && status.error_code != motor.error_code)
+    ROS_ERROR("[mit can backend]: %s error %d (%s)", name.c_str(), status.error_code,
+              motor.protocol->errorString(status.error_code).c_str());
+  motor.error_code = status.error_code;
 
   motor.motor_pos = status.position;
 
@@ -347,8 +353,18 @@ void MitCanBackend::commandLoop()
       {
         const Motor& m = *motor.second;
         auto bus = buses_.find(m.bus);
-        if (m.enabled && bus != buses_.end())
+        if (bus == buses_.end())
+          continue;
+
+        if (m.enabled)
+        {
           bus->second->send(m.protocol->makeMitFrame(m.id, m.model, m.cmd));
+        }
+        else
+        {
+          for (const auto& frame : m.protocol->makeStatusRequestFrames(m.id))
+            bus->second->send(frame);
+        }
       }
     }
 

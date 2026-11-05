@@ -46,15 +46,16 @@
 /* parameters of the motor in force control (MIT) mode */
 struct MitMotorModel
 {
+  std::string servo_type;  // value of "type" parameter (ServoType)
   std::string protocol;    // communication protocol (e.g., "cubemars_v3")
   double p_max;            // [rad]
   double v_max;            // [rad/s]
   double t_max;            // [Nm]
   double kp_max;           // [Nm/rad]
   double kd_max;           // [Nm/(rad/s)]
-  double torque_constant;  // [Nm/A] at output shaft
-  double pole_pairs;
-  double gear_ratio;
+  double torque_constant;  // [Nm/A] at output shaft, only if the status has the current
+  double pole_pairs;       // only if the status has the electrical speed
+  double gear_ratio;       // also determines the ambiguity of the angle at startup (2pi / gear_ratio)
 };
 
 /* MIT command in the motor side (output shaft) */
@@ -75,7 +76,7 @@ struct MitStatus
   double torque = 0;       // [Nm]
   double temperature = 0;  // [deg C]
   int error_code = 0;      // 0: no error
-  bool disabled = false;   // response to the disable command
+  bool disabled = false;   // the motor is not running
 };
 
 /*
@@ -90,6 +91,11 @@ public:
   /* frames to enable / disable the motor (e.g., enter / exit motor control mode) */
   virtual std::vector<can_frame> makeEnableFrames(int id) const = 0;
   virtual std::vector<can_frame> makeDisableFrames(int id) const = 0;
+  /* frames to get the status while the motor is disabled. empty if the motor uploads the status by itself */
+  virtual std::vector<can_frame> makeStatusRequestFrames(int id) const
+  {
+    return std::vector<can_frame>();
+  }
   virtual can_frame makeMitFrame(int id, const MitMotorModel& model, const MitCommand& cmd) const = 0;
 
   /* return false if the frame is not the status frame of this protocol */

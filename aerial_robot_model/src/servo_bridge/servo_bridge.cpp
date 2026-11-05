@@ -83,7 +83,9 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
   /* backend to send commands to real machine: dynamixel via spinal (one usb serial) */
   servo_backends_.insert(make_pair(ServoType::DYNAMIXEL, std::make_shared<DynamixelBackend>(servo_target_pos_pubs_.at("common"), servo_target_torque_pubs_.at("common"), servo_enable_pubs_.at("common"))));
   /* backend for the motors with MIT mode via SocketCAN, CAN is not used in simulation */
-  servo_backends_.insert(make_pair(ServoType::CUBEMARS, std::make_shared<MitCanBackend>(mutex_, !simulation_mode_, mit_command_rate)));
+  ServoBackendPtr mit_can_backend = std::make_shared<MitCanBackend>(mutex_, !simulation_mode_, mit_command_rate);
+  servo_backends_.insert(make_pair(ServoType::CUBEMARS, mit_can_backend));
+  servo_backends_.insert(make_pair(ServoType::XIAOMI, mit_can_backend));
 
 
   /* get additional config for servos from ros parameters */

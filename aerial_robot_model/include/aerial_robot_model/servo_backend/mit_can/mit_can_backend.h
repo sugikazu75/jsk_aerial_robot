@@ -50,13 +50,14 @@
 #include <vector>
 
 /*
-  Motors with force control (MIT) mode via SocketCAN (e.g., CubeMars).
+  Motors with force control (MIT) mode via SocketCAN (e.g., CubeMars, Xiaomi CyberGear, RobStride).
   The protocol difference of the vendor and firmware version is handled in MitProtocol,
   and this backend handles the joint space conversion, torque enable, rough calibration, and periodic command.
   - the status frames are received in the receive thread of each CAN bus,
     and the servo handlers are updated under the lock of ServoBridge (state_mutex).
-  - the latest command of each enabled motor is re-sent periodically (command_rate),
-    since the motor is disabled if the command stops (communication timeout of the motor).
+  - the latest command of each enabled motor is re-sent periodically (command_rate): some motors are disabled if the
+    command stops (CubeMars), and some motors reply the status only to the received frame (Xiaomi, RobStride).
+  - for the latter, MitProtocol::makeStatusRequestFrames() is sent at the same rate while the motor is disabled.
 */
 class MitCanBackend : public ServoBackend
 {
@@ -91,6 +92,7 @@ private:
     double startup_angle_tolerance;  // [rad]
     bool require_rough_calib;        // always require rough calibration before torque enable
     bool enabled = false;
+    bool running = false;  // the motor reports that it is running
     bool state_received = false;
     bool calibrated = false;  // the joint angle is reliable
     double motor_pos = 0;     // [rad], raw position from motor
