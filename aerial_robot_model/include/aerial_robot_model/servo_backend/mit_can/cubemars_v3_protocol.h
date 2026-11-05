@@ -33,10 +33,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef SERVO_BACKEND_CUBEMARS_CUBEMARS_V3_PROTOCOL_H
-#define SERVO_BACKEND_CUBEMARS_CUBEMARS_V3_PROTOCOL_H
+#ifndef SERVO_BACKEND_MIT_CAN_CUBEMARS_V3_PROTOCOL_H
+#define SERVO_BACKEND_MIT_CAN_CUBEMARS_V3_PROTOCOL_H
 
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_protocol.h>
+#include <aerial_robot_model/servo_backend/mit_can/mit_protocol.h>
 
 /*
   v3 protocol (e.g., AKE60-8, AK40-10 V3.0), extended frame id = (packet id << 8) | motor id
@@ -46,15 +46,15 @@
   - disable: packet 15, the motor responds the status with error code 0x77
   - no enable command: the motor is enabled by the MIT command, and disabled if the command stops
 */
-class CubemarsV3Protocol : public CubemarsProtocol
+class CubemarsV3Protocol : public MitProtocol
 {
 public:
   std::vector<can_frame> makeEnableFrames(int id) const override;
   std::vector<can_frame> makeDisableFrames(int id) const override;
-  can_frame makeMitFrame(int id, const CubemarsModel& model, const CubemarsMitCommand& cmd) const override;
+  can_frame makeMitFrame(int id, const MitMotorModel& model, const MitCommand& cmd) const override;
 
   bool parseId(const can_frame& frame, int& id) const override;
-  bool parseStatus(const can_frame& frame, const CubemarsModel& model, CubemarsStatus& status) const override;
+  bool parseStatus(const can_frame& frame, const MitMotorModel& model, MitStatus& status) const override;
 
   std::string errorString(int error_code) const override;
 

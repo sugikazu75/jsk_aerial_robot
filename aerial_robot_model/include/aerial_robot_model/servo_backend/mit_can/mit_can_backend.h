@@ -33,11 +33,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef SERVO_BACKEND_CUBEMARS_CUBEMARS_BACKEND_H
-#define SERVO_BACKEND_CUBEMARS_CUBEMARS_BACKEND_H
+#ifndef SERVO_BACKEND_MIT_CAN_MIT_CAN_BACKEND_H
+#define SERVO_BACKEND_MIT_CAN_MIT_CAN_BACKEND_H
 
 #include <aerial_robot_model/servo_backend/can_bus.h>
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_protocol.h>
+#include <aerial_robot_model/servo_backend/mit_can/mit_protocol.h>
 #include <aerial_robot_model/servo_backend/servo_backend.h>
 
 #include <atomic>
@@ -50,19 +50,19 @@
 #include <vector>
 
 /*
-  CubeMars AK series motors via SocketCAN, force control (MIT) mode.
-  The protocol difference of the firmware version (e.g., v3) is handled in CubemarsProtocol,
+  Motors with force control (MIT) mode via SocketCAN (e.g., CubeMars).
+  The protocol difference of the vendor and firmware version is handled in MitProtocol,
   and this backend handles the joint space conversion, torque enable, rough calibration, and periodic command.
   - the status frames are received in the receive thread of each CAN bus,
     and the servo handlers are updated under the lock of ServoBridge (state_mutex).
   - the latest command of each enabled motor is re-sent periodically (command_rate),
     since the motor is disabled if the command stops (communication timeout of the motor).
 */
-class CubemarsBackend : public ServoBackend
+class MitCanBackend : public ServoBackend
 {
 public:
-  CubemarsBackend(std::mutex& state_mutex, bool use_can, double command_rate);
-  ~CubemarsBackend() override;
+  MitCanBackend(std::mutex& state_mutex, bool use_can, double command_rate);
+  ~MitCanBackend() override;
 
   /* note: called without the lock of ServoBridge */
   bool addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& group_params,
@@ -82,8 +82,8 @@ private:
     std::string bus;
     int id;
     std::string model_name;
-    CubemarsModel model;
-    CubemarsProtocolPtr protocol;
+    MitMotorModel model;
+    MitProtocolPtr protocol;
     double kp;
     double kd;
     double zero_point_offset;        // [rad], motor position at joint zero
@@ -95,7 +95,7 @@ private:
     bool calibrated = false;  // the joint angle is reliable
     double motor_pos = 0;     // [rad], raw position from motor
     int error_code = 0;
-    CubemarsMitCommand cmd;  // latest command in motor side, re-sent periodically while enabled
+    MitCommand cmd;  // latest command in motor side, re-sent periodically while enabled
   };
   using MotorPtr = std::shared_ptr<Motor>;
   using BusFrame = std::pair<CanBus*, can_frame>;
@@ -103,7 +103,7 @@ private:
   void canCallback(const std::string& bus, const can_frame& frame);
   void commandLoop();
   void addFrame(const Motor& motor, const can_frame& frame);
-  void setMitCommand(Motor& motor, const CubemarsMitCommand& cmd);
+  void setMitCommand(Motor& motor, const MitCommand& cmd);
   double motorToJoint(const Motor& motor, double motor_pos) const;
   double jointToMotor(const Motor& motor, double joint_pos) const;
   MotorPtr findMotor(const SingleServoHandle& servo) const;
@@ -113,7 +113,7 @@ private:
   double command_rate_;  // [Hz]
   std::atomic<bool> running_{ false };
   std::thread command_thread_;
-  std::map<std::string, CubemarsProtocolPtr> protocols_;  // protocol name -> protocol
+  std::map<std::string, MitProtocolPtr> protocols_;  // protocol name -> protocol
   std::map<std::string, std::unique_ptr<CanBus>> buses_;
   std::map<std::pair<std::string, int>, MotorPtr> motors_;  // (bus, id) -> motor
   std::map<const SingleServoHandle*, MotorPtr> handle_motors_;

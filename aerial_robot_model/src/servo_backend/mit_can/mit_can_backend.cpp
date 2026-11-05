@@ -33,7 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_backend.h>
+#include <aerial_robot_model/servo_backend/mit_can/mit_can_backend.h>
 #include <aerial_robot_model/servo_bridge.h>
 
 #include <algorithm>
@@ -89,22 +89,22 @@ bool getParam(XmlRpc::XmlRpcValue& servo_params, XmlRpc::XmlRpcValue& group_para
 }
 }  // namespace
 
-CubemarsBackend::CubemarsBackend(std::mutex& state_mutex, bool use_can, double command_rate)
+MitCanBackend::MitCanBackend(std::mutex& state_mutex, bool use_can, double command_rate)
   : ServoBackend(ServoType::CUBEMARS), state_mutex_(state_mutex), use_can_(use_can), command_rate_(command_rate)
 {
   if (use_can_ && command_rate_ > 0)
   {
     running_ = true;
-    command_thread_ = std::thread(&CubemarsBackend::commandLoop, this);
+    command_thread_ = std::thread(&MitCanBackend::commandLoop, this);
   }
 }
 
-CubemarsBackend::~CubemarsBackend()
+MitCanBackend::~MitCanBackend()
 {
   stop();
 }
 
-void CubemarsBackend::stop()
+void MitCanBackend::stop()
 {
   running_ = false;
   if (command_thread_.joinable())
@@ -114,8 +114,8 @@ void CubemarsBackend::stop()
     bus.second->close();
 }
 
-bool CubemarsBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& group_params,
-                               XmlRpc::XmlRpcValue& servo_params)
+bool MitCanBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& group_params,
+                             XmlRpc::XmlRpcValue& servo_params)
 {
   std::lock_guard<std::mutex> lock(state_mutex_);
 
@@ -126,18 +126,18 @@ bool CubemarsBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& gr
 
   if (motor->id < 0 || motor->id > 0xFF)
   {
-    ROS_ERROR("[cubemars backend]: invalid id %d for %s", motor->id, name.c_str());
+    ROS_ERROR("[mit can backend]: invalid id %d for %s", motor->id, name.c_str());
     return false;
   }
 
-  const auto& models = cubemarsModels();
+  const auto& models = mitMotorModels();
   if (!getParam(servo_params, group_params, "model", motor->model_name) ||
       models.find(motor->model_name) == models.end())
   {
     std::string candidates;
     for (const auto& model : models)
       candidates += model.first + " ";
-    ROS_ERROR("[cubemars backend]: please set valid 'model' for %s, candidates: %s", name.c_str(), candidates.c_str());
+    ROS_ERROR("[mit can backend]: please set valid 'model' for %s, candidates: %s", name.c_str(), candidates.c_str());
     return false;
   }
   motor->model = models.at(motor->model_name);
@@ -145,10 +145,10 @@ bool CubemarsBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& gr
   /* protocol is shared among the motors with the same firmware version */
   if (protocols_.find(motor->model.protocol) == protocols_.end())
   {
-    CubemarsProtocolPtr protocol = createCubemarsProtocol(motor->model.protocol);
+    MitProtocolPtr protocol = createMitProtocol(motor->model.protocol);
     if (!protocol)
     {
-      ROS_ERROR("[cubemars backend]: protocol %s of %s is not supported", motor->model.protocol.c_str(), name.c_str());
+      ROS_ERROR("[mit can backend]: protocol %s of %s is not supported", motor->model.protocol.c_str(), name.c_str());
       return false;
     }
     protocols_.insert(std::make_pair(motor->model.protocol, protocol));
@@ -160,12 +160,12 @@ bool CubemarsBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& gr
 
   if (!getParam(servo_params, group_params, "kp", motor->kp) || !getParam(servo_params, group_params, "kd", motor->kd))
   {
-    ROS_ERROR("[cubemars backend]: please set 'kp' and 'kd' for %s", name.c_str());
+    ROS_ERROR("[mit can backend]: please set 'kp' and 'kd' for %s", name.c_str());
     return false;
   }
   if (motor->kp < 0 || motor->kp > motor->model.kp_max || motor->kd < 0 || motor->kd > motor->model.kd_max)
   {
-    ROS_WARN("[cubemars backend]: kp %f, kd %f for %s are out of range [0, %f], [0, %f], clamp", motor->kp, motor->kd,
+    ROS_WARN("[mit can backend]: kp %f, kd %f for %s are out of range [0, %f], [0, %f], clamp", motor->kp, motor->kd,
              name.c_str(), motor->model.kp_max, motor->model.kd_max);
     motor->kp = std::min(std::max(motor->kp, 0.0), motor->model.kp_max);
     motor->kd = std::min(std::max(motor->kd, 0.0), motor->model.kd_max);
@@ -184,7 +184,7 @@ bool CubemarsBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& gr
   const auto key = std::make_pair(motor->bus, motor->id);
   if (motors_.find(key) != motors_.end())
   {
-    ROS_ERROR("[cubemars backend]: id %d in %s is duplicated (%s and %s)", motor->id, motor->bus.c_str(),
+    ROS_ERROR("[mit can backend]: id %d in %s is duplicated (%s and %s)", motor->id, motor->bus.c_str(),
               motors_.at(key)->handle->getName().c_str(), name.c_str());
     return false;
   }
@@ -201,13 +201,13 @@ bool CubemarsBackend::addServo(SingleServoHandle* servo, XmlRpc::XmlRpcValue& gr
   motors_.insert(std::make_pair(key, motor));
   handle_motors_.insert(std::make_pair(servo, motor));
 
-  ROS_INFO("[cubemars backend]: %s, model: %s (protocol %s), bus: %s, id: %d, kp: %f, kd: %f", name.c_str(),
+  ROS_INFO("[mit can backend]: %s, model: %s (protocol %s), bus: %s, id: %d, kp: %f, kd: %f", name.c_str(),
            motor->model_name.c_str(), motor->model.protocol.c_str(), motor->bus.c_str(), motor->id, motor->kp,
            motor->kd);
   return true;
 }
 
-CubemarsBackend::MotorPtr CubemarsBackend::findMotor(const SingleServoHandle& servo) const
+MitCanBackend::MotorPtr MitCanBackend::findMotor(const SingleServoHandle& servo) const
 {
   auto it = handle_motors_.find(&servo);
   if (it == handle_motors_.end())
@@ -215,17 +215,17 @@ CubemarsBackend::MotorPtr CubemarsBackend::findMotor(const SingleServoHandle& se
   return it->second;
 }
 
-double CubemarsBackend::motorToJoint(const Motor& motor, double motor_pos) const
+double MitCanBackend::motorToJoint(const Motor& motor, double motor_pos) const
 {
   return motor.handle->getAngleSgn() * (motor_pos - motor.zero_point_offset - motor.turn_offset);
 }
 
-double CubemarsBackend::jointToMotor(const Motor& motor, double joint_pos) const
+double MitCanBackend::jointToMotor(const Motor& motor, double joint_pos) const
 {
   return motor.handle->getAngleSgn() * joint_pos + motor.zero_point_offset + motor.turn_offset;
 }
 
-void CubemarsBackend::canCallback(const std::string& bus, const can_frame& frame)
+void MitCanBackend::canCallback(const std::string& bus, const can_frame& frame)
 {
   const ros::Time now = ros::Time::now();
 
@@ -252,18 +252,18 @@ void CubemarsBackend::canCallback(const std::string& bus, const can_frame& frame
   Motor& motor = *motor_ptr;
   const std::string& name = motor.handle->getName();
 
-  CubemarsStatus status;
+  MitStatus status;
   if (!motor.protocol->parseStatus(frame, motor.model, status))
     return;
 
   if (status.disabled)
   {
-    ROS_INFO("[cubemars backend]: %s is disabled", name.c_str());
+    ROS_INFO("[mit can backend]: %s is disabled", name.c_str());
   }
   else
   {
     if (status.error_code != 0 && status.error_code != motor.error_code)
-      ROS_ERROR("[cubemars backend]: %s error %d (%s)", name.c_str(), status.error_code,
+      ROS_ERROR("[mit can backend]: %s error %d (%s)", name.c_str(), status.error_code,
                 motor.protocol->errorString(status.error_code).c_str());
     motor.error_code = status.error_code;
   }
@@ -279,7 +279,7 @@ void CubemarsBackend::canCallback(const std::string& bus, const can_frame& frame
     {
       motor.calibrated = false;
       ROS_WARN(
-          "[cubemars backend]: %s requires rough calibration before torque enable. move the joint near zero "
+          "[mit can backend]: %s requires rough calibration before torque enable. move the joint near zero "
           "(within +-%.1f deg), and call rough_calib service",
           name.c_str(), period / 2 * 180 / M_PI);
     }
@@ -287,7 +287,7 @@ void CubemarsBackend::canCallback(const std::string& bus, const can_frame& frame
     {
       motor.calibrated = false;
       ROS_ERROR(
-          "[cubemars backend]: %s starts at %.1f deg, which is far from zero (tolerance %.1f deg). the angle may be "
+          "[mit can backend]: %s starts at %.1f deg, which is far from zero (tolerance %.1f deg). the angle may be "
           "shifted by a multiple of %.1f deg. move the joint near zero, and call rough_calib service",
           name.c_str(), joint_pos * 180 / M_PI, motor.startup_angle_tolerance * 180 / M_PI, period * 180 / M_PI);
     }
@@ -304,7 +304,7 @@ void CubemarsBackend::canCallback(const std::string& bus, const can_frame& frame
   motor.handle->markStateReceived(now);
 }
 
-void CubemarsBackend::addFrame(const Motor& motor, const can_frame& frame)
+void MitCanBackend::addFrame(const Motor& motor, const can_frame& frame)
 {
   auto bus = buses_.find(motor.bus);
   if (bus == buses_.end())
@@ -312,14 +312,14 @@ void CubemarsBackend::addFrame(const Motor& motor, const can_frame& frame)
   pending_.push_back(std::make_pair(bus->second.get(), frame));
 }
 
-void CubemarsBackend::setMitCommand(Motor& motor, const CubemarsMitCommand& cmd)
+void MitCanBackend::setMitCommand(Motor& motor, const MitCommand& cmd)
 {
-  const CubemarsModel& m = motor.model;
+  const MitMotorModel& m = motor.model;
   if (std::fabs(cmd.position) > m.p_max)
-    ROS_WARN_THROTTLE(1.0, "[cubemars backend]: target position %f of %s is out of range +-%f, clamp", cmd.position,
+    ROS_WARN_THROTTLE(1.0, "[mit can backend]: target position %f of %s is out of range +-%f, clamp", cmd.position,
                       motor.handle->getName().c_str(), m.p_max);
   if (std::fabs(cmd.torque) > m.t_max)
-    ROS_WARN_THROTTLE(1.0, "[cubemars backend]: target torque %f of %s is out of range +-%f, clamp", cmd.torque,
+    ROS_WARN_THROTTLE(1.0, "[mit can backend]: target torque %f of %s is out of range +-%f, clamp", cmd.torque,
                       motor.handle->getName().c_str(), m.t_max);
 
   /* send immediately, and re-send in commandLoop() */
@@ -327,7 +327,7 @@ void CubemarsBackend::setMitCommand(Motor& motor, const CubemarsMitCommand& cmd)
   addFrame(motor, motor.protocol->makeMitFrame(motor.id, motor.model, motor.cmd));
 }
 
-void CubemarsBackend::commandLoop()
+void MitCanBackend::commandLoop()
 {
   const auto period = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
       std::chrono::duration<double>(1.0 / command_rate_));
@@ -359,14 +359,14 @@ void CubemarsBackend::commandLoop()
   }
 }
 
-void CubemarsBackend::addCommand(const SingleServoHandle& servo, const ServoCommand& cmd)
+void MitCanBackend::addCommand(const SingleServoHandle& servo, const ServoCommand& cmd)
 {
   MotorPtr motor = findMotor(servo);
   if (!motor || !motor->enabled)
     return;
 
   const double sgn = servo.getAngleSgn();
-  CubemarsMitCommand mit_cmd;
+  MitCommand mit_cmd;
   if (cmd.has_position)
   {
     /* position control with velocity and feed-forward torque */
@@ -389,7 +389,7 @@ void CubemarsBackend::addCommand(const SingleServoHandle& servo, const ServoComm
   setMitCommand(*motor, mit_cmd);
 }
 
-bool CubemarsBackend::addTorqueEnable(const SingleServoHandle& servo, bool enable)
+bool MitCanBackend::addTorqueEnable(const SingleServoHandle& servo, bool enable)
 {
   MotorPtr motor = findMotor(servo);
   if (!motor)
@@ -411,19 +411,19 @@ bool CubemarsBackend::addTorqueEnable(const SingleServoHandle& servo, bool enabl
 
   if (!motor->state_received)
   {
-    ROS_ERROR("[cubemars backend]: can not enable %s, no state from motor", servo.getName().c_str());
+    ROS_ERROR("[mit can backend]: can not enable %s, no state from motor", servo.getName().c_str());
     return false;
   }
   if (!motor->calibrated)
   {
     ROS_ERROR(
-        "[cubemars backend]: can not enable %s, the joint angle is not reliable. move the joint near zero, and "
+        "[mit can backend]: can not enable %s, the joint angle is not reliable. move the joint near zero, and "
         "call rough_calib service",
         servo.getName().c_str());
     return false;
   }
   if (motor->error_code != 0)
-    ROS_WARN("[cubemars backend]: enable %s with error %d (%s)", servo.getName().c_str(), motor->error_code,
+    ROS_WARN("[mit can backend]: enable %s with error %d (%s)", servo.getName().c_str(), motor->error_code,
              motor->protocol->errorString(motor->error_code).c_str());
 
   if (!motor->enabled)
@@ -434,7 +434,7 @@ bool CubemarsBackend::addTorqueEnable(const SingleServoHandle& servo, bool enabl
 
     /* hold the current position */
     motor->handle->setTargetAngleVal(motorToJoint(*motor, motor->motor_pos), ValueType::RADIAN);
-    CubemarsMitCommand hold_cmd;
+    MitCommand hold_cmd;
     hold_cmd.position = motor->motor_pos;
     hold_cmd.kp = motor->kp;
     hold_cmd.kd = motor->kd;
@@ -443,12 +443,12 @@ bool CubemarsBackend::addTorqueEnable(const SingleServoHandle& servo, bool enabl
   return true;
 }
 
-bool CubemarsBackend::roughCalib(const SingleServoHandle& servo, std::string& message)
+bool MitCanBackend::roughCalib(const SingleServoHandle& servo, std::string& message)
 {
   MotorPtr motor = findMotor(servo);
   if (!motor)
   {
-    message = servo.getName() + ": not cubemars motor";
+    message = servo.getName() + ": not managed by this backend";
     return false;
   }
 
@@ -485,18 +485,18 @@ bool CubemarsBackend::roughCalib(const SingleServoHandle& servo, std::string& me
   snprintf(buf, sizeof(buf), "%s: shift %.1f deg (%d x %.1f deg), joint angle %.1f deg", servo.getName().c_str(),
            -n * period * 180 / M_PI, -n, period * 180 / M_PI, joint_pos * 180 / M_PI);
   message = buf;
-  ROS_INFO("[cubemars backend]: rough calibration, %s", buf);
+  ROS_INFO("[mit can backend]: rough calibration, %s", buf);
   return true;
 }
 
-void CubemarsBackend::flush()
+void MitCanBackend::flush()
 {
   for (auto& frame : pending_)
     frame.first->send(frame.second);
   pending_.clear();
 }
 
-void CubemarsBackend::clear()
+void MitCanBackend::clear()
 {
   pending_.clear();
 }

@@ -33,8 +33,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef SERVO_BACKEND_CUBEMARS_CUBEMARS_PROTOCOL_H
-#define SERVO_BACKEND_CUBEMARS_CUBEMARS_PROTOCOL_H
+#ifndef SERVO_BACKEND_MIT_CAN_MIT_PROTOCOL_H
+#define SERVO_BACKEND_MIT_CAN_MIT_PROTOCOL_H
 
 #include <linux/can.h>
 
@@ -43,10 +43,10 @@
 #include <string>
 #include <vector>
 
-/* parameters of CubeMars AK series motor in force control (MIT) mode */
-struct CubemarsModel
+/* parameters of the motor in force control (MIT) mode */
+struct MitMotorModel
 {
-  std::string protocol;    // communication protocol (e.g., "v3")
+  std::string protocol;    // communication protocol (e.g., "cubemars_v3")
   double p_max;            // [rad]
   double v_max;            // [rad/s]
   double t_max;            // [Nm]
@@ -58,7 +58,7 @@ struct CubemarsModel
 };
 
 /* MIT command in the motor side (output shaft) */
-struct CubemarsMitCommand
+struct MitCommand
 {
   double position = 0;  // [rad]
   double velocity = 0;  // [rad/s]
@@ -68,7 +68,7 @@ struct CubemarsMitCommand
 };
 
 /* motor status in the motor side (output shaft) */
-struct CubemarsStatus
+struct MitStatus
 {
   double position = 0;     // [rad]
   double velocity = 0;     // [rad/s]
@@ -79,22 +79,22 @@ struct CubemarsStatus
 };
 
 /*
-  Communication protocol of CubeMars motors (difference of firmware version, e.g., v2 and v3).
+  Communication protocol of the motors (difference of vendor and firmware version).
   The protocol only converts between CAN frames and physical values in the motor side.
 */
-class CubemarsProtocol
+class MitProtocol
 {
 public:
-  virtual ~CubemarsProtocol() = default;
+  virtual ~MitProtocol() = default;
 
   /* frames to enable / disable the motor (e.g., enter / exit motor control mode) */
   virtual std::vector<can_frame> makeEnableFrames(int id) const = 0;
   virtual std::vector<can_frame> makeDisableFrames(int id) const = 0;
-  virtual can_frame makeMitFrame(int id, const CubemarsModel& model, const CubemarsMitCommand& cmd) const = 0;
+  virtual can_frame makeMitFrame(int id, const MitMotorModel& model, const MitCommand& cmd) const = 0;
 
   /* return false if the frame is not the status frame of this protocol */
   virtual bool parseId(const can_frame& frame, int& id) const = 0;
-  virtual bool parseStatus(const can_frame& frame, const CubemarsModel& model, CubemarsStatus& status) const = 0;
+  virtual bool parseStatus(const can_frame& frame, const MitMotorModel& model, MitStatus& status) const = 0;
 
   virtual std::string errorString(int error_code) const = 0;
 
@@ -103,12 +103,12 @@ protected:
   static double uintToFloat(int x, double x_min, double x_max, int bits);
 };
 
-using CubemarsProtocolPtr = std::shared_ptr<CubemarsProtocol>;
+using MitProtocolPtr = std::shared_ptr<MitProtocol>;
 
 /* supported motor models (name -> parameters) */
-const std::map<std::string, CubemarsModel>& cubemarsModels();
+const std::map<std::string, MitMotorModel>& mitMotorModels();
 
-/* create protocol by name (e.g., "v3"), return nullptr if not supported */
-CubemarsProtocolPtr createCubemarsProtocol(const std::string& protocol);
+/* create protocol by name (e.g., "cubemars_v3"), return nullptr if not supported */
+MitProtocolPtr createMitProtocol(const std::string& protocol);
 
 #endif

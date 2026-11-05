@@ -36,7 +36,7 @@
 
 #include <aerial_robot_model/servo_bridge.h>
 #include <aerial_robot_model/servo_backend/dynamixel_backend.h>
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_backend.h>
+#include <aerial_robot_model/servo_backend/mit_can/mit_can_backend.h>
 
 ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(nhp), real_state_received_(false)
 {
@@ -44,8 +44,8 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
   nhp_.param("joint_state_pub_rate", joint_state_pub_rate_, 100.0); // [Hz]
   nhp_.param("state_timeout", state_timeout_, 1.0); // [sec], warn if the feedback from the real servo stops
   nhp_.param("use_servo_state_stamp", use_servo_state_stamp_, false); // true: latest stamp of servo states, false: ros::Time::now()
-  double cubemars_command_rate;
-  nhp_.param("cubemars_command_rate", cubemars_command_rate, 500.0); // [Hz], re-send the latest command to keep cubemars motors enabled
+  double mit_command_rate;
+  nhp_.param("mit_command_rate", mit_command_rate, 500.0); // [Hz], re-send the latest command to the motors with MIT mode (e.g., cubemars)
   if(simulation_mode_)
     {
       if(!ros::service::waitForService(nh_.getNamespace() + std::string("/controller_manager/load_controller")))
@@ -82,8 +82,8 @@ ServoBridge::ServoBridge(ros::NodeHandle nh, ros::NodeHandle nhp): nh_(nh),nhp_(
 
   /* backend to send commands to real machine: dynamixel via spinal (one usb serial) */
   servo_backends_.insert(make_pair(ServoType::DYNAMIXEL, std::make_shared<DynamixelBackend>(servo_target_pos_pubs_.at("common"), servo_target_torque_pubs_.at("common"), servo_enable_pubs_.at("common"))));
-  /* backend for cubemars motors (v3 protocol) via SocketCAN, CAN is not used in simulation */
-  servo_backends_.insert(make_pair(ServoType::CUBEMARS, std::make_shared<CubemarsBackend>(mutex_, !simulation_mode_, cubemars_command_rate)));
+  /* backend for the motors with MIT mode via SocketCAN, CAN is not used in simulation */
+  servo_backends_.insert(make_pair(ServoType::CUBEMARS, std::make_shared<MitCanBackend>(mutex_, !simulation_mode_, mit_command_rate)));
 
 
   /* get additional config for servos from ros parameters */

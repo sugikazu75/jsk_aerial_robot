@@ -96,9 +96,9 @@ add_library(servo_bridge
   src/servo_bridge/servo_bridge.cpp
   src/servo_backend/dynamixel_backend.cpp
   src/servo_backend/can_bus.cpp
-  src/servo_backend/cubemars/cubemars_backend.cpp
-  src/servo_backend/cubemars/cubemars_protocol.cpp
-  src/servo_backend/cubemars/cubemars_v3_protocol.cpp)
+  src/servo_backend/mit_can/mit_can_backend.cpp
+  src/servo_backend/mit_can/mit_protocol.cpp
+  src/servo_backend/mit_can/cubemars_v3_protocol.cpp)
 target_link_libraries(servo_bridge ${catkin_LIBRARIES})
 add_executable(servo_bridge_node src/servo_bridge/servo_bridge_node.cpp)
 target_link_libraries (servo_bridge_node  ${catkin_LIBRARIES} servo_bridge)

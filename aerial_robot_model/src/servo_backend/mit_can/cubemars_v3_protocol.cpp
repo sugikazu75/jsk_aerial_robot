@@ -33,7 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_v3_protocol.h>
+#include <aerial_robot_model/servo_backend/mit_can/cubemars_v3_protocol.h>
 
 #include <algorithm>
 #include <cmath>
@@ -68,7 +68,7 @@ std::vector<can_frame> CubemarsV3Protocol::makeDisableFrames(int id) const
   return std::vector<can_frame>{ makeFrame(CAN_PACKET_DISABLE, id, nullptr, 0) };
 }
 
-can_frame CubemarsV3Protocol::makeMitFrame(int id, const CubemarsModel& model, const CubemarsMitCommand& cmd) const
+can_frame CubemarsV3Protocol::makeMitFrame(int id, const MitMotorModel& model, const MitCommand& cmd) const
 {
   const int p_int = floatToUint(cmd.position, -model.p_max, model.p_max, 16);
   const int v_int = floatToUint(cmd.velocity, -model.v_max, model.v_max, 12);
@@ -102,7 +102,7 @@ bool CubemarsV3Protocol::parseId(const can_frame& frame, int& id) const
   return true;
 }
 
-bool CubemarsV3Protocol::parseStatus(const can_frame& frame, const CubemarsModel& model, CubemarsStatus& status) const
+bool CubemarsV3Protocol::parseStatus(const can_frame& frame, const MitMotorModel& model, MitStatus& status) const
 {
   const int16_t pos_raw = static_cast<int16_t>((frame.data[0] << 8) | frame.data[1]);
   const int16_t spd_raw = static_cast<int16_t>((frame.data[2] << 8) | frame.data[3]);

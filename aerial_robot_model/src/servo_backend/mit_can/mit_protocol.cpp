@@ -33,38 +33,38 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_protocol.h>
-#include <aerial_robot_model/servo_backend/cubemars/cubemars_v3_protocol.h>
+#include <aerial_robot_model/servo_backend/mit_can/mit_protocol.h>
+#include <aerial_robot_model/servo_backend/mit_can/cubemars_v3_protocol.h>
 
 #include <algorithm>
 
-int CubemarsProtocol::floatToUint(double x, double x_min, double x_max, int bits)
+int MitProtocol::floatToUint(double x, double x_min, double x_max, int bits)
 {
   const double span = x_max - x_min;
   x = std::min(std::max(x, x_min), x_max);
   return static_cast<int>((x - x_min) * static_cast<double>((1 << bits) - 1) / span);
 }
 
-double CubemarsProtocol::uintToFloat(int x, double x_min, double x_max, int bits)
+double MitProtocol::uintToFloat(int x, double x_min, double x_max, int bits)
 {
   const double span = x_max - x_min;
   return static_cast<double>(x) * span / static_cast<double>((1 << bits) - 1) + x_min;
 }
 
-const std::map<std::string, CubemarsModel>& cubemarsModels()
+const std::map<std::string, MitMotorModel>& mitMotorModels()
 {
-  static const std::map<std::string, CubemarsModel> models = {
+  static const std::map<std::string, MitMotorModel> models = {
     /* v3: AK Series Motor Module V3 Driver Software User Manual (V1.0.1), force control mode parameter range */
     // protocol, p_max, v_max, t_max, kp_max, kd_max, torque_constant, pole_pairs, gear_ratio
-    { "AKE60_8", { "v3", 12.56, 40.0, 15.0, 500.0, 5.0, 0.7382, 14, 8 } },
-    { "AK40_10_V3", { "v3", 12.56, 45.0, 5.0, 500.0, 5.0, 0.4894, 14, 10 } },
+    { "AKE60_8", { "cubemars_v3", 12.56, 40.0, 15.0, 500.0, 5.0, 0.7382, 14, 8 } },
+    { "AK40_10_V3", { "cubemars_v3", 12.56, 45.0, 5.0, 500.0, 5.0, 0.4894, 14, 10 } },
   };
   return models;
 }
 
-CubemarsProtocolPtr createCubemarsProtocol(const std::string& protocol)
+MitProtocolPtr createMitProtocol(const std::string& protocol)
 {
-  if (protocol == "v3")
+  if (protocol == "cubemars_v3")
     return std::make_shared<CubemarsV3Protocol>();
-  return CubemarsProtocolPtr();
+  return MitProtocolPtr();
 }
