@@ -9,6 +9,7 @@
   <arg name="hw_sim_type" value="mujoco_ros_control/AerialRobotHWSim" if="$(arg use_spinal)"/>
   <arg name="hw_sim_type" value="mujoco_ros_control/DefaultAerialRobotHWSim" unless="$(arg use_spinal)"/>
   <arg name="mujoco_threads" default="1"/>
+  <arg name="extra_mujoco_plugins" default="" doc="additional plugin entry appended to MujocoPlugins"/>
 
   <group ns="$(arg robot_ns)">
     <include file="$(find mujoco_ros)/launch/launch_server.launch" >
@@ -33,6 +34,7 @@
         - type: aerial_robot_simulation/ThrustVisualizerPlugin
           min_force: 0.001
           rgba: [0.0, 0.8, 1.0, 0.9]
+        $(arg extra_mujoco_plugins)
     </rosparam>
 
   </group>
