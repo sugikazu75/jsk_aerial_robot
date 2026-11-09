@@ -25,7 +25,8 @@ def main():
         rospy.logerr("Failed to parse URDF: %s", e)
         return
 
-    rotor_joints = [j.name for j in robot.joints if "rotor" in j.name]
+    # only joints named exactly "rotorN" (e.g. exclude "rotor_arm1"), as in aerial_robot_dynamics
+    rotor_joints = [j.name for j in robot.joints if re.fullmatch(r"rotor\d+", j.name)]
     # natural order (rotor1, rotor2, ..., rotor10) so that controllerN drives rotorN, as in aerial_robot_dynamics
     rotor_joints.sort(key=lambda name: [int(s) if s.isdigit() else s for s in re.split(r"(\d+)", name)])
     rospy.loginfo("Found {} rotors".format(len(rotor_joints)))
