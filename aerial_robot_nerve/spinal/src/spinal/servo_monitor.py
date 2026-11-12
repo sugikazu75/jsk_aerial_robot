@@ -115,7 +115,7 @@ class ServoMonitor(Plugin):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update)
-        self.timer.start(1000)
+        self.timer.start(10)
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here

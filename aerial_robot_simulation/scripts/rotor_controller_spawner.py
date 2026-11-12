@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import rospy
 import sys
 from std_msgs.msg import Float64
@@ -24,8 +25,10 @@ def main():
         rospy.logerr("Failed to parse URDF: %s", e)
         return
 
-    rotor_joints = [j.name for j in robot.joints if "rotor" in j.name]
-    rotor_joints.sort()
+    # only joints named exactly "rotorN" (e.g. exclude "rotor_arm1"), as in aerial_robot_dynamics
+    rotor_joints = [j.name for j in robot.joints if re.fullmatch(r"rotor\d+", j.name)]
+    # natural order (rotor1, rotor2, ..., rotor10) so that controllerN drives rotorN, as in aerial_robot_dynamics
+    rotor_joints.sort(key=lambda name: [int(s) if s.isdigit() else s for s in re.split(r"(\d+)", name)])
     rospy.loginfo("Found {} rotors".format(len(rotor_joints)))
 
     # wait for controller manager services to be available
@@ -37,9 +40,7 @@ def main():
         sys.exit(1)
 
     load_srv = rospy.ServiceProxy("controller_manager/load_controller", LoadController)
-    switch_srv = rospy.ServiceProxy(
-        "controller_manager/switch_controller", SwitchController
-    )
+    switch_srv = rospy.ServiceProxy("controller_manager/switch_controller", SwitchController)
 
     common_type = "rotor_controllers/RotorController"
 
