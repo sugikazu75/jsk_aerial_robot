@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<robot
+    xmlns:xacro="http://www.ros.org/wiki/xacro" name="gimbalrotor" >
+
+  <!-- real machine: exported from SolidWorks (meshes in meshes/20261117_v1) -->
+  <xacro:include filename="$(find gimbalrotor)/urdf/quad_with_dual_arm/gimbalrotor.xacro" />
+
+  <!-- general attribute for aerial_robot_model -->
+  <baselink name="fc" />
+  <thrust_link name="thrust" />
+  <m_f_rate value="-0.0163" /> <!-- drug torque rate -->
+
+  <!-- dummy root: KDL does not accept a root link with inertia, and aerial_robot_model
+       takes the single child of the "root" link as the first inertia base link -->
+  <link name="root">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.00001"/>
+      <inertia ixx="0.000001" ixy="0.0" ixz="0.0" iyy="0.000001" iyz="0.0" izz="0.000001"/>
+    </inertial>
+  </link>
+  <joint name="root_joint" type="fixed">
+    <parent link="root"/>
+    <child link="main_body"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <!-- end effectors (virtual): the tip of link3 (x = 0.242 in front/back_arm_link3.STL) -->
+  <xacro:macro name="end_effector" params="prefix">
+    <link name="${prefix}_end_effector">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.00001"/>
+        <inertia ixx="0.000001" ixy="0.0" ixz="0.0" iyy="0.000001" iyz="0.0" izz="0.000001"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}_end_effector_joint" type="fixed">
+      <parent link="${prefix}_link3"/>
+      <child link="${prefix}_end_effector"/>
+      <origin rpy="0 0 0" xyz="0.242 0 0"/>
+    </joint>
+  </xacro:macro>
+  <xacro:end_effector prefix="front_arm"/>
+  <xacro:end_effector prefix="back_arm"/>
+
+  <!-- transmissions -->
+  <xacro:macro name="servo_transmission" params="joint">
+    <transmission name="${joint}_tran">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${joint}">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="${joint}_servo">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    <gazebo reference="${joint}"><implicitSpringDamper>true</implicitSpringDamper></gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="rotor_transmission" params="id">
+    <transmission name="rotor_tran${id}">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rotor${id}">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+      </joint>
+      <actuator name="rotor_actuator${id}">
+        <hardwareInterface>RotorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+  <xacro:macro name="gimbal_module" params="id">
+    <xacro:servo_transmission joint="gimbal${id}"/>
+    <xacro:rotor_transmission id="${id}"/>
+  </xacro:macro>
+  <xacro:gimbal_module id="1"/>
+  <xacro:gimbal_module id="2"/>
+  <xacro:gimbal_module id="3"/>
+  <xacro:gimbal_module id="4"/>
+
+  <xacro:macro name="arm_transmissions" params="prefix">
+    <xacro:servo_transmission joint="${prefix}_joint1"/>
+    <xacro:servo_transmission joint="${prefix}_joint2"/>
+    <xacro:servo_transmission joint="${prefix}_joint3"/>
+  </xacro:macro>
+  <xacro:arm_transmissions prefix="front_arm"/>
+  <xacro:arm_transmissions prefix="back_arm"/>
+
+</robot>
