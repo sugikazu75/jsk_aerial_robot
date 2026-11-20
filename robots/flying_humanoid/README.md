@@ -15,7 +15,7 @@ The walk needs the following in addition to the usual packages of jsk_aerial_rob
 
 | package | from | |
 |---|---|---|
-| crocoddyl | `aerial_robot_*.rosinstall` of the repository root | a fork with the thrust-rate models (`PR/thrust_rate/exact_gradient` of sugikazu75/crocoddyl) |
+| crocoddyl | `aerial_robot_*.rosinstall` of the repository root | a fork with the thrust-rate models (`develop/articulated_aerial_robot` of sugikazu75/crocoddyl) |
 | pinocchio (v4) | apt | |
 | blasfeo, hpipm, hpipm-cpp | another workspace `~/ros/ocp_ws` | for the HPIPM-SQP solver (see [Solvers](#solvers)) |
 

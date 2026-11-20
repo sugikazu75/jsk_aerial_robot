@@ -14,7 +14,7 @@ ROS だけが入った環境から始めます(Ubuntu 22.04/24.04 の ROS-O で�
 
 | パッケージ | 入手先 | |
 |---|---|---|
-| crocoddyl | レポジトリルートの `aerial_robot_*.rosinstall` | thrust-rate モデルを追加した fork(sugikazu75/crocoddyl の `PR/thrust_rate/exact_gradient`) |
+| crocoddyl | レポジトリルートの `aerial_robot_*.rosinstall` | thrust-rate モデルを追加した fork(sugikazu75/crocoddyl の `develop/articulated_aerial_robot`) |
 | pinocchio (v4) | apt | |
 | blasfeo, hpipm, hpipm-cpp | 別のワークスペース `~/ros/ocp_ws` | HPIPM-SQP ソルバー用([ソルバー](#ソルバー)を参照) |
 
