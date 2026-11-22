@@ -235,16 +235,16 @@ namespace aerial_robot_control
     switch(navigator_->getXyControlMode())
       {
       case aerial_robot_navigation::POS_CONTROL_MODE:
-        pid_controllers_.at(X).update(target_pos_.x() - pos_.x(), du, target_vel_.x() - vel_.x(), target_acc_.x());
-        pid_controllers_.at(Y).update(target_pos_.y() - pos_.y(), du, target_vel_.y() - vel_.y(), target_acc_.y());
+        pid_controllers_.at(X).update(target_pos_.x() - pos_.x(), du, target_vel_.x() - vel_.x(), target_acc_.x(), integrate_.at(X));
+        pid_controllers_.at(Y).update(target_pos_.y() - pos_.y(), du, target_vel_.y() - vel_.y(), target_acc_.y(), integrate_.at(Y));
         break;
       case aerial_robot_navigation::VEL_CONTROL_MODE:
-        pid_controllers_.at(X).update(0, du, target_vel_.x() - vel_.x(), target_acc_.x());
-        pid_controllers_.at(Y).update(0, du, target_vel_.y() - vel_.y(), target_acc_.y());
+        pid_controllers_.at(X).update(0, du, target_vel_.x() - vel_.x(), target_acc_.x(), integrate_.at(X));
+        pid_controllers_.at(Y).update(0, du, target_vel_.y() - vel_.y(), target_acc_.y(), integrate_.at(Y));
         break;
       case aerial_robot_navigation::ACC_CONTROL_MODE:
-        pid_controllers_.at(X).update(0, du, 0, target_acc_.x());
-        pid_controllers_.at(Y).update(0, du, 0, target_acc_.y());
+        pid_controllers_.at(X).update(0, du, 0, target_acc_.x(), integrate_.at(X));
+        pid_controllers_.at(Y).update(0, du, 0, target_acc_.y(), integrate_.at(Y));
         break;
       default:
         break;
@@ -270,7 +270,7 @@ namespace aerial_robot_control
         target_acc_.setZ(0);
       }
 
-    pid_controllers_.at(Z).update(err_z, du_z, err_v_z, target_acc_.z());
+    pid_controllers_.at(Z).update(err_z, du_z, err_v_z, target_acc_.z(), integrate_.at(Z));
 
     if(pid_controllers_.at(Z).getErrI() < 0) pid_controllers_.at(Z).setErrI(0);
 
@@ -294,8 +294,8 @@ namespace aerial_robot_control
           }
         du_rp = 0;
       }
-    pid_controllers_.at(ROLL).update(target_rpy_.x() - rpy_.x(), du_rp, target_omega_.x() - omega_.x(), target_ang_acc_.x());
-    pid_controllers_.at(PITCH).update(target_rpy_.y() - rpy_.y(), du_rp, target_omega_.y() - omega_.y(), target_ang_acc_.y());
+    pid_controllers_.at(ROLL).update(target_rpy_.x() - rpy_.x(), du_rp, target_omega_.x() - omega_.x(), target_ang_acc_.x(), integrate_.at(ROLL));
+    pid_controllers_.at(PITCH).update(target_rpy_.y() - rpy_.y(), du_rp, target_omega_.y() - omega_.y(), target_ang_acc_.y(), integrate_.at(PITCH));
 
     // yaw
     double err_yaw = angles::shortest_angular_distance(rpy_.z(), target_rpy_.z());
@@ -304,7 +304,7 @@ namespace aerial_robot_control
       {
         err_omega_z = target_omega_.z(); // part of the control in spinal
       }
-    pid_controllers_.at(YAW).update(err_yaw, du, err_omega_z, target_ang_acc_.z());
+    pid_controllers_.at(YAW).update(err_yaw, du, err_omega_z, target_ang_acc_.z(), integrate_.at(YAW));
 
     // update
     control_timestamp_ = ros::Time::now().toSec();

@@ -1,5 +1,12 @@
+<class_libraries>
 <library path="lib/libgimbalrotor_controller">
   <class name="aerial_robot_control/gimbalrotor_controller" type="aerial_robot_control::GimbalrotorController" base_class_type="aerial_robot_control::ControlBase">
     <description>plugin for gimbalrotor control </description>
   </class>
 </library>
+<library path="lib/libgimbalrotor_whole_body_controller">
+  <class name="aerial_robot_control/gimbalrotor_whole_body_controller" type="aerial_robot_control::GimbalrotorWholeBodyController" base_class_type="aerial_robot_control::ControlBase">
+    <description>gimbalrotor control with contacts: the PID wrench shared by the rotors and the contacts in a QP of the whole-body statics</description>
+  </class>
+</library>
+</class_libraries>

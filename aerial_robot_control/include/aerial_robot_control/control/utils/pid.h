@@ -60,11 +60,13 @@ namespace aerial_robot_control
 
     virtual ~PID() = default;
 
-    virtual void update(const double err_p, const double du, const double err_d, const double feedforward_term = 0)
+    // integrate: whether err_p is added to the integral (false: the integral is held as it is)
+    virtual void update(const double err_p, const double du, const double err_d, const double feedforward_term = 0,
+                        const bool integrate = true)
     {
       err_p_ = clamp(err_p, -limit_err_p_, limit_err_p_);
       err_i_prev_ = err_i_;
-      err_i_ = clamp(err_i_ + err_p_ * du, -limit_err_i_, limit_err_i_);
+      if (integrate) err_i_ = clamp(err_i_ + err_p_ * du, -limit_err_i_, limit_err_i_);
       err_d_ = clamp(err_d, -limit_err_d_, limit_err_d_);
 
       p_term_ = clamp(err_p_ * p_gain_, -limit_p_, limit_p_);

@@ -1,4 +1,5 @@
 #include <gimbalrotor/control/gimbalrotor_controller.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -307,6 +308,15 @@ void GimbalrotorController::sendFourAxisCommand()
   else
   {
     flight_command_data.base_thrust = target_full_thrust_;
+    const float max_thrust = robot_model_->getThrustUpperLimit();
+    for (int i = 0; i < motor_num_; i++)
+    {
+      const float requested = flight_command_data.base_thrust.at(i);
+      if (requested > max_thrust)
+        ROS_ERROR_THROTTLE(1.0, "[gimbalrotor] rotor %d thrust %.3f N exceeds %.3f N; clamping", i + 1, requested,
+                           max_thrust);
+      flight_command_data.base_thrust.at(i) = std::max(0.0f, std::min(requested, max_thrust));
+    }
   }
 
   flight_cmd_pub_.publish(flight_command_data);

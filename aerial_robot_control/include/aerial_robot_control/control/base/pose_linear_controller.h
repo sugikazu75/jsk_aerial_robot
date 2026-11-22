@@ -71,6 +71,7 @@ namespace aerial_robot_control
     ros::Publisher pid_pub_;
 
     std::vector<PID> pid_controllers_;
+    std::vector<bool> integrate_ = std::vector<bool>(6, true);  // per axis (X..YAW): whether its PID integrates (false: the integral held)
     std::vector<boost::shared_ptr<PidControlDynamicConfig> > pid_reconf_servers_;
     aerial_robot_msgs::PoseControlPid pid_msg_;
 

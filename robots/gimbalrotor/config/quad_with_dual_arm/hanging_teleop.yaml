@@ -1,0 +1,47 @@
+# Parameters of scripts/execution/hanging_teleop.py (all of them; each one can be overridden by a private
+# parameter of the node: _key:=value). The IK is src/gimbalrotor/hanging_ik.py.
+
+joint_group: arm_joints   # the servo group of the arm joints (<group>_ctrl)
+frame_id: world           # of the interactive marker and the markers
+rate: 50.0                # [Hz] of the IK and the targets sent
+
+# the hook: the robot hangs on the bar by it when the node starts; that point and the angle of the last
+# link of the front arm are kept where they are then
+hook_link: front_arm_end_effector
+hook_offset: [0.0443, 0.0, -0.0420]  # [m] in hook_link (HOOK_OFFSET of plan_perching_motion.py)
+activate_hook: true                  # switch the hook contact of the whole-body controller on at the start
+hook_contact: hook_bar               # its name (<ns>/whole_body/contacts/<name>/activate)
+
+# the hand
+tip_link: back_arm_end_effector  # its x axis is the direction of the hand
+track_direction: true            # the hand also turns to the direction of the target (its x axis)
+
+# the speeds: the target the IK follows moves to the requested one at most so fast, staying within
+# tip_lag (tip_angle_lag) of the hand (so that out of reach it stops); the IK moves each variable at
+# most so fast
+tip_speed: 0.05            # [m/s]
+tip_rotation_speed: 0.3    # [rad/s]
+tip_lag: 0.02              # [m]
+tip_angle_lag: 0.2         # [rad]
+root_speed: 0.05           # [m/s] of the root
+root_rotation_speed: 0.2   # [rad/s] of the body pitch
+joint_speed: 0.4           # [rad/s]
+
+# the limits
+joint_margin: 0.05         # [rad] inside the joint limits of the URDF
+pitch_reference: 0.0       # [rad] of the body
+max_pitch: 0.3             # [rad] from the reference
+max_effort_ratio: 0.75     # share of the URDF effort limits the rear arm joints may take (static)
+check_collision: true      # the robot against itself (not the scene)
+collision_margin: 0.01     # [m]
+
+# the IK (weights of the residuals; the hook point is an equality)
+ik_iterations: 5           # per cycle
+weight_hook: 100.0         # per m, only if the equality cannot be met
+weight_hook_angle: 10.0    # per rad
+weight_com: 10.0           # per m, the CoM below the hook (0: free)
+weight_tip: 10.0           # per m
+weight_direction: 1.0      # per rad
+weight_attitude: 1.0       # per rad, the body pitch to pitch_reference
+damping: 0.3               # per m or rad of each step
+max_tip_error: 0.05        # [m] the error of the hand is clipped to this in its residual

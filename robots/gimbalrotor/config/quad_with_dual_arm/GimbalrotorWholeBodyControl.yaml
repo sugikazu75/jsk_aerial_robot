@@ -1,0 +1,86 @@
+# GimbalrotorWholeBodyControl.yaml: GimbalrotorControl.yaml with the whole-body controller
+aerial_robot_control_name: aerial_robot_control/gimbalrotor_whole_body_controller
+
+controller:
+  torque_allocation_matrix_inv_pub_interval: 0.05
+  wrench_allocation_matrix_pub_interval: 0.1
+  gimbal_calc_in_fc : false  # the allocation is on the PC
+
+  xy:
+    p_gain: 1.5
+    i_gain: 0.05
+    d_gain: 1.0
+    limit_sum: 4.0
+    limit_p: 12.0
+    limit_i: 12.0
+    limit_d: 12.0
+
+  z:
+    p_gain: 5.0
+    i_gain: 1.0
+    d_gain: 2.5
+    limit_err_p: 1.0
+    limit_sum: 25.0 # N for clamping thrust force
+    limit_p: 25.0
+    limit_i: 25.0
+    limit_d: 25.0
+    force_landing_descending_rate: -0.5
+
+  roll_pitch:
+    p_gain: 10.0
+    i_gain: 1.0
+    d_gain: 4.0
+    limit_sum: 20.0
+    limit_p: 20.0
+    limit_i: 20.0
+    limit_d: 20.0
+
+    start_rp_integration_height: 0.01
+
+  yaw:
+    p_gain: 1.0
+    i_gain: 1.0
+    d_gain: 4.0
+    limit_err_p: 0.4
+    limit_sum: 20.0
+    limit_p: 20.0
+    limit_i: 20.0
+    limit_d: 20.0
+
+    need_d_control: true
+
+  # the whole-body controller (GimbalrotorWholeBodyController): the PID wrench shared by the rotors
+  # and the active contacts in a QP of the whole-body statics
+  whole_body:
+    min_lift: 2.2              # [N] per rotor along up (25 % of the weight in all): attitude kept in control
+    max_tilt: 1.5708           # [rad] of the thrust from up
+    thrust_regularization: 1.0e-3
+    contact_regularization: 1.0e-4
+    solver_tolerance: 1.0e-6      # ProxQP eps_abs, eps_rel (a loose one, e.g. 1e-3, leaves the contacts nearly unloaded)
+    solver_max_iteration: 10000
+    wrench_weight: [1.0, 1.0, 1.0, 10.0, 10.0, 10.0]  # force, torque (world, about the CoG)
+    freeze_integral_in_contact: [x, y, z, roll, yaw]  # the PIDs that hold their integral while a contact carries load
+    torque_limit_ratio: 0.75   # of the effort limit of the URDF
+    torque_limited_joints: [front_arm_joint1, front_arm_joint2, front_arm_joint3,
+                            back_arm_joint1, back_arm_joint2, back_arm_joint3]
+    # switched by <ns>/whole_body/contacts/<name>/activate (std_srvs/SetBool); the frames from the plan
+    # (plan_perching_motion.py): z along the normal, the environment pushing the robot
+    contacts:
+      hook_bar:
+        link: front_arm_end_effector
+        xyz: [0.0443, 0.0, -0.042]
+        quaternion: [1.0, 0.0, 0.0, 0.0]   # [x, y, z, w]: turned about x by pi
+        friction: 0.5
+        mode: support
+        max_normal: 40.0   # [N] when fully loaded
+        ramp_time: 2.0     # [s] the load moved onto the bar
+        ramp: relative     # the normal force within share x what the bar would carry fully loaded (the
+                           # load moves linearly over ramp_time); absolute: share x [min, max]_normal
+      rear_hand_wall:
+        link: back_arm_end_effector
+        xyz: [0.0, 0.0, 0.0]
+        quaternion: [0.0, -0.7071068, 0.0, 0.7071068]   # turned about y by -pi/2
+        friction: 0.5
+        mode: prescribed
+        force: [0.0, 0.0, 3.0]   # [N] in the contact frame: the push
+        ramp_time: 3.0
