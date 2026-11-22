@@ -1,0 +1,567 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 70
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.39411765336990356
+    Tree Height: 685
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 0.5
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Alpha: 0.6000000238418579
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        env_bar:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        env_floor:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        env_posts:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        env_wall:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: Environment
+      Robot Description: environment/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        back_arm_end_effector:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        back_arm_link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        back_arm_link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        back_arm_link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        front_arm_end_effector:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        front_arm_link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_arm_link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_arm_link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gimbal1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gimbal2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gimbal3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gimbal4_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        main_body:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        root:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rotor_arm1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rotor_arm2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rotor_arm3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        rotor_arm4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        thrust1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        thrust2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        thrust3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        thrust4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: Robot
+      Robot Description: gimbalrotor/robot_description
+      TF Prefix: gimbalrotor
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.029999999329447746
+      Force Color: 0; 121; 140
+      Hide Small Values: false
+      History Length: 4
+      Name: Thrust
+      Queue Size: 10
+      Topic: /gimbalrotor/trajectory_playback/thrust
+      Torque Arrow Scale: 0
+      Torque Color: 0; 0; 0
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.029999999329447746
+      Force Color: 209; 73; 91
+      Hide Small Values: false
+      History Length: 1
+      Name: Support contacts
+      Queue Size: 10
+      Topic: /gimbalrotor/trajectory_playback/contact
+      Torque Arrow Scale: 0
+      Torque Color: 0; 0; 0
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Arrow Width: 0.30000001192092896
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 0.029999999329447746
+      Force Color: 237; 174; 73
+      Hide Small Values: false
+      History Length: 1
+      Name: Task contacts
+      Queue Size: 10
+      Topic: /gimbalrotor/trajectory_playback/task_contact
+      Torque Arrow Scale: 0
+      Torque Color: 0; 0; 0
+      Unreliable: false
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /gimbalrotor/trajectory_playback/path
+      Name: Path
+      Namespaces:
+        path: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /gimbalrotor/trajectory_playback/phase
+      Name: Phase
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Alpha: 1
+      Class: rviz/Effort
+      Enabled: true
+      History Length: 1
+      Joints:
+        back_arm_joint1:
+          Value: true
+        back_arm_joint2:
+          Value: true
+        back_arm_joint3:
+          Value: true
+        front_arm_joint1:
+          Value: true
+        front_arm_joint2:
+          Value: true
+        front_arm_joint3:
+          Value: true
+        gimbal1:
+          Value: true
+        gimbal2:
+          Value: true
+        gimbal3:
+          Value: true
+        gimbal4:
+          Value: true
+      Name: Effort
+      Queue Size: 1
+      Robot Description: gimbalrotor/robot_description
+      Scale: 0.10000000149011612
+      TF Prefix: gimbalrotor
+      Topic: /gimbalrotor/joint_states
+      Unreliable: false
+      Value: true
+      Width: 0.004999999888241291
+    - Buffer length: 500
+      Class: jsk_rviz_plugin/Plotter2D
+      Enabled: true
+      Name: Thrust1
+      Show Value: true
+      Topic: /gimbalrotor/trajectory_playback/thrust_value/thrust1
+      Value: true
+      auto color change: false
+      auto scale: true
+      auto text size in plot: true
+      background color: 0; 0; 0
+      backround alpha: 0
+      border: true
+      foreground alpha: 0.699999988079071
+      foreground color: 25; 255; 240
+      height: 128
+      left: 0
+      linewidth: 1
+      max color: 255; 0; 0
+      max value: 1
+      min value: -1
+      show caption: true
+      text size: 12
+      text size in plot: 12
+      top: 0
+      update interval: 0.03999999910593033
+      width: 128
+    - Buffer length: 500
+      Class: jsk_rviz_plugin/Plotter2D
+      Enabled: true
+      Name: Thrust2
+      Show Value: true
+      Topic: /gimbalrotor/trajectory_playback/thrust_value/thrust2
+      Value: true
+      auto color change: false
+      auto scale: true
+      auto text size in plot: true
+      background color: 0; 0; 0
+      backround alpha: 0
+      border: true
+      foreground alpha: 0.699999988079071
+      foreground color: 25; 255; 240
+      height: 128
+      left: 128
+      linewidth: 1
+      max color: 255; 0; 0
+      max value: 1
+      min value: -1
+      show caption: true
+      text size: 12
+      text size in plot: 12
+      top: 0
+      update interval: 0.03999999910593033
+      width: 128
+    - Buffer length: 500
+      Class: jsk_rviz_plugin/Plotter2D
+      Enabled: true
+      Name: Thrust3
+      Show Value: true
+      Topic: /gimbalrotor/trajectory_playback/thrust_value/thrust3
+      Value: true
+      auto color change: false
+      auto scale: true
+      auto text size in plot: true
+      background color: 0; 0; 0
+      backround alpha: 0
+      border: true
+      foreground alpha: 0.699999988079071
+      foreground color: 25; 255; 240
+      height: 128
+      left: 256
+      linewidth: 1
+      max color: 255; 0; 0
+      max value: 1
+      min value: -1
+      show caption: true
+      text size: 12
+      text size in plot: 12
+      top: 0
+      update interval: 0.03999999910593033
+      width: 128
+    - Buffer length: 500
+      Class: jsk_rviz_plugin/Plotter2D
+      Enabled: true
+      Name: Thrust4
+      Show Value: true
+      Topic: /gimbalrotor/trajectory_playback/thrust_value/thrust4
+      Value: true
+      auto color change: false
+      auto scale: true
+      auto text size in plot: true
+      background color: 0; 0; 0
+      backround alpha: 0
+      border: true
+      foreground alpha: 0.699999988079071
+      foreground color: 25; 255; 240
+      height: 128
+      left: 384
+      linewidth: 1
+      max color: 255; 0; 0
+      max value: 1
+      min value: -1
+      show caption: true
+      text size: 12
+      text size in plot: 12
+      top: 0
+      update interval: 0.03999999910593033
+      width: 128
+    - Class: rviz/TF
+      Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        env_bar:
+          Value: true
+        env_floor:
+          Value: true
+        env_posts:
+          Value: true
+        env_wall:
+          Value: true
+        gimbalrotor/back_arm_end_effector:
+          Value: true
+        gimbalrotor/back_arm_link1:
+          Value: true
+        gimbalrotor/back_arm_link2:
+          Value: true
+        gimbalrotor/back_arm_link3:
+          Value: true
+        gimbalrotor/fc:
+          Value: true
+        gimbalrotor/front_arm_end_effector:
+          Value: true
+        gimbalrotor/front_arm_link1:
+          Value: true
+        gimbalrotor/front_arm_link2:
+          Value: true
+        gimbalrotor/front_arm_link3:
+          Value: true
+        gimbalrotor/gimbal1_link:
+          Value: true
+        gimbalrotor/gimbal2_link:
+          Value: true
+        gimbalrotor/gimbal3_link:
+          Value: true
+        gimbalrotor/gimbal4_link:
+          Value: true
+        gimbalrotor/hook_bar:
+          Value: true
+        gimbalrotor/main_body:
+          Value: true
+        gimbalrotor/rear_hand_wall:
+          Value: true
+        gimbalrotor/root:
+          Value: true
+        gimbalrotor/rotor_arm1:
+          Value: true
+        gimbalrotor/rotor_arm2:
+          Value: true
+        gimbalrotor/rotor_arm3:
+          Value: true
+        gimbalrotor/rotor_arm4:
+          Value: true
+        gimbalrotor/thrust1:
+          Value: true
+        gimbalrotor/thrust2:
+          Value: true
+        gimbalrotor/thrust3:
+          Value: true
+        gimbalrotor/thrust4:
+          Value: true
+        world:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 0.25
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: false
+      Tree:
+        world:
+          env_bar:
+            {}
+          env_floor:
+            {}
+          env_posts:
+            {}
+          env_wall:
+            {}
+          gimbalrotor/root:
+            gimbalrotor/main_body:
+              gimbalrotor/back_arm_link1:
+                gimbalrotor/back_arm_link2:
+                  gimbalrotor/back_arm_link3:
+                    gimbalrotor/back_arm_end_effector:
+                      gimbalrotor/rear_hand_wall:
+                        {}
+              gimbalrotor/fc:
+                {}
+              gimbalrotor/front_arm_link1:
+                gimbalrotor/front_arm_link2:
+                  gimbalrotor/front_arm_link3:
+                    gimbalrotor/front_arm_end_effector:
+                      gimbalrotor/hook_bar:
+                        {}
+              gimbalrotor/gimbal1_link:
+                gimbalrotor/thrust1:
+                  {}
+              gimbalrotor/gimbal2_link:
+                gimbalrotor/thrust2:
+                  {}
+              gimbalrotor/gimbal3_link:
+                gimbalrotor/thrust3:
+                  {}
+              gimbalrotor/gimbal4_link:
+                gimbalrotor/thrust4:
+                  {}
+              gimbalrotor/rotor_arm1:
+                {}
+              gimbalrotor/rotor_arm2:
+                {}
+              gimbalrotor/rotor_arm3:
+                {}
+              gimbalrotor/rotor_arm4:
+                {}
+      Update Interval: 0
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 240; 240; 240
+    Default Light: true
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 3.174004316329956
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Field of View: 0.7853981852531433
+      Focal Point:
+        X: 0.13773958384990692
+        Y: 0.05342833697795868
+        Z: 1.4977691173553467
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.16499994695186615
+      Target Frame: <Fixed Frame>
+      Yaw: 4.700015068054199
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 900
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd0000000100000000000001560000032efc0200000001fb000000100044006900730070006c006100790073010000003b0000032e000000c700ffffff0000041c0000032e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 1400
+  X: 4296
+  Y: 299

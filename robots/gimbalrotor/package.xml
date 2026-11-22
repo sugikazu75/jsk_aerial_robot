@@ -11,6 +11,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>aerial_robot_control</build_depend>
+  <build_depend>aerial_motion_planning</build_depend>
   <build_depend>aerial_robot_estimation</build_depend>
   <build_depend>aerial_robot_model</build_depend>
   <build_depend>aerial_robot_msgs</build_depend>
@@ -18,18 +19,40 @@
   <build_depend>spinal</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>pluginlib</build_depend>
+  <build_depend>pinocchio</build_depend>
+  <build_depend>proxsuite</build_depend>
 
   <run_depend>aerial_robot_control</run_depend>
+  <run_depend>aerial_motion_planning</run_depend>
   <run_depend>aerial_robot_estimation</run_depend>
   <run_depend>aerial_robot_model</run_depend>
   <run_depend>aerial_robot_msgs</run_depend>
   <run_depend>mujoco_ros_utils</run_depend>
-  <run_depend>python3-rospkg</run_depend>
   <run_depend>aerial_robot_simulation</run_depend>
   <run_depend>aerial_robot_base</run_depend>
   <run_depend>spinal</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>pluginlib</run_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>smach_ros</run_depend>
+  <run_depend>python3-rospkg</run_depend>
+  <run_depend>xacro</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>tf2_ros</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>interactive_markers</run_depend>
+  <run_depend>std_srvs</run_depend>
+  <run_depend>pinocchio</run_depend>
+  <run_depend>proxsuite</run_depend>
+  <run_depend>ompl</run_depend>
+  <run_depend>python3-numpy</run_depend>
+  <run_depend>python3-scipy</run_depend>
+  <run_depend>python3-matplotlib</run_depend>
 
   <test_depend>rostest</test_depend>
 

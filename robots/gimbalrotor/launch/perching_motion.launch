@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Play back the planned hanging-perching motion of quad_with_dual_arm in RViz: hover, hang
+       from the bar with the front arm, push the wall with the rear arm.
+       Make the trajectory file first; the scene (the bar, the wall and the task frame) is read from the
+       same configuration as the planner's (config, perching_motion.yaml):
+         rosrun gimbalrotor plan_perching_motion.py -->
+  <arg name="robot_ns" default="gimbalrotor"/>
+  <arg name="airframe" default="quad_with_dual_arm"/>
+  <arg name="robot_model" default="$(find gimbalrotor)/robots/$(arg airframe)/gimbalrotor.urdf.xacro"/>
+  <arg name="trajectory_file" default="$(find gimbalrotor)/config/$(arg airframe)/trajectories/perching_motion.json"/>
+  <arg name="config" default="$(find gimbalrotor)/config/$(arg airframe)/perching_motion.yaml"/>
+  <arg name="speed" default="1.0"/>
+  <arg name="loop" default="true"/>
+  <arg name="rviz" default="true"/>
+  <arg name="rviz_config" default="$(find gimbalrotor)/config/perching_motion.rviz"/>
+
+  <!-- the scene has no moving joint, so its robot_state_publisher only latches /tf_static -->
+  <group ns="environment">
+    <param name="robot_description"
+           command="$(find xacro)/xacro '$(find gimbalrotor)/urdf/environment/perching_environment.urdf.xacro'
+                    config:=$(arg config)"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
+  </group>
+
+  <group ns="$(arg robot_ns)">
+    <param name="robot_description" command="$(find xacro)/xacro '$(arg robot_model)'"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+      <param name="tf_prefix" value="$(arg robot_ns)"/>
+    </node>
+    <node pkg="gimbalrotor" type="trajectory_playback.py" name="trajectory_playback" output="screen">
+      <param name="trajectory_file" value="$(arg trajectory_file)"/>
+      <param name="tf_prefix" value="$(arg robot_ns)"/>
+      <param name="speed" value="$(arg speed)"/>
+      <param name="loop" value="$(arg loop)"/>
+    </node>
+  </group>
+
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="perching_motion_rviz" args="-d $(arg rviz_config)"/>
+</launch>
