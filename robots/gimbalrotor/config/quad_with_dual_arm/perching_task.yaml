@@ -1,0 +1,21 @@
+# Perching decisions and contact handling; perching_task.py also loads follow_trajectory.yaml.
+# Override this file with _task_config:=<path>, or individual values with _key:=value.
+
+# Slow approach to the first contact, after convergence at the start of this window.
+approach_window: 2.0         # [s] of the trajectory file
+approach_speed_scale: 0.3    # times the playback speed
+converge_pos: 0.03           # [m] of the CoG
+converge_vel: 0.05           # [m/s] of the CoG
+converge_joint: 0.03         # [rad]
+converge_timeout: 15.0       # [s]
+
+# Raw sensor_msgs/Joy button indices (PS4: R1 5, R2 7).
+ok_button: 5
+ng_button: 7
+
+# Switch controller contacts through <ns>/whole_body/contacts/<name>/activate.
+switch_contacts: true
+
+# "trajectory": play to end_frame, switching contacts at their events.
+# "stop": switch on the first contact, then stop at that pose for another task.
+after_hook: trajectory

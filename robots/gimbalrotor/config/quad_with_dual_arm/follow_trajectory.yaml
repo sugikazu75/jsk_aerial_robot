@@ -1,0 +1,19 @@
+# Playback parameters shared by follow_trajectory.py and perching_task.py.
+# Override a value with a private ROS parameter (_key:=value).
+
+trajectory_file: package://gimbalrotor/config/quad_with_dual_arm/trajectories/perching_motion_optimized.json
+
+# what is played
+end_frame: -1                # the frames up to this one; -1: all
+speed: 1.0                   # of the playback (1: the dt of the file)
+rate: 50.0                   # [Hz] of the targets sent
+
+# before the trajectory
+takeoff: false              # arm the motors and take off (with the joints at ground_joints)
+ground_joints: first        # sent first while on the ground (motors off): "first" the joints of the first
+                            # frame (the plan starts with the arms folded on the ground, folded_joints of
+                            # perching_motion.yaml), or [rad] per servo of the file
+joint_group: arm_joints                        # the servo group of the joints (<group>_ctrl)
+approach_speed: 0.2                            # [m/s] of the CoG to the first frame
+joint_speed: 0.5                               # [rad/s] of the joints to the first frame
+settle_time: 3.0                               # [s] at the first frame

@@ -1,0 +1,16 @@
+# quad_with_dual_arm: overrides of config/NavigationConfig.yaml (loaded after it by bringup.launch)
+navigation:
+  # the desired CoG frame (final_target_baselink_rot -> desire_coordinate): every attitude target goes
+  # this way (gimbalrotor.robot_interface), so it is updated faster than by default (0.2 s, 0.04 rad):
+  # every 0.02 s (50 Hz; the main loop is 200 Hz) by 0.01 rad at most, i.e. 0.5 rad/s
+  baselink_rot_pub_interval: 0.02
+  baselink_rot_change_thresh: 0.01
+
+  # landing: before the descent the body is levelled (the yaw kept) and the arms go to these angles,
+  # the height held (the pre-land state, as dragon); the arms folded as on the ground (folded_joints of
+  # perching_motion.yaml, the init_value of Servo.yaml): change them together
+  landing_joint_topic: arm_joints_ctrl
+  landing_joint_names: [front_arm_joint1, front_arm_joint2, front_arm_joint3,
+                        back_arm_joint1, back_arm_joint2, back_arm_joint3]
+  landing_joint_angles: [0.6, -2.4, -0.85, 0.6, -2.4, -0.85]
+  landing_joint_tolerance: 0.085  # [rad] the joints there: then the descent
