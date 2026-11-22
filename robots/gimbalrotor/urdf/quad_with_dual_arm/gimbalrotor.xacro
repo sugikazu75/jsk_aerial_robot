@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com)
+     Commit Version: 1.6.1-45-ge0cb81d-dirty  Build Version: 1.6.9812.24736
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="gimbalrotor">
+  <link name="main_body">
+    <inertial>
+      <origin xyz="-9.6852E-05 -0.00041885 0.016742" rpy="0 0 0" />
+      <mass value="1.5013" />
+      <inertia ixx="0.010318" ixy="-1.6387E-05" ixz="8.2304E-07" iyy="0.012611" iyz="-7.604E-06" izz="0.018365" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/main_body.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/main_body.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="gimbal1_link">
+    <inertial>
+      <origin xyz="-0.00534781998026623 -0.000469313993598767 0.00298034050591646" rpy="0 0 0" />
+      <mass value="0.30098267395777" />
+      <inertia ixx="0.000456700108908303" ixy="1.28821213813745E-06" ixz="-8.9073448488078E-05" iyy="0.00050773833264034" iyz="8.41785693441602E-06" izz="0.00013406175454985" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal1_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal1_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gimbal1" type="revolute">
+    <origin xyz="-0.223092189464356 -0.223092189464356 0" rpy="0 0 -2.35619449019235" />
+    <parent link="main_body" />
+    <child link="gimbal1_link" />
+    <axis xyz="1 0 0" />
+    <limit lower="-3.14" upper="3.14" effort="1.5" velocity="6" />
+  </joint>
+  <link name="thrust1">
+    <inertial>
+      <origin xyz="-5.90442494896593E-09 5.71575091293589E-10 0.00419842053980664" rpy="0 0 0" />
+      <mass value="0.0172929994338795" />
+      <inertia ixx="0.000132814399412504" ixy="-6.27246339253513E-06" ixz="-2.99120038623035E-13" iyy="1.02208324590415E-06" iyz="1.16967319805749E-14" izz="0.000133588088219155" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust1.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rotor1" type="continuous">
+    <origin xyz="0.00168834478122287 -0.0016883447812305 0.056" rpy="0 0 0" />
+    <parent link="gimbal1_link" />
+    <child link="thrust1" />
+    <axis xyz="0 0 -1" />
+    <limit lower="0" upper="27.6" effort="0" velocity="0" />
+  </joint>
+  <link name="gimbal2_link">
+    <inertial>
+      <origin xyz="-0.00534781998026629 -0.000469313993598767 0.00298034050591646" rpy="0 0 0" />
+      <mass value="0.30098267395777" />
+      <inertia ixx="0.000456700108908304" ixy="1.28821213813744E-06" ixz="-8.9073448488078E-05" iyy="0.00050773833264034" iyz="8.41785693441602E-06" izz="0.00013406175454985" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal2_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal2_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gimbal2" type="revolute">
+    <origin xyz="0.223092189464356 -0.223092189464355 0" rpy="0 0 -0.785398163397445" />
+    <parent link="main_body" />
+    <child link="gimbal2_link" />
+    <axis xyz="1 0 0" />
+    <limit lower="-3.14" upper="3.14" effort="1.5" velocity="6" />
+  </joint>
+  <link name="thrust2">
+    <inertial>
+      <origin xyz="2.53301701835795E-09 -3.0239760491664E-09 0.0041983859457769" rpy="0 0 0" />
+      <mass value="0.0172927203619797" />
+      <inertia ixx="0.000132812582621372" ixy="6.27227419354512E-06" ixz="1.77158476092638E-13" iyy="1.02205928196541E-06" iyz="-1.90367756675933E-13" izz="0.000133586254144587" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust2.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rotor2" type="continuous">
+    <origin xyz="0.00168834478122287 -0.0016883447812305 0.056" rpy="0 0 0" />
+    <parent link="gimbal2_link" />
+    <child link="thrust2" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="27.6" effort="0" velocity="0" />
+  </joint>
+  <link name="gimbal3_link">
+    <inertial>
+      <origin xyz="-0.00534781998026629 -0.000469313993598767 0.00298034050591646" rpy="0 0 0" />
+      <mass value="0.30098267395777" />
+      <inertia ixx="0.000456700108908303" ixy="1.2882121381374E-06" ixz="-8.90734484880769E-05" iyy="0.00050773833264034" iyz="8.41785693441603E-06" izz="0.000134061754549849" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal3_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal3_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gimbal3" type="revolute">
+    <origin xyz="0.223092189464354 0.223092189464357 0" rpy="0 0 0.785398163397455" />
+    <parent link="main_body" />
+    <child link="gimbal3_link" />
+    <axis xyz="1 0 0" />
+    <limit lower="-3.14" upper="3.14" effort="1.5" velocity="6" />
+  </joint>
+  <link name="thrust3">
+    <inertial>
+      <origin xyz="-5.90442494896593E-09 5.71575091076748E-10 0.00419842053980664" rpy="0 0 0" />
+      <mass value="0.0172929994338795" />
+      <inertia ixx="0.000132814399412504" ixy="-6.27246339253513E-06" ixz="-2.99120038623035E-13" iyy="1.02208324590415E-06" iyz="1.16967319805749E-14" izz="0.000133588088219155" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust3.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rotor3" type="continuous">
+    <origin xyz="0.00168834478122287 -0.0016883447812305 0.056" rpy="0 0 0" />
+    <parent link="gimbal3_link" />
+    <child link="thrust3" />
+    <axis xyz="0 0 -1" />
+    <limit lower="0" upper="27.6" effort="0" velocity="0" />
+  </joint>
+  <link name="gimbal4_link">
+    <inertial>
+      <origin xyz="-0.00534781998026623 -0.000469313993598766 0.00298034050591646" rpy="0 0 0" />
+      <mass value="0.30098267395777" />
+      <inertia ixx="0.000456700108908303" ixy="1.28821213813744E-06" ixz="-8.90734484880779E-05" iyy="0.00050773833264034" iyz="8.41785693441602E-06" izz="0.00013406175454985" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal4_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/gimbal4_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gimbal4" type="revolute">
+    <origin xyz="-0.223092189464358 0.223092189464353 0" rpy="0 0 2.35619449019236" />
+    <parent link="main_body" />
+    <child link="gimbal4_link" />
+    <axis xyz="1 0 0" />
+    <limit lower="-3.14" upper="3.14" effort="1.5" velocity="6" />
+  </joint>
+  <link name="thrust4">
+    <inertial>
+      <origin xyz="2.53301701835795E-09 -3.02397515144701E-09 0.004198385945722" rpy="0 0 0" />
+      <mass value="0.0172927203619797" />
+      <inertia ixx="0.000132812582621372" ixy="6.27227419354512E-06" ixz="1.77158476092638E-13" iyy="1.02205928196541E-06" iyz="-1.90367756675933E-13" izz="0.000133586254144587" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust4.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.501960784313725 0.501960784313725 0.501960784313725 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/thrust4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rotor4" type="continuous">
+    <origin xyz="0.00168834478122287 -0.0016883447812305 0.056" rpy="0 0 0" />
+    <parent link="gimbal4_link" />
+    <child link="thrust4" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="27.6" effort="0" velocity="0" />
+  </joint>
+  <link name="fc" />
+  <joint name="fc_joint" type="fixed">
+    <origin xyz="-0.0172999968682426 -0.0011000008429398 0.05706099896" rpy="0 0 0" />
+    <parent link="main_body" />
+    <child link="fc" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="rotor_arm1" />
+  <joint name="rotor_arm1_joint" type="fixed">
+    <origin xyz="-0.223092189464356 -0.223092189464356 0" rpy="0 0 -2.35619449019234" />
+    <parent link="main_body" />
+    <child link="rotor_arm1" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="rotor_arm2" />
+  <joint name="rotor_arm2_joint" type="fixed">
+    <origin xyz="0.223092189464356 -0.223092189464355 0" rpy="0 0 -0.785398163397438" />
+    <parent link="main_body" />
+    <child link="rotor_arm2" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="rotor_arm3" />
+  <joint name="rotor_arm3_joint" type="fixed">
+    <origin xyz="0.223092189464354 0.223092189464357 0" rpy="0 0 0.785398163397458" />
+    <parent link="main_body" />
+    <child link="rotor_arm3" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="rotor_arm4" />
+  <joint name="rotor_arm4_joint" type="fixed">
+    <origin xyz="-0.223092189464358 0.223092189464353 0" rpy="0 0 2.35619449019236" />
+    <parent link="main_body" />
+    <child link="rotor_arm4" />
+    <axis xyz="0 0 0" />
+  </joint>
+  <link name="front_arm_link1">
+    <inertial>
+      <origin xyz="0.18267 0.00018146 -2.0806E-12" rpy="0 0 0" />
+      <mass value="0.19789" />
+      <inertia ixx="4.9686E-05" ixy="-2.9849E-06" ixz="-6.396E-14" iyy="0.0017032" iyz="-3.7702E-15" izz="0.0017085" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/front_arm_link1.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/front_arm_link1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="front_arm_joint1" type="revolute">
+    <origin xyz="0.0963883476483186 0 0.05275" rpy="0 0 0" />
+    <parent link="main_body" />
+    <child link="front_arm_link1" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.9" upper="1.2" effort="8.5" velocity="1" />
+    <dynamics damping="0.1" friction="0.1" />
+  </joint>
+  <link name="front_arm_link2">
+    <inertial>
+      <origin xyz="0.055 -2.22044604925031E-16 0" rpy="0 0 0" />
+      <mass value="0.0364063411230181" />
+      <inertia ixx="1.32858457621515E-05" ixy="-2.11758236813574E-20" ixz="-8.16950953519826E-20" iyy="2.49078087870899E-05" iyz="-5.55374910665395E-22" izz="3.29629406171354E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/front_arm_link2.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/front_arm_link2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="front_arm_joint2" type="revolute">
+    <origin xyz="0.2755 0 0" rpy="0 0 0" />
+    <parent link="front_arm_link1" />
+    <child link="front_arm_link2" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.4" upper="2.4" effort="4.3" velocity="1" />
+    <dynamics damping="0.1" friction="0.1" />
+  </joint>
+  <link name="front_arm_link3">
+    <inertial>
+      <origin xyz="0.047315 0.00024379 2.7922E-12" rpy="0 0 0" />
+      <mass value="0.1473" />
+      <inertia ixx="2.9955E-05" ixy="1.3504E-06" ixz="-8.2683E-14" iyy="0.00046288" iyz="3.7958E-15" izz="0.00046471" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/front_arm_link3.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/front_arm_link3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="front_arm_joint3" type="revolute">
+    <origin xyz="0.11 0 0" rpy="0 0 0" />
+    <parent link="front_arm_link2" />
+    <child link="front_arm_link3" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.4" upper="2.4" effort="4.3" velocity="1" />
+    <dynamics damping="0.1" friction="0.1" />
+  </joint>
+  <link name="back_arm_link1">
+    <inertial>
+      <origin xyz="0.18267 -0.00018146 2.0786E-12" rpy="0 0 0" />
+      <mass value="0.19789" />
+      <inertia ixx="4.9686E-05" ixy="2.9849E-06" ixz="6.396E-14" iyy="0.0017032" iyz="-3.7702E-15" izz="0.0017085" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/back_arm_link1.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/back_arm_link1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="back_arm_joint1" type="revolute">
+    <origin xyz="-0.096388 0 0.05275" rpy="0 0 -3.1416" />
+    <parent link="main_body" />
+    <child link="back_arm_link1" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.9" upper="1.2" effort="8.5" velocity="1" />
+    <dynamics damping="0.1" friction="0.1" />
+  </joint>
+  <link name="back_arm_link2">
+    <inertial>
+      <origin xyz="0.055 2.2204E-16 0" rpy="0 0 0" />
+      <mass value="0.036406" />
+      <inertia ixx="1.3286E-05" ixy="1.3129E-20" ixz="8.3536E-20" iyy="2.4908E-05" iyz="-5.5894E-22" izz="3.2963E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/back_arm_link2.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/back_arm_link2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="back_arm_joint2" type="revolute">
+    <origin xyz="0.2755 0 0" rpy="0 0 0" />
+    <parent link="back_arm_link1" />
+    <child link="back_arm_link2" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.4" upper="2.4" effort="4.3" velocity="1" />
+    <dynamics damping="0.1" friction="0.1" />
+  </joint>
+  <link name="back_arm_link3">
+    <inertial>
+      <origin xyz="0.047315 -0.00024379 -2.7922E-12" rpy="0 0 0" />
+      <mass value="0.1473" />
+      <inertia ixx="2.9955E-05" ixy="-1.3504E-06" ixz="8.2683E-14" iyy="0.00046288" iyz="3.7958E-15" izz="0.00046471" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/back_arm_link3.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.75294 0.75294 0.75294 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/back_arm_link3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="back_arm_joint3" type="revolute">
+    <origin xyz="0.11 0 0" rpy="0 0 0" />
+    <parent link="back_arm_link2" />
+    <child link="back_arm_link3" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.4" upper="2.4" effort="4.3" velocity="1" />
+    <dynamics damping="0.1" friction="0.1" />
+  </joint>
+</robot>

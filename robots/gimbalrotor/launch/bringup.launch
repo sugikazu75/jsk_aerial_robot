@@ -21,6 +21,8 @@
   <arg name="robot_id" default="" />
   <arg name="robot_ns" value="gimbalrotor$(arg robot_id)" />
   <arg name="airframe" default="quad" />
+  <!-- motor (ESC, motor, propeller) configuration: depends on the airframe -->
+  <arg name="motor_info" default="$(eval arg('config_dir') + ('/MotorInfo_f55apro2_at2814kv900_90453.yaml' if arg('airframe') == 'quad_with_dual_arm' else '/MotorInfo.yaml'))" />
 
   ###########  Parameters  ###########
   <group ns="$(arg robot_ns)">
@@ -36,7 +38,7 @@
    <rosparam file="$(arg config_dir)/RobotModel.yaml" command="load" />
 
    ###########  Motor Config  ###########
-   <rosparam file="$(arg config_dir)/MotorInfo.yaml" command="load" />
+   <rosparam file="$(arg motor_info)" command="load" />
 
    ###########  Servo Config  ###########
    <rosparam file="$(arg config_dir)/$(arg airframe)/Servo.yaml" command="load"/>

@@ -1,0 +1,81 @@
+servo_controller:
+  gimbals:
+    angle_sgn: 1
+    angle_scale: 0.001534
+    zero_point_offset: 2047
+
+    controller1:
+      id: 0
+      name: gimbal1
+      simulation:
+        pid: {p: 5.0, i: 0.1, d: 0.1, i_clamp_max: 2.0, i_clamp_min: -2.0}
+        init_value: 0
+        type: effort_controllers/JointPositionController
+
+    controller2:
+      id: 1
+      name: gimbal2
+      simulation:
+        pid: {p: 5.0, i: 0.1, d: 0.1, i_clamp_max: 2.0, i_clamp_min: -2.0}
+        init_value: 0
+        type: effort_controllers/JointPositionController
+
+    controller3:
+      id: 2
+      name: gimbal3
+      simulation:
+        pid: {p: 5.0, i: 0.1, d: 0.1, i_clamp_max: 2.0, i_clamp_min: -2.0}
+        init_value: 0
+        type: effort_controllers/JointPositionController
+
+    controller4:
+      id: 3
+      name: gimbal4
+      simulation:
+        pid: {p: 5.0, i: 0.1, d: 0.1, i_clamp_max: 2.0, i_clamp_min: -2.0}
+        init_value: 0
+        type: effort_controllers/JointPositionController
+
+  # 3-DoF pitch arms (front: +x, back: -x)
+  arm_joints:
+    angle_sgn: 1
+    angle_scale: 0.001534
+    zero_point_offset: 2047
+
+    # for simulation: stiff position servos that hardly backdrive, like Dynamixel (MuJoCo, the front
+    # arm hanging, 12 N of the bar on the hook: 0.015 rad at the step, 0.002 rad 2 s later; p 20 gave
+    # way by 0.14 rad). The integral may take the whole load (i_clamp about the effort limit)
+    simulation:
+      pid: {p: 200.0, i: 200.0, d: 2.0, i_clamp_max: 4.0, i_clamp_min: -4.0}
+      init_value: 0.0
+      type: effort_controllers/JointPositionController
+
+    # should be in order in terms of kinematics model
+    # simulation/init_value: the arms folded, as the robot starts on the ground (folded_joints of
+    # perching_motion.yaml, the initial state of the MuJoCo world): change them together
+    controller1:
+      id: 4
+      name: front_arm_joint1
+      simulation: {init_value: 0.6}
+    controller2:
+      id: 5
+      name: front_arm_joint2
+      simulation: {init_value: -2.4}
+    controller3:
+      id: 6
+      name: front_arm_joint3
+      angle_sgn: -1
+      simulation: {init_value: -0.85}
+    controller4:
+      id: 7
+      name: back_arm_joint1
+      simulation: {init_value: 0.6}
+    controller5:
+      id: 8
+      name: back_arm_joint2
+      simulation: {init_value: -2.4}
+    controller6:
+      id: 9
+      name: back_arm_joint3
+      angle_sgn: -1
+      simulation: {init_value: -0.85}

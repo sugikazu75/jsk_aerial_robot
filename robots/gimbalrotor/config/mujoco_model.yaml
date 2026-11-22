@@ -1,0 +1,16 @@
+package:
+  ["gimbalrotor"]
+
+gimbalrotor:
+  input: ["robots/quad_with_dual_arm/gimbalrotor.urdf.xacro"]
+  filename: ["quad_with_dual_arm"]
+  # per model: MJCF attributes of joints. The arm servos are geared (Dynamixel-like): their reflected
+  # rotor inertia (armature [kg m^2]) keeps the stiff
+  # position control of config/<airframe>/Servo.yaml stable at the 1 kHz of the controllers
+  joint_attributes:
+    - front_arm_joint1: {armature: 0.01}
+      front_arm_joint2: {armature: 0.01}
+      front_arm_joint3: {armature: 0.01}
+      back_arm_joint1: {armature: 0.01}
+      back_arm_joint2: {armature: 0.01}
+      back_arm_joint3: {armature: 0.01}
