@@ -21,13 +21,12 @@ with the operator checking it and teleoperating when it went wrong.
                on and off where it begins and ends in the file; the last frame held.
                With ~after_hook "stop": only the hook switched on, the task ends there (outcome
                "stopped"), holding the hooked pose: e.g. for hanging_teleop.py next
-               With ~after_hook "unhook": no contact switched, UNHOOK instead
-  UNHOOK       (after_hook "unhook") the hooked pose held ~unhook_wait, then the approach played
-               backwards at ~approach_speed_scale: the hook out through its opening
-  JUDGE_UNHOOK the operator: OK (R1) clear of the bar -> RETREAT; NG (R2) -> finish, no target sent
-               (free the hook and land by teleoperation)
-  RETREAT      with ~retreat the flight played backwards to the first frame (the planned path, the
-               arms folded back), held there; then the task ends ("unhooked"): land by teleoperation
+               With ~after_hook "unhook": HOOKED instead
+  HOOKED       (after_hook "unhook") the hook contact switched on, the hooked pose held; the operator:
+               OK (R1) -> UNHOOK; NG (R2): the task ends with the contact on, holding ("succeeded")
+  UNHOOK       the contacts switched off, held through their ramp_time and ~unhook_wait, then the
+               approach backwards at ~approach_speed_scale (the hook out through its opening), the start
+               of the approach held; the task ends ("unhooked"): the rest by teleoperation
                With a "release" event in the file (plan_perching_motion.py), the trajectory up to it
   RELEASE      the frame there held; the operator: OK (R1, ~ok) every contact switched off and the
                rest of the file played (the load back onto the rotors, the rear arm back, the hook out
@@ -78,7 +77,6 @@ TASK_KEYS = {
     "switch_contacts",
     "after_hook",
     "unhook_wait",
-    "retreat",
 }
 TASK_CONFIG = os.path.join(
     rospkg.RosPack().get_path("gimbalrotor"), "config", "quad_with_dual_arm", "perching_task.yaml"
@@ -192,6 +190,17 @@ class Task:
             self.contact_time,
             self.window_start,
             self.end_time,
+        )
+
+
+    def contact_ramp(self):
+        """[s] the longest ramp_time of the active contacts (the whole-body controller's parameters)."""
+        return max(
+            [
+                float(rospy.get_param("%s/controller/whole_body/contacts/%s/ramp_time" % (self.robot.robot_ns, n), 2.0))
+                for n in self.contacts.active
+            ]
+            or [0.0]
         )
 
 
@@ -327,13 +336,7 @@ class Release(TaskState):
             return {"ng": "kept"}.get(outcome, outcome)
         # the longest ramp of the contacts switched off (the parameters of the whole-body controller)
         names = sorted(t.contacts.active)
-        ramp = max(
-            [
-                float(rospy.get_param("%s/controller/whole_body/contacts/%s/ramp_time" % (t.robot.robot_ns, n), 2.0))
-                for n in names
-            ]
-            or [0.0]
-        )
+        ramp = t.contact_ramp()
         t.contacts.release_all()
         if not t.player.hold(here, ramp + 0.5):
             return "aborted"
@@ -348,51 +351,45 @@ class Release(TaskState):
         return "released"
 
 
+class Hooked(TaskState):
+    """after_hook "unhook": the hook contact (the first contact of the file) switched on, the hooked pose
+    held while the load moves onto the bar; the operator: OK (R1) -> UNHOOK; NG (R2): the task ends with
+    the contact on, holding ("kept")."""
+
+    def __init__(self, task):
+        TaskState.__init__(self, task, ["unhook", "kept", "aborted", "preempted"])
+
+    def execute(self, userdata):
+        t = self.task
+        for _, name, on in (e for e in t.targets.contact_events if e[0] == t.contact_time and e[2]):
+            t.contacts.switch(name, on)
+        hold = t.targets.still(t.contact_time)
+        outcome = t.buttons.wait(
+            "Hooked, contacts %s on. OK (R1): unhook (contacts off, the hook out of the bar) / NG (R2): "
+            "finish here with the contacts on" % sorted(t.contacts.active),
+            hold=lambda: t.player.send(hold),
+        )
+        return {"ok": "unhook", "ng": "kept"}.get(outcome, outcome)
+
+
 class Unhook(TaskState):
-    """after_hook "unhook" (no contact switched): the approach backwards at ~approach_speed_scale, the hook
-    out through its opening, to the start of the approach."""
+    """Every contact switched off and held through its ramp (the load back onto the rotors), then the
+    approach played backwards at ~approach_speed_scale: the hook out through its opening, to the start of
+    the approach, held there. The task ends ("unhooked"): the rest by teleoperation."""
 
     def __init__(self, task):
         TaskState.__init__(self, task, ["succeeded", "aborted"])
 
     def execute(self, userdata):
         t, p = self.task, self.task.p
-        if not t.player.hold(t.contact_time, float(p["unhook_wait"])):
+        ramp = t.contact_ramp()
+        t.contacts.release_all()
+        if not t.player.hold(t.contact_time, ramp + float(p["unhook_wait"])):
             return "aborted"
-        ok = t.player.play_back(t.contact_time, t.window_start, t.speed * float(p["approach_speed_scale"]))
-        return "succeeded" if ok else "aborted"
-
-
-class JudgeUnhook(TaskState):
-    def __init__(self, task):
-        TaskState.__init__(self, task, ["clear", "stuck", "aborted", "preempted"])
-
-    def execute(self, userdata):
-        t = self.task
-        hold = t.targets.still(t.window_start)
-        outcome = t.buttons.wait(
-            "Hook clear of the bar? OK (R1): yes, %s / NG (R2): no, teleoperate (no target sent)"
-            % ("back along the flight to the start, the arms folded" if t.p["retreat"] else "finish here, holding"),
-            hold=lambda: t.player.send(hold),
-        )
-        if outcome == "ng":
-            rospy.logwarn("not clear of the bar: no target is sent any more, free the hook and land by teleoperation")
-        return {"ok": "clear", "ng": "stuck"}.get(outcome, outcome)
-
-
-class Retreat(TaskState):
-    """The flight backwards from the start of the approach to the first frame (the planned path, clear of
-    the bar; the arms folded back), held there. Without ~retreat: the start of the approach held."""
-
-    def __init__(self, task):
-        TaskState.__init__(self, task, ["succeeded", "aborted"])
-
-    def execute(self, userdata):
-        t = self.task
-        if t.p["retreat"] and not t.player.play_back(t.window_start, 0.0, t.speed):
+        if not t.player.play_back(t.contact_time, t.window_start, t.speed * float(p["approach_speed_scale"])):
             return "aborted"
-        t.player.send(t.targets.still(0.0 if t.p["retreat"] else t.window_start))
-        rospy.loginfo("unhooked: fly to a safe place and land by teleoperation; the navigation holds the last target")
+        t.player.send(t.targets.still(t.window_start))
+        rospy.loginfo("unhooked: the rest by teleoperation; the navigation holds the start of the approach")
         return "succeeded"
 
 
@@ -455,20 +452,19 @@ def build(task, stop_before_hook=False):
             "JUDGE_HOOK",
             JudgeHook(task),
             transitions={
-                "hooked": "UNHOOK" if unhook else "AFTER_HOOK",
+                "hooked": "HOOKED" if unhook else "AFTER_HOOK",
                 "failed": "TELEOP",
                 "aborted": "aborted",
                 "preempted": "preempted",
             },
         )
         if unhook:
-            smach.StateMachine.add("UNHOOK", Unhook(task), transitions={"succeeded": "JUDGE_UNHOOK", "aborted": "aborted"})
             smach.StateMachine.add(
-                "JUDGE_UNHOOK",
-                JudgeUnhook(task),
-                transitions={"clear": "RETREAT", "stuck": "finished", "aborted": "aborted", "preempted": "preempted"},
+                "HOOKED",
+                Hooked(task),
+                transitions={"unhook": "UNHOOK", "kept": "succeeded", "aborted": "aborted", "preempted": "preempted"},
             )
-            smach.StateMachine.add("RETREAT", Retreat(task), transitions={"succeeded": "unhooked", "aborted": "aborted"})
+            smach.StateMachine.add("UNHOOK", Unhook(task), transitions={"succeeded": "unhooked", "aborted": "aborted"})
         smach.StateMachine.add(
             "TELEOP",
             Teleop(task),
