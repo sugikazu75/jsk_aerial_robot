@@ -74,7 +74,7 @@ controller:
     # contact_integral_scale while a contact is on; what it gathers goes out with the load as the contacts
     # go off, so that the robot does not tilt the other way once free
     contact_integral: [roll]
-    contact_integral_scale: 5.0
+    contact_integral_scale: 10.0
     torque_limit_ratio: 0.75   # of the effort limit of the URDF
     torque_limited_joints: [front_arm_joint1, front_arm_joint2, front_arm_joint3,
                             back_arm_joint1, back_arm_joint2, back_arm_joint3]
