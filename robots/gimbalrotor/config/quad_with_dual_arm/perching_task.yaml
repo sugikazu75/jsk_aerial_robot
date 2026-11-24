@@ -18,4 +18,9 @@ switch_contacts: true
 
 # "trajectory": play to end_frame, switching contacts at their events.
 # "stop": switch on the first contact, then stop at that pose for another task.
+# "unhook": see below.
 after_hook: trajectory
+# "unhook": no contact switched; the hooked pose held, then the approach backwards (the hook out of the
+# bar), the operator's check, and the flight backwards to the start (retreat) for landing by teleoperation.
+unhook_wait: 2.0             # [s] at the hooked pose before the unhook
+retreat: true                # after the unhook: the flight backwards to the first frame (arms folded)

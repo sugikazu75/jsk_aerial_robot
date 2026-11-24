@@ -100,13 +100,37 @@ class TrajectoryPlayer:
         return False
 
     def play(self, start, end, speed=1.0):
-        """The file from time start to end [s] at speed."""
+        """The file from time start to end [s] at speed (the velocity scaled by it)."""
         if speed <= 0:
             raise ValueError("playback speed must be positive")
         if end <= start:
             return True
         rospy.loginfo("playing %.2f..%.2f s of the trajectory at speed %.2f", start, end, speed)
-        return self.run(lambda t: self.targets.at(min(start + t * speed, end)), (end - start) / speed)
+
+        def target(t):
+            here = self.targets.at(min(start + t * speed, end))
+            return dict(here, cog_vel=speed * here["cog_vel"])
+
+        return self.run(target, (end - start) / speed)
+
+    def play_back(self, start, end, speed=1.0):
+        """The file backwards from time start down to end [s] at speed (the velocity reversed and scaled);
+        the frame at end held at rest at the end."""
+        if speed <= 0:
+            raise ValueError("playback speed must be positive")
+        if start <= end:
+            return True
+        rospy.loginfo("playing %.2f..%.2f s of the trajectory backwards at speed %.2f", start, end, speed)
+        duration = (start - end) / speed
+        last = self.targets.still(end)
+
+        def target(t):
+            if t >= duration:
+                return last
+            here = self.targets.at(start - t * speed)
+            return dict(here, cog_vel=-speed * here["cog_vel"])
+
+        return self.run(target, duration)
 
     def hold(self, t, duration):
         """The frame at time t, at rest, for duration [s]."""
