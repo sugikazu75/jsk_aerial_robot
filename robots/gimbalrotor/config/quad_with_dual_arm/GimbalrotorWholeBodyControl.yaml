@@ -69,7 +69,12 @@ controller:
     solver_tolerance: 1.0e-6      # ProxQP eps_abs, eps_rel (a loose one, e.g. 1e-3, leaves the contacts nearly unloaded)
     solver_max_iteration: 10000
     wrench_weight: [1.0, 1.0, 1.0, 10.0, 10.0, 10.0]  # force, torque (world, about the CoG)
-    freeze_integral_in_contact: [x, y, z, roll, yaw]  # the PIDs that hold their integral while a contact carries load
+    freeze_integral_in_contact: [x, y, z, yaw]  # the PIDs that hold their integral while a contact carries load
+    # roll integrates while hanging (the hook turned about the arm tilts the robot in roll), faster by
+    # contact_integral_scale while a contact is on; what it gathers goes out with the load as the contacts
+    # go off, so that the robot does not tilt the other way once free
+    contact_integral: [roll]
+    contact_integral_scale: 5.0
     torque_limit_ratio: 0.75   # of the effort limit of the URDF
     torque_limited_joints: [front_arm_joint1, front_arm_joint2, front_arm_joint3,
                             back_arm_joint1, back_arm_joint2, back_arm_joint3]
@@ -83,7 +88,7 @@ controller:
         friction: 0.5
         mode: support
         max_normal: 40.0   # [N] when fully loaded
-        ramp_time: 2.0     # [s] the load moved onto the bar
+        ramp_time: 5.0     # [s] the load moved onto (off) the bar
         ramp: relative     # the normal force within share x what the bar would carry fully loaded (the
                            # load moves linearly over ramp_time); absolute: share x [min, max]_normal
       rear_hand_wall:

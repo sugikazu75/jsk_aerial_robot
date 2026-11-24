@@ -99,6 +99,21 @@ void GimbalrotorWholeBodyController::initialize(ros::NodeHandle nh, ros::NodeHan
       throw std::runtime_error("[whole body] freeze_integral_in_contact: unknown axis " + name);
     freeze_integral_.at(it - axis_names.begin()) = true;
   }
+  std::vector<std::string> gathered;
+  wb.param("contact_integral", gathered, std::vector<std::string>{});
+  contact_integral_.assign(6, false);
+  for (const auto& name : gathered)
+  {
+    const auto it = std::find(axis_names.begin(), axis_names.end(), name);
+    if (it == axis_names.end())
+      throw std::runtime_error("[whole body] contact_integral: unknown axis " + name);
+    contact_integral_.at(it - axis_names.begin()) = true;
+  }
+  wb.param("contact_integral_scale", contact_integral_scale_, 1.0);
+  if (contact_integral_scale_ < 1.0)
+    throw std::runtime_error("[whole body] contact_integral_scale must be at least 1");
+  free_integral_.assign(6, 0.0);
+  contact_excess_.assign(6, 0.0);
   double ratio;
   wb.param("torque_limit_ratio", ratio, 0.75);
   wb.param("torque_limited_joints", torque_limited_joints_, std::vector<std::string>{});
@@ -189,6 +204,7 @@ bool GimbalrotorWholeBodyController::activateContact(std_srvs::SetBool::Request&
 void GimbalrotorWholeBodyController::reset()
 {
   GimbalrotorController::reset();
+  was_loaded_ = unloading_ = false;  // the PIDs are reset too
   // every contact off at once: called while arming (every loop), at the takeoff and after the
   // motors are off, so no contact is carried over to the next flight
   std::lock_guard<std::mutex> lock(contacts_mutex_);
@@ -247,18 +263,31 @@ bool GimbalrotorWholeBodyController::updateModel(Eigen::VectorXd& q)
 void GimbalrotorWholeBodyController::controlCore()
 {
   // the PIDs hold their integral on the frozen axes while a contact carries load
-  bool loaded = false;
+  bool loaded = false, active = false;
+  double share = 0.0;
   {
     std::lock_guard<std::mutex> lock(contacts_mutex_);
     const ros::Time now = ros::Time::now();
     for (const auto& contact : contacts_)
-      loaded = loaded || loadShare(contact, now) > 1e-6;
+    {
+      share = std::max(share, loadShare(contact, now));
+      active = active || contact.active;
+    }
+    loaded = share > 1e-6;
   }
   for (size_t axis = 0; axis < freeze_integral_.size(); axis++)
     integrate_.at(axis) = !(loaded && freeze_integral_[axis]);
+  if (loaded && !was_loaded_)  // the integral the robot flies free with
+  {
+    for (size_t axis = 0; axis < contact_integral_.size(); axis++)
+      free_integral_.at(axis) = pid_controllers_.at(axis).getErrI();
+    was_loaded_ = true;
+    unloading_ = false;
+  }
 
   // the PIDs and the usual allocation (kept if the QP does not run or fails)
   GimbalrotorController::controlCore();
+  updateContactIntegral(loaded, active, share);
   if (navigator_->getNaviState() != aerial_robot_navigation::HOVER_STATE)
     return;
 
@@ -279,6 +308,43 @@ void GimbalrotorWholeBodyController::controlCore()
   Eigen::VectorXd q;
   if (!updateModel(q) || !allocate(q, wrench, ros::Time::now()))
     ROS_ERROR_THROTTLE(1.0, "[whole body] the QP failed: the usual allocation");
+}
+
+void GimbalrotorWholeBodyController::updateContactIntegral(bool loaded, bool active, double share)
+{
+  // after the PIDs: their integrals for the next cycle
+  if (!was_loaded_)
+    return;
+  if (!loaded)  // free again: the integral as it was before the load
+  {
+    for (size_t axis = 0; axis < contact_integral_.size(); axis++)
+      if (contact_integral_[axis])
+        pid_controllers_.at(axis).setErrI(free_integral_.at(axis));
+    was_loaded_ = unloading_ = false;
+    return;
+  }
+  for (size_t axis = 0; axis < contact_integral_.size(); axis++)
+  {
+    if (!contact_integral_[axis])
+      continue;
+    auto& pid = pid_controllers_.at(axis);
+    if (active)  // the step of this cycle (0 if held), sped up
+      pid.setErrI(pid.getErrI() + (contact_integral_scale_ - 1.0) * (pid.getErrI() - pid.getPrevErrI()));
+    else  // every contact going off: what was gathered goes out with the load
+    {
+      if (!unloading_)
+        contact_excess_.at(axis) = pid.getErrI() - free_integral_.at(axis);
+      const double ratio = unloading_ ? share / unload_share_ : 1.0;
+      pid.setErrI(free_integral_.at(axis) + ratio * contact_excess_.at(axis));
+    }
+  }
+  if (active)
+    unloading_ = false;
+  else if (!unloading_)
+  {
+    unloading_ = true;
+    unload_share_ = share;
+  }
 }
 
 bool GimbalrotorWholeBodyController::allocate(const Eigen::VectorXd& q, const Eigen::Matrix<double, 6, 1>& wrench,

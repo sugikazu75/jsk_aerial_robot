@@ -32,6 +32,10 @@
  *
  * While a contact carries load, the PIDs of the axes in freeze_integral_in_contact do not integrate
  * (their integral is held: z keeps the share of the weight it has): a constrained axis would drift.
+ * The PIDs of the axes in contact_integral integrate contact_integral_scale times faster while a contact
+ * is on (e.g. roll hanging from a hook turned about the arm); what they gather over the integral they had
+ * when the load began goes back out with the load as the contacts go off (linearly with the load share),
+ * so that no offset is left once the robot flies free.
  *
  * The thrust of each rotor goes out as its thrust and gimbal angle (gimbal_calc_in_fc must be
  * false). The contacts, defined in the parameters, are switched by a service each:
@@ -117,6 +121,14 @@ private:
   double solver_tolerance_;        // ProxQP absolute and relative tolerance
   int solver_max_iteration_;
   std::vector<bool> freeze_integral_;  // per axis X..YAW, while a contact carries load
+  // per axis X..YAW: the integral gathered while a contact carries load is let go with the load
+  std::vector<bool> contact_integral_;
+  double contact_integral_scale_;          // the integration sped up by it while a contact is on
+  std::vector<double> free_integral_;      // the integral (err_i) when the load began
+  std::vector<double> contact_excess_;     // what was gathered over it, when the load began to go off
+  double unload_share_ = 0.0;              // the load share then
+  bool was_loaded_ = false, unloading_ = false;
+  void updateContactIntegral(bool loaded, bool active, double share);
   ros::Publisher wrench_error_pub_;
   ros::Publisher joint_torque_pub_;  // the torques of the statics on the limited joints (and their limits)
 
