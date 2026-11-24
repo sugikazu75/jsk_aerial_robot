@@ -4,7 +4,7 @@
 # Slow approach to the first contact, after convergence at the start of this window.
 approach_window: 2.0         # [s] of the trajectory file
 approach_speed_scale: 0.3    # times the playback speed
-converge_pos: 0.03           # [m] of the CoG
+converge_pos: 0.05           # [m] of the CoG
 converge_vel: 0.05           # [m/s] of the CoG
 converge_joint: 0.03         # [rad]
 converge_timeout: 15.0       # [s]
