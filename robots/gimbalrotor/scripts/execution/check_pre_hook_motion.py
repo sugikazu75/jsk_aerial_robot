@@ -8,10 +8,16 @@ target remains held by navigation after this node exits; land with the usual fli
 No contact is activated, and the hook approach is not played.
 """
 
+import os
+import sys
+
 import rospy
 import smach_ros
 
-from perching_task import Task, build
+# rosrun runs catkin's relay in devel/lib, where perching_task.py is a relay too (no Task in it):
+# import the source next to this file instead.
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+from perching_task import Task, build  # noqa: E402
 
 
 def main():
