@@ -1,0 +1,49 @@
+<launch>
+  <arg
+    name="model" />
+  <!-- the pose for figures (root, thrust, zeros: the joint positions), from a frame of a trajectory
+       (scripts/visualization/display_pose.py); the default: hanging on the bar with the rear hand on the wall -->
+  <arg name="pose" default="$(find gimbalrotor)/config/quad_with_dual_arm/display_pose.yaml" />
+  <!-- thrust arrows (aerial_robot_control/thrust_visualizer.py) of the thrust of the pose -->
+  <arg name="thrust" default="true" />
+  <!-- the perching scene (the bar, the wall) from the configuration of the planner, as in bringup.launch -->
+  <arg name="environment" default="true" />
+  <arg name="environment_config" default="$(find gimbalrotor)/config/quad_with_dual_arm/perching_motion.yaml" />
+  <!-- the post of the bar drawn (both, left: +y of the task frame, right: -y). The task frame is turned by
+       pi, so with the back arm on the right of the view (looking along world +y) the left one is in front -->
+  <arg name="posts" default="right" />
+
+  <param
+    name="robot_description"
+    command="$(find xacro)/xacro '$(find gimbalrotor)/robots/quad_with_dual_arm/gimbalrotor.urdf.xacro' body:='$(find gimbalrotor)/urdf/quad_with_dual_arm/gimbalrotor_color.xacro' hook_visual:=mesh" />
+  <node
+    name="joint_state_publisher_gui"
+    pkg="joint_state_publisher_gui"
+    type="joint_state_publisher_gui">
+    <rosparam command="load" file="$(arg pose)" />
+  </node>
+  <node
+    name="robot_state_publisher"
+    pkg="robot_state_publisher"
+    type="robot_state_publisher" />
+  <!-- world -> root, and four_axes/command of the thrust of the pose -->
+  <node pkg="gimbalrotor" type="display_pose.py" name="display_pose">
+    <rosparam command="load" file="$(arg pose)" />
+    <rosparam param="thrust" if="$(eval not arg('thrust'))">[]</rosparam>
+  </node>
+  <node pkg="aerial_robot_control" type="thrust_visualizer.py" name="thrust_visualizer" if="$(arg thrust)">
+    <param name="tf_prefix" value="" />
+  </node>
+
+  <group ns="environment" if="$(arg environment)">
+    <param name="robot_description"
+           command="$(find xacro)/xacro '$(find gimbalrotor)/urdf/environment/perching_environment.urdf.xacro' config:=$(arg environment_config) posts:=$(arg posts)"/>
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher"/>
+  </group>
+
+  <node
+    name="rviz"
+    pkg="rviz"
+    type="rviz"
+    args="-d $(find gimbalrotor)/urdf.rviz" />
+</launch>
