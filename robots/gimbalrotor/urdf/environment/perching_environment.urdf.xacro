@@ -22,6 +22,10 @@
   <xacro:arg name="task_y" default="0.0"/>
   <xacro:arg name="task_yaw" default="0.0"/>
   <xacro:arg name="config" default=""/>
+  <!-- the posts drawn: both, left (+y of the task frame) or right (-y), as env_post_left/right of the
+       MuJoCo world; one for figures, not to hide the robot behind the near one -->
+  <xacro:arg name="posts" default="both"/>
+  <xacro:property name="posts" value="$(arg posts)"/>
   <xacro:property name="config" value="$(arg config)"/>
   <xacro:property name="cfg" value="${xacro.load_yaml(config) if config else None}"/>
   <xacro:property name="bar_x" value="${cfg['bar_x'] if config else $(arg bar_x)}"/>
@@ -74,16 +78,20 @@
   </joint>
 
   <link name="env_posts">
-    <visual>
-      <origin xyz="0 ${bar_length/2 + post_size/2} ${-bar_z/2}" rpy="0 0 0"/>
-      <geometry><box size="${post_size} ${post_size} ${bar_z + 2*bar_radius}"/></geometry>
-      <material name="steel"/>
-    </visual>
-    <visual>
-      <origin xyz="0 ${-bar_length/2 - post_size/2} ${-bar_z/2}" rpy="0 0 0"/>
-      <geometry><box size="${post_size} ${post_size} ${bar_z + 2*bar_radius}"/></geometry>
-      <material name="steel"/>
-    </visual>
+    <xacro:if value="${posts in ('both', 'left')}">
+      <visual>
+        <origin xyz="0 ${bar_length/2 + post_size/2} ${-bar_z/2}" rpy="0 0 0"/>
+        <geometry><box size="${post_size} ${post_size} ${bar_z + 2*bar_radius}"/></geometry>
+        <material name="steel"/>
+      </visual>
+    </xacro:if>
+    <xacro:if value="${posts in ('both', 'right')}">
+      <visual>
+        <origin xyz="0 ${-bar_length/2 - post_size/2} ${-bar_z/2}" rpy="0 0 0"/>
+        <geometry><box size="${post_size} ${post_size} ${bar_z + 2*bar_radius}"/></geometry>
+        <material name="steel"/>
+      </visual>
+    </xacro:if>
   </link>
   <joint name="env_posts_joint" type="fixed">
     <parent link="env_task"/>

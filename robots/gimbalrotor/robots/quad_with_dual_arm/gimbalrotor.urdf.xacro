@@ -2,8 +2,14 @@
 <robot
     xmlns:xacro="http://www.ros.org/wiki/xacro" name="gimbalrotor" >
 
+  <!-- body: the model for the control by default; display.launch gives the colored one
+       (urdf/quad_with_dual_arm/gimbalrotor_color.xacro, with the same links and joints) for figures -->
+  <xacro:arg name="body" default="$(find gimbalrotor)/urdf/quad_with_dual_arm/gimbalrotor.xacro"/>
+  <!-- visual of the hook: "convex" (the pieces below, for MuJoCo) or "mesh" (hook_module.STL itself) -->
+  <xacro:arg name="hook_visual" default="convex"/>
+
   <!-- real machine: exported from SolidWorks (meshes in meshes/20261117_v1) -->
-  <xacro:include filename="$(find gimbalrotor)/urdf/quad_with_dual_arm/gimbalrotor.xacro" />
+  <xacro:include filename="$(arg body)" />
 
   <!-- general attribute for aerial_robot_model -->
   <baselink name="fc" />
@@ -70,7 +76,20 @@
       <mass value="0.0516"/>
       <inertia ixx="4.61311e-05" ixy="0.0" ixz="-5.23214e-06" iyy="1.51326e-04" iyz="0.0" izz="1.35836e-04"/>
     </inertial>
-    <xacro:hook_convex_visual i="0"/>
+    <xacro:if value="${'$(arg hook_visual)' == 'convex'}">
+      <xacro:hook_convex_visual i="0"/>
+    </xacro:if>
+    <xacro:if value="${'$(arg hook_visual)' == 'mesh'}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://gimbalrotor/urdf/quad_with_dual_arm/mesh/hook_module.STL"/>
+        </geometry>
+        <material name="">
+          <color rgba="0.25 0.25 0.25 1"/>
+        </material>
+      </visual>
+    </xacro:if>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
