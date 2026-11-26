@@ -56,6 +56,7 @@ catkin_install_python(PROGRAMS
 
 catkin_install_python(PROGRAMS scripts/planning/plan_perching_motion.py
   scripts/visualization/trajectory_playback.py scripts/visualization/contact_wrench_visualizer.py
+  scripts/visualization/display_pose.py
   scripts/execution/follow_trajectory.py scripts/execution/perching_task.py
   scripts/execution/check_pre_hook_motion.py scripts/execution/hanging_teleop.py
   scripts/simulation/make_perching_world.py
