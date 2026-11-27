@@ -13,7 +13,7 @@ and its hanging-perching motion.
 roslaunch gimbalrotor bringup.launch airframe:=quad_with_dual_arm
 # simulation (Gazebo)
 roslaunch gimbalrotor bringup.launch airframe:=quad_with_dual_arm real_machine:=false simulation:=true headless:=false
-# simulation (MuJoCo), with the bar and the wall of the perching task
+# simulation (MuJoCo), with the bar of the perching task
 roslaunch gimbalrotor bringup.launch airframe:=quad_with_dual_arm real_machine:=false simulation:=true headless:=false \
   mujoco:=true mujoco_world:=quad_with_dual_arm_perching
 # joystick (on /gimbalrotor/joy)
@@ -43,7 +43,7 @@ execution), `visualization/` (RViz), and `simulation/` (MuJoCo model and world g
 The `rosrun gimbalrotor <script>.py` commands are unchanged.
 
 **`plan_perching_motion.py`** plans a collision-checked flight to the bar, constructs the hook,
-hang, reach and push phases with IK, and solves static thrust and contact forces for each frame.
+hang and unhook phases with IK, and solves static thrust and contact forces for each frame.
 It writes a JSON trajectory and, unless `--no-plot` is set, a plot. It runs offline without a ROS
 master. `perching_motion.yaml` sets the scene, constraints, timing and output path; command-line
 options can override individual values. Collision and statics failures are reported in the output
@@ -84,10 +84,11 @@ separate `aerial_motion_planning` package. Rotor allocation and its constraints 
 `src/gimbalrotor/rotor_statics.py`.
 
 The motion: hover → flight (RRTConnect) → stop in front of the bar → approach along the opening of the
-hook → load the bar → hang → reach the wall with the rear arm → push. Main groups of keys:
+hook → load the bar → hang (the rear arm held out in front, `hang_rear_joints`) → release the load →
+unhook. Main groups of keys:
 
-- `bar_*`, `wall_x`: the scene. Use the same values in `perching_motion.launch` and the MuJoCo world.
-- `start`, `hook_tilt`, `push_force`, `approach`: the task.
+- `bar_*`: the scene. Use the same values in `perching_motion.launch` and the MuJoCo world.
+- `start`, `hang_rear_joints`, `hook_tilt`, `approach`: the task.
 - `min_lift`, `max_effort_ratio`, `max_thrust_tilt`: the statics (thrust kept up, torque margin).
 - `reference_attitude`, `max_body_tilt`, `attitude_mask`, `attitude_weight`: the body attitude in the IK and the flight. Set an `attitude_mask` component to 0 to hold that axis at its reference.
 - `margin`, `bar_margin`: clearances in flight (`bar_margin` for the front arm passing over the bar).
@@ -161,17 +162,110 @@ stays within the joint limits, the body pitch (`max_pitch`), the static torques 
 without pulling the hook off the bar. The result goes to the CoG, the attitude and the arm joints
 every cycle.
 
-```bash
-# hanging on the bar (e.g. after the hooking of perching_task.py, with an end_frame in the hang)
-rosrun gimbalrotor hanging_teleop.py __ns:=gimbalrotor
-# the target of the hand: in RViz, an InteractiveMarkers display on
-#   /gimbalrotor/hanging_teleop/target_marker/update (drag the arrow; turn the ring for the direction)
-# or a pose (the direction of the hand is the x axis of the orientation; projected onto the plane)
-rostopic pub -1 /gimbalrotor/hanging_teleop/target geometry_msgs/PoseStamped \
-  '{header: {frame_id: world}, pose: {position: {x: -0.4, y: 0.0, z: 1.0}, orientation: {y: 1.0, w: 0.0}}}'
-```
+#### Running the teleoperation (bringup up, the robot hovering)
+
+1. Fly to the bar and hook it, then stop there:
+   ```bash
+   rosrun gimbalrotor perching_task.py __ns:=gimbalrotor _after_hook:=stop
+   ```
+   The robot plays the planned flight, converges before the approach, and approaches the bar slowly.
+   At the question "Hooked on the bar?", press R1 (OK; or `rostopic pub -1
+   /gimbalrotor/perching_task/ok std_msgs/Empty`). The hook contact is switched on, and the node ends
+   with the hooked pose held. R2 (NG) goes to teleoperation and a retry instead.
+2. Move the hand:
+   ```bash
+   rosrun gimbalrotor hanging_teleop.py __ns:=gimbalrotor
+   ```
+   Use the joystick (hold L1, see below), the RViz marker (an InteractiveMarkers display on
+   `/gimbalrotor/hanging_teleop/target_marker/update`: drag the arrow, turn the ring for the
+   direction), or a pose (the direction of the hand is the x axis of the orientation; both are
+   projected onto the plane):
+   ```bash
+   rostopic pub -1 /gimbalrotor/hanging_teleop/target geometry_msgs/PoseStamped \
+     '{header: {frame_id: world}, pose: {position: {x: 0.6, y: 0.0, z: 0.7}, orientation: {y: 1.0, w: 0.0}}}'
+   ```
+3. Leave the bar: hold L1 and R1 together for 1 s (`joy_unhook_button`, `joy_unhook_hold`), or
+   ```bash
+   rostopic pub -1 /gimbalrotor/hanging_teleop/unhook std_msgs/Empty
+   ```
+   The IK brings the hand back to where it was at the start (the hooked posture). The hook contact is
+   then switched off, and the posture is held through its `ramp_time` and `unhook_wait` while the load
+   goes back onto the rotors. Last, the whole robot moves back along the opening of the hook by
+   `unhook_distance` at `unhook_speed`, the reverse of the planned approach: up and slightly back, so
+   the hook comes off the bar. The node ends there, and the navigation holds the last target. Land
+   with the joystick. If the hand cannot get back to the start in 30 s, the node stops without
+   unhooking (the contact stays on).
+
+The IK does not check the bar or the scene, only self-collisions. As the hand goes forward and up, the
+IK may lift the body toward the bar to keep the CoM below the hook: up to 0.3 m, with the propellers
+coming within a few cm of the bar. Watch the propellers when the hand is above the body.
+
+With the joystick: hold L1 and move the sticks. The left stick up/down moves the hand target along
+the heading, the right stick up/down in height, the right stick left/right turns the hand direction.
+When the sticks return to neutral or L1 is released, the target is set to the current hand position.
+While L1 is held, the gimbalrotor navigator zeroes the flight commands from the sticks
+(`GimbalrotorNavigator::joyStickControl`), so the CoG is moved only by the IK. The buttons are set by
+`joy_*` in `hanging_teleop.yaml` (raw PS4 indices).
 
 The hook point, the plane and the starting posture are those of the robot when the node starts; the
 hook contact of the whole-body controller is switched on (`activate_hook`). The parameters (speeds,
 limits, IK weights) are in `config/quad_with_dual_arm/hanging_teleop.yaml`; `~markers` shows the hook
 point, the hand and the CoM of the IK.
+
+### Evaluation: accuracy of the hand with and without the bar
+
+Both conditions start from the same planned posture and position: the first hook contact frame of the
+trajectory file (`start_frame: hook`). `perching_task.py` brings the robot there in both cases.
+From that frame, `hand_accuracy_test.py` sends the rear hand to the same world targets with the
+hanging IK. The IK starts from the plan, not from the measured robot. Its hook point is therefore the
+planned point on the bar, fixed in the world, and the commanded postures are the same in both
+conditions. Only the bar and the hook contact of the whole-body controller differ.
+
+#### Running the evaluation (bringup up, the robot hovering)
+
+With the bar (`perching` in the file names):
+
+1. Hook the bar and stop there, as in the teleoperation (R1 at "Hooked on the bar?"):
+   ```bash
+   rosrun gimbalrotor perching_task.py __ns:=gimbalrotor _after_hook:=stop
+   ```
+2. Run the targets:
+   ```bash
+   rosrun gimbalrotor hand_accuracy_test.py __ns:=gimbalrotor _contact:=true
+   ```
+   The script switches the hook contact on and holds the start frame until the robot converges
+   (`converge_*`). It then moves the hand to each target (MOVE, then SETTLE for `settle_time`, then
+   MEASURE for `measure_time`), and brings the hand back to the start. With `finish: unhook` (the
+   default), it then converges to the start frame, switches the contact off, waits for the load to go
+   back onto the rotors, and plays the approach backwards: the hook comes out of the bar. The
+   whole run takes about 1.5 minutes. Land with the joystick.
+
+Without the bar (`hover`): remove the bar, then run the same motion with no contact switched:
+
+```bash
+rosrun gimbalrotor perching_task.py __ns:=gimbalrotor _after_hook:=stop _switch_contacts:=false   # R1 at the hook frame
+rosrun gimbalrotor hand_accuracy_test.py __ns:=gimbalrotor _contact:=false
+```
+
+Compare the two runs (the logs are in `~/.ros/hand_accuracy/`):
+
+```bash
+rosrun gimbalrotor compare_hand_accuracy.py ~/.ros/hand_accuracy/<hover>.csv ~/.ros/hand_accuracy/<perching>.csv
+```
+
+The targets are world `[x, z]` points of the hand, optionally with a hand-direction offset
+(`[x, z, dangle]`). With the current plan, the root is at about (0.00, 0.71) at the hook, the hand at
+(0.64, 0.66) pointing horizontally forward (the rear arm at `hang_rear_joints` [0, 1.2, -1.2] of the
+plan), and the hook point at (0.00, 1.10). The default five targets are in front of the body, from a little below
+the hand of the start to above it, with the hand kept horizontal. They were checked offline with the IK, in order: all are reached, the
+body is not lifted, and the robot stays at least 0.28 m from the bar. The IK does not check the bar, so check any new target in the same way before using it
+(see the comment in `hand_accuracy_test.yaml`).
+The log records the measured hand (FK of the estimated baselink pose and
+joint states), the IK hand, the commanded thrust of each rotor, the hook contact force, and the joint
+torques of the whole-body QP. Settings are in `config/quad_with_dual_arm/hand_accuracy_test.yaml`; IK
+parameters come from `hanging_teleop.yaml`.
+The comparison reports, for each target, the hand error (total, IK part, and control part), the
+thrust, the contact force, and the torque saturation. The IK bounds only the gravity torques of the
+rear arm. Front-arm torques under the bar load are bounded only by the QP, which shifts load from the
+contact to the rotors at the limit or falls back to the usual allocation if it fails. Check
+`tau_sat`/`qp_fail` before comparing thrust.
