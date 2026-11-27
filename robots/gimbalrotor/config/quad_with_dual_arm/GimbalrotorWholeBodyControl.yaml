@@ -85,7 +85,11 @@ controller:
         link: front_arm_end_effector
         xyz: [0.0443, 0.0, -0.042]
         quaternion: [1.0, 0.0, 0.0, 0.0]   # [x, y, z, w]: turned about x by pi
-        friction: 0.5
+        # [x, y] of the contact frame; y is along the bar: the hook slides along it (and turns in yaw
+        # within its play), so the bar gives no force along it. With 0.5 there the QP put the roll
+        # torque (its integral) into a force along the bar at the hook, 0.37 m above the CoG
+        # (-4 N, 2026-11-24 take 13), which the rotors then did not make: the robot slid along y
+        friction: [0.5, 0.0]
         mode: support
         max_normal: 40.0   # [N] when fully loaded
         ramp_time: 5.0     # [s] the load moved onto (off) the bar

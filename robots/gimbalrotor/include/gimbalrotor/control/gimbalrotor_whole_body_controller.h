@@ -67,7 +67,9 @@ struct WholeBodyContact
   pinocchio::FrameIndex frame;  // the contact frame: z along the normal (the environment pushing the robot)
   bool prescribed = false;      // a task force instead of a supporting one
   Eigen::Vector3d force;        // prescribed: the force in the contact frame [N]
-  double friction = 0.5;
+  // support: the friction coefficient along the x and the y of the contact frame (the pyramid); e.g. a
+  // hook on a bar along y slides along it: [0.5, 0.0]
+  Eigen::Vector2d friction = Eigen::Vector2d::Constant(0.5);
   double min_normal = 0.0;    // [N] support: at least (when fully loaded)
   double max_normal = 50.0;   // [N] support: at most when fully loaded
   double ramp_time = 1.0;     // [s] of the load share from 0 to 1 (and back)

@@ -143,8 +143,20 @@ void GimbalrotorWholeBodyController::initialize(ros::NodeHandle nh, ros::NodeHan
       const auto& link = model_.frames[model_.getFrameId(c.link)];
       c.frame = model_.addFrame(pinocchio::Frame(c.name, link.parentJoint, model_.getFrameId(c.link),
                                                  link.placement * in_link, pinocchio::OP_FRAME));
-      if (v.hasMember("friction"))
-        c.friction = toDouble(v["friction"]);
+      if (v.hasMember("friction"))  // one coefficient, or one for the x and the y of the contact frame
+      {
+        if (v["friction"].getType() == XmlRpc::XmlRpcValue::TypeArray)
+        {
+          const auto mu = toVector(v["friction"]);
+          if (mu.size() != 2)
+            throw std::runtime_error("[whole body] contact " + c.name + ": friction is one value or two (x, y)");
+          c.friction = Eigen::Vector2d(mu[0], mu[1]);
+        }
+        else
+          c.friction.setConstant(toDouble(v["friction"]));
+        if ((c.friction.array() < 0.0).any())
+          throw std::runtime_error("[whole body] contact " + c.name + ": negative friction");
+      }
       if (v.hasMember("min_normal"))
         c.min_normal = toDouble(v["min_normal"]);
       if (v.hasMember("max_normal"))
@@ -476,7 +488,7 @@ bool GimbalrotorWholeBodyController::allocate(const Eigen::VectorXd& q, const Ei
       for (double sign : { 1.0, -1.0 })
       {
         row.setZero();
-        row.segment<3>(col) = contact.friction * normal + sign * R.col(axis);
+        row.segment<3>(col) = contact.friction(axis) * normal + sign * R.col(axis);
         add(row, 0.0, INF);
       }
     }

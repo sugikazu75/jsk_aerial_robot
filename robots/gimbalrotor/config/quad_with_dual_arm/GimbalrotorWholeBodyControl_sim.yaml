@@ -75,7 +75,7 @@ controller:
         link: front_arm_end_effector
         xyz: [0.0443, 0.0, -0.042]
         quaternion: [1.0, 0.0, 0.0, 0.0]   # [x, y, z, w]: turned about x by pi
-        friction: 0.5
+        friction: [0.5, 0.0]
         mode: support
         max_normal: 40.0   # [N] when fully loaded
         ramp_time: 5.0     # [s] the load moved onto (off) the bar
