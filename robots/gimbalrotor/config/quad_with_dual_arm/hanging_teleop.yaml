@@ -55,3 +55,9 @@ joy_axis_forward: 1      # left stick, up: along the heading
 joy_axis_up: 5           # right stick, up: up
 joy_axis_turn: 2         # right stick, leftwards: the hand direction up
 joy_deadzone: 0.2
+joy_unhook_button: 5     # R1, held together with L1 for joy_unhook_hold: leave the bar
+joy_unhook_hold: 1.0     # [s]
+# the unhook: the hand back to the start, the hook contact off, the robot back along the opening of the hook
+unhook_wait: 1.0         # [s] held after the ramp_time of the contact switched off
+unhook_distance: 0.16    # [m] along the opening (approach of perching_motion.yaml)
+unhook_speed: 0.03       # [m/s]

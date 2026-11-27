@@ -32,6 +32,18 @@ the torque limit of the rear arm, a self-collision) stops the hand at the closes
 and moving the target back moves the hand at once. Each cycle (~rate) the IK result goes to the robot:
 the CoG and the body attitude to the navigation, the arm joints to the servos.
 
+Leaving the bar: hold L1 and R1 (~joy_unhook_button) together for ~joy_unhook_hold [s], or send
+std_msgs/Empty on ~unhook:
+
+  rostopic pub -1 /gimbalrotor/hanging_teleop/unhook std_msgs/Empty
+
+The hand goes back to where it was at the start (the hooked posture) by the IK; the hook contact is
+switched off and the posture held through its ramp_time and ~unhook_wait (the load back onto the
+rotors); then the whole robot (the posture held) moves back along the opening of the hook by
+~unhook_distance at ~unhook_speed, the reverse of the approach of plan_perching_motion.py: the hook
+comes out of the bar. The node ends there, the navigation holding the last target: land by
+teleoperation. The joystick and the targets are ignored once the unhook has begun.
+
 ~markers (visualization_msgs/MarkerArray): the hook point (red), the hand of the IK (green arrow),
 the CoM of the IK (blue). The node stops when the robot leaves the hover state. The parameters are
 in config/quad_with_dual_arm/hanging_teleop.yaml.
@@ -48,7 +60,7 @@ import rospy
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Vector3
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
 from sensor_msgs.msg import Joy
-from std_msgs.msg import ColorRGBA
+from std_msgs.msg import ColorRGBA, Empty
 from visualization_msgs.msg import (
     InteractiveMarker,
     InteractiveMarkerControl,
@@ -57,7 +69,8 @@ from visualization_msgs.msg import (
     MarkerArray,
 )
 
-from gimbalrotor.hanging_follower import FOLLOWER_KEYS, HangingFollower, switch_contact
+from gimbalrotor.hanging_follower import FOLLOWER_KEYS, HangingFollower, switch_contact, toward
+from gimbalrotor.perching_model import HOOK_OPENING
 from gimbalrotor.robot_interface import GimbalrotorInterface
 from gimbalrotor.trajectory_follower import load_params
 
@@ -70,6 +83,11 @@ KEYS = FOLLOWER_KEYS | {
     "joy_axis_up",
     "joy_axis_turn",
     "joy_deadzone",
+    "joy_unhook_button",
+    "joy_unhook_hold",
+    "unhook_wait",
+    "unhook_distance",
+    "unhook_speed",
 }
 DEFAULT_CONFIG = os.path.join(
     rospkg.RosPack().get_path("gimbalrotor"), "config", "quad_with_dual_arm", "hanging_teleop.yaml"
@@ -176,13 +194,20 @@ class JoyInput:
         self.button = int(p["joy_enable_button"])
         self.axes = [int(p["joy_axis_forward"]), int(p["joy_axis_up"]), int(p["joy_axis_turn"])]
         self.deadzone = float(p["joy_deadzone"])
+        self.unhook_button, self.unhook_hold = int(p["joy_unhook_button"]), float(p["joy_unhook_hold"])
         self.lock = threading.Lock()
         self.command = None
+        self.unhook_since = None  # when the enable and the unhook buttons began to be held together
         rospy.Subscriber(robot_ns + "/joy", Joy, self._joy, queue_size=1)
 
     def _joy(self, msg):
         command = None
         pressed = lambda b: b < len(msg.buttons) and msg.buttons[b] == 1  # noqa: E731
+        with self.lock:
+            if pressed(self.button) and pressed(self.unhook_button):
+                self.unhook_since = self.unhook_since or rospy.get_time()
+            else:
+                self.unhook_since = None
         if pressed(self.button) and max(self.axes) < len(msg.axes):
             values = np.array([msg.axes[i] for i in self.axes], float)
             values[np.abs(values) < self.deadzone] = 0.0
@@ -196,6 +221,11 @@ class JoyInput:
         keeps it."""
         with self.lock:
             return None if self.command is None else self.command.copy()
+
+    def unhook(self):
+        """The enable and the unhook buttons held together for unhook_hold [s]."""
+        with self.lock:
+            return self.unhook_since is not None and rospy.get_time() - self.unhook_since >= self.unhook_hold
 
 
 class Markers:
@@ -221,6 +251,57 @@ class Markers:
         self.pub.publish(MarkerArray(markers=[hook, com, hand]))
 
 
+def unhook(follower, robot_ns, p, start_tip, start_angle, timer):
+    """Leave the bar: the hand back to the start (the hooked posture), the hook contact off and held
+    through its ramp, then the robot moved back along the opening of the hook. False if the robot stops
+    hovering."""
+    robot, ik = follower.robot, follower.ik
+    rospy.loginfo("\033[32munhook: the hand back to the start %s\033[0m", ik.from_plane(start_tip).round(3))
+    settled, deadline = None, rospy.get_time() + 30.0
+    while not rospy.is_shutdown():
+        if rospy.get_time() > deadline:
+            rospy.logerr("unhook: the hand does not get back to the start in 30 s: not unhooked (contact on)")
+            return False
+        if not follower.step(start_tip, start_angle):
+            return False
+        if follower.reached(start_tip, start_angle) and np.linalg.norm(follower.f.tip - start_tip) < 2e-3:
+            settled = settled or rospy.get_time()
+            if rospy.get_time() - settled > 1.0:
+                break
+        timer.sleep()
+    ramp = float(rospy.get_param("%s/controller/whole_body/contacts/%s/ramp_time" % (robot_ns, p["hook_contact"]), 2.0))
+    switch_contact(robot_ns, p["hook_contact"], False)
+    wait = ramp + float(p["unhook_wait"])
+    rospy.loginfo("unhook: contact %s off, holding %.1f s while the load moves back onto the rotors", p["hook_contact"], wait)
+    end = rospy.get_time() + wait
+    while not rospy.is_shutdown() and rospy.get_time() < end:
+        if not follower.step(start_tip, start_angle):
+            return False
+        timer.sleep()
+    # the reverse of the approach: the whole robot back along the opening of the hook, the posture held
+    pin.framesForwardKinematics(ik.model, ik.data, ik.q(follower.x))
+    opening = ik.data.oMf[ik.hook_frame].rotation @ HOOK_OPENING
+    cog0, rot, joints = ik.targets(follower.x)
+    goal = cog0 - float(p["unhook_distance"]) * opening
+    speed, dt = float(p["unhook_speed"]), follower.dt
+    rospy.loginfo("unhook: the hook out of the bar, %.2f m along %s", float(p["unhook_distance"]), (-opening).round(3))
+    cog = cog0.copy()
+    while not rospy.is_shutdown():
+        nxt = toward(cog, goal, speed * dt)
+        vel = (nxt - cog) / dt
+        cog = nxt
+        if not robot.sendCogTarget(cog, vel, rot):
+            rospy.logerr("not hovering any more (state %s): stopped", robot.getFlightState())
+            return False
+        robot.sendJointTarget(ik.joint_names, joints)
+        if np.linalg.norm(goal - cog) < 1e-9:
+            break
+        timer.sleep()
+    robot.sendCogTarget(goal, np.zeros(3), rot)
+    rospy.loginfo("\033[32munhooked: land by teleoperation; the navigation holds the last target\033[0m")
+    return True
+
+
 def main():
     rospy.init_node("hanging_teleop")
     p = load_params(DEFAULT_CONFIG, KEYS)
@@ -241,8 +322,11 @@ def main():
         sorted(ik.collisions(follower.x)) or "none",
     )
 
+    start_tip, start_angle = f.tip.copy(), f.tip_angle  # the hooked posture: where the unhook begins
     target = HandTarget(ik, p["frame_id"], f.tip, f.tip_angle)
     joy = JoyInput(robot_ns, p)
+    unhook_request = threading.Event()
+    rospy.Subscriber("~unhook", Empty, lambda _: unhook_request.set())
     joy_active = False
     marker_period, marker_stamp = 0.1, 0.0  # [s] the marker follows the joystick at most so often
     markers = Markers(ik, p["frame_id"])
@@ -255,7 +339,16 @@ def main():
         rospy.resolve_name("~target"),
         joy.button,
     )
+    rospy.loginfo(
+        "\033[32mleave the bar: hold L1 and the button %d (R1) for %.1f s, or send std_msgs/Empty on %s\033[0m",
+        joy.unhook_button,
+        joy.unhook_hold,
+        rospy.resolve_name("~unhook"),
+    )
     while not rospy.is_shutdown():
+        if joy.unhook() or unhook_request.is_set():
+            unhook(follower, robot_ns, p, start_tip, start_angle, timer)
+            return
         command = joy.get()
         if command is not None:
             # the requested target moves from the one the IK follows (no run-away out of reach)
