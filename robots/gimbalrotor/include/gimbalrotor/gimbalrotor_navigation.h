@@ -6,6 +6,7 @@
 #include <geometry_msgs/Vector3Stamped.h>
 #include <geometry_msgs/QuaternionStamped.h>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/Joy.h>
 #include <spinal/DesireCoord.h>
 
 namespace aerial_robot_navigation
@@ -38,6 +39,8 @@ private:
   void targetBaselinkRotCallback(const geometry_msgs::QuaternionStampedConstPtr& msg);
   void targetBaselinkRPYCallback(const geometry_msgs::Vector3StampedConstPtr& msg);
   void naviCallback(const aerial_robot_msgs::FlightNavConstPtr& msg) override;
+  // L1 held: the sticks are for the hand target of hanging_teleop.py, not for the flight (zeroed)
+  void joyStickControl(const sensor_msgs::JoyConstPtr& joy_msg) override;
 
   void reset() override;
   void landingProcess();

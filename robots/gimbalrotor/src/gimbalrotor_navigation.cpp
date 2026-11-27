@@ -1,6 +1,7 @@
 // -*- mode: c++ -*-
 
 #include <gimbalrotor/gimbalrotor_navigation.h>
+#include <aerial_robot_control/util/joy_parser.h>
 
 using namespace aerial_robot_model;
 using namespace aerial_robot_navigation;
@@ -155,6 +156,24 @@ void GimbalrotorNavigator::naviCallback(const aerial_robot_msgs::FlightNavConstP
     setTargetRoll(msg->target_roll);
   if (msg->pitch_nav_mode == 2)
     setTargetPitch(msg->target_pitch);
+}
+
+void GimbalrotorNavigator::joyStickControl(const sensor_msgs::JoyConstPtr& joy_msg)
+{
+  // While L1 is held the sticks move the hand target of the whole-body IK (hanging_teleop.py): the
+  // flight commands of the sticks (xy, z, yaw) are overwritten by 0, the buttons work as usual.
+  // The parsed message is in the general (PS3) layout, which joyParse of the base passes through.
+  sensor_msgs::Joy joy_cmd = joyParse(*joy_msg);
+  if (joy_cmd.buttons.size() > JOY_BUTTON_REAR_LEFT_1 && joy_cmd.buttons[JOY_BUTTON_REAR_LEFT_1] == 1)
+  {
+    joy_cmd.axes[JOY_AXIS_STICK_LEFT_LEFTWARDS] = 0;
+    joy_cmd.axes[JOY_AXIS_STICK_LEFT_UPWARDS] = 0;
+    joy_cmd.axes[JOY_AXIS_STICK_RIGHT_LEFTWARDS] = 0;
+    joy_cmd.axes[JOY_AXIS_STICK_RIGHT_UPWARDS] = 0;
+    BaseNavigator::joyStickControl(boost::make_shared<const sensor_msgs::Joy>(joy_cmd));
+    return;
+  }
+  BaseNavigator::joyStickControl(joy_msg);
 }
 
 void GimbalrotorNavigator::baselinkRotationProcess()
