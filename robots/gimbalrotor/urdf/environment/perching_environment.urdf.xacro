@@ -6,10 +6,9 @@
 
        env_bar    horizontal bar along y at (bar_x, bar_z) to hook the front arm on
        env_posts  the two posts holding the bar
-       env_wall   vertical wall whose face is at x = wall_x (facing +x), for the rear arm to touch
 
      The same arguments are given to this file by plan_perching_motion.py and perching_motion.launch.
-     config: a YAML file with bar_x, bar_z, bar_radius, wall_x and task_frame [x, y, yaw]
+     config: a YAML file with bar_x, bar_z, bar_radius and task_frame [x, y, yaw]
      (config/quad_with_dual_arm/perching_motion.yaml, that of the planner): its values instead of
      those arguments. -->
 <robot name="perching_environment" xmlns:xacro="http://www.ros.org/wiki/xacro">
@@ -17,7 +16,6 @@
   <xacro:arg name="bar_z" default="1.6"/>
   <xacro:arg name="bar_radius" default="0.015"/>
   <xacro:arg name="bar_length" default="1.2"/>
-  <xacro:arg name="wall_x" default="-0.6"/>
   <xacro:arg name="task_x" default="0.0"/>
   <xacro:arg name="task_y" default="0.0"/>
   <xacro:arg name="task_yaw" default="0.0"/>
@@ -32,15 +30,10 @@
   <xacro:property name="bar_z" value="${cfg['bar_z'] if config else $(arg bar_z)}"/>
   <xacro:property name="bar_radius" value="${cfg['bar_radius'] if config else $(arg bar_radius)}"/>
   <xacro:property name="bar_length" value="$(arg bar_length)"/>
-  <xacro:property name="wall_x" value="${cfg['wall_x'] if config else $(arg wall_x)}"/>
   <xacro:property name="task_frame" value="${cfg['task_frame'] if config and 'task_frame' in cfg else [$(arg task_x), $(arg task_y), $(arg task_yaw)]}"/>
-  <xacro:property name="wall_thickness" value="0.05"/>
-  <xacro:property name="wall_width" value="1.6"/>
-  <xacro:property name="wall_height" value="2.4"/>
   <xacro:property name="post_size" value="0.04"/>
 
   <material name="floor"><color rgba="0.62 0.64 0.63 1"/></material>
-  <material name="wall"><color rgba="0.90 0.90 0.87 0.6"/></material>
   <material name="steel"><color rgba="0.70 0.72 0.75 1"/></material>
   <material name="red"><color rgba="0.80 0.13 0.12 1"/></material>
 
@@ -97,18 +90,5 @@
     <parent link="env_task"/>
     <child link="env_posts"/>
     <origin xyz="${bar_x} 0 ${bar_z}" rpy="0 0 0"/>
-  </joint>
-
-  <link name="env_wall">
-    <visual>
-      <origin xyz="${-wall_thickness/2} 0 ${wall_height/2}" rpy="0 0 0"/>
-      <geometry><box size="${wall_thickness} ${wall_width} ${wall_height}"/></geometry>
-      <material name="wall"/>
-    </visual>
-  </link>
-  <joint name="env_wall_joint" type="fixed">
-    <parent link="env_task"/>
-    <child link="env_wall"/>
-    <origin xyz="${wall_x} 0 0" rpy="0 0 0"/>
   </joint>
 </robot>

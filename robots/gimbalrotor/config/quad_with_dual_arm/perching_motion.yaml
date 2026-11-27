@@ -8,15 +8,14 @@ output: package://gimbalrotor/config/quad_with_dual_arm/trajectories/perching_mo
 
 # the scene: read by urdf/environment/perching_environment.urdf.xacro (config:=this file; drawn by
 # bringup.launch and perching_motion.launch) and scripts/simulation/make_perching_world.py (the MuJoCo world).
-# The task frame: bar_x, bar_z, wall_x, start and the plan are in it; in it the robot comes from +x,
-# hangs its front arm (heading +x) on the bar and reaches the wall at -x with its rear arm. It is placed
-# in the world by task_frame [x, y, yaw]: the plan written is in the world. yaw pi: the robot comes
-# from world -x towards +x, and its rear arm reaches out to world +x
+# The task frame: bar_x, bar_z, start and the plan are in it; in it the robot comes from +x and hangs
+# its front arm (heading +x) on the bar, its rear arm held out to -x. It is placed in the world by
+# task_frame [x, y, yaw]: the plan written is in the world. yaw pi: the robot comes from world -x
+# towards +x, and its rear arm is held out to world +x
 task_frame: [0.0, 0.0, 3.141592653589793]  # [m, m, rad]
 bar_x: 0.0          # [m]
 bar_z: 1.075          # [m]
 bar_radius: 0.03   # [m] cylindrical approximation of the real 0.05 m square bar
-wall_x: -0.6        # [m] the face of the wall
 
 # the task
 start: [1.2, 0.0, 0.8]  # [m] hover position of the root (task frame)
@@ -24,16 +23,15 @@ start: [1.2, 0.0, 0.8]  # [m] hover position of the root (task frame)
 # link1 reaches the ground, joint2 and joint3 folded up. The replay (follow_trajectory.py,
 # perching_task.py) sends the first frame on the ground before the takeoff
 folded_joints: [0.6, -2.4, -0.85]   # [rad] joint1, joint2, joint3
-# the rear arm while hanging, from where it reaches the wall (hanging down; the folded one puts the hand
-# above the body, far from the wall)
-hang_rear_joints: [1.15, 0.2, 0.0]  # [rad] joint1, joint2, joint3
+# the rear arm while hanging: held out in front, the hand horizontal at about (0.64, 0.65) in the world,
+# away from the joint limits and from the stretched (singular) arm, where the IK of hanging_teleop.py and
+# hand_accuracy_test.py starts
+hang_rear_joints: [0.0, 1.2, -1.2]  # [rad] joint1, joint2, joint3
 hook_tilt: 0.0          # [rad] near-vertical hook approach: clears the lower real bar in the pre-hook flight
 hook_pitch_range: 0.15  # [rad] the hook turns on the bar (a hinge about it: pitch only) by up to this from
                         #       hook_tilt (0: fixed); tilt + range within atan(friction) for a vertical load
 hook_pitch_weight: 1.0  # per rad, pulling the pitch of the hook back to hook_tilt
 friction: 0.5           # of the hook on the bar
-push_force: 3.0         # [N] pushed on the wall
-standoff: 0.04          # [m] of the rear hand from the wall after reach
 approach: 0.16          # [m] along the opening of the hook onto the bar (the hook clear of it by bar_margin;
                         #     longer brings the body and the first link of the front arm up into the bar)
 
@@ -59,8 +57,8 @@ simplify_time: 1.0  # [s] OMPL path simplification (shortcuts) after the search;
 resolution: 0.005    # edge check resolution (fraction)
 seed: 1
 
-# the timing: frames = duration x rate (the IK of the reach and the touch is solved at a fixed
-# number of points, then timed, so that the durations do not change the path)
+# the timing: frames = duration x rate (the IK of the unhook is solved at a fixed number of points, then
+# timed, so that the durations do not change the path)
 rate: 20.0                   # [Hz] of the output frames
 hover_time: 2.0              # [s]
 flight_speed: 0.15           # [m/s] the root in flight at most
@@ -70,13 +68,7 @@ pre_time: 1.0                # [s] held off the bar before the approach (the cor
 approach_time: 2.0           # [s]
 load_time: 2.0               # [s] the load moved from the rotors onto the bar
 hang_time: 2.0               # [s]
-reach_time: 4.0              # [s]
-reach_ik_steps: 40
-touch_time: 1.0              # [s]
-touch_ik_steps: 10
-push_time: 3.0               # [s] the push ramped up
-hold_time: 2.0               # [s]
-# leaving the bar: the load back onto the rotors, the rear arm back along the reach, the hook out of the
+# leaving the bar: the load back onto the rotors, then the hook out of the
 # bar the way it came in (back along its opening by unhook_distance, its pose held) while the body goes
 # down by unhook_drop, the arms taking the difference; then held there (on by teleoperation). The
 # arms limit the drop: with the hook 0.2 m out, about 0.03 m keeps the hook on its path (a larger one

@@ -17,7 +17,7 @@ with the operator checking it and teleoperating when it went wrong.
   RETURN       the contacts switched off; from where the robot is back to the start of the approach
                (the CoG in a straight line: clear the bar by hand first), then HOOK again
   AFTER_HOOK   the first contact (the hook) switched on, then the rest of the trajectory (the load
-               onto the bar, the hang, the reach to the wall, the push), each other contact switched
+               onto the bar, the hang), each other contact switched
                on and off where it begins and ends in the file; the last frame held.
                With ~after_hook "stop": only the hook switched on, the task ends there (outcome
                "stopped"), holding the hooked pose: e.g. for hanging_teleop.py next

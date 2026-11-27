@@ -33,7 +33,7 @@ OVER_BAR = ("front_arm_link2", FRONT_LINK3, FRONT_HOOK)
 # the last link: +z facing -normal).
 HOOK_OFFSET = np.array([0.0443, 0.0, -0.0420])  # [m], the hook point in FRONT_TIP
 HOOK_OPENING = np.array([np.cos(np.radians(111.0)), 0.0, np.sin(np.radians(111.0))])  # the middle of the opening
-PERCH_PHASES = ("load", "hang", "reach", "touch", "push", "hold")
+PERCH_PHASES = ("load", "hang")
 HOOK, PUSH = "hook_bar", "rear_hand_wall"  # the contact and force frames
 
 

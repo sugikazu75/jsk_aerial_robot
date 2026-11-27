@@ -104,7 +104,7 @@
   <node pkg="aerial_robot_control" type="thrust_visualizer.py" name="thrust_visualizer" ns="$(arg robot_ns)"/>
   <!-- whole_body/contacts/<name>/force -> contact_wrench_visualizer/contact (WrenchStamped, in TF frames of the contacts) -->
   <node pkg="gimbalrotor" type="contact_wrench_visualizer.py" name="contact_wrench_visualizer" ns="$(arg robot_ns)"/>
-  <!-- the perching scene (the bar, the wall) from the configuration of the planner; only drawn, the
+  <!-- the perching scene (the bar) from the configuration of the planner; only drawn, the
        simulation has its own (worlds/<mujoco_world>.xml) -->
   <group ns="environment" if="$(arg environment)">
     <param name="robot_description"

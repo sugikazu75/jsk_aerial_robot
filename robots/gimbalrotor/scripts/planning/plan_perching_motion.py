@@ -3,10 +3,10 @@
 the way, to show how much thrust hanging saves. Offline: no ROS master is needed. The parameters are
 all in config/quad_with_dual_arm/perching_motion.yaml (--config another; --key value overrides one).
 
-The scene (urdf/environment/perching_environment.urdf.xacro) has a horizontal bar along y and a
-wall facing +x behind it. The robot flies to the bar, hangs the hook module of the front arm (a C
-whose opening faces down at the bar) on it, then reaches the wall with the rear arm and pushes on it.
-The phases are
+The scene (urdf/environment/perching_environment.urdf.xacro) has a horizontal bar along y. The robot
+flies to the bar, hangs the hook module of the front arm (a C whose opening faces down at the bar) on
+it with the rear arm held out in front (--hang-rear-joints: a posture from where the hand can be moved
+around by hanging_teleop.py or hand_accuracy_test.py), and leaves it again. The phases are
 
   hover     hovering at --start with both arms folded down           (no contact)
   flight    planned with OMPL RRTConnect to just off the hook pose     (no contact)
@@ -17,10 +17,9 @@ The phases are
             onto the bar over --load-time: the normal force of the hook
             is capped by a share of its full value that grows to one
   hang      the front arm on the bar                                  (hook contact)
-  reach     the rear arm swung out to --standoff from the wall         (hook contact)
-  touch     the rear hand moved onto the wall                          (hook contact)
-  push      the push on the wall ramped up to --push-force             (hook contact + force)
-  hold      holding the push                                           (hook contact + force)
+  release   the load back onto the rotors over --release-time         (hook contact)
+  unhook    the hook out of the bar back along its opening             (no contact)
+  end       holding there                                              (no contact)
 
 Flight: the planning state is the root pose (the attitude as its offset from --reference-attitude,
 a rotation vector, each component within --max-body-tilt, yaw included) and the six arm joints. The
@@ -32,22 +31,22 @@ hull, the lift capacity above --thrust-margin times the weight).
 Contact postures: an IK (scipy least squares) on the root pose (the attitude within
 --max-body-tilt of --reference-attitude) and the arm joints puts the hook point (the inside of the
 hook) on top of the bar with the last link of the front arm tilted by --hook-tilt, the CoM right below the hook so that the bar carries
-the weight, and the rear hand on its target. The attitude is redundant to the arms; the IK keeps it
+the weight, and the rear arm at --hang-rear-joints. The attitude is redundant to the arms; the IK keeps it
 and the joints close to the previous posture and pulls the attitude back to the reference by
 --attitude-weight, so it tilts the body only where the tasks need it (tilting is a risk).
 
 Statics (gimbalrotor.rotor_statics): each gimbal turns its rotor about the rotor arm, so a rotor can push
 anywhere in the plane normal to that axis, and the thrust vectors enter the force and moment
 balance linearly (the rotor drag torque included). One QP per frame finds the thrust vectors of
-least squared norm, the hook force inside its friction cone and the push given, for the robot to
+least squared norm and the hook force inside its friction cone, for the robot to
 stand still. Every rotor keeps pushing up, so that the attitude stays under control while the bar
 carries the robot: in the gimbal plane, its component along the most upward direction is at least
 --min-lift times the weight over the number of rotors (and the thrust limit of the URDF), and the
 thrust is tilted from that direction by at most --max-thrust-tilt. The joint torques, linear in
 these forces, stay within --max-effort-ratio of the effort limits of the URDF, so the rotors take
 over what the arm cannot hold; the gimbal angles follow from the thrust directions, and the joint torques from the
-RNEA with these forces. From the hang on, every frame is solved once more without the hook
-contact (the same posture and push in free flight); both are summed up per phase at the end and
+RNEA with these forces. While hooked, every frame is solved once more without the hook
+contact (the same posture in free flight); both are summed up per phase at the end and
 drawn in a plot next to the trajectory file.
 
 The trajectory file holds, every dt, the root pose, the joint angles, the thrust, the static joint
@@ -77,15 +76,12 @@ from gimbalrotor.perching_model import (
     ARM_JOINTS,
     ROOM,
     FRONT_TIP,
-    REAR_TIP,
     FRONT_LINK3,
-    REAR_LINK3,
     FRONT_HOOK,
     HOOK_OFFSET,
     HOOK_OPENING,
     PERCH_PHASES,
     HOOK,
-    PUSH,
     BodyAttitude,
     HookPitch,
     Robot,
@@ -263,7 +259,6 @@ def parse_args():
     parser.add_argument("--bar-x", type=float, help="[m] the bar (pass the same to the launch)")
     parser.add_argument("--bar-z", type=float, help="[m]")
     parser.add_argument("--bar-radius", type=float, help="[m]")
-    parser.add_argument("--wall-x", type=float, help="[m] the face of the wall")
     # the task
     parser.add_argument(
         "--task-frame",
@@ -284,7 +279,8 @@ def parse_args():
         "--hang-rear-joints",
         type=float,
         nargs=3,
-        help="[rad] joint1..3 of the rear arm while hanging, from where it reaches the wall",
+        help="[rad] joint1..3 of the rear arm while hanging (held out in front, away from the joint "
+        "limits: the start of the hand of hanging_teleop.py and hand_accuracy_test.py)",
     )
     parser.add_argument("--hook-tilt", type=float, help="[rad] the last link of the front arm, tip down")
     parser.add_argument(
@@ -299,8 +295,6 @@ def parse_args():
         help="per rad, of the IK residual pulling the pitch of the hook to --hook-tilt",
     )
     parser.add_argument("--friction", type=float, help="of the hook on the bar")
-    parser.add_argument("--push-force", type=float, help="[N] pushed on the wall")
-    parser.add_argument("--standoff", type=float, help="[m] of the rear hand from the wall after reach")
     parser.add_argument(
         "--approach",
         type=float,
@@ -387,13 +381,7 @@ def parse_args():
         "--load-time", type=float, help="[s] over which the load moves from the rotors onto the bar after the touchdown"
     )
     parser.add_argument("--hang-time", type=float, help="[s]")
-    parser.add_argument("--reach-time", type=float, help="[s]")
-    parser.add_argument("--reach-ik-steps", type=int, help="IK points along the reach (the path, not the time)")
-    parser.add_argument("--touch-time", type=float, help="[s]")
-    parser.add_argument("--touch-ik-steps", type=int, help="IK points along the touch")
-    parser.add_argument("--push-time", type=float, help="[s] the push ramped up")
-    parser.add_argument("--hold-time", type=float, help="[s]")
-    parser.add_argument("--release-time", type=float, help="[s] the load back onto the rotors (the push let go)")
+    parser.add_argument("--release-time", type=float, help="[s] the load back onto the rotors")
     parser.add_argument("--unhook-time", type=float, help="[s] the hook out of the bar")
     parser.add_argument("--unhook-ik-steps", type=int, help="IK points along the unhook")
     parser.add_argument(
@@ -437,7 +425,7 @@ def main():
     clock = time.time()
     watch = Stopwatch()
     urdf = xacro(args.robot)
-    scene_urdf = xacro(args.scene, bar_x=args.bar_x, bar_z=args.bar_z, bar_radius=args.bar_radius, wall_x=args.wall_x)
+    scene_urdf = xacro(args.scene, bar_x=args.bar_x, bar_z=args.bar_z, bar_radius=args.bar_radius)
     watch.lap("xacro")
     robot = Robot(
         urdf,
@@ -488,54 +476,15 @@ def main():
     )
 
     front_on_bar = robot.pairs({(FRONT_HOOK, "env/env_bar")})
-    rear_on_wall = robot.pairs({(REAR_LINK3, "env/env_wall")})
     check(robot, "start", x_start, args, args.margin, args.bar_margin)
     check(robot, "off the bar", x_pre, args, args.margin, args.bar_margin)
     watch.lap("misc")
 
-    # rear arm: swung out to the standoff, then onto the wall; the IK holds the hook all along
-    frames_rear, _ = robot.kinematics(x_hang)
-    rear_from = frames_rear[REAR_TIP].translation.copy()
-    rear_to = np.array([args.wall_x, 0.0, x_hang[2]])
-    rear_off = rear_to + np.array([args.standoff, 0.0, 0.0])
     rate = args.rate
-    # The path is solved by IK at a fixed number of points (--reach-ik-steps, --touch-ik-steps) and then
-    # timed: each IK starts from the previous solution, so the steps decide which way the arms go, and
-    # the duration (the number of frames) must not.
-    reach, touch, worst = [], [], {"hook": 0.0, "rear_tip": 0.0}
-    x = x_hang
-    for out, a, b, steps, duration, aligned in (
-        (reach, rear_from, rear_off, args.reach_ik_steps, args.reach_time, False),
-        (touch, rear_off, rear_to, args.touch_ik_steps, args.touch_time, True),
-    ):
-        path = [x]
-        for k in range(1, steps + 1):
-            s = k / steps
-            # the hand turns to face the wall gradually over the reach, and stays so on the touch
-            x, error = robot.ik(
-                x,
-                hook=hook,
-                rear_tip=a + s * (b - a),
-                com_x=hook[0][0],
-                previous=x,
-                rear_direction=np.array([-1.0, 0.0, 0.0]),
-                direction_weight=3.0 if aligned else 3.0 * s,
-            )
-            path.append(x)
-            worst = {key: max(worst[key], error.get(key, 0.0)) for key in worst}
-        frames = max(int(round(duration * rate)), 1)  # the IK points spread evenly over the duration
-        out.extend(resample(path, np.linspace(0.0, frames / rate, len(path)), rate)[1:])
-    print(
-        "reach/touch: worst IK error, hook %.1f mm, rear tip %.1f mm" % (1e3 * worst["hook"], 1e3 * worst["rear_tip"])
-    )
-    x_touch = touch[-1]
-    watch.lap("ik_reach_touch")
 
-    # --- leaving the bar (after the load is back on the rotors): the rear arm back along the reach,
-    # then the hook out of the bar the way it came in (its point back along the opening by
-    # --unhook-distance, its pose held) while the body goes down by --unhook-drop and the arms take the
-    # difference
-    retract = list(reversed(reach + touch))[1:] + [x_hang]
+    # --- leaving the bar (after the load is back on the rotors): the hook out of the bar the way it came
+    # in (its point back along the opening by --unhook-distance, its pose held) while the body goes down
+    # by --unhook-drop and the arms take the difference
     hook_point = robot.hook_point(frames_hang)
     hook_normal_hang = -frames_hang[FRONT_LINK3].rotation[:, 2]
     opening = frames_hang[FRONT_TIP].rotation @ HOOK_OPENING
@@ -569,7 +518,7 @@ def main():
     watch.lap("rrt_simplify")  # the search is moved out of it: the rest is the path simplification
     watch.move("rrt_simplify", "rrt_search", search_time)
     watch.counts.update(rrt_state_checks=checks, rrt_waypoints=len(flight),
-                        ik_calls=1 + args.reach_ik_steps + args.touch_ik_steps + args.unhook_ik_steps)
+                        ik_calls=1 + args.unhook_ik_steps)
     speed = {"position": args.flight_speed, "rotation": args.flight_rotation_speed, "joint": args.flight_joint_speed}
     frames_of = lambda duration: max(int(round(duration * rate)), 1)  # noqa: E731
     phases = [
@@ -579,12 +528,7 @@ def main():
         ("approach", line(x_pre, x_hang, args.approach_time, rate)),
         ("load", [x_hang] * frames_of(args.load_time)),
         ("hang", [x_hang] * frames_of(args.hang_time)),
-        ("reach", reach),
-        ("touch", touch),
-        ("push", [x_touch] * frames_of(args.push_time)),
-        ("hold", [x_touch] * frames_of(args.hold_time)),
-        ("release", [x_touch] * frames_of(args.release_time)),
-        ("retract", retract),
+        ("release", [x_hang] * frames_of(args.release_time)),
         ("unhook", unhook),
         ("end", [x_off] * frames_of(args.hover_time)),
     ]  # off the bar: on by teleoperation
@@ -597,12 +541,7 @@ def main():
         "approach": front_on_bar,
         "load": front_on_bar,
         "hang": front_on_bar,
-        "reach": front_on_bar,
-        "touch": front_on_bar | rear_on_wall,
-        "push": front_on_bar | rear_on_wall,
-        "hold": front_on_bar | rear_on_wall,
-        "release": front_on_bar | rear_on_wall,
-        "retract": front_on_bar | rear_on_wall,
+        "release": front_on_bar,
         "unhook": front_on_bar,
     }
     for name, xs in phases:
@@ -623,7 +562,6 @@ def main():
     hook_normal = -frames_hang[FRONT_LINK3].rotation[:, 2]
     placements = {
         HOOK: (FRONT_TIP, contact_placement(robot, x_hang, FRONT_TIP, HOOK_OFFSET, hook_normal)),
-        PUSH: (REAR_TIP, contact_placement(robot, x_touch, REAR_TIP, np.zeros(3), np.array([1.0, 0, 0]))),
     }
     effort_limits = {n: args.max_effort_ratio * limit for n, limit in robot.effort.items()}
     statics = Statics(
@@ -654,7 +592,6 @@ def main():
         ]
         for g in robot.gimbals
     }
-    push_force = np.array([args.push_force, 0.0, 0.0])  # the wall pushing the hand back, world axes
     thrust_frames = [g[2] for g in robot.gimbals]
     joint_names = ARM_JOINTS + [g[0] for g in robot.gimbals]
 
@@ -664,13 +601,10 @@ def main():
     warm, warm_free = None, None
     for name, xs in phases:
         for k, x in enumerate(xs):
-            # the release: the share of the load and of the push going back to zero (the load in reverse)
+            # the release: the share of the load going back to zero (the load in reverse)
             unload = 1.0 - (k + 1) / len(xs) if name == "release" else None
-            scale = {"push": (k + 1) / len(xs), "hold": 1.0, "release": unload}.get(name, 0.0)
             perched = name in PERCH_PHASES or (unload is not None and unload > 0.0)
-            result = statics.solve(
-                x, hook=args.friction if perched else None, push=scale * push_force, warm_start=warm
-            )
+            result = statics.solve(x, hook=args.friction if perched else None, warm_start=warm)
             if name in ("load", "release") and perched:  # the share of the full hook force the bar may take
                 share = (k + 1) / len(xs) if name == "load" else unload
                 full_normal = statics._world(HOOK).rotation[:, 2] @ result["hook"]
@@ -678,11 +612,10 @@ def main():
                     result = statics.solve(
                         x,
                         hook=args.friction,
-                        push=scale * push_force,
                         hook_max_normal=share * full_normal,
                         warm_start=result["q"],
                     )
-            free = statics.solve(x, push=scale * push_force, warm_start=warm_free) if perched else result
+            free = statics.solve(x, warm_start=warm_free) if perched else result
             if result["solved"]:
                 warm = result["q"]
             if perched and free["solved"]:
@@ -691,8 +624,6 @@ def main():
             contacts = {}
             if perched:
                 contacts[HOOK] = [float(v) for v in statics._world(HOOK).rotation.T @ result["hook"]]
-            if scale > 0.0:
-                contacts[PUSH] = [float(v) for v in statics._world(PUSH).rotation.T @ (scale * push_force)]
             frames.append(
                 dict(
                     root=task_to_world(args.task_frame, result["q"][:7]),
@@ -757,7 +688,7 @@ def main():
     with open(args.output, "w") as f:
         json.dump(
             dict(
-                description="hover -> hang on the bar -> push the wall, planned by plan_perching_motion.py",
+                description="hover -> hang on the bar -> unhook, planned by plan_perching_motion.py",
                 # the root of the frames is in the world; the plan was made in this frame of it
                 task_frame=[float(v) for v in args.task_frame],
                 # [s] of the file: where the release begins (the load back onto the rotors, then

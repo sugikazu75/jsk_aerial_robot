@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Play back the planned hanging-perching motion of quad_with_dual_arm in RViz: hover, hang
-       from the bar with the front arm, push the wall with the rear arm.
-       Make the trajectory file first; the scene (the bar, the wall and the task frame) is read from the
+       from the bar with the front arm (the rear arm held out in front), unhook.
+       Make the trajectory file first; the scene (the bar and the task frame) is read from the
        same configuration as the planner's (config, perching_motion.yaml):
          rosrun gimbalrotor plan_perching_motion.py -->
   <arg name="robot_ns" default="gimbalrotor"/>
