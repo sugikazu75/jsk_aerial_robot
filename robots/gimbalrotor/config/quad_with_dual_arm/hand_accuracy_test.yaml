@@ -1,0 +1,54 @@
+# Parameters of scripts/execution/hand_accuracy_test.py (each one can be overridden by a private
+# parameter of the node: _key:=value). The IK and its speeds are those of hanging_teleop.yaml.
+
+# the condition: the hook contact of the whole-body controller on (perching: hanging on the bar) or off
+# (hover: no bar). The IK keeps the hook point (on the bar of the plan), the hook angle and the CoM below
+# the hook in both.
+contact: true
+hook_contact: hook_bar   # <ns>/whole_body/contacts/<name>/activate
+contact_wait: 2.0        # [s] the start frame held after the switch (> ramp_time of the contact)
+label: ""                # appended to the file name
+
+# the start: a frame of the plan, the same in both conditions (perching_task.py brings the robot there:
+# _after_hook:=stop, and _switch_contacts:=false without the bar). The IK starts from it (the hook point
+# where the plan puts it on the bar), not from the measured robot.
+trajectory_file: package://gimbalrotor/config/quad_with_dual_arm/trajectories/perching_motion_optimized.json
+start_frame: hook        # "hook": the first contact of the file; or a frame number
+# the robot held at the start frame until it is there (else stopped)
+converge_pos: 0.05       # [m] of the CoG
+converge_vel: 0.05       # [m/s] of the CoG
+converge_joint: 0.05     # [rad]
+converge_timeout: 15.0   # [s]
+
+# the hand in the world: [x, z] [m] (y that of the plane of the arms of the start frame), or [x, z, dangle]
+# with dangle [rad] the direction of the hand from that of the start frame. With the plan of
+# perching_motion_optimized.json (hang_rear_joints [0, 1.2, -1.2]) the root is at about (0.00, 0.70) at
+# the hook, the hand at (0.64, 0.66) pointing horizontally forward (+x), and the hook point at
+# (0.00, 1.10) on the bar (center (0.00, 1.075)). The targets are in front of the body, from below the
+# hand of the start to above it (back_arm_joint1 from +0.7 down to about -0.8 rad), out to x 0.7 (about
+# the reach there: x 0.75 is out of it), the hand kept horizontal. Checked offline with the IK
+# (hanging_teleop.yaml, in this order, from the start frame and back to it): all reached, the body
+# within 0.66..0.67 m, and the robot (its collision meshes, the propellers as the cylinders they sweep)
+# at least 0.28 m from the real 0.05 m square bar on the way. The IK does not check the bar: as the hand
+# goes up (z 0.9 and above) or back toward the body (x 0.4..0.5) it may lift the body toward the bar
+# (e.g. at (0.4, 0.7..0.8) or (0.8, 1.1) the body or the propellers come into it), so check a new target
+# or order before using it.
+targets:
+  - [0.6, 0.45]   # below the hand of the start
+  - [0.65, 0.55]
+  - [0.7, 0.65]   # furthest out (near the reach)
+  - [0.65, 0.75]
+  - [0.6, 0.85]   # above (back_arm_joint1 about -0.8)
+repetitions: 1
+move_timeout: 15.0       # [s] the target the IK follows does not get there (out of reach): go on
+settle_time: 3.0         # [s] after the move, not evaluated
+measure_time: 5.0        # [s] evaluated
+return_to_start: true    # back to the hand of the start frame at the end (logged with rep -1)
+# the end: "hold" the last target (the contact as it is), or "unhook" (with return_to_start) as UNHOOK of
+# perching_task.py: back to the start frame, the hook contact off, the approach of the plan backwards
+finish: unhook
+unhook_wait: 1.0            # [s] held after the ramp_time of the contact switched off
+approach_window: 2.0        # [s] of the file before the first contact: where the unhook ends
+approach_speed_scale: 0.3   # times the playback speed, the hook out of the bar
+
+output_dir: ~/.ros/hand_accuracy

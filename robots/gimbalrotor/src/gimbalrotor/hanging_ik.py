@@ -255,6 +255,28 @@ class HangingIK:
             torque=torque.copy(),
         )
 
+    def measure(self, q):
+        """The task quantities at a full configuration q (pinocchio; e.g. configuration() of the measured
+        baselink pose and joint states), not restricted to the plane: the hand and the hook in the plane,
+        their distance from the plane (lateral, along the left of the heading) and the body pitch."""
+        com = pin.centerOfMass(self.model, self.data, q)
+        pin.updateFramePlacements(self.model, self.data)
+        hook = self.data.oMf[self.hook_frame]
+        tip = self.data.oMf[self.tip_frame]
+        base = self.data.oMf[self.baselink]
+        left = np.array([-self.heading[1], self.heading[0], 0.0])
+        hook_point = hook.act(self.hook_offset)
+        return {
+            "tip": self.to_plane(tip.translation),
+            "tip_angle": self.plane_angle(tip.rotation[:, 0]),
+            "tip_lateral": float((tip.translation - self.origin) @ left),
+            "tip_world": tip.translation.copy(),
+            "hook": self.to_plane(hook_point),
+            "hook_lateral": float((hook_point - self.origin) @ left),
+            "com": self.to_plane(com),
+            "pitch": float(pin.rpy.matrixToRpy(base.rotation)[1]),
+        }
+
     def jacobian(self, p, f0, eps=1e-6):
         v0 = f0.vector()
         J = np.zeros((len(v0), len(p)))
