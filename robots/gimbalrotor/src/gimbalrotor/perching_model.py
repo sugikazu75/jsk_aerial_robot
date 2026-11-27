@@ -224,7 +224,8 @@ class Robot(FreeFlyerModel):
         q = self.raw_q(x)
         com = pin.centerOfMass(self.model, self.data, q)  # also runs the forward kinematics
         pin.updateFramePlacements(self.model, self.data)
-        return {name: self.data.oMf[i] for name, i in self.frame.items()}, com
+        # copies: the placements in data change with the next kinematics
+        return {name: self.data.oMf[i].copy() for name, i in self.frame.items()}, com.copy()
 
     def hook_point(self, frames):
         return frames[FRONT_TIP].act(HOOK_OFFSET)
