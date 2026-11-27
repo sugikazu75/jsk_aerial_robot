@@ -55,7 +55,7 @@ hull_margin: 0.02    # [m] CoM inside the rotor hull
 thrust_margin: 1.3   # lift capacity / weight
 time: 60.0           # [s] planning time limit
 range: 0.3           # RRTConnect step
-simplify_time: 0.0  # [s] OMPL path simplification after the search (0: none, the raw RRTConnect path; the optimisation smooths it anyway). Not a hard limit: one pass of it takes ~10 s
+simplify_time: 1.0  # [s] OMPL path simplification (shortcuts) after the search; 0: none, the raw RRTConnect path, which winds (the root about twice the straight distance) and which the optimisation does not straighten (it has no collision constraints and tracks the plan). Not a hard limit: one pass of it takes ~10 s whatever this is
 resolution: 0.005    # edge check resolution (fraction)
 seed: 1
 
