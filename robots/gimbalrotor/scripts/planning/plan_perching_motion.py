@@ -99,8 +99,35 @@ def xacro(path, **args):
     return subprocess.run(command, check=True, capture_output=True, text=True).stdout
 
 
+class Stopwatch:
+    """Wall time per stage: lap(name) adds the time since the previous lap to that stage. The stages
+    are printed as one JSON line ("timing: {...}") for scripts/analysis/benchmark_perching.py."""
+
+    def __init__(self):
+        self.begun = self.last = time.perf_counter()
+        self.times, self.counts = {}, {}
+
+    def lap(self, name):
+        now = time.perf_counter()
+        self.times[name] = self.times.get(name, 0.0) + now - self.last
+        self.last = now
+
+    def move(self, source, target, seconds):
+        """Book seconds of the stage source to the stage target instead."""
+        self.times[source] -= seconds
+        self.times[target] = self.times.get(target, 0.0) + seconds
+
+    def report(self):
+        times = dict(self.times, total=time.perf_counter() - self.begun)
+        print("\n%-16s %9s" % ("stage", "time [s]"))
+        for name, seconds in times.items():
+            print("%-16s %9.3f" % (name, seconds))
+        print("timing: " + json.dumps(dict(times=times, counts=self.counts)))
+
+
 def plan_flight(robot, x_start, x_goal, args):
-    """Task-specific state chart and flight validity on a generic RRTConnect search."""
+    """Task-specific state chart and flight validity on a generic RRTConnect search. Return the
+    waypoints, the seconds of the search (without the path simplification) and the state checks."""
     attitude = robot.attitude
     dims = (
         [0, 1, 2]
@@ -131,7 +158,8 @@ def plan_flight(robot, x_start, x_goal, args):
     ends = np.array([to_state(x_start), to_state(x_goal)])
     low, high = np.minimum(low[dims], ends.min(axis=0)), np.maximum(high[dims], ends.max(axis=0))
     states, exact, checks, elapsed = rrt_connect(
-        to_state(x_start), to_state(x_goal), low, high, valid, args.resolution, args.range, args.time
+        to_state(x_start), to_state(x_goal), low, high, valid, args.resolution, args.range, args.time,
+        args.simplify_time,
     )
     print(
         "flight: %s after %.1f s and %d state checks"
@@ -139,7 +167,7 @@ def plan_flight(robot, x_start, x_goal, args):
     )
     if not exact:
         raise SystemExit("no flight path found; try a longer --time")
-    return [to_x(state) for state in states]
+    return [to_x(state) for state in states], elapsed, checks
 
 
 def check(
@@ -340,6 +368,11 @@ def parse_args():
     parser.add_argument("--thrust-margin", type=float, help="lift capacity / weight")
     parser.add_argument("--time", type=float, help="[s] planning time limit")
     parser.add_argument("--range", type=float, help="RRTConnect step")
+    parser.add_argument(
+        "--simplify-time",
+        type=float,
+        help="[s] the path simplification (shortcuts) after the search at most; 0: the raw RRTConnect path",
+    )
     parser.add_argument("--resolution", type=float, help="edge check resolution (fraction)")
     parser.add_argument("--seed", type=int)
     # the timing (frames = duration x rate)
@@ -402,8 +435,10 @@ def main():
 
     ou.RNG.setSeed(args.seed)
     clock = time.time()
+    watch = Stopwatch()
     urdf = xacro(args.robot)
     scene_urdf = xacro(args.scene, bar_x=args.bar_x, bar_z=args.bar_z, bar_radius=args.bar_radius, wall_x=args.wall_x)
+    watch.lap("xacro")
     robot = Robot(
         urdf,
         scene_urdf,
@@ -416,6 +451,8 @@ def main():
         ),
     )
     robot.hook_pitch = HookPitch(radius=args.bar_radius, range=args.hook_pitch_range, weight=args.hook_pitch_weight)
+    watch.lap("model")
+    watch.move("model", "collision_setup", robot.collision_setup_time)
     weight = robot.mass * 9.81
     print(
         "robot: %.3f kg (%.2f N), %d rotors of %.1f..%.1f N"
@@ -434,7 +471,9 @@ def main():
     guess = x_start.copy()
     guess[:3] = [args.bar_x, 0.0, args.bar_z - 0.3]
     guess[6:9] = [-1.4, -1.0, -1.0]  # up, then curled back over the bar
+    watch.lap("misc")
     x_hang, error = robot.ik(guess, hook=hook, rear_joints=np.array(args.hang_rear_joints, float), com_x=hook[0][0])
+    watch.lap("ik_hang")
     print(
         "hang: root (%.3f, %.3f), front arm %s, IK error %s" % (x_hang[0], x_hang[2], np.round(x_hang[6:9], 3), error)
     )
@@ -452,6 +491,7 @@ def main():
     rear_on_wall = robot.pairs({(REAR_LINK3, "env/env_wall")})
     check(robot, "start", x_start, args, args.margin, args.bar_margin)
     check(robot, "off the bar", x_pre, args, args.margin, args.bar_margin)
+    watch.lap("misc")
 
     # rear arm: swung out to the standoff, then onto the wall; the IK holds the hook all along
     frames_rear, _ = robot.kinematics(x_hang)
@@ -489,6 +529,7 @@ def main():
         "reach/touch: worst IK error, hook %.1f mm, rear tip %.1f mm" % (1e3 * worst["hook"], 1e3 * worst["rear_tip"])
     )
     x_touch = touch[-1]
+    watch.lap("ik_reach_touch")
 
     # --- leaving the bar (after the load is back on the rotors): the rear arm back along the reach,
     # then the hook out of the bar the way it came in (its point back along the opening by
@@ -512,6 +553,7 @@ def main():
         path.append(x)
         worst_unhook = max(worst_unhook, error["hook"])
     robot.hook_pitch = hinge
+    watch.lap("ik_unhook")
     unhook = resample(path, np.linspace(0.0, args.unhook_time, len(path)), rate)[1:]
     x_off = unhook[-1]
     print(
@@ -522,7 +564,12 @@ def main():
 
     # --- flight
     robot.set_margin(args.margin, args.bar_margin)
-    flight = plan_flight(robot, x_start, x_pre, args)
+    watch.lap("misc")
+    flight, search_time, checks = plan_flight(robot, x_start, x_pre, args)
+    watch.lap("rrt_simplify")  # the search is moved out of it: the rest is the path simplification
+    watch.move("rrt_simplify", "rrt_search", search_time)
+    watch.counts.update(rrt_state_checks=checks, rrt_waypoints=len(flight),
+                        ik_calls=1 + args.reach_ik_steps + args.touch_ik_steps + args.unhook_ik_steps)
     speed = {"position": args.flight_speed, "rotation": args.flight_rotation_speed, "joint": args.flight_joint_speed}
     frames_of = lambda duration: max(int(round(duration * rate)), 1)  # noqa: E731
     phases = [
@@ -568,6 +615,7 @@ def main():
         hits = sorted({pair for b in bad for pair in b})
         print("%-9s %3d frames, %d in collision %s" % (name, len(xs), sum(1 for b in bad if b), hits if hits else ""))
     robot.set_allowed(set())
+    watch.lap("phase_collision")
 
     # --- statics along the path
     # each contact frame has its z along the surface normal (the direction the scene pushes the robot)
@@ -611,21 +659,34 @@ def main():
     joint_names = ARM_JOINTS + [g[0] for g in robot.gimbals]
 
     frames, records, failed = [], [], 0  # frames go to the file; records (per frame) only to the summary
+    # each frame starts the gimbal iteration of the statics at the angles of the previous frame (the
+    # posture changes little between frames), the solves with the hook and those without it apart
+    warm, warm_free = None, None
     for name, xs in phases:
         for k, x in enumerate(xs):
             # the release: the share of the load and of the push going back to zero (the load in reverse)
             unload = 1.0 - (k + 1) / len(xs) if name == "release" else None
             scale = {"push": (k + 1) / len(xs), "hold": 1.0, "release": unload}.get(name, 0.0)
             perched = name in PERCH_PHASES or (unload is not None and unload > 0.0)
-            result = statics.solve(x, hook=args.friction if perched else None, push=scale * push_force)
+            result = statics.solve(
+                x, hook=args.friction if perched else None, push=scale * push_force, warm_start=warm
+            )
             if name in ("load", "release") and perched:  # the share of the full hook force the bar may take
                 share = (k + 1) / len(xs) if name == "load" else unload
                 full_normal = statics._world(HOOK).rotation[:, 2] @ result["hook"]
                 if share < 1.0:
                     result = statics.solve(
-                        x, hook=args.friction, push=scale * push_force, hook_max_normal=share * full_normal
+                        x,
+                        hook=args.friction,
+                        push=scale * push_force,
+                        hook_max_normal=share * full_normal,
+                        warm_start=result["q"],
                     )
-            free = statics.solve(x, push=scale * push_force) if perched else result
+            free = statics.solve(x, push=scale * push_force, warm_start=warm_free) if perched else result
+            if result["solved"]:
+                warm = result["q"]
+            if perched and free["solved"]:
+                warm_free = free["q"]
             failed += not result["solved"]
             contacts = {}
             if perched:
@@ -651,6 +712,8 @@ def main():
                 )
             )
     print("statics: %d of %d frames did not solve" % (failed, len(frames)))
+    watch.lap("statics")
+    watch.counts["frames"] = len(frames)
 
     # --- summary
     print(
@@ -720,6 +783,8 @@ def main():
     print("wrote %s: %d frames, %.2f s" % (args.output, len(frames), (len(frames) - 1) / rate))
     if not args.no_plot:
         plot(os.path.splitext(args.output)[0] + ".png", records, [(n, len(xs)) for n, xs in phases], weight, rate)
+    watch.lap("output")
+    watch.report()
     sys.stdout.flush()
     os._exit(0)  # skip the nanobind leak report of the ompl bindings at exit
 

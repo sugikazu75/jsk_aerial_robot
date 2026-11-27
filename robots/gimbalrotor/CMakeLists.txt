@@ -59,6 +59,7 @@ catkin_install_python(PROGRAMS scripts/planning/plan_perching_motion.py
   scripts/visualization/display_pose.py
   scripts/execution/follow_trajectory.py scripts/execution/perching_task.py
   scripts/execution/check_pre_hook_motion.py scripts/execution/hanging_teleop.py
+  scripts/analysis/benchmark_perching.py
   scripts/simulation/make_perching_world.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )

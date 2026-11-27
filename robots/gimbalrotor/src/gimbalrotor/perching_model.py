@@ -6,6 +6,7 @@ The reusable numerical IK, collision scene and statics helpers are in aerial_mot
 
 from __future__ import annotations
 
+import time
 import xml.etree.ElementTree as ElementTree
 from dataclasses import dataclass
 
@@ -147,8 +148,10 @@ class Robot(FreeFlyerModel):
         self.joint_high = np.array([float(l.get("upper")) for l in limits]) - JOINT_MARGIN
         self.effort = {n: float(joints[n].find("limit").get("effort")) for n in self.idx_q}  # [Nm], URDF
         self.frame = {n: self.model.getFrameId(n) for n in (FRONT_TIP, REAR_TIP, FRONT_LINK3)}
+        begun = time.perf_counter()
         self._build_collision(env_urdf)
         self.set_margin(margin)
+        self.collision_setup_time = time.perf_counter() - begun  # [s] for the benchmark
 
     def _build_collision(self, env_urdf):
         self.scene = CollisionScene(
@@ -365,7 +368,7 @@ class Robot(FreeFlyerModel):
 class Statics(GimballedRotorStatics):
     """Perching frame names and output keys for the shared static solver."""
 
-    def solve(self, x, hook=None, push=None, hook_max_normal=None, iterations=30):
+    def solve(self, x, hook=None, push=None, hook_max_normal=None, iterations=30, warm_start=None):
         result = super().solve(
             x,
             contact_name=HOOK if hook is not None else None,
@@ -374,6 +377,7 @@ class Statics(GimballedRotorStatics):
             force=push,
             contact_max_normal=hook_max_normal,
             iterations=iterations,
+            warm_start=warm_start,
         )
         result["hook"] = result.pop("contact")
         return result

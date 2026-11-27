@@ -30,9 +30,20 @@ class GimballedRotorStatics(StaticBalanceBase):
         super().__init__(robot.model, robot.data, placements, np.array([0.0, 0.0, -9.81 * robot.mass]))
 
     def solve(
-        self, x, contact_name=None, friction=None, force_name=None, force=None, contact_max_normal=None, iterations=30
+        self,
+        x,
+        contact_name=None,
+        friction=None,
+        force_name=None,
+        force=None,
+        contact_max_normal=None,
+        iterations=30,
+        warm_start=None,
     ):
-        """Solve for an optional frictional contact and optional prescribed world force."""
+        """Solve for an optional frictional contact and optional prescribed world force. The gimbal
+        angles are iterated to a fixed point from the upright ones, or from those of warm_start (a
+        configuration, e.g. the "q" of the result of the previous frame), which takes fewer
+        iterations to the same point when the posture changes little."""
         has_contact = friction is not None
         fixed_force = force
         if has_contact and contact_name not in self.placements:
@@ -40,7 +51,12 @@ class GimballedRotorStatics(StaticBalanceBase):
         if force is not None and force_name not in self.placements:
             raise KeyError(force_name)
         robot = self.robot
-        q = robot.q(x)
+        if warm_start is None:
+            q = robot.q(x)
+        else:
+            q = robot.raw_q(x)
+            for name, _, _, _ in robot.gimbals:
+                q[robot.idx_q[name]] = warm_start[robot.idx_q[name]]
         n_rotor = len(robot.gimbals)
         n = 2 * n_rotor + (3 if has_contact else 0)
         for _ in range(iterations):
@@ -121,9 +137,8 @@ class GimballedRotorStatics(StaticBalanceBase):
                             np.zeros(3),
                         )
                     )
-                gravity_only = self._torques(q, [])
                 tau0 = self._torques(q, fixed)
-                B = np.column_stack([self._torques(q, [load]) - gravity_only for load in loads])
+                B = self._load_torques(q, loads)
                 for name, limit in self.effort_limits.items():
                     j = self.model.joints[self.model.getJointId(name)].idx_v
                     C += [-B[j], B[j]]
