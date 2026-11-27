@@ -66,6 +66,7 @@ catkin_install_python(PROGRAMS
   scripts/execution/hand_accuracy_test.py
   scripts/analysis/compare_hand_accuracy.py
   scripts/analysis/benchmark_perching.py
+  scripts/analysis/plot_perching_experiment.py
   scripts/simulation/make_perching_world.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   )
