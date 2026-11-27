@@ -32,13 +32,17 @@ def resolve(path):
     return path
 
 
-def load_params(default_path, keys, config_param="~config"):
+def load_params(default_path, keys, config_param="~config", ignore_unknown=False):
     """All the parameters in keys from the YAML file of config_param (default_path if not set), each one
-    overridden by the private parameter of its name if set; an unknown or a missing key is an error."""
+    overridden by the private parameter of its name if set; a missing key is an error, and so is an
+    unknown one unless ignore_unknown (then it is left out: a file shared with another node)."""
     path = rospy.get_param(config_param, default_path)
     with open(resolve(path)) as f:
         params = yaml.safe_load(f) or {}
     missing, unknown = sorted(set(keys) - set(params)), sorted(set(params) - set(keys))
+    if ignore_unknown:
+        params = {k: v for k, v in params.items() if k in keys}
+        unknown = []
     if missing or unknown:
         raise RuntimeError("%s: unknown keys %s, missing keys %s" % (path, unknown, missing))
     for key in keys:

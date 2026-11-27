@@ -45,3 +45,13 @@ weight_direction: 1.0      # per rad
 weight_attitude: 1.0       # per rad, the body pitch to pitch_reference
 damping: 0.3               # per m or rad of each step
 max_tip_error: 0.05        # [m] the error of the hand is clipped to this in its residual
+
+# the joystick (<ns>/joy, raw sensor_msgs/Joy indices; PS4 as in perching_task.yaml): while the enable
+# button is held, the sticks move the hand target at tip_speed / tip_rotation_speed (full deflection);
+# on release (or the sticks back to neutral) the target is the hand where it is. The navigation of
+# gimbalrotor zeroes the flight commands of the sticks while L1 is held.
+joy_enable_button: 4     # L1
+joy_axis_forward: 1      # left stick, up: along the heading
+joy_axis_up: 5           # right stick, up: up
+joy_axis_turn: 2         # right stick, leftwards: the hand direction up
+joy_deadzone: 0.2

@@ -20,6 +20,12 @@ The target of the hand, in ~frame_id (world):
       rostopic pub -1 /gimbalrotor/hanging_teleop/target geometry_msgs/PoseStamped \\
         '{header: {frame_id: world}, pose: {position: {x: -0.3, y: 0.0, z: 1.0}, orientation: {y: 1.0, w: 0.0}}}'
 
+  * the joystick (sensor_msgs/Joy on <ns>/joy, raw indices of ~joy_*): while L1 (~joy_enable_button)
+    is held, the left stick up/down moves the target along the heading, the right stick up/down in
+    height, the right stick left/right turns the direction of the hand (up). When the sticks go back
+    to neutral or L1 is released, the target is set to where the hand is then (it stays there). The
+    navigation of gimbalrotor ignores the sticks for the flight while L1 is held.
+
 The target the IK follows moves to the requested one at ~tip_speed and ~tip_rotation_speed, staying
 within ~tip_lag (~tip_angle_lag) of where the hand is: a target out of reach (or behind a joint limit,
 the torque limit of the rear arm, a self-collision) stops the hand at the closest point it gets to,
@@ -31,7 +37,6 @@ the CoM of the IK (blue). The node stops when the robot leaves the hover state. 
 in config/quad_with_dual_arm/hanging_teleop.yaml.
 """
 
-import dataclasses
 import math
 import os
 import threading
@@ -42,9 +47,8 @@ import rospkg
 import rospy
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Vector3
 from interactive_markers.interactive_marker_server import InteractiveMarkerServer
-from sensor_msgs.msg import JointState
+from sensor_msgs.msg import Joy
 from std_msgs.msg import ColorRGBA
-from std_srvs.srv import SetBool
 from visualization_msgs.msg import (
     InteractiveMarker,
     InteractiveMarkerControl,
@@ -53,37 +57,23 @@ from visualization_msgs.msg import (
     MarkerArray,
 )
 
-from gimbalrotor.hanging_ik import HangingIK, HangingIKConfig
+from gimbalrotor.hanging_follower import FOLLOWER_KEYS, HangingFollower, switch_contact
 from gimbalrotor.robot_interface import GimbalrotorInterface
 from gimbalrotor.trajectory_follower import load_params
 
-IK_KEYS = {f.name for f in dataclasses.fields(HangingIKConfig)} - {"front_joints", "rear_joints"}
-KEYS = IK_KEYS | {
-    "joint_group",
+KEYS = FOLLOWER_KEYS | {
     "frame_id",
-    "rate",
     "activate_hook",
     "hook_contact",
-    "track_direction",
-    "tip_speed",
-    "tip_rotation_speed",
-    "tip_lag",
-    "tip_angle_lag",
-    "root_speed",
-    "root_rotation_speed",
-    "joint_speed",
-    "ik_iterations",
+    "joy_enable_button",
+    "joy_axis_forward",
+    "joy_axis_up",
+    "joy_axis_turn",
+    "joy_deadzone",
 }
 DEFAULT_CONFIG = os.path.join(
     rospkg.RosPack().get_path("gimbalrotor"), "config", "quad_with_dual_arm", "hanging_teleop.yaml"
 )
-
-
-def toward(current, goal, step):
-    """current moved toward goal by at most step (norm)."""
-    delta = np.asarray(goal, float) - current
-    norm = np.linalg.norm(delta)
-    return current + (delta if norm <= step else delta * step / norm)
 
 
 class HandTarget:
@@ -169,6 +159,44 @@ class HandTarget:
         with self.lock:
             return self.tip.copy(), self.angle
 
+    def set(self, tip, angle, show=True):
+        """Set the requested target (from the joystick); show: move the marker to it too."""
+        with self.lock:
+            self.tip, self.angle = np.asarray(tip, float).copy(), float(angle)
+        if show:
+            self.server.setPose("hand", self._pose(tip, angle))
+            self.server.applyChanges()
+
+
+class JoyInput:
+    """The sticks while the enable button (L1) is held: the requested velocity of the hand, (u, z) [-1, 1]
+    and the turn [-1, 1], or None without input (released, or the sticks in the deadzone)."""
+
+    def __init__(self, robot_ns, p):
+        self.button = int(p["joy_enable_button"])
+        self.axes = [int(p["joy_axis_forward"]), int(p["joy_axis_up"]), int(p["joy_axis_turn"])]
+        self.deadzone = float(p["joy_deadzone"])
+        self.lock = threading.Lock()
+        self.command = None
+        rospy.Subscriber(robot_ns + "/joy", Joy, self._joy, queue_size=1)
+
+    def _joy(self, msg):
+        command = None
+        pressed = lambda b: b < len(msg.buttons) and msg.buttons[b] == 1  # noqa: E731
+        if pressed(self.button) and max(self.axes) < len(msg.axes):
+            values = np.array([msg.axes[i] for i in self.axes], float)
+            values[np.abs(values) < self.deadzone] = 0.0
+            if np.any(values != 0.0):
+                command = values
+        with self.lock:
+            self.command = command
+
+    def get(self):
+        """The last command: joy_node publishes on changes only (no autorepeat), a stick held still
+        keeps it."""
+        with self.lock:
+            return None if self.command is None else self.command.copy()
+
 
 class Markers:
     def __init__(self, ik, frame_id):
@@ -193,93 +221,63 @@ class Markers:
         self.pub.publish(MarkerArray(markers=[hook, com, hand]))
 
 
-def switch_hook(robot_ns, name):
-    service = "%s/whole_body/contacts/%s/activate" % (robot_ns, name)
-    try:
-        rospy.wait_for_service(service, timeout=1.0)
-        rospy.loginfo("contact %s", rospy.ServiceProxy(service, SetBool)(True).message)
-    except (rospy.ROSException, rospy.ServiceException) as e:
-        rospy.logwarn(
-            "cannot switch the contact %s on (%s): is the whole-body controller running " "(bringup whole_body:=true)?",
-            name,
-            e,
-        )
-
-
 def main():
     rospy.init_node("hanging_teleop")
     p = load_params(DEFAULT_CONFIG, KEYS)
     robot_ns = rospy.get_namespace().rstrip("/")
     robot = GimbalrotorInterface(robot_ns=robot_ns, joint_group=p["joint_group"])
-    rospy.loginfo("waiting for the hover state and the odometry")
-    if not robot.waitForState(robot.HOVER_STATE):
+    try:
+        follower = HangingFollower(robot, p)
+    except rospy.ROSInterruptException:
         return
-    while not rospy.is_shutdown() and robot.getBaseOdom() is None:
-        rospy.sleep(0.1)
-    joint_state = rospy.wait_for_message(robot_ns + "/joint_states", JointState, timeout=5.0)
-
-    config = HangingIKConfig(**{k: (tuple(p[k]) if isinstance(p[k], list) else p[k]) for k in IK_KEYS})
-    ik = HangingIK(rospy.get_param("robot_description"), config)
-    q = ik.configuration(robot.getBasePos(), robot.getBaseRot(), dict(zip(joint_state.name, joint_state.position)))
-    x = ik.start(q)
+    ik, f = follower.ik, follower.f
     if p["activate_hook"]:
-        switch_hook(robot_ns, p["hook_contact"])
-    f = ik.features(x)
+        switch_contact(robot_ns, p["hook_contact"], True)
     rospy.loginfo(
         "hanging: hook at %s (plane u, z), body pitch %.3f rad, hand at %s, collisions %s",
         f.hook.round(3),
-        x[2],
+        follower.x[2],
         f.tip.round(3),
-        sorted(ik.collisions(x)) or "none",
+        sorted(ik.collisions(follower.x)) or "none",
     )
 
     target = HandTarget(ik, p["frame_id"], f.tip, f.tip_angle)
+    joy = JoyInput(robot_ns, p)
+    joy_active = False
+    marker_period, marker_stamp = 0.1, 0.0  # [s] the marker follows the joystick at most so often
     markers = Markers(ik, p["frame_id"])
-    rate = float(p["rate"])
-    dt = 1.0 / rate
-    step = np.array([p["root_speed"]] * 2 + [p["root_rotation_speed"]] + [p["joint_speed"]] * 6, float) * dt
-    tip, angle = f.tip.copy(), f.tip_angle  # what the IK follows
-    cog_prev = None
-    timer = rospy.Rate(rate)
+    dt = follower.dt
+    timer = rospy.Rate(float(p["rate"]))
     rospy.loginfo(
-        "\033[32mmove the rear hand with the interactive marker %s or on %s\033[0m",
+        "\033[32mmove the rear hand with the interactive marker %s, on %s, or with the sticks while "
+        "holding the joystick button %d (L1)\033[0m",
         target.server.topic_ns,
         rospy.resolve_name("~target"),
+        joy.button,
     )
     while not rospy.is_shutdown():
-        goal, goal_angle = target.get()
-        # within the lag of the hand, then toward the goal
-        hand = f.tip
-        if np.linalg.norm(tip - hand) > p["tip_lag"]:
-            tip = toward(hand, tip, p["tip_lag"])
-        tip = toward(tip, goal, p["tip_speed"] * dt)
-        lag = math.remainder(angle - f.tip_angle, 2 * math.pi)
-        angle = f.tip_angle + max(-p["tip_angle_lag"], min(p["tip_angle_lag"], lag))
-        turn = math.remainder(goal_angle - angle, 2 * math.pi)
-        angle += max(-p["tip_rotation_speed"] * dt, min(p["tip_rotation_speed"] * dt, turn))
-
-        result = ik.solve(x, tip, angle if p["track_direction"] else None, step, int(p["ik_iterations"]))
-        x, f = result.p, result.features
-        cog, rot, joints = ik.targets(x)
-        vel = np.zeros(3) if cog_prev is None else (cog - cog_prev) / dt
-        cog_prev = cog
-        if not robot.sendCogTarget(cog, vel, rot):
-            rospy.logerr("not hovering any more (state %s): stopped", robot.getFlightState())
-            break
-        robot.sendJointTarget(ik.joint_names, joints)
-        markers.publish(result)
-
-        if result.hook_soft:
-            rospy.logwarn_throttle(1.0, "the hook cannot be kept exactly (%.1f mm off)" % (1e3 * result.hook_error))
-        if result.blocked:
-            rospy.logwarn_throttle(1.0, "stopped by a self-collision of %s" % result.blocked)
-        if np.linalg.norm(tip - f.tip) > 0.9 * p["tip_lag"]:  # the hand does not follow
-            rospy.logwarn_throttle(
-                2.0,
-                "the hand stops %.1f cm from the target (out of reach, or at a limit): body "
-                "pitch %.2f rad, rear arm torques %s Nm"
-                % (1e2 * np.linalg.norm(goal - f.tip), x[2], f.torque.round(2)),
+        command = joy.get()
+        if command is not None:
+            # the requested target moves from the one the IK follows (no run-away out of reach)
+            now = rospy.get_time()
+            show = now - marker_stamp > marker_period
+            if show:
+                marker_stamp = now
+            target.set(
+                follower.tip + command[:2] * p["tip_speed"] * dt,
+                follower.angle + command[2] * p["tip_rotation_speed"] * dt,
+                show,
             )
+            joy_active = True
+        elif joy_active:
+            # the input stopped: the target is where the hand is now
+            target.set(follower.f.tip, follower.f.tip_angle)
+            follower.hold_hand()
+            joy_active = False
+        goal, goal_angle = target.get()
+        if not follower.step(goal, goal_angle):
+            break
+        markers.publish(follower.result)
         timer.sleep()
 
 
